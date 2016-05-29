@@ -1,5 +1,10 @@
 - Add article in the `source/blog` directory
 - `gulp watch`
 - `http://localhost:3000/`
+- `jigsaw build local`
+  - builds the blog locally
+- `gulp`
+  - compiles assests and
+  - builds the blog locally
 - `blog-publish`
-  - copies files from `build_local` to the blogdirectory and pushes them to github
+  - copies files from `build_local` to the blog directory and pushes them to github

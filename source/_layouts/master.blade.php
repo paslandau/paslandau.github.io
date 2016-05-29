@@ -1,4 +1,7 @@
 <?php
+/**
+ *  @var TightenCo\Jigsaw\Jigsaw $jigsaw
+ */
 $vars = [
         "title",
         "description",
@@ -31,14 +34,16 @@ foreach ($vars as $var) {
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <!-- RSS Feed -->
+    <link rel="alternate" type="application/rss+xml" title="{{$site["title"]}}" href="{{$site["url"]}}{{$jigsaw->getMeta()["feed.xml.blade.php"]["target-path"]}}" />
 
     <!-- Custom Fonts -->
     <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
           type="text/css">
-    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'
-          type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'
-          rel='stylesheet' type='text/css'>
+    {{--<link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'--}}
+          {{--type='text/css'>--}}
+    {{--<link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800'--}}
+          {{--rel='stylesheet' type='text/css'>--}}
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -143,20 +148,38 @@ foreach ($vars as $var) {
                                 </span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{$social["rss"]}}">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
                 </ul>
-                <p class="copyright text-muted">&copy; {{$site["host"]}} <?= date("Y") ?></p>
+                <p class="copyright text-muted">&copy; <a href="{{$site["url"]}}">{{$site["host"]}}</a> <?= date("Y") ?>
+                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
             </div>
         </div>
     </div>
 </footer>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-4233326-17', 'auto');
+    ga('send', 'pageview');
+    ga("set","anonymizeIp",!0);
 
+</script>
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
 <script src="/js/bootstrap.min.js"></script>
 <!-- Custom Theme JavaScript -->
 <script src="/js/clean-blog.min.js"></script>
-<!-- Custom Theme JavaScript -->
+<!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
 
 </body>

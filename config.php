@@ -1,6 +1,6 @@
 <?php
 
-return [
+$config = [
     'production' => false,
     'site' => [
         "title" => "pascallandau.com",
@@ -12,5 +12,10 @@ return [
         "twitter" => "https://twitter.com/PascalLandau",
         "fb" => "https://www.facebook.com/pascal.landau",
         "github" => "https://github.com/paslandau/",
+        "rss" => "/feed.xml",
     ]
 ];
+
+$config["site"]["url"] = $config["site"]["scheme"].$config["site"]["host"];
+
+return $config;
