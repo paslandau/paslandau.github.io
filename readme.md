@@ -1,0 +1,5 @@
+- Add article in the `source/blog` directory
+- `gulp watch`
+- `http://localhost:3000/`
+- `blog-publish`
+  - copies files from `build_local` to the blogdirectory and pushes them to github
