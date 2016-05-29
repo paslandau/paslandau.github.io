@@ -5,9 +5,24 @@
         <description>Personal website of Pascal Landau</description>
         <link>http://www.pascallandau.com</link>
         <atom:link href="http://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 29 May 2016 12:06:34 +0000</pubDate>
-        <lastBuildDate>Sun, 29 May 2016 12:06:34 +0000</lastBuildDate>
+        <pubDate>Sun, 29 May 2016 12:11:31 +0000</pubDate>
+        <lastBuildDate>Sun, 29 May 2016 12:11:31 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Cool different shizzle</title>
+                <description><![CDATA[&lt;h2&gt;How to qhar?&lt;/h2&gt;
+&lt;p&gt;In this tutorial I&#039;m going to give a detailed explanation into how I ususally set up my PHP development environment in combination with laravel.
+This is actually not goinf to be a huge text but more of a yadadada :P
+In this tutorial I&#039;m going to give a detailed explanation into how I ususally set up my PHP development environment in combination with laravel.
+This is actually not goinf to be a huge text but more of a yadadada :P
+In this tutorial I&#039;m going to give a detailed explanation into how I ususally set up my PHP development environment in combination with laravel.
+This is actually not goinf to be a huge text but more of a yadadada :P
+In this tutorial I&#039;m going to give a detailed explanation into how I ususally set up my PHP development environment in combination with laravel.
+This is actually not goinf to be a huge text but more of a yadadada :P&lt;/p&gt;]]></description>
+                                                    <pubDate>Thu, 26 May 2016 22:43:00 +0000</pubDate>
+                                <link>http://www.pascallandau.com/blog/test/index.html</link>
+                <guid isPermaLink="true">http://www.pascallandau.com/blog/test/index.html</guid>
+            </item>
                     <item>
                 <title>Cool Title</title>
                 <description><![CDATA[&lt;h2&gt;How to qhar?&lt;/h2&gt;
