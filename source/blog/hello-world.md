@@ -18,18 +18,20 @@ Let's get to it, shall we?
 
 ##Contents
 
-
 ##Software overview
 On the software side we're going to use:
 - PHP 7.0.7 with Xdebug 2.4
 - PHPStorm 2016.1.2 + Plugins
+- Git Bash
+- Composer 1.1 
+- Phrase Express (optional)
+
+Part 2
 - Oracle Virtual Box 
 - Vagrant 1.7.4
 - Ruby
-- Git Bash
-- Composer 1.1 
 - Laravel 5.2
-- Phrase Express (optional)
+
 
 ##Setup PHP 7 (for local development)
 I will do almost all of my development in a virtual machine because the final product usually runs on a unix server, but
@@ -118,3 +120,8 @@ Now select Run > Run... and choose the test.php with the small PHP icon in the f
 we did not specify a PHP interpreter yet so PHPStorm doesn't know how to run the file
 
 ...
+
+##Installing XDebug for local development
+##Installing Git and Git bash 
+##Composer
+##Phrase Express
