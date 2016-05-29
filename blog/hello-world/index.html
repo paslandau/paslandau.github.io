@@ -5,9 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="Wow such description!">
+    <meta name="description" content="Step-by-Step tutorial for setting up a new PHPStorm project for a fresh Laravel installation running on Vagrant.">
             <meta name="author" content="Pascal Landau">
-        <title>Cool Title | pascallandau.com</title>
+        <title>How to setup PHPStorm with Vagrant and Laravel [Tutorial] | pascallandau.com</title>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
@@ -67,15 +67,14 @@
 <!-- Page Header -->
 <!-- Set your background image for this header on the line below. -->
 <header class="intro-header" style="background: #000
-                    url('/img/post-bg.jpg');
                 ">
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>Such h1</h1>
-                                            <h2 class="subheading">Cool Subline</h2>
-                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-05-16</span>
+                    <h1>Setting up PHPStorm with Vagrant and Laravel</h1>
+                                            <h2 class="subheading">... on a Windows machine. Guide should still be useful for Linux/Mac users ;)</h2>
+                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-05-29 16:38:13</span>
                                     </div>
             </div>
         </div>
@@ -86,14 +85,105 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <h2>How to qhar?</h2>
-<p>In this tutorial I'm going to give a detailed explanation into how I ususally set up my PHP development environment in combination with laravel.
-This is actually not goinf to be a huge text but more of a yadadada :P</p>
-<p>Browsersync not working or what=</p>
-<p>Can i see the changes?</p>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/4xsNzanYUlY" frameborder="0" allowfullscreen></iframe>
-<p>wow.. tha is.. cool :)
-a</p>
+                <p>In this tutorial I'll show my typical procedure when setting up an new development environment on a fresh Windows 10 laptop.
+It's not like I do this every day (as 'typical' might suggest) but when I started my current job, I had to do it
+several times for me (switched my laptop) as well as for some of my co-workers. I'm going to cover this step-by-step
+and will include (hopefully) all necessary information for you to get this setup running as well. </p>
+<p>Let's get to it, shall we?</p>
+<h2>Contents</h2>
+<h2>Software overview</h2>
+<p>On the software side we're going to use:</p>
+<ul>
+<li>PHP 7.0.7 with Xdebug 2.4</li>
+<li>PHPStorm 2016.1.2 + Plugins</li>
+<li>Oracle Virtual Box </li>
+<li>Vagrant 1.7.4</li>
+<li>Ruby</li>
+<li>Git Bash</li>
+<li>Composer 1.1 </li>
+<li>Laravel 5.2</li>
+<li>Phrase Express (optional)</li>
+</ul>
+<h2>Setup PHP 7 (for local development)</h2>
+<p>I will do almost all of my development in a virtual machine because the final product usually runs on a unix server, but
+from time to time I find it helpful to have a local setup available as well.</p>
+<h3>Installation</h3>
+<ul>
+<li>Download the current version of PHP 7 from the <a href="http://windows.php.net/download/">PHP download page for Windows</a>.
+Simply take the version at the top of the right panel which should be the latest NTS (non thread safe) build.
+If you have 64-bit system, choose the <em>VC14 x64 Non Thread Safe</em> variant.
+Click on the link labeled &quot;zip&quot; to start the download. </li>
+<li>create a new folder named <code>php7</code> in your Program Files directory (e.g. <code>C:\Program Files</code>) and unzip the downloaded archive there</li>
+<li>double-click the file &quot;php.exe&quot; to confirm no error message shows up. You might encounter the error
+<em>Unable to start the program as VCRUNTIME140.dll is missing on your computer. Try reinstalling the program to fix this problem.</em>
+It can be fixed by downloading and installing the corresponding file from <a href="https://www.microsoft.com/en-us/download/details.aspx?id=48145">here</a>.
+Please make sure you pick the architecture (x64/x86) that matches the previously downloaded PHP7 version!</li>
+</ul>
+<p>We're almost done, but we should modify the <code>PATH</code> variable in order to make PHP globally available (and thus usable by
+other tools like composer).</p>
+<h3>The <code>PATH</code> variable</h3>
+<p>Simply put, the <code>PATH</code> variable defines where Windows looks for executable files when the specified file is not found
+in the current directory. So lets say you would like to know the current PHP version on your system, then
+<a href="http://stackoverflow.com/a/15517857/413531">stackoverflow</a> will tell you something along the lines of</p>
+<pre><code>C:\&gt;php -v</code></pre>
+<p>But you will probably get this</p>
+<blockquote>
+<p>php: command not found</p>
+</blockquote>
+<p>or this</p>
+<blockquote>
+<p>'php' is not recognized as an internal or external command,
+operable program or batch file.</p>
+</blockquote>
+<p>That command would only work if our current working directory (the location from where we executed the <code>php -v</code> command) would
+contain the correct php.exe file. In other words: Calling the command is not location-agnostic yet. To make it, though,
+we need to modify the <code>PATH</code> environment variable and make it aware of the location PHP is installed at.</p>
+<p>To do so, we need to modify the System Properties... and might as well learn some nifty shortcuts to get there along the way :)</p>
+<ul>
+<li>open the &quot;run&quot; window by pressing WIN + R</li>
+<li>type &quot;SystemPropertiesAdvanced&quot; and hit Enter</li>
+<li>click on &quot;Environment Variables...&quot; at the bottom of the window</li>
+<li>select the <code>PATH</code> entry in the list of system variables (lower half) and click &quot;Edit...&quot;</li>
+<li>hit the &quot;New&quot; button and enter the full path to the directory that should be used to look up commands/programs</li>
+<li>confirm with &quot;OK&quot;</li>
+<li>open a new shell by hitting WIN + R, type &quot;cmd&quot; and confirm with Enter
+<ul>
+<li>any existing shell will <em>not</em> be aware of the changes in the environment variables!</li>
+</ul></li>
+<li>running <code>php -v</code> again should now yield something like this:
+<pre><code>C:\&gt;php -v
+PHP 7.0.7 (cli) (built: May 25 2016 13:08:31) ( NTS )
+Copyright (c) 1997-2016 The PHP Group
+Zend Engine v3.0.0, Copyright (c) 1998-2016 Zend Technologies</code></pre></li>
+</ul>
+<h2>Setup PHPStorm (for local development)</h2>
+<h3>Installation</h3>
+<ul>
+<li>Download the current version of PHPStorm from the <a href="https://www.jetbrains.com/phpstorm/download/">PHPStorm download page</a>
+<ul>
+<li>Yes, it's paid but so far the best IDE I've come across + you get a 30 day free trial ;)</li>
+</ul></li>
+<li>Double-click the downloaded file (probably something like PhpStorm-2016.1.2.exe) and follow the instructions.
+Nothing fancy there.</li>
+<li>After the installation finished, run PhpStorm. You should be greeted with the question for importing previous settings.
+We'll go with the &quot;I do not have a previous version of PhpStorm or I do not want to import my settings&quot; option as we
+can always do that later.</li>
+<li>After accepting the Privacy Policy you'll be prompted for the license activation. Unless you have a valid license,
+go with the &quot;Evaluation for free for 30 days&quot; option and accept the license agreement afterwards.</li>
+<li>PhpStorm will now start and ask you for the Inital Configuration - that is Keymap scheme, IDE theme and colors/fonts.
+Unless you have anything to change a that point, go with the defaults and hit OK.</li>
+<li>In the following New Project screen choose &quot;PHP Empty Project&quot; in the left hand list and hit &quot;Create&quot;</li>
+</ul>
+<p>That'll conclude the installation :)</p>
+<h3>Setup for local PHP development</h3>
+<p>First, let's create a new PHP file by right-clicking on the project folder and choosing New &gt; PHP File named <code>test.php</code>
+with the following content:</p>
+<pre><code>&lt;?php
+$i = 1;
+echo $i."\n";</code></pre>
+<p>Now select Run &gt; Run... and choose the test.php with the small PHP icon in the front. A new window should appear because
+we did not specify a PHP interpreter yet so PHPStorm doesn't know how to run the file</p>
+<p>...</p>
             </div>
         </div>
     </div>
@@ -131,13 +221,30 @@ a</p>
                                 </span>
                         </a>
                     </li>
+                    <li>
+                        <a href="/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
                 </ul>
-                <p class="copyright text-muted">&copy; www.pascallandau.com 2016</p>
+                <p class="copyright text-muted">&copy; <a href="http://www.pascallandau.com">www.pascallandau.com</a> 2016                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
             </div>
         </div>
     </div>
 </footer>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-4233326-17', 'auto');
+    ga('send', 'pageview');
+    ga("set","anonymizeIp",!0);
 
+</script>
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
