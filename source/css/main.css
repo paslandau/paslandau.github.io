@@ -1,2 +1,10 @@
+img {
+    display:block;
+    margin: 0.5em auto 1em auto;
+    height: auto;
+    max-width: 100%;
+}
 
-/*# sourceMappingURL=main.css.map */
+table {
+    width: 100%;
+}
