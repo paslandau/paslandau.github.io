@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>http://www.pascallandau.com</link>
         <atom:link href="http://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 30 May 2016 23:12:25 +0000</pubDate>
-        <lastBuildDate>Mon, 30 May 2016 23:12:25 +0000</lastBuildDate>
+        <pubDate>Sun, 05 Jun 2016 17:19:50 +0000</pubDate>
+        <lastBuildDate>Sun, 05 Jun 2016 17:19:50 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup PHP7 with Xdebug 2.4 for PhpStorm [Tutorial]</title>
@@ -329,8 +329,8 @@ to either write them out in full length or to look them up. Here's my short list
 </tr>
 </tbody>
 </table>]]></description>
-                                                <link>http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-php-storm-on-windows-10/index.html</link>
-                <guid isPermaLink="true">http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-php-storm-on-windows-10/index.html</guid>
+                                                <link>http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-php-storm-on-windows-10/</link>
+                <guid isPermaLink="true">http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-php-storm-on-windows-10/</guid>
             </item>
             </channel>
 </rss>
