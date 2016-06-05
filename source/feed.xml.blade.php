@@ -33,8 +33,8 @@ $url = $site["url"];
                 @if($date)
                     <pubDate>{{ $date->format(DATE_RSS) }}</pubDate>
                 @endif
-                <link>{{$url}}/{{ $lesson['target-path'] }}</link>
-                <guid isPermaLink="true">{{$url}}/{{ $lesson['target-path'] }}</guid>
+                <link>{{$url}}/{{ $lesson['url-path'] }}</link>
+                <guid isPermaLink="true">{{$url}}/{{ $lesson['url-path'] }}</guid>
             </item>
         @endforeach
     </channel>

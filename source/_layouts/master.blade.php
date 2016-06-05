@@ -1,7 +1,10 @@
 <?php
 /**
- *  @var TightenCo\Jigsaw\Jigsaw $jigsaw
+ * @var TightenCo\Jigsaw\Jigsaw $jigsaw
+ * @var array $currentMeta
  */
+$url = $site["url"];
+$canonical = $url."/".$currentMeta["url-path"];
 $vars = [
         "title",
         "description",
@@ -35,6 +38,7 @@ foreach ($vars as $var) {
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
+    <link rel="alternate" type="canonical" href="{{$canonical}}" />
     <link rel="alternate" type="application/rss+xml" title="{{$site["title"]}}" href="{{$site["url"]}}{{$jigsaw->getMeta()["feed.xml.blade.php"]["target-path"]}}" />
 
     <!-- Custom Fonts -->

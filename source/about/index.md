@@ -6,6 +6,7 @@ subheading: "An entire page about moi \\o/"
 h1: "About me"
 author: "Pascal Landau"
 description: "About Pascal Landau"
+slug: "about"
 ---
 
 I'm a 28 year old tech enthusiast who currently works as a tech lead at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/).

@@ -7,6 +7,7 @@ $title = "Blog";
 $h1 = "Blog";
 $subheading = "Coding, PHP, Laravel";
 $description = "The most recent articles in this blog";
+$slug = "blog";
 
 $posts = collect($jigsaw->getMeta())
         ->filter(function ($item, $path) {
@@ -20,7 +21,7 @@ $posts = collect($jigsaw->getMeta())
 
 @section('content')
     @foreach($posts as $post)
-        <h2><a href="/{{$post['target-path']}}">{{$post['title']}}</a></h2>
+        <h2><a href="/{{$post['url-path']}}">{{$post['title']}}</a></h2>
         <small>Published at {{$post['published_at']}} by {{$post['author']}} </small>
         <p>{{$post['description']}}</p>
     @endforeach
