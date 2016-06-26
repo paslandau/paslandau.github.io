@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>http://www.pascallandau.com</link>
         <atom:link href="http://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 26 Jun 2016 22:25:44 +0000</pubDate>
-        <lastBuildDate>Sun, 26 Jun 2016 22:25:44 +0000</lastBuildDate>
+        <pubDate>Sun, 26 Jun 2016 22:35:40 +0000</pubDate>
+        <lastBuildDate>Sun, 26 Jun 2016 22:35:40 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial]</title>
