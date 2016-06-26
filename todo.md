@@ -1,5 +1,5 @@
-[] add VG Wort Pixel
 [] add social buttons?
+[x] add VG Wort Pixel
 [x] add comments (Disqus?)
 [x] add canonical urls
 [x] add RSS reference meta tag 
