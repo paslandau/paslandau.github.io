@@ -167,6 +167,9 @@ foreach ($vars as $var) {
         </div>
     </div>
 </footer>
+@if(isset($vgwort))
+    <img src="http://vg02.met.vgwort.de/na/{{$vgwort}}" width="1" height="1" alt="" style="display:none" />
+@endif
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
                 (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
