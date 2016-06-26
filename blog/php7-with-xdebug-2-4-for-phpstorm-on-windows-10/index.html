@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Step-by-Step tutorial for setting up PHP7 with Xdebug 2.4 for PhpStorm on Windows 10">
+            <meta name="author" content="Pascal Landau">
+        <title>How to setup PHP7 with Xdebug 2.4 for PhpStorm [Tutorial] | pascallandau.com</title>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- RSS Feed -->
+    <link rel="alternate" type="canonical" href="http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/" />
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="http://www.pascallandau.com/feed.xml" />
+
+    <!-- Custom Fonts -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+                            
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+                ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Setting up PHP7 with Xdebug 2.4 for PhpStorm</h1>
+                                            <h2 class="subheading">... on a Windows 10 machine. With composer. Plus Phrase Express.</h2>
+                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-05-31 01:11:52</span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In this tutorial I'll show my typical procedure when setting up a new development environment on a fresh Windows 10 laptop.
+It's not like I do this every day (as 'typical' might suggest) but when I started my current job, I had to do it
+several times for me (switched my laptop) as well as for some of my co-workers. I'm going to cover this step-by-step
+and will include (hopefully) all necessary information for you to get this setup running as well.</p>
+<p>This is the first part of a two-part tutorial, focusing on the development on Windows. In the second part I will
+explain how to make the shift to using a virtual machine.</p>
+<p>Let's get to it, shall we?</p>
+<h2>Setup PHP 7 (for local development)</h2>
+<p>I do almost all of my development in a virtual machine because the final product usually runs on a unix server, but
+from time to time I find it helpful to have a local setup available as well.</p>
+<h3>Installation</h3>
+<ul>
+<li>Download the current version of PHP 7 from the <a href="http://windows.php.net/download/">PHP download page for Windows</a>.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/download-php.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/download-php.PNG" alt="Download PHP 7" title="Download PHP 7" /></a>
+Simply take the version at the top of the right panel which should be the latest NTS (non thread safe) build.
+If you have 64-bit system, choose the <em>VC14 x64 Non Thread Safe</em> variant.
+Click on the link labeled &quot;zip&quot; to start the download. </li>
+<li>create a new folder named <code>php7</code> in your Program Files directory (e.g. <code>C:\Program Files</code>) and unzip the downloaded archive there
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/install-php.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/install-php.PNG" alt="Install PHP 7" title="Install PHP 7" /></a></li>
+<li>double-click the file &quot;php.exe&quot; to confirm no error message shows up. You might encounter the error
+<em>Unable to start the program as VCRUNTIME140.dll is missing on your computer. Try reinstalling the program to fix this problem.</em>
+It can be fixed by downloading and installing the corresponding file from <a href="https://www.microsoft.com/en-us/download/details.aspx?id=48145">here</a>
+(found at <a href="http://stackoverflow.com/a/30826746">stackoverflow</a>)
+Please make sure you pick the architecture (x64/x86) that matches the previously downloaded PHP7 version!</li>
+</ul>
+<p>We're almost done, but we should modify the <code>PATH</code> variable in order to make PHP globally available.</p>
+<h3>The <code>PATH</code> variable</h3>
+<p>Simply put, the <code>PATH</code> variable defines where Windows looks for executable files when the specified file is not found
+in the current directory. So lets say you would like to know the current PHP version on your system, then
+<a href="http://stackoverflow.com/a/15517857/413531">stackoverflow</a> will tell you something along the lines of</p>
+<pre><code>C:\&gt;php -v</code></pre>
+<p>But you will probably get this</p>
+<blockquote>
+<p>php: command not found</p>
+</blockquote>
+<p>or this</p>
+<blockquote>
+<p>'php' is not recognized as an internal or external command,
+operable program or batch file.</p>
+</blockquote>
+<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/php-command-not-found.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/php-command-not-found.PNG" alt="php command not found" title="php command not found" /></a></p>
+<p>That command would only work if our current working directory (the location from where we executed the <code>php -v</code> command) would
+contain the correct php.exe file. In other words: Calling the command is not location-agnostic yet. To make it, though,
+we need to modify the <code>PATH</code> environment variable and make it aware of the location PHP is installed at.</p>
+<p>To do so, we need to modify the System Properties... and might as well learn some nifty shortcuts to get there along the way :)</p>
+<ul>
+<li>open the &quot;run&quot; window by pressing <code>WIN + R</code></li>
+<li>type <code>SystemPropertiesAdvanced</code> and hit Enter</li>
+<li>click on &quot;Environment Variables...&quot; at the bottom of the window
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/SystemPropertiesAdvanced.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/SystemPropertiesAdvanced.PNG" alt="SystemPropertiesAdvanced" title="SystemPropertiesAdvanced" /></a></li>
+<li>select the <code>PATH</code> entry in the list of system variables (lower half) and click &quot;Edit...&quot;
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/environment-variables.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/environment-variables.PNG" alt="Environment variables" title="Environment variables" /></a></li>
+<li>hit the &quot;New&quot; button and enter the full path to the directory that should be used to look up commands/programs.
+So in the case of PHP that's the directory containing the php.exe file.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/new-environment-variable.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/new-environment-variable.PNG" alt="New environment variable" title="New environment variable" /></a></li>
+<li>confirm with &quot;OK&quot;</li>
+<li>open a new shell by hitting <code>WIN + R</code>, type <code>cmd</code> and confirm with Enter
+<ul>
+<li><em>Caution:</em> Any existing shell will <em>not</em> be aware of the changes in the environment variables so you need to restart a new one!</li>
+</ul></li>
+<li>running <code>php -v</code> again should now yield something like this:
+<pre><code>C:\&gt;php -v
+PHP 7.0.7 (cli) (built: May 25 2016 13:08:31) ( NTS )
+Copyright (c) 1997-2016 The PHP Group
+Zend Engine v3.0.0, Copyright (c) 1998-2016 Zend Technologies</code></pre></li>
+</ul>
+<p>Cool, now on to the IDE.</p>
+<h2>Setup PhpStorm (for local development)</h2>
+<h3>Installation</h3>
+<ul>
+<li>Download the current version of PhpStorm from the <a href="https://www.jetbrains.com/phpstorm/download/">PhpStorm download page</a>
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/download.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/download.PNG" alt="Download PhpStorm" title="Download PhpStorm" /></a>
+<ul>
+<li>Yes, it's paid but so far the best IDE I've come across + you get a 30 day free trial ;)</li>
+</ul></li>
+<li>Double-click the downloaded file (probably something like PhpStorm-2016.1.2.exe) and follow the instructions.
+Nothing fancy there.</li>
+<li>After the installation finished, run PhpStorm. You should be greeted with the question for importing previous settings.
+We'll go with the &quot;I do not have a previous version of PhpStorm or I do not want to import my settings&quot; option as we
+can always do that later.</li>
+<li>After accepting the Privacy Policy you'll be prompted for the license activation. Unless you have a valid license,
+go with the &quot;Evaluation for free for 30 days&quot; option and accept the license agreement afterwards.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/evaluate.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/evaluate.PNG" alt="PhpStorm license" title="PhpStorm license" /></a></li>
+<li>PhpStorm will now start and ask you for the Initial Configuration - that is Keymap scheme, IDE theme and colors/fonts.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/initial-configuration.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/initial-configuration.PNG" alt="Initial configuration" title="Initial configuration" /></a>
+Unless you have anything to change a that point, go with the defaults and hit OK.</li>
+<li>In the following New Project screen choose &quot;PHP Empty Project&quot; in the left hand list and hit &quot;Create&quot;</li>
+</ul>
+<p>That'll conclude the installation :)</p>
+<h3>Setup for local PHP development</h3>
+<p>First, let's create a new PHP file by right-clicking on the project folder and choosing <code>New &gt; PHP File</code>.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/new-file.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/new-file.PNG" alt="Create new PHP file" title="Create new PHP file" /></a></p>
+<p>Name the file <code>test.php</code> and give it the following content:</p>
+<pre><code>&lt;?php
+$i = 1;
+echo $i."\n";</code></pre>
+<p>Now select <code>Run &gt; Run...</code> and choose the test.php with the small PHP icon in the front.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run.PNG" alt="Run PHP file" title="Run PHP file" /></a></p>
+<p>A new window should appear because we did not specify a PHP interpreter yet so PhpStorm doesn't know how to run the file.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/no-interpreter.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/no-interpreter.PNG" alt="Interpreter error" title="Interpreter error" /></a></p>
+<p>A click on the &quot;Fix&quot; button with the red exclamation mark will open up the PHP interpreter settings. You can get to the
+same screen via <code>File &gt; Settings... &gt; Languages &amp; Frameworks &gt; PHP</code>. First, choose <em>7 (return types,
+scalar type hints, etc.)</em> as PHP language level so that scalar type hints won't get marked as an error, for instance.
+Second, hit the <code>...</code> button to specify an new (local) PHP interpreter and click on the green &quot;+&quot; icon on the top left.
+Since we installed PHP 7 before, PhpStorm should automatically provide that as an option. Otherwise choose &quot;Other Local...&quot;
+and select the php.exe file from the install location of PHP on your system.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/select-interpreter.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/select-interpreter.PNG" alt="Select interpreter" title="Select interpreter" /></a></p>
+<p>A little warning sign should appear, stating that the</p>
+<blockquote>
+<p>Configuration php.ini file does not exist</p>
+</blockquote>
+<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/php-no-ini.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/php-no-ini.PNG" alt="No php.ini warning" title="No php.ini warning" /></a></p>
+<p>Clicking on the &quot;How To Fix&quot; help link reveals, that PHP expects a file called php.ini in either its installation directory
+or at C:\Windows. But we'll come to that in a moment. For now, we can just confirm all dialogs with &quot;OK&quot; and should now
+be able to run the PHP file - either by right-click + selecting &quot;Run&quot; or (by default) hitting <code>Shift + F10</code>.
+The console window of PhpStorm should open at the bottom and show something like this</p>
+<pre><code>"C:\Program Files\php7\php.exe" C:\Users\IEUser\PhpstormProjects\untitled\test.php
+1
+
+Process finished with exit code 0</code></pre>
+<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run-output.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run-output.PNG" alt="Run output" title="Run output" /></a></p>
+<p>Splendid, PhpStorm is now up and running with PHP7 :)</p>
+<h2>Installing Xdebug for local development</h2>
+<p>Debugging is an invaluable asset during development as it lets you walk step-by-step through the source code, showing
+exactly what is happening. <code>var_dump()</code> on freakin' steroids! Choose <code>Run &gt; Debug 'test.php'</code> (or hit <code>Shift + F9</code>) -
+and be greeted by a little error message at the bottom that goes like this:</p>
+<blockquote>
+<p>Connection was no established: debug extension is not installed. </p>
+</blockquote>
+<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-extension-not-installed.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-extension-not-installed.PNG" alt="Debug extension not installed" title="Debug extension not installed" /></a></p>
+<p>Unfortunately, the  help link &quot;Update interpreter info&quot; is not really useful at that point... So what's actually going on?
+In order enable debugging, we need to install the Xdebug extension. To do so, go to the
+<a href="https://xdebug.org/download.php">Xdebug download page</a> and download the appropriate installer for your PHP version...
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-versions.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-versions.PNG" alt="Download Xdebug" title="Download Xdebug" /></a></p>
+<p>Just kidding, of course I'm going to explain how to find the right one ;) Actually it's pretty straight forward:
+We installed PHP 7 NTS, probably in the 64 bit version, so the link &quot;PHP 7.0 VC14 (64bit)&quot; should be the correct one.
+But since I tend forget the exact version I installed, I would like to point to
+<a href="https://xdebug.org/wizard.php">Xdebug's fantastic installation wizard</a> which simply requires us to print, copy and
+paste some information of our PHP installation. And here's how we gonna do that:</p>
+<ul>
+<li>click on the test.php file in the left pane of your PhpStorm window and select &quot;Show in Explorer&quot;
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/show-in-explorer.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/show-in-explorer.PNG" alt="Show in Explorer" title="Show in Explorer" /></a>
+<ul>
+<li>a new window opens up at the location of the file</li>
+</ul></li>
+<li>press (and hold) Shift while right-clicking on an empty space within the opened folder. A new option
+called &quot;Open command window here&quot; shows up. Click on it.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/open-command-window-here.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/open-command-window-here.PNG" alt="Open CMD at path" title="Open CMD at path" /></a>
+<ul>
+<li>a new shell opens at the location of the folder (I know.. neat, right?)</li>
+</ul></li>
+<li>type <code>php -i</code>... and be overwhelmed by too much output. Since we need to copy and paste the output,
+echoing on the command line is somewhat cumbersome.</li>
+<li>type <code>php -i &gt; phpinfo.txt</code> instead to redirect the output to the file <code>phpinfo.txt</code> (that will be created at
+the location of the shell which conveniently is also the location of our PhpStorm project).
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/phpinfo-output.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/phpinfo-output.PNG" alt="Capture php -i output" title="Capture php -i output" /></a>
+If the file doesn't show up in PhpStorm after some seconds you can right-click
+on the parent folder and select &quot;Synchronize [foldername]` ([foldername] is &quot;untitled&quot; in my example) to make
+PhpStorm aware of changes in the filesystem.</li>
+<li>open <code>phpinfo.txt</code>, hit <code>CTRL + A</code> to select everything and <code>CTRL + C</code> to copy. </li>
+<li>hurry back to the Xdebug installation wizard, paste everything in the textarea and click the &quot;Analyse my phpinfo() output&quot; button.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard.PNG" alt="Xdebug wizard" title="Xdebug wizard" /></a>
+The wizard will provide you with exact installation instructions for your system. For me, it looks like this:
+<ol>
+<li>Download <a href="http://xdebug.org/files/php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll">php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll</a></li>
+<li>Move the downloaded file to <code>C:\php\ext</code></li>
+<li>Create php.ini in the same folder as where php.exe is and add the line
+<code>zend_extension = C:\php\ext\php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll</code></li>
+</ol></li>
+</ul>
+<p>You <em>could</em> follow those instructions directly, but I would recommend to change the directory of the extension. <code>C:\php\ext</code> is
+the default directory for PHP to look for extensions if not specified otherwise in <em>drumroll</em>  the <code>php.ini</code> - that we
+shall create now. To do so, open you PHP installation directory (just as a reminder: mine was at <code>C:\Program Files\php7</code>), look for the file
+<code>php.ini-development</code> copy and rename it to <code>php.ini</code> and open that file. Search for &quot;extension_dir&quot; which should lead
+you to a passage that looks like this:</p>
+<pre><code>; Directory in which the loadable extensions (modules) reside.
+; http://php.net/extension-dir
+; extension_dir = "./"
+; On windows:
+; extension_dir = "ext"</code></pre>
+<p>Remove the leading  &quot;;&quot; in front of the &quot;extension_dir&quot; directive and set the path to the &quot;ext&quot; folder in your PHP installation
+directory as value. For me, the line now looks like this:</p>
+<pre><code>extension_dir = "C:\Program Files\php7\ext"</code></pre>
+<p><em>Hint:</em> If you don't find any &quot;extension_dir&quot; string in your original php.ini file just add it at the end of the file.
+Also, don't forget to save the file.</p>
+<p>When re-running the <code>php -i &gt; phpinfo.txt</code> step including the Xdebug wizard, the instructions now look like this:
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard-result.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard-result.PNG" alt="Xdebug wizard installation instructions" title="Xdebug wizard installation instructions" /></a></p>
+<ol>
+<li>Download <a href="http://xdebug.org/files/php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll">php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll</a></li>
+<li>Move the downloaded file to &quot;C:\Program Files\php7\ext&quot;</li>
+<li>Edit C:\Program Files\php7\php.ini and add the line
+<code>zend_extension = "C:\Program Files\php7\ext\php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll"</code></li>
+</ol>
+<p>You can add the &quot;zend_extension&quot; line simply at the end of the php.ini.</p>
+<p>Now we should be good to go - or better to debug. Open up the test.php file in PhpStorm and click on the
+little green bug icon on the top right to run the file in debug mode.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-mode.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-mode.PNG" alt="Run in debug mode" title="Run in debug mode" /></a></p>
+<p>The console window pops up again and yields something like this:</p>
+<pre><code>"C:\Program Files\php7\php.exe" -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=127.0.0.1 C:\Users\IEUser\PhpstormProjects\untitled\test.php
+1
+
+Process finished with exit code 0</code></pre>
+<p>Please note the <code>-dxdebug</code> parameters following the php.exe call. To actually <em>use</em> the debugger, set a breakpoint in the
+second line of the script (that says <code>$i = 1;</code>) by left-clicking on the little margin on the left of said line (you can
+unset the breakpoint by simply clicking on it again).
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/set-breakpoint.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/set-breakpoint.PNG" alt="Set breakpoint" title="Set breakpoint" /></a></p>
+<p>Running the script now (again in debug mode) will stop the execution at that position.</p>
+<p>Phew. Glad we got that thing working :)</p>
+<h2>Setup Composer</h2>
+<p>Next in line: PHP's beloved dependency manager Composer. I deeply believe that there's hardly a way around
+this wonderful tool when it comes to modern PHP development. </p>
+<h3>Installation</h3>
+<ul>
+<li>download the current Windows installer from the <a href="https://getcomposer.org/download/">Composer download page</a>
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/download-installer.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/download-installer.PNG" alt="Download Composer installer" title="Download Composer installer" /></a></li>
+<li>double-click the file to start the installation</li>
+<li>choose the PHP version you want composer to use. The installation wizard should already show you
+the installed PHP 7 php.exe file.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/choose-php-version.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/choose-php-version.PNG" alt="Choose PHP version" title="Choose PHP version" /></a></li>
+<li>next, you might get a security warning because the open-ssl extension is not activated and
+composer can't connect via https to download some some necessary files.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-warning.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-warning.PNG" alt="Openssl warning" title="Openssl warning" /></a></li>
+</ul>
+<p>So let's quickly take care of this before we continue. (We could also ignore this requirement by checking
+the checkbox but I'll take this opportunity to show you how extensions are enabled for PHP).</p>
+<h4>Enabling the openssl PHP extension</h4>
+<p>Open up the php.ini file in your PHP installation directory and search for &quot;php_openssl&quot;. You should now see
+a line like this:</p>
+<pre><code>;extension=php_openssl.dll</code></pre>
+<p>The <code>php_openssl.dll</code> file should already come pre-installed in the &quot;ext&quot; directory within your PHP installation
+directory. (It's starting to make sense that we adjusted the &quot;extension_dir&quot;, doesn't id ;)). So you can simply
+remove the &quot;;&quot; in front of this line. To verify that the extension is actually loaded, open up a shell and type
+<code>php -m</code> to list all enabled modules. The list should contain an item that says <code>openssl</code>.
+<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-module.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-module.PNG" alt="Show PHP modules" title="Show PHP modules" /></a></p>
+<p>Cool. Now that that's working we shall continue with the installation process. Try hitting the &quot;&lt; Back&quot; button
+once to get back to the PHP executable selection. Upon clicking &quot;Next &gt;&quot;, the openssl warning should be gone.
+If not, cancel and restart the setup. You can ignore the Proxy Settings dialog and just hit &quot;Next &gt;&quot; and &quot;Install&quot;.
+Since we installed Xdebug before, Composer will show a warning that this slows down Composer but that's nothing
+to worry about. Just keep hitting &quot;Next &gt;&quot; and &quot;Finish&quot;. Composer will add itself automatically to your <code>PATH</code>
+environment variable so you can call it globally. As mentioned before, this will only affect freshly opened shells,
+so let's do a quick <code>WIN + R</code> and a <code>cmd</code>.</p>
+<p>Type <code>composer -V</code> to print the Composer version, which should generate something along the lines of </p>
+<pre><code>C:\Users\IEUser&gt;composer -V
+You are running composer with xdebug enabled. This has a major impact on runtime performance. See https://getcomposer.org/xdebug
+Composer version 1.1.1 2016-05-17 12:25:44</code></pre>
+<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/composer-version.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/composer-version.PNG" alt="Show Composer version" title="Show composer version" /></a></p>
+<p>Aaaand we're done.</p>
+<h2>Phrase Express</h2>
+<p>This is more of bonus since it's a somewhat opinionated software but I've grown very fond of it over the last
+couple of years. Phrase Express is a clipboard manager / text expander for Windows. You can download the
+tool for free at the <a href="http://www.phraseexpress.com/download.php">Phrase Express download page</a> (Download Client).</p>
+<p>There's actually not much to tell about the installation process so I'm just gonna outline my major use cases.</p>
+<h3>Clipboard cache</h3>
+<p>This one is a biggie: Phrase Express saves everything you copy to the clipboard in a cache that can be accessed
+via <code>CRTL + ALT + V</code> (by default). I cannot emphasize how incredible handy that is.</p>
+<h3>Text expansion</h3>
+<p>There's a couple of things I have to type frequently (or at least from time to time) and it's just cumbersome
+to either write them out in full length or to look them up. Here's my short list to give you an idea:</p>
+<table>
+<thead>
+<tr>
+<th>auto text</th>
+<th></th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mee</td>
+<td></td>
+<td><em>my email address</em></td>
+</tr>
+<tr>
+<td>myssh</td>
+<td></td>
+<td><em>my public ssh key</em></td>
+</tr>
+<tr>
+<td>mytax</td>
+<td></td>
+<td><em>my tax id</em></td>
+</tr>
+<tr>
+<td>myserver</td>
+<td></td>
+<td><em>ip address of my server</em></td>
+</tr>
+<tr>
+<td>ts</td>
+<td></td>
+<td><em>the current timestamp in Y-m-d format</em></td>
+</tr>
+<tr>
+<td>tsf</td>
+<td></td>
+<td><em>the current timestamp in Y-m-d H:i:s format</em></td>
+</tr>
+<tr>
+<td>*shrug</td>
+<td></td>
+<td>¯\_(ツ)_/¯</td>
+</tr>
+<tr>
+<td>*party</td>
+<td></td>
+<td>(ツ)_\m/</td>
+</tr>
+<tr>
+<td>cmark</td>
+<td></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>killphp</td>
+<td></td>
+<td><code>ps aux | grep php | awk '{print $2}' | sudo xargs kill</code></td>
+</tr>
+</tbody>
+</table>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/";
+                                                     this.page.identifier = "php7-windows10";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.facebook.com/pascal.landau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="http://www.pascallandau.com">www.pascallandau.com</a> 2016                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="http://vg02.met.vgwort.de/na/9ae74a6a0da44be884cbd6ea2d95965a" width="1" height="1" alt="" style="display:none" />
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-4233326-17', 'auto');
+    ga('send', 'pageview');
+    ga("set","anonymizeIp",!0);
+
+</script>
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+
+</body>
+
+</html>
