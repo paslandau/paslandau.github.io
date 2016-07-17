@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Step-by-Step tutorial for setting up a fresh Laravel installation running on a Homestead Vagrant box.">
+            <meta name="author" content="Pascal Landau">
+        <title>How to setup Laravel with PhpUnit on Vagrant in PhpStorm [Tutorial] | pascallandau.com</title>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- RSS Feed -->
+    <link rel="alternate" type="canonical" href="http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/" />
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="http://www.pascallandau.com/feed.xml" />
+
+    <!-- Custom Fonts -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+                            
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+                ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Setting up Laravel with PhpUnit on Vagrant in PhpStorm</h1>
+                                            <h2 class="subheading">... on a Windows 10 machine. With some workflow tips.</h2>
+                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-05-31 01:11:52</span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In this third part we will set up a fresh Laravel installation and configure everything to run it on Vagrant, triggered by PhpStorm.
+That includes:</p>
+<ul>
+<li>install Laravel and Laravel Homestead</li>
+<li>configure Vagrant through Homestead</li>
+<li>run PhpUnit unit tests via PhpStorm on Vagrant</li>
+<li>enable Laravel-specific configurations in PhpStorm</li>
+</ul>
+<p>And just as a reminder, the first part is over at
+<a href="http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>, the second
+at <a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>.</p>
+<h2>Setting up Laravel</h2>
+<p>Now that we have the basics covered, you should have got a fairly decent understanding how vagrant and PhpStorm play together. But it's still all a little
+hacky and doesn't feel &quot;right&quot;. In this section I'll make up for that by explaining how I set up a completely fresh installation of Laravel (5.2) and configure
+it to run on a homestead vagrant box for a &quot;real world development&quot; scenario. For now let's assume, that we have no vagrant box configured
+(i.e. there is no virtual machine running, yet).</p>
+<h3>Install laravel/laravel</h3>
+<ul>
+<li>create a new PhpStorm project via <code>File &gt; New Project...</code> and name it &quot;LaravelExample&quot;</li>
+<li>open the PhpStorm terminal and run <code>composer create-project laravel/laravel tmp</code>. This will initialize a fresh
+Laravel installation including dependencies. This isn't optimal, since we're doing this from our local machine and not
+from within the vagrant box we're using later on. This might be a problem when the local PHP setup is (vastly) different from
+the one in the vagrant box since the downloaded packages might differ. But on the other hand it's not really a big deal since we
+can just run composer update once the vagrant box is running (from within the box).</li>
+</ul>
+<h3>Install laravel/homestead</h3>
+<ul>
+<li>unfortunately, <a href="https://github.com/composer/composer/issues/1135">composer cannot create a new project in an existing directory</a>, so we
+need to copy the contents of &quot;tmp&quot; afterwards into the parent directory &quot;LaravelExample&quot; and delete the &quot;tmp&quot; directory manually.</li>
+<li>next, make sure the current working directory of the shell is the PhpStorm project folder</li>
+<li>run <code>composer require laravel/homestead --dev</code>. The <a href="https://github.com/laravel/homestead">laravel/homestead</a> package gives a
+more convenient way to deal with the setup of the vagrant homestead box as it enables us to use an easier yaml syntax to
+define the properties we really need.</li>
+<li>run <code>vendor/bin/homestead make</code> (if that fails, run <code>vendor/bin/homestead.bat make</code> instead), which yields:
+<pre><code>$ vendor/bin/homestead make
+Homestead Installed!</code></pre>
+<p>The command also places a <code>Homestead.yaml</code> file as well as a <code>Vagrantfile</code> in the project directory.
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/homestead-make.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/homestead-make.PNG" alt="Project folder after running vendor/bin/homestead make" /></a>
+Technically, that would be all you need to do,
+because everything is configured to work out of the box (e.g. the configuration of shared folders), but I would like to go over some details
+just to make sure it is clear whats going on here.</p></li>
+<li>
+<p>open the <code>Homestead.yaml</code> file which should look similar to this:</p>
+<pre><code>---
+ip: "192.168.10.10"
+memory: 2048
+cpus: 1
+hostname: laravelexample
+name: laravelexample
+provider: virtualbox
+
+authorize: ~/.ssh/id_rsa.pub
+
+keys:
+  - ~/.ssh/id_rsa
+
+folders:
+  - map: "C:/Users/Pascal/PhpstormProjects/LaravelExample"
+    to: "/home/vagrant/laravelexample"
+
+sites:
+  - map: homestead.app
+    to: "/home/vagrant/laravelexample/public"
+
+databases:
+  - homestead</code></pre>
+<p>There are a few things I would like to adjust:</p>
+<ul>
+<li>make sure the <code>ip</code> (<code>192.168.10.10</code> in the example above) is not already used in your local network</li>
+<li>
+<pre><code>folders:
+  - map: "C:/Users/Pascal/PhpstormProjects/LaravelExample"
+    to: "/home/vagrant/laravelexample"</code></pre>
+<ul>
+<li><code>map</code> should point to the absolute path to the repository on your <strong>local</strong> (host) machine.</li>
+<li><code>to</code> denotes the path on your <strong>vagrant</strong> (remote) machine that is mapped to the above mentioned path on your local machine,
+so that you can access your local files within the vagrant box.</li>
+</ul>
+</li>
+<li>
+<pre><code>sites:
+  - map: homestead.app
+    to: "/home/vagrant/laravelexample/public"</code></pre>
+<ul>
+<li><code>map: homestead.app</code> denotes the hostname that the nginx is looking for to serve content on
+you <em>should</em> adjust that entry if you are going to have multiple projects (e.g. to laravelexample.app instead of homestead.app)
+although it not strictly necessary since nginx will respond to other hostnames as well</li>
+<li><code>to: "/home/vagrant/laravelexample/public"</code> denotes the absolute path within the vagrant box that the above mentioned hostname uses as lookup path for content.
+This should be the path to the <code>public</code> folder of the repository on your <strong>vagrant machine</strong></li>
+</ul>
+</li>
+<li>
+<p>if you already have an SSH key pair that is located in the <code>.ssh</code> folder in your home directory, you can leave the following lines in place:</p>
+<pre><code>authorize: ~/.ssh/id_rsa.pub
+
+keys:
+  - ~/.ssh/id_rsa</code></pre>
+<p>Otherwise, you should delete them. They are responsible for a) making it possible to connect
+to the box by using your own ssh key and b) letting vagrant use your private key (which might come in handy
+if you need to open up an SSH tunnel for example - but that's another story ;))</p>
+</li>
+<li>
+<p>finally, to make your life a little easier, add <code>192.168.10.10 laravelexample.app</code> and  <code>192.168.10.10 www.laravelexample.app</code>
+to the <code>host</code> file on your local machine.
+The default location on Windows is <code>C:\Windows\System32\drivers\etc</code>. You will probably need to copy the file
+to another location, edit it there and then copy it again to <code>C:\Windows\System32\drivers\etc</code>. The file should look like this:</p>
+<pre><code># Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+# This file contains the mappings of IP addresses to host names. Each
+# entry should be kept on an individual line. The IP address should
+# be placed in the first column followed by the corresponding host name.
+# The IP address and the host name should be separated by at least one
+# space.
+#
+# Additionally, comments (such as these) may be inserted on individual
+# lines or following the machine name denoted by a '#' symbol.
+#
+# For example:
+#
+#      102.54.94.97     rhino.acme.com          # source server
+#       38.25.63.10     x.acme.com              # x client host
+
+# localhost name resolution is handled within DNS itself.
+# 127.0.0.1       localhost
+# ::1             localhost
+
+192.168.10.10 laravelexample.app
+192.168.10.10 www.laravelexample.app</code></pre>
+<p>This adjustment makes it possible to open a browser on your host machine and point it to <code>laravelexample.app</code>
+or <code>www.laravelexample.app</code> which will serve the content of your laravel installation <em>running within the vagrant box</em>.
+If there are any issues editing the <code>host</code> file, <a href="http://www.howtogeek.com/howto/27350/beginner-geek-how-to-edit-your-hosts-file/">How-to Geek comes to the rescue. Again.</a></p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>Homestead.yaml</code> should now look like this:</p>
+<pre><code>---
+ip: "192.168.10.10"
+memory: 2048
+cpus: 1
+hostname: laravelexample
+name: laravelexample
+provider: virtualbox
+
+folders:
+    - map: "C:/Users/Pascal/PhpstormProjects/LaravelExample"
+      to: "/home/vagrant/laravelexample"
+
+sites:
+    - map: homestead.app
+      to: "/home/vagrant/laravelexample/public"
+
+databases:
+    - homestead</code></pre>
+</li>
+<li>cool, now let's start vagrant via <code>vagrant up</code>.
+<pre><code>$ vagrant up
+Bringing machine 'default' up with 'virtualbox' provider...
+==&gt; default: Importing base box 'laravel/homestead'...
+==&gt; default: Matching MAC address for NAT networking...
+==&gt; default: Checking if box 'laravel/homestead' is up to date...
+==&gt; default: Setting the name of the VM: laravelexample
+==&gt; default: Fixed port collision for 22 =&gt; 2222. Now on port 2200.
+==&gt; default: Clearing any previously set network interfaces...
+==&gt; default: Preparing network interfaces based on configuration...
+  default: Adapter 1: nat
+  default: Adapter 2: hostonly
+==&gt; default: Forwarding ports...
+  default: 80 =&gt; 8000 (adapter 1)
+  default: 443 =&gt; 44300 (adapter 1)
+  default: 3306 =&gt; 33060 (adapter 1)
+  default: 5432 =&gt; 54320 (adapter 1)
+  default: 22 =&gt; 2200 (adapter 1)
+==&gt; default: Running 'pre-boot' VM customizations...
+==&gt; default: Booting VM...
+==&gt; default: Waiting for machine to boot. This may take a few minutes...
+  default: SSH address: 127.0.0.1:2200
+  default: SSH username: vagrant
+  default: SSH auth method: private key
+  default: Warning: Connection timeout. Retrying...
+  default:
+  default: Vagrant insecure key detected. Vagrant will automatically replace
+  default: this with a newly generated keypair for better security.
+  default:
+  default: Inserting generated public key within guest...
+  default: Removing insecure key from the guest if it's present...
+  default: Key inserted! Disconnecting and reconnecting using new SSH key...
+==&gt; default: Machine booted and ready!
+==&gt; default: Checking for guest additions in VM...
+==&gt; default: Setting hostname...
+==&gt; default: Configuring and enabling network interfaces...
+==&gt; default: Mounting shared folders...
+  default: /vagrant =&gt; C:/Users/Pascal/PhpstormProjects/LaravelExample
+  default: /home/vagrant/laravelexample =&gt; C:/Users/Pascal/PhpstormProjects/LaravelExample
+==&gt; default: Running provisioner: shell...
+  default: Running: C:/Users/Pascal/AppData/Local/Temp/vagrant-shell20160627-11412-1e33p4n.sh
+==&gt; default: Running provisioner: shell...
+  default: Running: C:/Users/Pascal/AppData/Local/Temp/vagrant-shell20160627-11412-bun3u6.sh
+==&gt; default: nginx stop/waiting
+==&gt; default: nginx start/running, process 2202
+==&gt; default: php7.0-fpm stop/waiting
+==&gt; default: php7.0-fpm start/running, process 2220
+==&gt; default: Running provisioner: shell...
+  default: Running: C:/Users/Pascal/AppData/Local/Temp/vagrant-shell20160627-11412-8xmse3.sh
+==&gt; default: mysql:
+==&gt; default: [Warning] Using a password on the command line interface can be insecure.
+==&gt; default: Running provisioner: shell...
+  default: Running: C:/Users/Pascal/AppData/Local/Temp/vagrant-shell20160627-11412-ct1lb2.sh
+==&gt; default: createdb: database creation failed: ERROR:  database "homestead" already exists
+==&gt; default: Running provisioner: shell...
+  default: Running: C:/Users/Pascal/AppData/Local/Temp/vagrant-shell20160627-11412-lhjib5.sh
+==&gt; default: Running provisioner: shell...
+  default: Running: inline script
+==&gt; default: You are running composer with xdebug enabled. This has a major impact on runtime performance. See https://getcomposer.org/xdebug
+==&gt; default: Updating to version 1.1.3.
+==&gt; default:     Downloading: Connecting...
+==&gt; default:
+==&gt; default:     Downloading: 100%
+==&gt; default:
+==&gt; default:
+==&gt; default: Use composer self-update --rollback to return to version 1.0.0</code></pre>
+<p>Please note, that this will create a <code>.vagrant</code> folder in the directory of your laravel app.</p></li>
+<li>
+<p>we should now be able to ssh into the virtual machine by using <code>vagrant ssh</code></p>
+<pre><code>$ vagrant ssh
+Welcome to Ubuntu 14.04.4 LTS (GNU/Linux 3.19.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+vagrant@laravelexample:~$</code></pre>
+</li>
+<li>navigate to the application root directory via <code>cd /home/vagrant/laravelexample/</code> which should look like this:
+<pre><code>vagrant@laravelexample:~/laravelexample$ cd /home/vagrant/laravelexample/
+vagrant@laravelexample:~/laravelexample$ ll
+total 157
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 22:04 ./
+drwxr-xr-x 7 vagrant vagrant   4096 Jul 17 13:27 ../
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:40 app/
+-rwxrwxrwx 1 vagrant vagrant   1646 Jun 26 13:40 artisan*
+drwxrwxrwx 1 vagrant vagrant      0 Jun 26 13:40 bootstrap/
+-rwxrwxrwx 1 vagrant vagrant   1309 Jun 26 13:43 composer.json*
+-rwxrwxrwx 1 vagrant vagrant 114898 Jun 26 13:44 composer.lock*
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:40 config/
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:40 database/
+-rwxrwxrwx 1 vagrant vagrant    423 Jun 26 13:40 .env.example*
+-rwxrwxrwx 1 vagrant vagrant     61 Jun 26 13:40 .gitattributes*
+-rwxrwxrwx 1 vagrant vagrant     73 Jun 26 13:40 .gitignore*
+-rwxrwxrwx 1 vagrant vagrant    503 Jun 26 13:40 gulpfile.js*
+-rwxrwxrwx 1 vagrant vagrant    332 Jun 26 22:04 Homestead.yaml*
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:23 .idea/
+-rwxrwxrwx 1 vagrant vagrant    212 Jun 26 13:40 package.json*
+-rwxrwxrwx 1 vagrant vagrant   1026 Jun 26 13:40 phpunit.xml*
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:40 public/
+-rwxrwxrwx 1 vagrant vagrant   1918 Jun 26 13:40 readme.md*
+drwxrwxrwx 1 vagrant vagrant      0 Jun 26 13:40 resources/
+-rwxrwxrwx 1 vagrant vagrant    567 Jun 26 13:40 server.php*
+drwxrwxrwx 1 vagrant vagrant      0 Jun 26 13:40 storage/
+drwxrwxrwx 1 vagrant vagrant      0 Jun 26 13:40 tests/
+drwxrwxrwx 1 vagrant vagrant      0 Jun 26 21:56 .vagrant/
+-rwxrwxrwx 1 vagrant vagrant    900 Jun 26 13:51 Vagrantfile*
+drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:46 vendor/</code></pre></li>
+</ul>
+<p>Before we move on, let's follow the remaining <a href="https://laravel.com/docs/5.2">installation instructions in the laravel docs</a>, that is:</p>
+<ul>
+<li>create a <code>.env</code> file via <code>cp .env.example .env</code>
+<pre><code>vagrant@laravelexample:~/laravelexample$ cp .env.example .env</code></pre></li>
+<li>generate an application key via <code>php artisan key:generate</code>
+<pre><code>vagrant@laravelexample:~/laravelexample$ php artisan key:generate
+Application key [base64:OhVwfzcFp40LaboJyCQAGS1briBwhYDupgvWJD/YYFE=] set successfully.</code></pre></li>
+</ul>
+<p>If we did everything right, we should now be able to open a browser and point it to <a href="http://laravelexample.app">http://laravelexample.app</a> and see the
+Laravel welcome screen:
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/laravel-welcome-screen.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/laravel-welcome-screen.PNG" alt="Laravel welcome screen" /></a></p>
+<p>Let's take a step back and think about what we did and what it means:
+So we basically set up a new Laravel installation (code-wise) and configured a vagrant homestead box via Laravel Homestead.
+And all we need to do to get started, is to navigate into the directory of our app and run <code>vagrant up</code>. Seems not too shabby.
+But what if we could make this even more comfortable?</p>
+<h3>Convenience commands</h3>
+<p>Since we're use git bash, we can make use of <a href="https://wiki.ubuntuusers.de/alias/">command aliases</a>. This is pretty straight forward:</p>
+<ul>
+<li>Open up a new bash on your host machine</li>
+<li>type <code>cd ~</code> to navigate to your home directory</li>
+<li>type <code>vi .bashrc</code> to open up the vi editor with your <a href="https://wiki.ubuntuusers.de/Bash/bashrc/"><code>.bashrc</code></a> file (that is basically a configuration file for bash)</li>
+<li>add an alias like this:
+<pre><code>alias aliasname='command'</code></pre>
+<p>which makes <code>aliasname</code> available to bash and will execute <code>command</code>.</p></li>
+<li>after you are finished modifying the file, type <code>:wq</code> to save and close vi. Of course, you can also use another editor ;) If you have any problems,
+<a href="http://superuser.com/a/602896">this post</a> might help</li>
+<li>Now you need to either close and open your current bash session or type &quot;. ~/.bashrc&quot; to reload the changes</li>
+</ul>
+<p>I usually define the following aliases for a new project:</p>
+<pre><code>alias ledir='cd "C:\\Users\\Pascal\\PhpstormProjects\\LaravelExample"'
+alias leup='ledir &amp;&amp; vagrant up'
+alias ledown='ledir &amp;&amp; vagrant halt'
+alias lessh='ledir &amp;&amp; vagrant ssh'
+alias lein='leup &amp;&amp; lessh'</code></pre>
+<p>where the <code>le</code>-prefix is just an abbreviation for &quot;LaravelExample&quot; and <code>"C:\\Users\\Pascal\\PhpstormProjects\\LaravelExample"</code> is the directory of the
+LaravelExample app on my host machine. So all I need to do no when I start to work an that project is:</p>
+<ul>
+<li>open a new bash &quot;anywhere&quot;</li>
+<li>type <code>lein</code>
+and that will start vagrant and ssh into it :)</li>
+</ul>
+<h2>Configure PhpStorm</h2>
+<ul>
+<li>same as before...
+<h3>Install laravel plugin</h3>
+<h3>Install IDE-helper</h3></li>
+<li>suggest debugbar</li>
+</ul>
+<h2>Setup PhpUnit</h2>
+<h3>phpunit.xml</h3>
+<ul>
+<li>.env overriding
+<ul>
+<li>database settings</li>
+</ul></li>
+<li>Migrate refresh testcase class</li>
+<li>configure test db
+<ul>
+<li>benefit: having the exact same behaviour in your tests</li>
+</ul></li>
+<li>Setup command
+<ul>
+<li>(re)build databases</li>
+</ul></li>
+</ul>
+<h2>Housekeeping</h2>
+<ul>
+<li>init git</li>
+<li>.gitignore entries
+<ul>
+<li>Homestead.yaml</li>
+<li>.vagrant</li>
+<li>_ide_helper*</li>
+</ul></li>
+<li>helpful setup readme</li>
+</ul>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/";
+                                                     this.page.identifier = "laravel-phpunit-vagrant-phpstorm";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.facebook.com/pascal.landau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="http://www.pascallandau.com">www.pascallandau.com</a> 2016                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="http://vg02.met.vgwort.de/na/1e8a8793fe474eba988e3d25d7618127" width="1" height="1" alt="" style="display:none" />
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-4233326-17', 'auto');
+    ga('send', 'pageview');
+    ga("set","anonymizeIp",!0);
+
+</script>
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+
+</body>
+
+</html>
