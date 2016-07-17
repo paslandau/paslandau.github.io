@@ -9,7 +9,8 @@ description: "About Pascal Landau"
 slug: "about"
 ---
 
-I'm a 28 year old tech enthusiast who currently works as a tech lead at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/).
+I'm a 28 year old tech enthusiast who currently works as Head of Marketing Technology (team lead for the 
+online marketing development department) at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/).
 At this particular point in time, I'm really digging software development especially backend PHP coding particularly with 
 Laravel. Apart from that I've always enjoyed earning money on the internet - which initially brought me to SEO. Which 
 was a lot more fun when Google was not that sophisticated tbh :) Besides that, I tend to work out.
@@ -43,7 +44,7 @@ _tbc..._
 - 2012: Started working as SEO consultant at TRG (The Reach Group) in Hamburg
 - 2013-01: Started lecturing at [AFS Akademie für Fortbildung in Suchmaschinenoptimierung](http://www.afs-akademie.org/) (bi-yearly) on the topic of "Pagerank und Trustrank"
 - 2013-05: Started working at [Tchibo GmbH](http://www.tchibo.com/) as Technical SEO Manager
-- 2016-04: Started working at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/) as Lead Marketing Technology
+- 2016-04: Started working at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/) as Lead/Head of Marketing Technology
 
 ## Slightly longer
 

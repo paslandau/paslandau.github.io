@@ -64,7 +64,7 @@ caches, web servers etc., this approach becomes incredibly helpful.
 
 ### Vagrant
 Technically, we wouldn't even need vagrant for our development as the "heavy lifting" is done by VirtualBox and once 
-we've got our virtual machine up and running, we can start running code on it. But getting the  etup right is actually not an
+we've got our virtual machine up and running, we can start running code on it. But getting the setup right is actually not an
 easy task and requires manual involvement. We don't want that. We want a simple, reproducible, formalized way of defining
 our virtual machine. Vagrant does exactly that: It gives us a simple configuration language that fulfills those requirements 
 and makes it even sharable with other team members to get them started quickly.
@@ -268,7 +268,7 @@ info on what's happening behind the scenes is also helpful ;)). And it will _not
 helpful to explain why that is the case and how to work around it.
 
 PS: There is also a [Working with Advanced Vagrant features in PhpStorm](https://confluence.jetbrains.com/display/PhpStorm/Working+with+Advanced+Vagrant+features+in+PhpStorm)
-    tutorial.
+    tutorial. Although their approach is a little different, so take it as a nice to know :)
 
 - open up PhpStorm and open the settings via `File > Settings...`
 - enter the search box at the top left, type "PHP" and choose the entry named "PHP" from the resulting list
