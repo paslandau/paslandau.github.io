@@ -14,7 +14,7 @@ $posts = collect($jigsaw->getMeta())
             $sep = preg_quote(DIRECTORY_SEPARATOR, "#");
             return preg_match("#^blog{$sep}#", $path);
         })
-        ->sortByDesc("last_modified")
+        ->sortByDesc("published_at")
         ->take(10);
 ?>
 @extends('_layouts.post')

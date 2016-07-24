@@ -6,7 +6,7 @@ subheading: "... on a Windows 10 machine. Plus Git and Git bash"
 h1: "Setting up PhpStorm with Vagrant and Laravel Homestead"
 description: "Step-by-Step tutorial for setting up a new PhpStorm project running on a Homestead Vagrant box."
 author: "Pascal Landau"
-published_at: "2016-05-31 01:11:52"
+published_at: "2016-06-24 01:11:52"
 vgwort: "9cf2ebaf25a5461f806db747de63335c"
 slug: "phpstorm-vagrant-homestead"
 ---
@@ -16,10 +16,10 @@ In this second part we're going to cover the setup of Vagrant as local developme
 - setup Vagrant in PhpStorm for (remote) PHP execution and debugging
 
 And just as a reminder, the first part is over at 
-[Setting up PHP7 with Xdebug 2.4 for PhpStorm](http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/).
+[Setting up PHP7 with Xdebug 2.4 for PhpStorm](https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/),
+the third at [Setting up Laravel with PHPUnit on Vagrant in PhpStorm](https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/)
 
 ## Setting up the software
-
 ### Git and Git Bash
 First of all, we're going to install a decent terminal on windows, because we will have to do some stuff on the command line and once you're 
 working with vagrant you'll have to do this via SSH and it's just convenient to have a similar tool set available on Windows as on Unix (e.g. history search).
@@ -271,7 +271,7 @@ PS: There is also a [Working with Advanced Vagrant features in PhpStorm](https:/
     tutorial. Although their approach is a little different, so take it as a nice to know :)
 
 - open up PhpStorm and open the settings via `File > Settings...`
-- enter the search box at the top left, type "PHP" and choose the entry named "PHP" from the resulting list
+- enter the search box at the top left, type "PHP" and choose the entry named "PHP" under "Laguages & Frameworks" from the resulting list
   [![Select a new PHP interpreter in PhpStorm](/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/select-php-interpreter.PNG)](/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/select-php-interpreter.PNG)
 - click on the "..." next to "Interpreter". This opens the interpreter settings for PhpStorm
 - click on the green "+" on the top left and choose "Remote..." to add a new interpreter. Technically, vagrant is a
