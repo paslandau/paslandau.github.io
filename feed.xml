@@ -5,17 +5,17 @@
         <description>Personal website of Pascal Landau</description>
         <link>http://www.pascallandau.com</link>
         <atom:link href="http://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 17 Jul 2016 14:52:52 +0000</pubDate>
-        <lastBuildDate>Sun, 17 Jul 2016 14:52:52 +0000</lastBuildDate>
+        <pubDate>Sun, 24 Jul 2016 22:20:01 +0000</pubDate>
+        <lastBuildDate>Sun, 24 Jul 2016 22:20:01 +0000</lastBuildDate>
         <language>en</language>
                     <item>
-                <title>How to setup Laravel with PhpUnit on Vagrant in PhpStorm [Tutorial]</title>
+                <title>How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial]</title>
                 <description><![CDATA[<p>In this third part we will set up a fresh Laravel installation and configure everything to run it on Vagrant, triggered by PhpStorm.
 That includes:</p>
 <ul>
 <li>install Laravel and Laravel Homestead</li>
 <li>configure Vagrant through Homestead</li>
-<li>run PhpUnit unit tests via PhpStorm on Vagrant</li>
+<li>run PHPUnit unit tests via PhpStorm on Vagrant</li>
 <li>enable Laravel-specific configurations in PhpStorm</li>
 </ul>
 <p>And just as a reminder, the first part is over at
@@ -47,7 +47,7 @@ define the properties we really need.</li>
 <pre><code>$ vendor/bin/homestead make
 Homestead Installed!</code></pre>
 <p>The command also places a <code>Homestead.yaml</code> file as well as a <code>Vagrantfile</code> in the project directory.
-<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/homestead-make.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/homestead-make.PNG" alt="Project folder after running vendor/bin/homestead make" /></a>
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/laravel/homestead-make.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/laravel/homestead-make.PNG" alt="Project folder after running vendor/bin/homestead make" /></a>
 Technically, that would be all you need to do,
 because everything is configured to work out of the box (e.g. the configuration of shared folders), but I would like to go over some details
 just to make sure it is clear whats going on here.</p></li>
@@ -283,7 +283,7 @@ Application key [base64:OhVwfzcFp40LaboJyCQAGS1briBwhYDupgvWJD/YYFE=] set succes
 </ul>
 <p>If we did everything right, we should now be able to open a browser and point it to <a href="http://laravelexample.app">http://laravelexample.app</a> and see the
 Laravel welcome screen:
-<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/laravel-welcome-screen.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/laravel/laravel-welcome-screen.PNG" alt="Laravel welcome screen" /></a></p>
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/laravel/laravel-welcome-screen.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/laravel/laravel-welcome-screen.PNG" alt="Laravel welcome screen" /></a></p>
 <p>Let's take a step back and think about what we did and what it means:
 So we basically set up a new Laravel installation (code-wise) and configured a vagrant homestead box via Laravel Homestead.
 And all we need to do to get started, is to navigate into the directory of our app and run <code>vagrant up</code>. Seems not too shabby.
@@ -299,7 +299,7 @@ But what if we could make this even more comfortable?</p>
 <p>which makes <code>aliasname</code> available to bash and will execute <code>command</code>.</p></li>
 <li>after you are finished modifying the file, type <code>:wq</code> to save and close vi. Of course, you can also use another editor ;) If you have any problems,
 <a href="http://superuser.com/a/602896">this post</a> might help</li>
-<li>Now you need to either close and open your current bash session or type &quot;. ~/.bashrc&quot; to reload the changes</li>
+<li>Now you need to either close and open your current bash session or type <code>. ~/.bashrc</code> (which is the same as <code>source ~/.bashrc</code>) to reload the changes</li>
 </ul>
 <p>I usually define the following aliases for a new project:</p>
 <pre><code>alias ledir='cd "C:\\Users\\Pascal\\PhpstormProjects\\LaravelExample"'
@@ -308,49 +308,177 @@ alias ledown='ledir &amp;&amp; vagrant halt'
 alias lessh='ledir &amp;&amp; vagrant ssh'
 alias lein='leup &amp;&amp; lessh'</code></pre>
 <p>where the <code>le</code>-prefix is just an abbreviation for &quot;LaravelExample&quot; and <code>"C:\\Users\\Pascal\\PhpstormProjects\\LaravelExample"</code> is the directory of the
-LaravelExample app on my host machine. So all I need to do no when I start to work an that project is:</p>
+LaravelExample app on my host machine. So now, all I need to do when I start to work on that project is:</p>
 <ul>
 <li>open a new bash &quot;anywhere&quot;</li>
 <li>type <code>lein</code>
 and that will start vagrant and ssh into it :)</li>
 </ul>
 <h2>Configure PhpStorm</h2>
+<p>Now that we have successfully set up vagrant, it's time to configrue PhpStorm to use the virtual machine. I've explained all the necessary
+steps to do that in the second part of this series (<a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>)
+so I'll keep this rather short.</p>
+<ol>
+<li>make sure your vagrant box is running</li>
+<li>open the PhpStorm Settings, search for &quot;Deyployment&quot; and choose &quot; &quot;Deployment&quot; under &quot;Build, Execution, Deployment&quot;
+from the resulting list. Now click on the green &quot;+&quot; at the top left, enter &quot;Vagrant (LaravelExamle)&quot;
+as name and choose &quot;SFTP&quot; as type. </li>
+<li>in the &quot;Connection&quot; tab, enter the following information:
 <ul>
-<li>same as before...
-<h3>Install laravel plugin</h3>
-<h3>Install IDE-helper</h3></li>
-<li>suggest debugbar</li>
+<li>SFTP host: laravelexample.app</li>
+<li>Port: 22</li>
+<li>User name: vagrant</li>
+<li>Auth type: Password</li>
+<li>Password: vagrant</li>
+<li>check the &quot;Save password&quot; checkbox
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-deployment-configuration-connection.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-deployment-configuration-connection.PNG" alt="PhpStorm Deployment Configuration Connection settings" /></a>
+Please note, that we are connecting directly to the vagrant box using it's hostname an port 22 (<code>laravelexample.app</code> is the host
+file entry, set we set up earlier.) This is different from the example in the previous
+article (where we used 127.0.0.1 and the tunneled port 2222) but allows us to easily run multiple vagrant instances
+simultaneously and identify them via host name.</li>
+</ul></li>
+<li>next, open the &quot;Mappings&quot; tab and enter the following information:
+<ul>
+<li>Local path: [path to your local PhpStorm project - this should already be set] </li>
+<li>Deployment path on server 'Vagrant (LaravelExample)': /home/vagrant/laravelexample
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-deployment-configuration-mappings.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-deployment-configuration-mappings.PNG" alt="PhpStorm Deployment Configuration Mappings settings" /></a>
+This corresponds to the <code>folders:</code> setup that we defined in the Homestead.yml file earlier.
+Hit &quot;OK&quot; to apply the changes</li>
+</ul></li>
+<li>open the PhpStorm Settings again, enter the search box at the top left, type &quot;PHP&quot; and choose the entry named &quot;PHP&quot; from the resulting list
+Set the language level to PHP 7 to get the correct syntax highlighting and click on the &quot;...&quot; to open the &quot;Interpreter&quot; dialog.
+Click on the &quot;+&quot; in the top left corner and choose &quot;Remote...&quot;. In the upcoming dialog choose &quot;Deployment Configuration&quot; and select
+the 'Vagrant (LaravelExample)' entry.
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-interpreter-settings.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-interpreter-settings.PNG" alt="PhpStorm Interpreter settings" /></a></li>
+<li>hit &quot;OK&quot; to confirm your selection. PhpStorm will now try to connect via SSH on port 22 to <code>laravelexample.app</code>.
+Since this is the first time you will be doing that, you should be prompted to confirm the RSA key fingerprint.
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-remote-host-verification.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-remote-host-verification.PNG" alt="PhpStorm remote host RSA key fingerprint verification" /></a>
+In short,
+you need to do this once in the beginning to <em>manually</em> verify that you are really connecting to correct server. Since
+we are only using this for local development, it doesn't really matter and you could just confirm the dialog. But that
+wouldn't be fun, would it? So, to confirm that the shown RSA key fingerprint matches the one of our vagrant box, log into
+the box and type <code>ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub</code>. That should display the same key as shown in the popup:
+<pre><code>vagrant@laravelexample:~/.ssh$ ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub
+2048 6d:4f:59:b6:9a:82:4d:20:e9:4d:b3:a0:e7:68:a6:9f  root@vagrant (RSA)</code></pre>
+<p>For more information, please refer to the article <a href="http://www.phcomp.co.uk/Tutorials/Unix-And-Linux/ssh-check-server-fingerprint.html">Checking ssh public key fingerprints</a>.</p></li>
+<li>Rename the newly created interpreter to &quot;Vagrant (LaravelExample) PHP 7&quot; and confirm the &quot;Interpreters&quot; as well as all remaining
+dialogs with &quot;OK&quot;.
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-vagrant-interpreter.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-vagrant-interpreter.PNG" alt="PhpStorm Vagrant interpreter" /></a></li>
+</ol>
+<p>Great, PhpStorm should now be able to use our homestead vagrant box. To verify that everything is working correctly, you could run the file
+<code>artisan</code> in the base folder of your laravel installation. Simply right-click on the file and choose &quot;Run&quot;. This should generate something
+like this:</p>
+<pre><code>sftp://vagrant@laravelexample.app:22/usr/bin/php /home/vagrant/laravelexample/artisan
+Laravel Framework version 5.2.39
+
+Usage:
+  command [options] [arguments]
+
+Options:
+  -h, --help            Display this help message
+  -q, --quiet           Do not output any message
+  -V, --version         Display this application version
+      --ansi            Force ANSI output
+      --no-ansi         Disable ANSI output
+...</code></pre>
+<p>The first line <code>sftp://vagrant@laravelexample.app:22/usr/bin/php /home/vagrant/laravelexample/artisan</code> confirms, that PhpStorm actually
+uses the remote interpreter and the remote path to run.</p>
+<h3>Setup PHPUnit</h3>
+<p>Setting up PHPUnit is pretty straight forward.</p>
+<ul>
+<li>open the settings via <code>File &gt; Settings...</code>, search vor &quot;PHPUnit&quot;, choose the entry under &quot;Language &amp; Frameworks&quot; &gt; &quot;PHP&quot;
+and click on the green &quot;+&quot; in the top left and choose &quot;By Remote Interpreter...&quot;
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter.png" alt="PHPUnit remote interpreter" /></a></li>
+<li>choose the &quot;Vagrant (LaravelExample)&quot; entry
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter-vagrant.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter-vagrant.png" alt="PHPUnit vagrant remote interpreter" /></a></li>
+<li>select &quot;Use custom autoloader&quot; and fill in the required paths (as they appear on the remote server):
+<ul>
+<li>Path to script: <code>/home/vagrant/laravelexample/vendor/autoload.php</code> (the path to the autoloader as generated by Composer)</li>
+<li>Default configuration file: <code>/home/vagrant/laravelexample/phpunit.xml</code>
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-path-settings.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-path-settings.png" alt="PHPUnit path settings" /></a></li>
+</ul></li>
+<li>confirm with &quot;OK&quot;</li>
 </ul>
-<h2>Setup PhpUnit</h2>
-<h3>phpunit.xml</h3>
+<p>To verify that everything works as expected, right-click on the file &quot;test/ExampleTest.php&quot; in PhpStorm and choose &quot;Run&quot; &gt; &quot;ExampleTest&quot;.
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/run-phpunit-example-test.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/run-phpunit-example-test.png" alt="Run PHPUnit ExampleTest" /></a>
+The test should succeed with the following output:
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-successful-test.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-successful-test.PNG" alt="Successful PHPUnit test" /></a></p>
+<p>Great, now we can run unit tests from within PhpStorm :) This becomes incredibly useful when tests fail and you need to quickly debug them in
+order to find the error. At a later point, you might want to have a look at the <code>&lt;php&gt;</code> section of the <code>phpunit.xml</code> configuration, as that enables
+you to override the default settings defined by the &quot;.env&quot; file, which is pretty useful when you want to have specific settings when running unit tests.
+I like to setup a dedicated testing database, for instance. To make Laravel use this out of the box, all I need to do is set the corresponding ENV
+variable in the phpunit.xml file. Please refer to <a href="http://stackoverflow.com/a/34838187/413531">my comment on Stackoverflow</a>
+for some more insight in how .env files work in Laravel.</p>
+<h3>Laravel-specific settings in PhpStorm</h3>
+<p>I strongly believe in optimizing the everyday workflow as much as possible. When working with Laravel in PhpStorm, there are two things
+that really made my life easier:</p>
 <ul>
-<li>.env overriding
+<li>
+<p>the Laravel Plugin (Open the settings, search for &quot;plugin&quot; and then for &quot;Laravel Plugin&quot;).
+I personally really like the code completion when using the <code>config()</code> helper. You can find a full description
+at the <a href="https://plugins.jetbrains.com/plugin/7532?pr=">plugin page</a> and in <a href="https://blog.jetbrains.com/phpstorm/2015/01/laravel-development-using-phpstorm/">this blog article</a>.</p>
+<p>One thing to note: The plugin has to be activated <strong>per project</strong>. That means it's not enough to install it, but you
+have to enable it in the settings for the current PhpStorm project. Open the settings, search for &quot;Laravel&quot; and choose
+the &quot;Laravel Plugin&quot; entry under &quot;Other settings. Now activate the checkbox that says &quot;Enable plugin for this project&quot;
+and confirm with &quot;OK&quot;.
+<a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/enable-laravel-plugin.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/enable-laravel-plugin.PNG" alt="Enable the Laravel plugin" /></a></p>
+</li>
+<li>The <a href="https://github.com/barryvdh/laravel-ide-helper">Laravel IDE helper project by barryvdh</a>.
+To install it, log into your vagrant machine and navigate to you project folder. Now run
+<code>composer require barryvdh/laravel-ide-helper</code> to download the dependency in your vendor folder (and add it to your composer.json)
+and add <code>Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class</code> to your <code>config/app.php</code> file in the <code>'providers' =&gt; [...]</code> section.
+Now generate the helper files for PhpStorm by running two artisan commands:
 <ul>
-<li>database settings</li>
-</ul></li>
-<li>Migrate refresh testcase class</li>
-<li>configure test db
-<ul>
-<li>benefit: having the exact same behaviour in your tests</li>
-</ul></li>
-<li>Setup command
-<ul>
-<li>(re)build databases</li>
+<li><code>php artisan ide-helper:generate</code> 
+<pre><code>vagrant@laravelexample:~/laravelexample$ php artisan ide-helper:generate
+A new helper file was written to _ide_helper.php</code></pre>
+<p>This enables code-completion for <a href="https://laravel.com/docs/5.2/facades">Facades</a>, for example. Another nice feature is the
+<code>Eloquent</code> meta class that you can use as &quot;meta mixin&quot; for your models. See <a href="https://github.com/barryvdh/laravel-ide-helper/issues/74#issuecomment-143770037">my comment at issue 74</a> for a complete example.</p></li>
+<li><code>php artisan ide-helper:meta</code>  
+<pre><code>vagrant@laravelexample:~/laravelexample$ php artisan ide-helper:meta
+A new meta file was written to .phpstorm.meta.php</code></pre>
+<p>This enables the automatic recognition of entities, that are resolved from the <a href="https://laravel.com/docs/5.2/container">dependency injection container</a>.</p></li>
 </ul></li>
 </ul>
 <h2>Housekeeping</h2>
-<ul>
-<li>init git</li>
-<li>.gitignore entries
-<ul>
-<li>Homestead.yaml</li>
-<li>.vagrant</li>
-<li>_ide_helper*</li>
-</ul></li>
-<li>helpful setup readme</li>
-</ul>]]></description>
-                                                <link>http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/</link>
-                <guid isPermaLink="true">http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm-on-windows-10/</guid>
+<p>Our project is setup, it runs on vagrant and we can even run PHPUnit tests. Regarding the local development, we are pretty much all set.
+But chances are, you're gonna commit your code to some remote repository. (If not, you really should!). To make this as smooth as possible,
+we should do some cleanup before.</p>
+<h3>Update the .gitignore file</h3>
+<p>We added quite some files to the bare Laravel installation which might not be suitable for a remote repository. To prevent them from being
+committed, we need to update the <code>.gitignore</code> file in the base directory of the application. The file <em>should</em> currently look like this:</p>
+<pre><code>/vendor
+/node_modules
+/public/storage
+Homestead.yaml
+Homestead.json
+.env</code></pre>
+<p>The <code>Homestead.yaml</code> and <code>Homestead.json</code> entries have been added automatically when we ran <code>vendor/bin/homestead make</code>. That's nice, but we
+should also add a <code>.vagrant/</code> entry, because this folder will be created automatically, once we run <code>vagrant up</code>. Further, the ide-helper
+Plugin created two files that are only relevant if you're using an IDE so they shouldn't necessarily be in the repo. So let's add entries for
+<code>.phpstorm.meta</code> and <code>_ide_helper*</code> (I'm using the wildcard here, because there might be more files later with that prefix, e.g. <code>_ide_helper_models.php</code>)</p>
+<p>The <code>.gitignore</code> file should now look like this:</p>
+<pre><code>/vendor
+/node_modules
+/public/storage
+Homestead.yaml
+Homestead.json
+.env
+.vagrant/
+.phpstorm.meta
+_ide_helper*</code></pre>
+<h3>Update the readme.md file</h3>
+<p>The <code>readme.md</code> file in the base directory of your application currently contains the default readme of the Laravel framework. So let's delete
+the old content and put some general information in there on how other developers can setup their development environment and get started quickly.
+Here's an example that you can use as blueprint:</p>
+<pre><code># LaravelExample
+## Setup
+
+...f</code></pre>
+<p>Cool, now we are basically done and could <a href="https://help.github.com/articles/adding-an-existing-project-to-github-using-the-command-line/">upload our project e.g. on Github</a>.
+I actually went ahead and did exactly that with the &quot;LaravelExample&quot; project I used in this tutorial.</p>]]></description>
+                                                <link>http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/</link>
+                <guid isPermaLink="true">http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/</guid>
             </item>
                     <item>
                 <title>How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial]</title>
@@ -360,7 +488,8 @@ and that will start vagrant and ssh into it :)</li>
 <li>setup Vagrant in PhpStorm for (remote) PHP execution and debugging</li>
 </ul>
 <p>And just as a reminder, the first part is over at
-<a href="http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>.</p>
+<a href="https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>,
+the third at <a href="https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
 <h2>Setting up the software</h2>
 <h3>Git and Git Bash</h3>
 <p>First of all, we're going to install a decent terminal on windows, because we will have to do some stuff on the command line and once you're
@@ -585,7 +714,7 @@ helpful to explain why that is the case and how to work around it.</p>
 tutorial. Although their approach is a little different, so take it as a nice to know :)</p>
 <ul>
 <li>open up PhpStorm and open the settings via <code>File &gt; Settings...</code></li>
-<li>enter the search box at the top left, type &quot;PHP&quot; and choose the entry named &quot;PHP&quot; from the resulting list
+<li>enter the search box at the top left, type &quot;PHP&quot; and choose the entry named &quot;PHP&quot; under &quot;Laguages &amp; Frameworks&quot; from the resulting list
 <a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/select-php-interpreter.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/select-php-interpreter.PNG" alt="Select a new PHP interpreter in PhpStorm" /></a></li>
 <li>click on the &quot;...&quot; next to &quot;Interpreter&quot;. This opens the interpreter settings for PhpStorm</li>
 <li>click on the green &quot;+&quot; on the top left and choose &quot;Remote...&quot; to add a new interpreter. Technically, vagrant is a
@@ -722,8 +851,12 @@ to &quot;destroy&quot; the VM.</p>]]></description>
 It's not like I do this every day (as 'typical' might suggest) but when I started my current job, I had to do it
 several times for me (switched my laptop) as well as for some of my co-workers. I'm going to cover this step-by-step
 and will include (hopefully) all necessary information for you to get this setup running as well.</p>
-<p>This is the first part of a two-part tutorial, focusing on the development on Windows. In the second part I will
-explain how to make the shift to using a virtual machine.</p>
+<p>This is the first part of a three-part tutorial, focusing on the development on Windows. In the second part I will
+explain how to make the shift to using a virtual machine and in the third we'll setup a fresh Laravel installation
+and put it all together.</p>
+<p>The second part is over at
+<a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>,
+the third at <a href="https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
 <p>Let's get to it, shall we?</p>
 <h2>Setup PHP 7 (for local development)</h2>
 <p>I do almost all of my development in a virtual machine because the final product usually runs on a unix server, but
