@@ -17,8 +17,8 @@ In this second part we're going to cover the setup of Vagrant as local developme
 - setup Vagrant in PhpStorm for (remote) PHP execution and debugging
 
 And just as a reminder, the first part is over at 
-[Setting up PHP7 with Xdebug 2.4 for PhpStorm](https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/),
-the third at [Setting up Laravel with PHPUnit on Vagrant in PhpStorm](https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/)
+[Setting up PHP7 with Xdebug 2.4 for PhpStorm](http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/),
+the third at [Setting up Laravel with PHPUnit on Vagrant in PhpStorm](http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/)
 
 ## Table of contents
 <ul>

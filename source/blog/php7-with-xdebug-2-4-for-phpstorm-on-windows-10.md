@@ -22,7 +22,7 @@ and put it all together.
 
 The second part is over at 
 [Setting up PhpStorm with Vagrant and Laravel Homestead](http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/),
-the third at [Setting up Laravel with PHPUnit on Vagrant in PhpStorm](https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/)
+the third at [Setting up Laravel with PHPUnit on Vagrant in PhpStorm](http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/)
 
 Let's get to it, shall we?
 
