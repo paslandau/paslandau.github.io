@@ -8,6 +8,7 @@ description: "Step-by-Step tutorial for setting up a fresh Laravel installation 
 author: "Pascal Landau"
 published_at: "2016-08-07 16:00:00"
 vgwort: "1e8a8793fe474eba988e3d25d7618127"
+category: "development"
 slug: "laravel-phpunit-vagrant-phpstorm"
 ---
 

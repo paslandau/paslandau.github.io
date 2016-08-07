@@ -6,7 +6,7 @@
 $lessons = collect($jigsaw->getMeta())
         ->filter(function ($item, $path) {
             $sep = preg_quote(DIRECTORY_SEPARATOR, "#");
-            return preg_match("#^blog{$sep}#", $path);
+            return preg_match("#^blog{$sep}#", $path) && isset($item["category"]) && $item["category"] == "development";
         })
         ->sortByDesc("published_at")
         ->take(10);
@@ -16,10 +16,10 @@ $url = $site["url"];
 <?xml version = "1.0" encoding = "UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>{{ $site['title'] }}</title>
-        <description>{{ $site['description'] }}</description>
+        <title>{{ $site['title'] }} [dev only]</title>
+        <description>{{ $site['description'] }} - Development related posts only</description>
         <link>{{$url}}</link>
-        <atom:link href="{{$url}}/feed.xml" rel="self" type="application/rss+xml"/>
+        <atom:link href="{{$url}}/feed-development.xml" rel="self" type="application/rss+xml"/>
         <pubDate>{{ (new DateTime)->format(DATE_RSS) }}</pubDate>
         <lastBuildDate>{{ (new DateTime)->format(DATE_RSS) }}</lastBuildDate>
         <language>en</language>

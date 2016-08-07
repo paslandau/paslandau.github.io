@@ -8,6 +8,7 @@ author: "Pascal Landau"
 published_at: "2016-08-07 10:00:00"
 description: "Step-by-Step tutorial for setting up PHP7 with Xdebug 2.4 for PhpStorm on Windows 10"
 vgwort: "9ae74a6a0da44be884cbd6ea2d95965a"
+category: "development"
 slug: "php7-windows10"
 ---
 In this tutorial I'll show my typical procedure when setting up a new development environment on a fresh Windows 10 laptop.

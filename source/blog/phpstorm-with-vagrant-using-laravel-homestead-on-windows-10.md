@@ -8,6 +8,7 @@ description: "Step-by-Step tutorial for setting up a new PhpStorm project runnin
 author: "Pascal Landau"
 published_at: "2016-08-07 13:00:00"
 vgwort: "9cf2ebaf25a5461f806db747de63335c"
+category: "development"
 slug: "phpstorm-vagrant-homestead"
 ---
 
