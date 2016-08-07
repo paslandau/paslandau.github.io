@@ -7,7 +7,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="Step-by-Step tutorial for setting up a fresh Laravel installation running on a Homestead Vagrant box.">
             <meta name="author" content="Pascal Landau">
-        <title>How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial] | pascallandau.com</title>
+        <title>How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial Part 3] | pascallandau.com</title>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
@@ -75,7 +75,7 @@
                 <div class="post-heading">
                     <h1>Setting up Laravel with PHPUnit on Vagrant in PhpStorm</h1>
                                             <h2 class="subheading">... With some workflow tips.</h2>
-                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-07-17 01:11:52</span>
+                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-08-07 16:00:00</span>
                                     </div>
             </div>
         </div>
@@ -553,9 +553,9 @@ Here's an example that you can use as blueprint:</p>
 <pre><code># LaravelExample
 ## Setup
 - download/clone the git repository from
-  - git clone 
+  - `git clone https://github.com/paslandau/laravelexample.git`
 - navigate into the project folder
-  - cd laravelexample
+  - `cd laravelexample`
 - make sure not to work directly on the master branch  
   - `git checkout -b my_local_branch`
 - to prepare the vagrant configuration, run
@@ -587,9 +587,9 @@ Here's an example that you can use as blueprint:</p>
   - `php artisan ide-helper:generate`
   - `php artisan ide-helper:model`
 
-Should now be able to open http://laravelexample.app/ in your browser and see the Laravel welcome page :)</code></pre>
+You should now be able to open http://laravelexample.app/ in your browser and see the Laravel welcome page :)</code></pre>
 <p>Cool, now we are basically done and could <a href="https://help.github.com/articles/adding-an-existing-project-to-github-using-the-command-line/">upload our project e.g. on Github</a>.
-I actually went ahead and did exactly that with the &quot;LaravelExample&quot; project I used in this tutorial.</p>
+I actually <a href="https://github.com/paslandau/laravelexample">went ahead and did exactly that with the &quot;LaravelExample&quot; project</a> I used in this tutorial.</p>
                 <h2>Comments</h2>
                 <div id="disqus_thread"></div>
                 <script>

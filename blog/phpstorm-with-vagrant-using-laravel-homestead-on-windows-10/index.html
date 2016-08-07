@@ -7,7 +7,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="Step-by-Step tutorial for setting up a new PhpStorm project running on a Homestead Vagrant box.">
             <meta name="author" content="Pascal Landau">
-        <title>How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial] | pascallandau.com</title>
+        <title>How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial  Part 2] | pascallandau.com</title>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
@@ -75,7 +75,7 @@
                 <div class="post-heading">
                     <h1>Setting up PhpStorm with Vagrant and Laravel Homestead</h1>
                                             <h2 class="subheading">... on a Windows 10 machine. Plus Git and Git bash</h2>
-                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-06-24 01:11:52</span>
+                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-08-07 10:00:00</span>
                                     </div>
             </div>
         </div>
@@ -144,9 +144,9 @@ and makes it even sharable with other team members to get them started quickly.<
 <li>
 <p>Download the 1.7.4 version of Vagrant from the <a href="https://releases.hashicorp.com/vagrant/1.7.4/">Vagrant download archive page</a>
 (the <a href="https://releases.hashicorp.com/vagrant/1.7.4/vagrant_1.7.4.msi">vagrant_1.7.4.msi file</a> is the installer for Windows)
-As of writing this tutorial, the current version is 1.8.3 but that didn't work for me. (More concrete, I got the error</p>
+As of writing this tutorial, the current version is 1.8.5 but that didn't work for me. (More concrete, I got the error</p>
 <blockquote>
-<p>The box 'laravel/homestead' could not be found orThe box 'laravel/homestead' could not be found or</p>
+<p>The box 'laravel/homestead' could not be found</p>
 </blockquote>
 <p>when trying to set up homestead.)</p>
 </li>
@@ -161,9 +161,16 @@ Vagrant 1.7.4</code></pre>
 <p>Homestead is a vagrant base box that is maintained by the creator of Laravel, Taylor Otwell. There's actually a chapter
 on <a href="https://laravel.com/docs/5.2/homestead">Homestead in the Laravel documentation</a> that does a pretty good job explaining
 how to set homestead up, so I'll keep this section rather short.</p>
-<p>Since we've already installed VirtualBox and Vagrant, all we need to do is running <code>vagrant box add laravel/homestead</code>.
-That command will download the latest <a href="https://atlas.hashicorp.com/laravel/homestead">homestead box from the vagrant catalogue</a>
-to (by default) <code>~/.vagrant.d/boxes</code> or in Windows terms <code>C:\Users\&lt;Username&gt;\.vagrant.d\boxes</code></p>
+<p>Since we've already installed VirtualBox and Vagrant, all we need to do is running <code>vagrant box add laravel/homestead --box-version 0.4.4</code>.
+That command will download <a href="https://atlas.hashicorp.com/laravel/boxes/homestead/versions/0.4.4">the homestead box version v0.4.4 from the vagrant catalogue</a>
+to (by default) <code>~/.vagrant.d/boxes</code> or in Windows terms <code>C:\Users\&lt;Username&gt;\.vagrant.d\boxes</code>. You can change this location
+by setting the <code>VAGRANT_HOME</code> path variable as explained <a href="http://stackoverflow.com/a/10226134/413531">here</a>.</p>
+<p><strong>Caution:</strong> We specified the concrete version because a simple <code>vagrant box add laravel/homestead</code> would download the
+<em>latest</em> version of homestead which is (at the time of this writing) v0.5.0 and contains the newest Ubuntu release 16.04.
+If you want to go with that version, make sure to also download and install the <em>latest</em> vagrant version (currently 1.8.5).
+It is possible ot have multiple versions of a vagrant box on your host machine, but it requires some additional
+setup to choose the right box. Please refer to this <a href="http://laravel.io/forum/02-03-2016-install-specific-laravel-homestead-version-and-502-bad-gateway-nginx-solved?page=1#reply-29937">answer</a>
+for further information.</p>
 <p><em>Note:</em> You might encounter the following error message:</p>
 <blockquote>
 <p>$ vagrant box add laravel/homestead
