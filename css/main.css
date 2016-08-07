@@ -8,3 +8,7 @@ img {
 table {
     width: 100%;
 }
+
+.container a{
+    text-decoration: underline;
+}

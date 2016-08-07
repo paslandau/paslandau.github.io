@@ -97,10 +97,27 @@ and put it all together.</p>
 <a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>,
 the third at <a href="https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
 <p>Let's get to it, shall we?</p>
-<h2>Setup PHP 7 (for local development)</h2>
+<h2>Table of contents</h2>
+<ul>
+<li><a href="#setup-php-7">Setup PHP 7</a><ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#the-path-variable">The `PATH` variable</a></li>
+</ul></li>
+<li><a href="#setup-phpstorm">Setup PhpStorm</a><ul>
+<li><a href="#setup-for-local-php-development">Setup for local PHP development</a></li>
+</ul></li>
+<li><a href="#installing-xdebug">Installing Xdebug</a></li>
+<li><a href="#setup-composer">Setup Composer</a><ul>
+<li><a href="#enabling-the-openssl-php-extension">Enabling the openssl PHP extension</a></li>
+</ul></li>
+<li><a href="#phrase-express">Phrase Express</a><ul>
+<li><a href="#clipboard-cache">Clipboard cache</a></li>
+<li><a href="#text-expansion">Text expansion</a></li>
+</ul>
+<h2><a id="setup-php-7"></a>Setup PHP 7</h2>
 <p>I do almost all of my development in a virtual machine because the final product usually runs on a unix server, but
 from time to time I find it helpful to have a local setup available as well.</p>
-<h3>Installation</h3>
+<h3><a id="installation"></a>Installation</h3>
 <ul>
 <li>Download the current version of PHP 7 from the <a href="http://windows.php.net/download/">PHP download page for Windows</a>.
 <a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/download-php.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/download-php.PNG" alt="Download PHP 7" title="Download PHP 7" /></a>
@@ -116,7 +133,7 @@ It can be fixed by downloading and installing the corresponding file from <a hre
 Please make sure you pick the architecture (x64/x86) that matches the previously downloaded PHP7 version!</li>
 </ul>
 <p>We're almost done, but we should modify the <code>PATH</code> variable in order to make PHP globally available.</p>
-<h3>The <code>PATH</code> variable</h3>
+<h3><a id="the-path-variable"></a>The <code>PATH</code> variable</h3>
 <p>Simply put, the <code>PATH</code> variable defines where Windows looks for executable files when the specified file is not found
 in the current directory. So lets say you would like to know the current PHP version on your system, then
 <a href="http://stackoverflow.com/a/15517857/413531">stackoverflow</a> will tell you something along the lines of</p>
@@ -157,8 +174,8 @@ Copyright (c) 1997-2016 The PHP Group
 Zend Engine v3.0.0, Copyright (c) 1998-2016 Zend Technologies</code></pre></li>
 </ul>
 <p>Cool, now on to the IDE.</p>
-<h2>Setup PhpStorm (for local development)</h2>
-<h3>Installation</h3>
+<h2><a id="setup-phpstorm"></a>Setup PhpStorm</h2>
+<h3><a id="installation"></a>Installation</h3>
 <ul>
 <li>Download the current version of PhpStorm from the <a href="https://www.jetbrains.com/phpstorm/download/">PhpStorm download page</a>
 <a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/download.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/download.PNG" alt="Download PhpStorm" title="Download PhpStorm" /></a>
@@ -179,7 +196,7 @@ Unless you have anything to change a that point, go with the defaults and hit OK
 <li>In the following New Project screen choose &quot;PHP Empty Project&quot; in the left hand list and hit &quot;Create&quot;</li>
 </ul>
 <p>That'll conclude the installation :)</p>
-<h3>Setup for local PHP development</h3>
+<h3><a id="setup-for-local-php-development"></a>Setup for local PHP development</h3>
 <p>First, let's create a new PHP file by right-clicking on the project folder and choosing <code>New &gt; PHP File</code>.
 <a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/new-file.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/new-file.PNG" alt="Create new PHP file" title="Create new PHP file" /></a></p>
 <p>Name the file <code>test.php</code> and give it the following content:</p>
@@ -212,7 +229,7 @@ The console window of PhpStorm should open at the bottom and show something like
 Process finished with exit code 0</code></pre>
 <p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run-output.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run-output.PNG" alt="Run output" title="Run output" /></a></p>
 <p>Splendid, PhpStorm is now up and running with PHP7 :)</p>
-<h2>Installing Xdebug for local development</h2>
+<h2><a id="installing-xdebug"></a>Installing Xdebug</h2>
 <p>Debugging is an invaluable asset during development as it lets you walk step-by-step through the source code, showing
 exactly what is happening. <code>var_dump()</code> on freakin' steroids! Choose <code>Run &gt; Debug 'test.php'</code> (or hit <code>Shift + F9</code>) -
 and be greeted by a little error message at the bottom that goes like this:</p>
@@ -298,10 +315,10 @@ unset the breakpoint by simply clicking on it again).
 <a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/set-breakpoint.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/set-breakpoint.PNG" alt="Set breakpoint" title="Set breakpoint" /></a></p>
 <p>Running the script now (again in debug mode) will stop the execution at that position.</p>
 <p>Phew. Glad we got that thing working :)</p>
-<h2>Setup Composer</h2>
+<h2><a id="setup-composer"></a>Setup Composer</h2>
 <p>Next in line: PHP's beloved dependency manager Composer. I deeply believe that there's hardly a way around
 this wonderful tool when it comes to modern PHP development. </p>
-<h3>Installation</h3>
+<h3><a id="installation"></a>Installation</h3>
 <ul>
 <li>download the current Windows installer from the <a href="https://getcomposer.org/download/">Composer download page</a>
 <a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/download-installer.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/download-installer.PNG" alt="Download Composer installer" title="Download Composer installer" /></a></li>
@@ -315,7 +332,7 @@ composer can't connect via https to download some some necessary files.
 </ul>
 <p>So let's quickly take care of this before we continue. (We could also ignore this requirement by checking
 the checkbox but I'll take this opportunity to show you how extensions are enabled for PHP).</p>
-<h4>Enabling the openssl PHP extension</h4>
+<h3><a id="enabling-the-openssl-php-extension"></a>Enabling the openssl PHP extension</h3>
 <p>Open up the php.ini file in your PHP installation directory and search for &quot;php_openssl&quot;. You should now see
 a line like this:</p>
 <pre><code>;extension=php_openssl.dll</code></pre>
@@ -337,15 +354,15 @@ You are running composer with xdebug enabled. This has a major impact on runtime
 Composer version 1.1.1 2016-05-17 12:25:44</code></pre>
 <p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/composer-version.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/composer-version.PNG" alt="Show Composer version" title="Show composer version" /></a></p>
 <p>Aaaand we're done.</p>
-<h2>Phrase Express</h2>
+<h2><a id="phrase-express"></a>Phrase Express</h2>
 <p>This is more of bonus since it's a somewhat opinionated software but I've grown very fond of it over the last
 couple of years. Phrase Express is a clipboard manager / text expander for Windows. You can download the
 tool for free at the <a href="http://www.phraseexpress.com/download.php">Phrase Express download page</a> (Download Client).</p>
 <p>There's actually not much to tell about the installation process so I'm just gonna outline my major use cases.</p>
-<h3>Clipboard cache</h3>
+<h3><a id="clipboard-cache"></a>Clipboard cache</h3>
 <p>This one is a biggie: Phrase Express saves everything you copy to the clipboard in a cache that can be accessed
 via <code>CRTL + ALT + V</code> (by default). I cannot emphasize how incredibly handy that is.</p>
-<h3>Text expansion</h3>
+<h3><a id="text-expansion"></a>Text expansion</h3>
 <p>There's a couple of things I have to type frequently (or at least from time to time) and it's just cumbersome
 to either write them out in full length or to look them up. Here's my short list to give you an idea:</p>
 <table>

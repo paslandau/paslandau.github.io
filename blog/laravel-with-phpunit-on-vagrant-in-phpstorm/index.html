@@ -97,12 +97,28 @@ That includes:</p>
 <p>And just as a reminder, the first part is over at
 <a href="http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>, the second
 at <a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>.</p>
-<h2>Setting up Laravel</h2>
+<h2>Table of contents</h2>
+<ul>
+<li><a href="#setting-up-laravel">Setting up Laravel</a><ul>
+<li> <a href="#install-laravel">Install laravel/laravel</a></li>
+<li> <a href="#install-homestead">Install laravel/homestead</a></li>
+<li> <a href="#convenience-commands">Convenience commands</a></li>
+</ul></li>
+<li> <a href="#configure-php-storm">Configure PhpStorm</a><ul>
+<li> <a href="#setup-phpunit">Setup PHPUnit</a></li>
+<li> <a href="#laravel-specific-settings-in-phpstorm">Laravel-specific settings in PhpStorm</a></li>
+</ul></li>
+<li> <a href="#housekeeping">Housekeeping</a><ul>
+<li> <a href="#update-the-gitignore-file">Update the .gitignore file</a></li>
+<li> <a href="#update-the-readme-md-file">Update the readme.md file</a></li>
+</ul></li>
+</ul>
+<h2><a id="setting-up-laravel"></a>Setting up Laravel</h2>
 <p>Now that we have the basics covered, you should have got a fairly decent understanding how vagrant and PhpStorm play together. But it's still all a little
 hacky and doesn't feel &quot;right&quot;. In this section I'll make up for that by explaining how I set up a completely fresh installation of Laravel (5.2) and configure
 it to run on a homestead vagrant box for a &quot;real world development&quot; scenario. For now let's assume, that we have no vagrant box configured
 (i.e. there is no virtual machine running, yet).</p>
-<h3>Install laravel/laravel</h3>
+<h3><a id="install-laravel"></a>Install laravel/laravel</h3>
 <ul>
 <li>Create a new PhpStorm project via <code>File &gt; New Project...</code> and name it &quot;LaravelExample&quot;</li>
 <li>Open the PhpStorm terminal and run <code>composer create-project laravel/laravel tmp</code>. This will initialize a fresh
@@ -111,7 +127,7 @@ from within the vagrant box we're using later on. This might be a problem when t
 the one in the vagrant box since the downloaded packages might differ. But on the other hand it's not really a big deal since we
 can just run composer update once the vagrant box is running (from within the box).</li>
 </ul>
-<h3>Install laravel/homestead</h3>
+<h3><a id="install-homestead"></a>Install laravel/homestead</h3>
 <ul>
 <li>Unfortunately, <a href="https://github.com/composer/composer/issues/1135">composer cannot create a new project in an existing directory</a>, so we
 need to copy the contents of &quot;tmp&quot; afterwards into the parent directory &quot;LaravelExample&quot; and delete the &quot;tmp&quot; directory manually.</li>
@@ -365,7 +381,7 @@ Laravel welcome screen:
 So we basically set up a new Laravel installation (code-wise) and configured a vagrant homestead box via Laravel Homestead.
 And all we need to do to get started, is to navigate into the directory of our app and run <code>vagrant up</code>. Seems not too shabby.
 But what if we could make this even more comfortable?</p>
-<h3>Convenience commands</h3>
+<h3><a id="convenience-commands"></a>Convenience commands</h3>
 <p>Since we're using git bash, we can make use of <a href="https://wiki.ubuntuusers.de/alias/">command aliases</a>. This is pretty straight forward:</p>
 <ul>
 <li>Open up a new bash on your host machine</li>
@@ -391,9 +407,10 @@ LaravelExample app on my host machine. So now, all I need to do when I start to 
 <li>type <code>lein</code>
 and that will start vagrant for the &quot;LaravelExample&quot; project and ssh into it :)</li>
 </ul>
-<h2>Configure PhpStorm</h2>
+<h2><a id="configure-php-storm"></a>Configure PhpStorm</h2>
 <p>Now that we have successfully set up vagrant, it's time to configrue PhpStorm to use the virtual machine. I've explained all the necessary
-steps to do that in the second part of this series (<a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>)
+steps to do that in the second part of this series
+(<a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#configuring-phpstorm-to-use-the-vagrant-box">Setting up PhpStorm with Vagrant and Laravel Homestead</a>)
 so I'll keep this rather short.</p>
 <ol>
 <li>Make sure your vagrant box is running</li>
@@ -460,7 +477,7 @@ Options:
 ...</code></pre>
 <p>The first line <code>sftp://vagrant@laravelexample.app:22/usr/bin/php /home/vagrant/laravelexample/artisan</code> confirms, that PhpStorm actually
 uses the remote interpreter and the remote path to run.</p>
-<h3>Setup PHPUnit</h3>
+<h3><a id="setup-phpunit"></a>Setup PHPUnit</h3>
 <p>Setting up PHPUnit is pretty straight forward.</p>
 <ul>
 <li>Open the settings via <code>File &gt; Settings...</code>, search vor &quot;PHPUnit&quot;, choose the entry under &quot;Language &amp; Frameworks&quot; &gt; &quot;PHP&quot;
@@ -486,7 +503,7 @@ you to override the default settings defined by the &quot;.env&quot; file, which
 I like to setup a dedicated testing database, for instance. To make Laravel use this out of the box, all I need to do is set the corresponding ENV
 variable in the phpunit.xml file. Please refer to <a href="http://stackoverflow.com/a/34838187/413531">my comment on Stackoverflow</a>
 for some more insight in how .env files work in Laravel.</p>
-<h3>Laravel-specific settings in PhpStorm</h3>
+<h3><a id="laravel-specific-settings-in-phpstorm"></a>Laravel-specific settings in PhpStorm</h3>
 <p>I strongly believe in optimizing the everyday workflow as much as possible. When working with Laravel in PhpStorm, there are two things
 that really made my life easier:</p>
 <ul>
@@ -517,11 +534,11 @@ A new meta file was written to .phpstorm.meta.php</code></pre>
 <p>This enables the automatic recognition of entities, that are resolved from the <a href="https://laravel.com/docs/5.2/container">dependency injection container</a>.</p></li>
 </ul></li>
 </ul>
-<h2>Housekeeping</h2>
+<h2><a id="housekeeping"></a>Housekeeping</h2>
 <p>Our project is setup, it runs on vagrant and we can even run PHPUnit tests. Regarding the local development, we are pretty much all set.
 But chances are, you're gonna commit your code to some remote repository. (If not, you really should!). To make this as smooth as possible,
 we should do some cleanup before.</p>
-<h3>Update the .gitignore file</h3>
+<h3><a id="update-the-gitignore-file"></a>Update the .gitignore file</h3>
 <p>We added quite some files to the bare Laravel installation which might not be suitable for a remote repository. To prevent them from being
 committed, we need to update the <code>.gitignore</code> file in the base directory of the application. The file <em>should</em> currently look like this:</p>
 <pre><code>/vendor
@@ -546,7 +563,7 @@ Homestead.json
 .phpstorm.meta.php
 _ide_helper*
 .idea/</code></pre>
-<h3>Update the readme.md file</h3>
+<h3><a id="update-the-readme-md-file"></a>Update the readme.md file</h3>
 <p>The <code>readme.md</code> file in the base directory of your application currently contains the default readme of the Laravel framework. So let's delete
 the old content and put some general information in there on how other developers can setup their development environment and get started quickly.
 Here's an example that you can use as blueprint:</p>
