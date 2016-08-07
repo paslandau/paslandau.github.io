@@ -104,8 +104,8 @@ it to run on a homestead vagrant box for a &quot;real world development&quot; sc
 (i.e. there is no virtual machine running, yet).</p>
 <h3>Install laravel/laravel</h3>
 <ul>
-<li>create a new PhpStorm project via <code>File &gt; New Project...</code> and name it &quot;LaravelExample&quot;</li>
-<li>open the PhpStorm terminal and run <code>composer create-project laravel/laravel tmp</code>. This will initialize a fresh
+<li>Create a new PhpStorm project via <code>File &gt; New Project...</code> and name it &quot;LaravelExample&quot;</li>
+<li>Open the PhpStorm terminal and run <code>composer create-project laravel/laravel tmp</code>. This will initialize a fresh
 Laravel installation including dependencies. This isn't optimal, since we're doing this from our local machine and not
 from within the vagrant box we're using later on. This might be a problem when the local PHP setup is (vastly) different from
 the one in the vagrant box since the downloaded packages might differ. But on the other hand it's not really a big deal since we
@@ -113,13 +113,13 @@ can just run composer update once the vagrant box is running (from within the bo
 </ul>
 <h3>Install laravel/homestead</h3>
 <ul>
-<li>unfortunately, <a href="https://github.com/composer/composer/issues/1135">composer cannot create a new project in an existing directory</a>, so we
+<li>Unfortunately, <a href="https://github.com/composer/composer/issues/1135">composer cannot create a new project in an existing directory</a>, so we
 need to copy the contents of &quot;tmp&quot; afterwards into the parent directory &quot;LaravelExample&quot; and delete the &quot;tmp&quot; directory manually.</li>
-<li>next, make sure the current working directory of the shell is the PhpStorm project folder</li>
-<li>run <code>composer require laravel/homestead --dev</code>. The <a href="https://github.com/laravel/homestead">laravel/homestead</a> package gives a
-more convenient way to deal with the setup of the vagrant homestead box as it enables us to use an easier yaml syntax to
+<li>Next, make sure the current working directory of the shell is the PhpStorm project folder</li>
+<li>Run <code>composer require laravel/homestead --dev</code>. The <a href="https://github.com/laravel/homestead">laravel/homestead</a> package gives a
+more convenient way to deal with the setup of the vagrant homestead box as it enables us to use an easy yaml syntax to
 define the properties we really need.</li>
-<li>run <code>vendor/bin/homestead make</code> (if that fails, run <code>vendor/bin/homestead.bat make</code> instead), which yields:
+<li>Run <code>vendor/bin/homestead make</code> (if that fails, run <code>vendor/bin/homestead.bat make</code> instead), which yields:
 <pre><code>$ vendor/bin/homestead make
 Homestead Installed!</code></pre>
 <p>The command also places a <code>Homestead.yaml</code> file as well as a <code>Vagrantfile</code> in the project directory.
@@ -128,7 +128,7 @@ Technically, that would be all you need to do,
 because everything is configured to work out of the box (e.g. the configuration of shared folders), but I would like to go over some details
 just to make sure it is clear whats going on here.</p></li>
 <li>
-<p>open the <code>Homestead.yaml</code> file which should look similar to this:</p>
+<p>Open the <code>Homestead.yaml</code> file which should look similar to this:</p>
 <pre><code>---
 ip: "192.168.10.10"
 memory: 2048
@@ -154,7 +154,8 @@ databases:
   - homestead</code></pre>
 <p>There are a few things I would like to adjust:</p>
 <ul>
-<li>make sure the <code>ip</code> (<code>192.168.10.10</code> in the example above) is not already used in your local network</li>
+<li>make sure the <code>ip</code> (<code>192.168.10.10</code> in the example above) is not already used in your local network.
+This is the IP that is assigned to your virtual machine.</li>
 <li>
 <pre><code>folders:
   - map: "C:/Users/Pascal/PhpstormProjects/LaravelExample"
@@ -178,7 +179,7 @@ This should be the path to the <code>public</code> folder of the repository on y
 </ul>
 </li>
 <li>
-<p>if you already have an SSH key pair that is located in the <code>.ssh</code> folder in your home directory, you can leave the following lines in place:</p>
+<p>If you already have an SSH key pair that is located in the <code>.ssh</code> folder in your home directory, you can leave the following lines in place:</p>
 <pre><code>authorize: ~/.ssh/id_rsa.pub
 
 keys:
@@ -188,7 +189,7 @@ to the box by using your own ssh key and b) letting vagrant use your private key
 if you need to open up an SSH tunnel for example - but that's another story ;))</p>
 </li>
 <li>
-<p>finally, to make your life a little easier, add <code>192.168.10.10 laravelexample.app</code> and  <code>192.168.10.10 www.laravelexample.app</code>
+<p>Finally, to make your life a little easier, add <code>192.168.10.10 laravelexample.app</code> and  <code>192.168.10.10 www.laravelexample.app</code>
 to the <code>host</code> file on your local machine.
 The default location on Windows is <code>C:\Windows\System32\drivers\etc</code>. You will probably need to copy the file
 to another location, edit it there and then copy it again to <code>C:\Windows\System32\drivers\etc</code>. The file should look like this:</p>
@@ -243,7 +244,7 @@ sites:
 databases:
     - homestead</code></pre>
 </li>
-<li>cool, now let's start vagrant via <code>vagrant up</code>.
+<li>Cool, now let's start vagrant via <code>vagrant up</code>.
 <pre><code>$ vagrant up
 Bringing machine 'default' up with 'virtualbox' provider...
 ==&gt; default: Importing base box 'laravel/homestead'...
@@ -311,14 +312,14 @@ Bringing machine 'default' up with 'virtualbox' provider...
 ==&gt; default: Use composer self-update --rollback to return to version 1.0.0</code></pre>
 <p>Please note, that this will create a <code>.vagrant</code> folder in the directory of your laravel app.</p></li>
 <li>
-<p>we should now be able to ssh into the virtual machine by using <code>vagrant ssh</code></p>
+<p>We should now be able to ssh into the virtual machine by using <code>vagrant ssh</code></p>
 <pre><code>$ vagrant ssh
 Welcome to Ubuntu 14.04.4 LTS (GNU/Linux 3.19.0-25-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com/
 vagrant@laravelexample:~$</code></pre>
 </li>
-<li>navigate to the application root directory via <code>cd /home/vagrant/laravelexample/</code> which should look like this:
+<li>Navigate to the application root directory via <code>cd /home/vagrant/laravelexample/</code> which should look like this:
 <pre><code>vagrant@laravelexample:~/laravelexample$ cd /home/vagrant/laravelexample/
 vagrant@laravelexample:~/laravelexample$ ll
 total 157
@@ -351,9 +352,9 @@ drwxrwxrwx 1 vagrant vagrant   4096 Jun 26 13:46 vendor/</code></pre></li>
 </ul>
 <p>Before we move on, let's follow the remaining <a href="https://laravel.com/docs/5.2">installation instructions in the laravel docs</a>, that is:</p>
 <ul>
-<li>create a <code>.env</code> file via <code>cp .env.example .env</code>
+<li>Create a <code>.env</code> file via <code>cp .env.example .env</code>
 <pre><code>vagrant@laravelexample:~/laravelexample$ cp .env.example .env</code></pre></li>
-<li>generate an application key via <code>php artisan key:generate</code>
+<li>Generate an application key via <code>php artisan key:generate</code>
 <pre><code>vagrant@laravelexample:~/laravelexample$ php artisan key:generate
 Application key [base64:OhVwfzcFp40LaboJyCQAGS1briBwhYDupgvWJD/YYFE=] set successfully.</code></pre></li>
 </ul>
@@ -365,15 +366,15 @@ So we basically set up a new Laravel installation (code-wise) and configured a v
 And all we need to do to get started, is to navigate into the directory of our app and run <code>vagrant up</code>. Seems not too shabby.
 But what if we could make this even more comfortable?</p>
 <h3>Convenience commands</h3>
-<p>Since we're use git bash, we can make use of <a href="https://wiki.ubuntuusers.de/alias/">command aliases</a>. This is pretty straight forward:</p>
+<p>Since we're using git bash, we can make use of <a href="https://wiki.ubuntuusers.de/alias/">command aliases</a>. This is pretty straight forward:</p>
 <ul>
 <li>Open up a new bash on your host machine</li>
-<li>type <code>cd ~</code> to navigate to your home directory</li>
-<li>type <code>vi .bashrc</code> to open up the vi editor with your <a href="https://wiki.ubuntuusers.de/Bash/bashrc/"><code>.bashrc</code></a> file (that is basically a configuration file for bash)</li>
-<li>add an alias like this:
+<li>Type <code>cd ~</code> to navigate to your home directory</li>
+<li>Type <code>vi .bashrc</code> to open up the vi editor with your <a href="https://wiki.ubuntuusers.de/Bash/bashrc/"><code>.bashrc</code></a> file (that is basically a configuration file for bash)</li>
+<li>Add an alias like this:
 <pre><code>alias aliasname='command'</code></pre>
 <p>which makes <code>aliasname</code> available to bash and will execute <code>command</code>.</p></li>
-<li>after you are finished modifying the file, type <code>:wq</code> to save and close vi. Of course, you can also use another editor ;) If you have any problems,
+<li>After you are finished modifying the file, hit the <code>ESC</code> key and type <code>:wq</code> to save and close vi. Of course, you can also use another editor ;) If you have any problems,
 <a href="http://superuser.com/a/602896">this post</a> might help</li>
 <li>Now you need to either close and open your current bash session or type <code>. ~/.bashrc</code> (which is the same as <code>source ~/.bashrc</code>) to reload the changes</li>
 </ul>
@@ -388,18 +389,18 @@ LaravelExample app on my host machine. So now, all I need to do when I start to 
 <ul>
 <li>open a new bash &quot;anywhere&quot;</li>
 <li>type <code>lein</code>
-and that will start vagrant and ssh into it :)</li>
+and that will start vagrant for the &quot;LaravelExample&quot; project and ssh into it :)</li>
 </ul>
 <h2>Configure PhpStorm</h2>
 <p>Now that we have successfully set up vagrant, it's time to configrue PhpStorm to use the virtual machine. I've explained all the necessary
 steps to do that in the second part of this series (<a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>)
 so I'll keep this rather short.</p>
 <ol>
-<li>make sure your vagrant box is running</li>
-<li>open the PhpStorm Settings, search for &quot;Deyployment&quot; and choose &quot; &quot;Deployment&quot; under &quot;Build, Execution, Deployment&quot;
+<li>Make sure your vagrant box is running</li>
+<li>Open the PhpStorm Settings, search for &quot;Deyployment&quot; and choose &quot; &quot;Deployment&quot; under &quot;Build, Execution, Deployment&quot;
 from the resulting list. Now click on the green &quot;+&quot; at the top left, enter &quot;Vagrant (LaravelExamle)&quot;
 as name and choose &quot;SFTP&quot; as type. </li>
-<li>in the &quot;Connection&quot; tab, enter the following information:
+<li>In the &quot;Connection&quot; tab, enter the following information:
 <ul>
 <li>SFTP host: laravelexample.app</li>
 <li>Port: 22</li>
@@ -408,12 +409,12 @@ as name and choose &quot;SFTP&quot; as type. </li>
 <li>Password: vagrant</li>
 <li>check the &quot;Save password&quot; checkbox
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-deployment-configuration-connection.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-deployment-configuration-connection.PNG" alt="PhpStorm Deployment Configuration Connection settings" /></a>
-Please note, that we are connecting directly to the vagrant box using it's hostname an port 22 (<code>laravelexample.app</code> is the host
+Please note, that we are connecting directly to the vagrant box using its hostname and port 22 (<code>laravelexample.app</code> is the host
 file entry, set we set up earlier.) This is different from the example in the previous
 article (where we used 127.0.0.1 and the tunneled port 2222) but allows us to easily run multiple vagrant instances
 simultaneously and identify them via host name.</li>
 </ul></li>
-<li>next, open the &quot;Mappings&quot; tab and enter the following information:
+<li>Next, open the &quot;Mappings&quot; tab and enter the following information:
 <ul>
 <li>Local path: [path to your local PhpStorm project - this should already be set] </li>
 <li>Deployment path on server 'Vagrant (LaravelExample)': /home/vagrant/laravelexample
@@ -421,12 +422,12 @@ simultaneously and identify them via host name.</li>
 This corresponds to the <code>folders:</code> setup that we defined in the Homestead.yml file earlier.
 Hit &quot;OK&quot; to apply the changes</li>
 </ul></li>
-<li>open the PhpStorm Settings again, enter the search box at the top left, type &quot;PHP&quot; and choose the entry named &quot;PHP&quot; from the resulting list
+<li>Open the PhpStorm Settings again, enter the search box at the top left, type &quot;PHP&quot; and choose the entry named &quot;PHP&quot; from the resulting list.
 Set the language level to PHP 7 to get the correct syntax highlighting and click on the &quot;...&quot; to open the &quot;Interpreter&quot; dialog.
 Click on the &quot;+&quot; in the top left corner and choose &quot;Remote...&quot;. In the upcoming dialog choose &quot;Deployment Configuration&quot; and select
 the 'Vagrant (LaravelExample)' entry.
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-interpreter-settings.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-interpreter-settings.PNG" alt="PhpStorm Interpreter settings" /></a></li>
-<li>hit &quot;OK&quot; to confirm your selection. PhpStorm will now try to connect via SSH on port 22 to <code>laravelexample.app</code>.
+<li>Hit &quot;OK&quot; to confirm your selection. PhpStorm will now try to connect via SSH on port 22 to <code>laravelexample.app</code>.
 Since this is the first time you will be doing that, you should be prompted to confirm the RSA key fingerprint.
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-remote-host-verification.PNG"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpstorm-remote-host-verification.PNG" alt="PhpStorm remote host RSA key fingerprint verification" /></a>
 In short,
@@ -462,18 +463,18 @@ uses the remote interpreter and the remote path to run.</p>
 <h3>Setup PHPUnit</h3>
 <p>Setting up PHPUnit is pretty straight forward.</p>
 <ul>
-<li>open the settings via <code>File &gt; Settings...</code>, search vor &quot;PHPUnit&quot;, choose the entry under &quot;Language &amp; Frameworks&quot; &gt; &quot;PHP&quot;
+<li>Open the settings via <code>File &gt; Settings...</code>, search vor &quot;PHPUnit&quot;, choose the entry under &quot;Language &amp; Frameworks&quot; &gt; &quot;PHP&quot;
 and click on the green &quot;+&quot; in the top left and choose &quot;By Remote Interpreter...&quot;
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter.png" alt="PHPUnit remote interpreter" /></a></li>
-<li>choose the &quot;Vagrant (LaravelExample)&quot; entry
+<li>Choose the &quot;Vagrant (LaravelExample)&quot; entry
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter-vagrant.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-remote-interpreter-vagrant.png" alt="PHPUnit vagrant remote interpreter" /></a></li>
-<li>select &quot;Use custom autoloader&quot; and fill in the required paths (as they appear on the remote server):
+<li>Select &quot;Use custom autoloader&quot; and fill in the required paths (as they appear on the remote server):
 <ul>
 <li>Path to script: <code>/home/vagrant/laravelexample/vendor/autoload.php</code> (the path to the autoloader as generated by Composer)</li>
 <li>Default configuration file: <code>/home/vagrant/laravelexample/phpunit.xml</code>
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-path-settings.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/phpunit-path-settings.png" alt="PHPUnit path settings" /></a></li>
 </ul></li>
-<li>confirm with &quot;OK&quot;</li>
+<li>Confirm with &quot;OK&quot;</li>
 </ul>
 <p>To verify that everything works as expected, right-click on the file &quot;test/ExampleTest.php&quot; in PhpStorm and choose &quot;Run&quot; &gt; &quot;ExampleTest&quot;.
 <a href="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/run-phpunit-example-test.png"><img src="/img/laravel-with-phpunit-on-vagrant-in-phpstorm/phpstorm/run-phpunit-example-test.png" alt="Run PHPUnit ExampleTest" /></a>
@@ -490,7 +491,7 @@ for some more insight in how .env files work in Laravel.</p>
 that really made my life easier:</p>
 <ul>
 <li>
-<p>the Laravel Plugin (Open the settings, search for &quot;plugin&quot; and then for &quot;Laravel Plugin&quot;).
+<p>The Laravel Plugin (Open the settings, search for &quot;plugin&quot; and then for &quot;Laravel Plugin&quot;).
 I personally really like the code completion when using the <code>config()</code> helper. You can find a full description
 at the <a href="https://plugins.jetbrains.com/plugin/7532?pr=">plugin page</a> and in <a href="https://blog.jetbrains.com/phpstorm/2015/01/laravel-development-using-phpstorm/">this blog article</a>.</p>
 <p>One thing to note: The plugin has to be activated <strong>per project</strong>. That means it's not enough to install it, but you
@@ -532,7 +533,8 @@ Homestead.json
 <p>The <code>Homestead.yaml</code> and <code>Homestead.json</code> entries have been added automatically when we ran <code>vendor/bin/homestead make</code>. That's nice, but we
 should also add a <code>.vagrant/</code> entry, because this folder will be created automatically, once we run <code>vagrant up</code>. Further, the ide-helper
 Plugin created two files that are only relevant if you're using an IDE so they shouldn't necessarily be in the repo. So let's add entries for
-<code>.phpstorm.meta</code> and <code>_ide_helper*</code> (I'm using the wildcard here, because there might be more files later with that prefix, e.g. <code>_ide_helper_models.php</code>)</p>
+<code>.phpstorm.meta.php</code> and <code>_ide_helper*</code> (I'm using the wildcard here, because there might be more files later with that prefix, e.g. <code>_ide_helper_models.php</code>).
+Plus, PhpStorm also generates some meta files itself that really shouldn't be in the repository, so let's add <code>.idea/</code> as well.</p>
 <p>The <code>.gitignore</code> file should now look like this:</p>
 <pre><code>/vendor
 /node_modules
@@ -541,16 +543,51 @@ Homestead.yaml
 Homestead.json
 .env
 .vagrant/
-.phpstorm.meta
-_ide_helper*</code></pre>
+.phpstorm.meta.php
+_ide_helper*
+.idea/</code></pre>
 <h3>Update the readme.md file</h3>
 <p>The <code>readme.md</code> file in the base directory of your application currently contains the default readme of the Laravel framework. So let's delete
 the old content and put some general information in there on how other developers can setup their development environment and get started quickly.
 Here's an example that you can use as blueprint:</p>
 <pre><code># LaravelExample
 ## Setup
+- download/clone the git repository from
+  - git clone 
+- navigate into the project folder
+  - cd laravelexample
+- make sure not to work directly on the master branch  
+  - `git checkout -b my_local_branch`
+- to prepare the vagrant configuration, run
+  - `vendor/bin/homestead make` or `vendor/bin/homestead.bat make` on Windows
+- adjust the `hosts` file and the newly created `Homestead.yaml` in the root of the repo according to your needs. Usually that includes:
+  - adjust `ip`
+    - make sure the `ip` is not already used in your local network
+  - add an entry to your host file
+    - `[IP] laravelexample.app` (e.g. `192.168.33.111 laravelexample.app`)
+    - location on Unix: `/etc/hosts`
+    - location on Windows: `C:\Windows\System32\drivers\etc`
+- adjust `folders` and `sites` mapping (optional; it should be set up correctly by default if you followed the steps above).
+  Watch out for the following:
+  - the `folders: - map: "[PATH]"` should point to the absolute path to the `cube` repository on your **local** machine
+  - the `folders: to: "[PATH]"` denotes the path on your **vagrant** machine that is mapped to the above mentioned path on your local machine,
+    so that you can access your local files within the vagrant box.
+  - the `sites: - map: "[HOSTNAME]"` denotes the hostname that the nginx is looking for to serve content on
+    - you _should_ adjust that to the hostname chosen for your hostfile (e.g. `laravelexample.app`) although it not necessary since nginx will even respond to another hostname
+  - the `sites: - to: "[PATH]"` denotes the absolute path withing the vagrant box that the above mentioned hostname uses as `root` path for content.
+    This should be the path to the `public` folder of this repository
+- start the vagrant box with `vagrant up`, ssh into it with `vagrant ssh`, switch to the project folder (by default, this should be `cd /home/vagrant/laravelexample/`) and install the 
+  project's dependencies
+  - `composer install`
+- setup laravel by generating an application key and setting up the .env file:
+  - php artisan key:generate
+  - `cp .env.example .env`
+- generate the meta data files for better code completion
+  - `php artisan ide-helper:meta`
+  - `php artisan ide-helper:generate`
+  - `php artisan ide-helper:model`
 
-...f</code></pre>
+Should now be able to open http://laravelexample.app/ in your browser and see the Laravel welcome page :)</code></pre>
 <p>Cool, now we are basically done and could <a href="https://help.github.com/articles/adding-an-existing-project-to-github-using-the-command-line/">upload our project e.g. on Github</a>.
 I actually went ahead and did exactly that with the &quot;LaravelExample&quot; project I used in this tutorial.</p>
                 <h2>Comments</h2>
