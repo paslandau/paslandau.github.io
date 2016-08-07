@@ -33,6 +33,7 @@ foreach ($vars as $var) {
         <meta name="author" content="{{$author}}">
     @endif
     <title>{{$title}} | {{$site["title"]}}</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw" />
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
