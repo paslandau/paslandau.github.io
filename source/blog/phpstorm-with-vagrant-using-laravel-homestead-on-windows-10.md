@@ -19,8 +19,19 @@ And just as a reminder, the first part is over at
 [Setting up PHP7 with Xdebug 2.4 for PhpStorm](https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/),
 the third at [Setting up Laravel with PHPUnit on Vagrant in PhpStorm](https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/)
 
-## Setting up the software
-### Git and Git Bash
+## Table of contents
+<ul>
+<li><a href="#setting-up-the-software">Setting up the software</a><ul>
+ <li><a href="#git-and-git-bash">Git and Git Bash</a></li>
+ <li><a href="#oracle-virtualbox">Oracle VirtualBox</a></li>
+ <li><a href="#vagrant">Vagrant</a></li>
+ <li><a href="#homestead">Homestead</a></li>
+</ul></li>
+<li><a href="#configuring-phpstorm-to-use-the-vagrant-box">Configuring PhpStorm to use the vagrant box</a></li>
+</ul>
+
+## <a id="setting-up-the-software"></a>Setting up the software
+### <a id="git-and-git-bash"></a>Git and Git Bash
 First of all, we're going to install a decent terminal on windows, because we will have to do some stuff on the command line and once you're 
 working with vagrant you'll have to do this via SSH and it's just convenient to have a similar tool set available on Windows as on Unix (e.g. history search).
 
@@ -51,7 +62,7 @@ Cool, we now have a much prettier (and more powerful) shell to work with. I won'
 there are [much better introductions/tutorials on Git](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) 
 out there than I could possibly write :) 
 
-### Oracle VirtualBox
+### <a id="oracle-virtualbox"></a>Oracle VirtualBox
 VirtualBox is the software that runs the virtual machine that we can use to run our code on. Using a virtual machine
 makes it possible to use the environment/infrastructure of a production system during local development and thus
 minimizes the error potential when finally going to production. When you're just starting out, those benefits probably 
@@ -62,7 +73,7 @@ caches, web servers etc., this approach becomes incredibly helpful.
   As of writing this tutorial, the current version is "VirtualBox 5.0.20 for Windows hosts".
 - Run the downloaded file and follow the installation instructions. There's actually nothing to explain ;)
 
-### Vagrant
+### <a id="vagrant"></a>Vagrant
 Technically, we wouldn't even need vagrant for our development as the "heavy lifting" is done by VirtualBox and once 
 we've got our virtual machine up and running, we can start running code on it. But getting the setup right is actually not an
 easy task and requires manual involvement. We don't want that. We want a simple, reproducible, formalized way of defining
@@ -85,7 +96,7 @@ $ vagrant -v
 Vagrant 1.7.4
 ```
 
-### Homestead
+### <a id="homestead"></a>Homestead
 Homestead is a vagrant base box that is maintained by the creator of Laravel, Taylor Otwell. There's actually a chapter 
 on [Homestead in the Laravel documentation](https://laravel.com/docs/5.2/homestead) that does a pretty good job explaining 
 how to set homestead up, so I'll keep this section rather short.
@@ -269,7 +280,7 @@ vagrant@homestead:~$
 Congratulations, you've successfully overcome every obstacle and are now the proud owner 
 of a working vagrant homestead setup.
 
-## Configuring PhpStorm to use the vagrant box
+## <a id="configuring-phpstorm-to-use-the-vagrant-box"></a>Configuring PhpStorm to use the vagrant box
 Setting up PhpStorm to work with your newly created vagrant box can be a little tricky, as the process is not really
 that straight forward. But in the end it's just a matter of "knowing where to click" (and having a little bit of background
 info on what's happening behind the scenes is also helpful ;)). And it will _not_ work as expected, but I think it's still 
