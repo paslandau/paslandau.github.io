@@ -6,7 +6,7 @@ subheading: "... on a Windows 10 machine. Plus Git and Git bash"
 h1: "Setting up PhpStorm with Vagrant and Laravel Homestead"
 description: "Step-by-Step tutorial for setting up a new PhpStorm project running on a Homestead Vagrant box."
 author: "Pascal Landau"
-published_at: "2016-08-07 10:00:00"
+published_at: "2016-08-07 13:00:00"
 vgwort: "9cf2ebaf25a5461f806db747de63335c"
 slug: "phpstorm-vagrant-homestead"
 ---
