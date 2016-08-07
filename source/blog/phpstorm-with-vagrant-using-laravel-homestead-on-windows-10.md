@@ -1,12 +1,12 @@
 ---
 extends: _layouts.post
 section: content
-title: "How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial]"
+title: "How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial  Part 2]"
 subheading: "... on a Windows 10 machine. Plus Git and Git bash"
 h1: "Setting up PhpStorm with Vagrant and Laravel Homestead"
 description: "Step-by-Step tutorial for setting up a new PhpStorm project running on a Homestead Vagrant box."
 author: "Pascal Landau"
-published_at: "2016-06-24 01:11:52"
+published_at: "2016-08-07 10:00:00"
 vgwort: "9cf2ebaf25a5461f806db747de63335c"
 slug: "phpstorm-vagrant-homestead"
 ---
@@ -71,8 +71,8 @@ and makes it even sharable with other team members to get them started quickly.
 
 - Download the 1.7.4 version of Vagrant from the [Vagrant download archive page](https://releases.hashicorp.com/vagrant/1.7.4/)
   (the [vagrant_1.7.4.msi file](https://releases.hashicorp.com/vagrant/1.7.4/vagrant_1.7.4.msi) is the installer for Windows)
-  As of writing this tutorial, the current version is 1.8.3 but that didn't work for me. (More concrete, I got the error
-  > The box 'laravel/homestead' could not be found orThe box 'laravel/homestead' could not be found or
+  As of writing this tutorial, the current version is 1.8.5 but that didn't work for me. (More concrete, I got the error
+  > The box 'laravel/homestead' could not be found
   
   when trying to set up homestead.)
 - Run the downloaded file and follow the installation instructions. Again, nothing fancy here but you'll probably 
@@ -90,9 +90,17 @@ Homestead is a vagrant base box that is maintained by the creator of Laravel, Ta
 on [Homestead in the Laravel documentation](https://laravel.com/docs/5.2/homestead) that does a pretty good job explaining 
 how to set homestead up, so I'll keep this section rather short.
 
-Since we've already installed VirtualBox and Vagrant, all we need to do is running `vagrant box add laravel/homestead`.
-That command will download the latest [homestead box from the vagrant catalogue](https://atlas.hashicorp.com/laravel/homestead)
-to (by default) `~/.vagrant.d/boxes` or in Windows terms `C:\Users\<Username>\.vagrant.d\boxes`
+Since we've already installed VirtualBox and Vagrant, all we need to do is running `vagrant box add laravel/homestead --box-version 0.4.4`.
+That command will download [the homestead box version v0.4.4 from the vagrant catalogue](https://atlas.hashicorp.com/laravel/boxes/homestead/versions/0.4.4)
+to (by default) `~/.vagrant.d/boxes` or in Windows terms `C:\Users\<Username>\.vagrant.d\boxes`. You can change this location
+by setting the `VAGRANT_HOME` path variable as explained [here](http://stackoverflow.com/a/10226134/413531).
+
+**Caution:** We specified the concrete version because a simple `vagrant box add laravel/homestead` would download the 
+_latest_ version of homestead which is (at the time of this writing) v0.5.0 and contains the newest Ubuntu release 16.04.
+If you want to go with that version, make sure to also download and install the _latest_ vagrant version (currently 1.8.5). 
+It is possible ot have multiple versions of a vagrant box on your host machine, but it requires some additional
+setup to choose the right box. Please refer to this [answer](http://laravel.io/forum/02-03-2016-install-specific-laravel-homestead-version-and-502-bad-gateway-nginx-solved?page=1#reply-29937) 
+for further information.
 
 _Note:_ You might encounter the following error message:
 > $ vagrant box add laravel/homestead

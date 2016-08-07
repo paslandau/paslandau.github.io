@@ -1,11 +1,11 @@
 ---
 extends: _layouts.post
 section: content
-title: "How to setup PHP7 with Xdebug 2.4 for PhpStorm [Tutorial]"
+title: "How to setup PHP7 with Xdebug 2.4 for PhpStorm [Tutorial Part 1]"
 subheading: "... on a Windows 10 machine. With composer. Plus Phrase Express."
 h1: "Setting up PHP7 with Xdebug 2.4 for PhpStorm"
 author: "Pascal Landau"
-published_at: "2016-05-31 01:11:52"
+published_at: "2016-08-07 14:00:00"
 description: "Step-by-Step tutorial for setting up PHP7 with Xdebug 2.4 for PhpStorm on Windows 10"
 vgwort: "9ae74a6a0da44be884cbd6ea2d95965a"
 slug: "php7-windows10"
@@ -307,7 +307,7 @@ There's actually not much to tell about the installation process so I'm just gon
 
 ### Clipboard cache
 This one is a biggie: Phrase Express saves everything you copy to the clipboard in a cache that can be accessed
-via `CRTL + ALT + V` (by default). I cannot emphasize how incredible handy that is.
+via `CRTL + ALT + V` (by default). I cannot emphasize how incredibly handy that is.
 
 ### Text expansion
 There's a couple of things I have to type frequently (or at least from time to time) and it's just cumbersome
