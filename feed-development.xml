@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>http://www.pascallandau.com</link>
         <atom:link href="http://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 07 Aug 2016 18:15:05 +0000</pubDate>
-        <lastBuildDate>Sun, 07 Aug 2016 18:15:05 +0000</lastBuildDate>
+        <pubDate>Sun, 07 Aug 2016 18:56:30 +0000</pubDate>
+        <lastBuildDate>Sun, 07 Aug 2016 18:56:30 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial Part 3]</title>
@@ -543,8 +543,8 @@ I actually <a href="https://github.com/paslandau/laravelexample">went ahead and 
 <li>setup Vagrant in PhpStorm for (remote) PHP execution and debugging</li>
 </ul>
 <p>And just as a reminder, the first part is over at
-<a href="https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>,
-the third at <a href="https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
+<a href="http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>,
+the third at <a href="http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
 <h2>Table of contents</h2>
 <ul>
 <li><a href="#setting-up-the-software">Setting up the software</a><ul>
@@ -929,7 +929,7 @@ explain how to make the shift to using a virtual machine and in the third we'll 
 and put it all together.</p>
 <p>The second part is over at
 <a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>,
-the third at <a href="https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
+the third at <a href="http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
 <p>Let's get to it, shall we?</p>
 <h2>Table of contents</h2>
 <ul>
