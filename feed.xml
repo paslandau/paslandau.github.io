@@ -5,9 +5,171 @@
         <description>Personal website of Pascal Landau</description>
         <link>http://www.pascallandau.com</link>
         <atom:link href="http://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 08 Apr 2018 16:38:18 +0000</pubDate>
-        <lastBuildDate>Sun, 08 Apr 2018 16:38:18 +0000</lastBuildDate>
+        <pubDate>Sun, 08 Apr 2018 16:47:04 +0000</pubDate>
+        <lastBuildDate>Sun, 08 Apr 2018 16:47:04 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>BigQuery: Convert timestamp/date/datetime to different timezone</title>
+                <description><![CDATA[<p>BigQuery provides multiple functions to convert timestamps / dates / datetimes to a different timezone:</p>
+<ul>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#date">DATE(timestamp_expression, timezone)</a></li>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#time">TIME(timestamp, timezone)</a></li>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#datetime">DATETIME(timestamp_expression, timezone)</a></li>
+</ul>
+<p>According to the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#time-zones">docu</a> the <code>timezone</code>
+can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. <code>Europe/Berlin</code>). See this
+<a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">list of IANA timezone offsets and names</a>.</p>
+<p>The converted dates/times can than be formatted with via </p>
+<ul>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_date">FORMAT_DATE(format_string, date_expression)</a></li>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_time">FORMAT_TIME(format_string, time_expression)</a></li>
+<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></li>
+</ul>
+<h2>Code</h2>
+<pre><code>SELECT
+  DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
+  DATE(timestamp, "Europe/Berlin") as date_berlin,
+  TIME(timestamp, "Europe/Berlin") as time_berlin,
+  FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
+FROM
+  table</code></pre>
+<h2>Working Example</h2>
+<script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script>
+<h2>Run on BigQuery</h2>
+<p><a href="https://bigquery.cloud.google.com/savedquery/106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png"><img src="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png" alt="BigQuery Console: Convert timestamp to different timezone example" title="BigQuery Console: Convert timestamp to different timezone" /></a></p>
+<h2>Links</h2>
+<ul>
+<li><a href="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9">Gist on Github</a></li>
+<li><a href="https://bigquery.cloud.google.com/savedquery/106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
+<li><a href="https://stackoverflow.com/a/43349229/413531">Answer to &quot;BigQuery converting to a different timezone&quot; on Stackoverflow</a></li>
+</ul>
+<h2>Use cases</h2>
+<p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
+dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
+<p>Common formats:</p>
+<pre><code>FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
+FORMAT_DATE("%F", DATETIME(timestamp, "Europe/Berlin"))     # %Y-%m-%d          =&gt; 2018-04-08
+FORMAT_DATE("%V", DATETIME(timestamp, "Europe/Berlin"))     # calendar week     =&gt; 14
+FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))     #          %H:%M:%S =&gt; 18:28:01</code></pre>]]></description>
+                                                    <pubDate>Sun, 08 Apr 2018 18:00:00 +0000</pubDate>
+                                <link>http://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/</link>
+                <guid isPermaLink="true">http://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/</guid>
+            </item>
+                    <item>
+                <title>BigQuery: Extract URL parameters as ARRAY</title>
+                <description><![CDATA[<p>We're gonna use the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_extract_all">REGEXP_EXTRACT_ALL</a>
+function provided in the Standard SQL dialect of BigQuery
+to extract parameters from the query part of a URL and return them as an ARRAY.</p>
+<h2>Code</h2>
+<pre><code>SELECT
+  REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)((?:[^=]+)=(?:[^&amp;]*))') as params,
+  REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)(?:([^=]+)=(?:[^&amp;]*))') as keys,
+  REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values
+FROM
+  table</code></pre>
+<h2>Working Example</h2>
+<script src="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a.js"></script>
+<h3>Result</h3>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>id</th>
+<th>query</th>
+<th>params</th>
+<th>keys</th>
+<th>values</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>?foo=bar</td>
+<td>foo=bar</td>
+<td>foo</td>
+<td>bar</td>
+<td>simple</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2</td>
+<td>?foo=bar&amp;bar=baz</td>
+<td>foo=bar</td>
+<td>foo</td>
+<td>bar</td>
+<td>multiple params</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>bar=baz</td>
+<td>bar</td>
+<td>baz</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>?foo[]=bar&amp;foo[]=baz</td>
+<td>foo[]=bar</td>
+<td>foo[]</td>
+<td>bar</td>
+<td>arrays</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>foo[]=baz</td>
+<td>foo[]</td>
+<td>baz</td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td>4</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>no query</td>
+</tr>
+</tbody>
+</table>
+<h2>Run on BigQuery</h2>
+<p><a href="https://bigquery.cloud.google.com/savedquery/106862046541:e5da849d652a4502b12443a2f14b355a">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/extract-url-parameters-array/extract-url-parameters-array-bigquery-example.png"><img src="/img/bigquery-snippets/extract-url-parameters-array/extract-url-parameters-array-bigquery-example.png" alt="BigQuery Console: Extract URL parameters example" title="BigQuery Console: Extract URL parameters example" /></a></p>
+<h2>Notes</h2>
+<ul>
+<li><code>REGEXP_EXTRACT_ALL</code> only excepts 1 capturing group, hence we need to mark all other groups
+as non-capturing with <code>(?:</code></li>
+<li>if the URL contains a fragment part (e.g. <a href="https://example.org/?foo=bar#baz">https://example.org/?foo=bar#baz</a>), the fragment is currently not removed.
+To do so, remove the fragment prior to extraction with
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_replace">REGEXP_REPLACE</a>,
+e.g. like so:
+<pre><code>REGEXP_EXTRACT_ALL(
+REGEXP_EXTRACT(query, r'#.*', ''),
+r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values</code></pre></li>
+</ul>
+<h2>Links</h2>
+<ul>
+<li><a href="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a">Gist on Github</a></li>
+<li><a href="https://bigquery.cloud.google.com/savedquery/106862046541:e5da849d652a4502b12443a2f14b355a">Example on BigQuery</a></li>
+<li><a href="https://regex101.com/r/iqwgxD/1/">REGEX explanation on Regex101</a></li>
+</ul>
+<h2>Use cases</h2>
+<ul>
+<li>compile a list of all parameters from your log files</li>
+<li>evaluate the frequency of parameters keys/values</li>
+</ul>]]></description>
+                                                    <pubDate>Sun, 08 Apr 2018 12:00:00 +0000</pubDate>
+                                <link>http://www.pascallandau.com/bigquery-snippets/extract-url-parameters-array/</link>
+                <guid isPermaLink="true">http://www.pascallandau.com/bigquery-snippets/extract-url-parameters-array/</guid>
+            </item>
                     <item>
                 <title>How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial Part 3]</title>
                 <description><![CDATA[<p>In this third part we will set up a fresh Laravel installation and configure everything to run it on Vagrant, triggered by PhpStorm.
