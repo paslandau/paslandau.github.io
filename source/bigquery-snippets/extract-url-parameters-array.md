@@ -6,7 +6,7 @@ subheading: ""
 h1: "How to extract URL parameters as ARRAY in Google BigQuery"
 description: "Extracting parameters in the query of a URL as ARRAY with Google BigQuery"
 author: "Pascal Landau"
-published_at: "2018-04-08 16:00:00"
+published_at: "2018-04-08 12:00:00"
 category: "development"
 slug: "extract-url-parameters-array"
 ---
