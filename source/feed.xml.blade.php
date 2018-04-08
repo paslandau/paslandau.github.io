@@ -6,7 +6,7 @@
 $lessons = collect($jigsaw->getMeta())
         ->filter(function ($item, $path) {
             $sep = preg_quote(DIRECTORY_SEPARATOR, "#");
-            return preg_match("#^blog{$sep}#", $path);
+            return preg_match("#^(blog|bigquery-snippets){$sep}#", $path);
         })
         ->sortByDesc("published_at")
         ->take(10);
