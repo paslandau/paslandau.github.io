@@ -12,6 +12,7 @@
 
 Deploy
 - `blog-build`
+  - commits the current status of this repo
   - runs `gulp` (see above; but from anywhere; changes to this dir before)
 - `blog-publish`
   - copies files from `build_local` to the blog directory and pushes them to github
