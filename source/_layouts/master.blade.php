@@ -88,6 +88,9 @@ foreach ($vars as $var) {
                 <li>
                     <a href="/blog/">Blog</a>
                 </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->

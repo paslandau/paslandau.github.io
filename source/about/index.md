@@ -9,10 +9,10 @@ description: "About Pascal Landau"
 slug: "about"
 ---
 
-I'm a 28 year old tech enthusiast who currently works as Head of Marketing Technology (team lead for the 
-online marketing development department) at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/).
+I'm a 30 year old tech enthusiast who currently works as Head of Marketing Technology, Webtracking and SEO 
+at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/).
 At this particular point in time, I'm really digging software development especially backend PHP coding particularly with 
-Laravel. Apart from that I've always enjoyed earning money on the internet - which initially brought me to SEO. Which 
+Laravel. Oh, and Gooogle BigQuery (lots of love <3) Apart from that I've always enjoyed earning money on the internet - which initially brought me to SEO. Which 
 was a lot more fun when Google was not that sophisticated tbh :) Besides that, I tend to work out.
 
 There are same basic philosophies and ground rules I've found particularly useful (yes, this list will grow 
@@ -31,6 +31,33 @@ I feel very strongly about not simply presenting the solution but explain the wa
 encounter a similar problem at some point in the future and I would rather give you the necessary tools to figure it
 out yourself than solving it for you _again_.
 
+> I can't manage what I can't measure.
+> One accurate measurement is worth a thousand expert opinions.
+
+These are _big_ ones. If you're coming from a mindset of "always learning", you'll embrace the philosophy of
+"The more I know about X, the more I know that I don' t know X" at some point. You'll start to 
+constantly question your work (and that of others...) because you are used to the fact, that there seldom
+is one truth and the more you get to know, the more likely it is that you'll change your opinion on something.
+
+Combine that with highly complex fields and black box components (think AI, Attribution Modeling, Re-engineering 
+Google's ranking algorithm) and you'll quickly notice, that there are perfectly reasonable assumptions that
+are still completely incorrect. It does not 
+matter how you feel about something or how much you think you ore an "expert" knows. Unless proven, that does
+not count much. I'm not saying there is no value in an opinion, especially if the one having it has a lot of 
+experience in the field at hand. This is still super value in terms of developing a hypothesis. 
+
+Once you get there, numbers and metrics are your one, true friend. 
+
+> An ounce of prevention is worth a pound of cure
+
+As a software engineer, you're probably familiar with "the cost of a bug":
+
+![Cost of a bug in software development](/img/cost-of-a-bug.png "Cost of a bug in software development")
+
+After realizing that, the phrase "... but we didn't have time to write tests!" becomes almost comical.
+Making errors is human. Things break, that is absolutely normal. But isn't it so much better to see
+that _immediately_ instead of "crossing-fingers and hoping that nothing breaks and if so that no ones notices"?
+
 _tbc..._
 
 ## Short facts
@@ -45,6 +72,8 @@ _tbc..._
 - 2013-01: Started lecturing at [AFS Akademie für Fortbildung in Suchmaschinenoptimierung](http://www.afs-akademie.org/) (bi-yearly) on the topic of "Pagerank und Trustrank"
 - 2013-05: Started working at [Tchibo GmbH](http://www.tchibo.com/) as Technical SEO Manager
 - 2016-04: Started working at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/) as Lead/Head of Marketing Technology
+  - 2017-07: + Head of SEO
+  - 2017-12: + Head of Webtracking
 
 ## Slightly longer
 

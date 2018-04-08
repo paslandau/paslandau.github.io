@@ -1,14 +1,19 @@
-img {
-    display:block;
-    margin: 0.5em auto 1em auto;
-    height: auto;
-    max-width: 100%;
-}
-
 table {
-    width: 100%;
-}
+  width: 100%; }
 
-.container a{
-    text-decoration: underline;
-}
+table td {
+  padding: 5px;
+  border: 1px solid black; }
+
+table th {
+  padding: 5px;
+  border: 1px solid black;
+  border-width: 0 0 2px 0; }
+
+.container a {
+  text-decoration: underline; }
+
+.container img {
+  width: 100%; }
+
+/*# sourceMappingURL=main.css.map */
