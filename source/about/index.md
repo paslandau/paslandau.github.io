@@ -9,11 +9,21 @@ description: "About Pascal Landau"
 slug: "about"
 ---
 
+<div class="col-md-6 col-s-12 center">
+ <figure>
+  <a href="/img/pascal-landau.jpg">
+    <img src="/img/pascal-landau-400x400.jpg" alt="Pascal Landau" />
+  </a>
+  <figcaption style="text-align:center; margin-bottom:1em">Pascal Landau</figcaption>
+</figure> 
+</div>
+<div class="col-md-6 col-s-12">
 I'm a 30 year old tech enthusiast who currently works as Head of Marketing Technology, Webtracking and SEO 
-at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/).
+at <a href="http://corporate.aboutyou.de/en/">ABOUT YOU GmbH</a>.
 At this particular point in time, I'm really digging software development especially backend PHP coding particularly with 
 Laravel. Oh, and Gooogle BigQuery (lots of love <3) Apart from that I've always enjoyed earning money on the internet - which initially brought me to SEO. Which 
 was a lot more fun when Google was not that sophisticated tbh :) Besides that, I tend to work out.
+</div>
 
 There are same basic philosophies and ground rules I've found particularly useful (this list will grow, give it some time:P):
 
