@@ -4,7 +4,7 @@
  * @var array $currentMeta
  */
 $url = $site["url"];
-$canonical = $url."/".$currentMeta["url-path"];
+$canonical = rtrim($url,"/")."/".$currentMeta["url-path"];
 $vars = [
         "title",
         "description",
