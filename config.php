@@ -6,7 +6,7 @@ $config = [
         "title" => "pascallandau.com",
         "description" => "Personal website of Pascal Landau",
         'host' => "www.pascallandau.com",
-        'scheme' => "http://",
+        'scheme' => "https://",
     ],
     'social' => [
         "twitter" => "https://twitter.com/PascalLandau",
