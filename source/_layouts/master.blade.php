@@ -43,7 +43,7 @@ foreach ($vars as $var) {
     <link rel="alternate" type="application/rss+xml" title="{{$site["title"]}}" href="{{$site["url"]}}{{$jigsaw->getMeta()["feed.xml.blade.php"]["target-path"]}}" />
 
     <!-- Custom Fonts -->
-    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
           type="text/css">
     {{--<link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet'--}}
           {{--type='text/css'>--}}
@@ -172,7 +172,7 @@ foreach ($vars as $var) {
     </div>
 </footer>
 @if(isset($vgwort))
-    <img src="http://vg02.met.vgwort.de/na/{{$vgwort}}" width="1" height="1" alt="" style="display:none" />
+    <img src="https://ssl-vg03.met.vgwort.de/na/{{$vgwort}}" width="1" height="1" alt="" />
 @endif
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
