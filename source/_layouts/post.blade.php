@@ -4,7 +4,8 @@
  * @var array $currentMeta
  */
 $url = $site["url"];
-$canonical = $url."/".$currentMeta["url-path"];
+$path = preg_replace("#/+#","/","/".$currentMeta["url-path"]);
+$canonical = rtrim($url,"/").$path;
 ?>
 @extends('_layouts.master')
 
