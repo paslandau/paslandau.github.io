@@ -39,7 +39,7 @@ foreach ($vars as $var) {
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="alternate" type="canonical" href="{{$canonical}}" />
+    <link rel="canonical" href="{{$canonical}}" />
     <link rel="alternate" type="application/rss+xml" title="{{$site["title"]}}" href="{{$site["url"]}}{{$jigsaw->getMeta()["feed.xml.blade.php"]["target-path"]}}" />
 
     <!-- Custom Fonts -->
