@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 16 Apr 2018 22:38:01 +0000</pubDate>
-        <lastBuildDate>Mon, 16 Apr 2018 22:38:01 +0000</lastBuildDate>
+        <pubDate>Mon, 30 Apr 2018 12:40:10 +0000</pubDate>
+        <lastBuildDate>Mon, 30 Apr 2018 12:40:10 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial Part 3]</title>
