@@ -80,7 +80,7 @@ _tbc..._
 - 2011-09: Bachelors degree (final grade 1.1)
 - 2011-12: Voted [Best SEO Newcomer 2011](http://www.seo-united.de/blog/seo/seo-wahlen-2011-gewinner.htm#newcomer)
 - 2012: Started working as SEO consultant at TRG (The Reach Group) in Hamburg
-- 2013-01: Started lecturing at [AFS Akademie für Fortbildung in Suchmaschinenoptimierung](http://www.afs-akademie.org/) (bi-yearly) on the topic of "Pagerank und Trustrank"
+- 2013-01: Started lecturing at [AFS Akademie für Fortbildung in Suchmaschinenoptimierung](http://www.afs-akademie.org/) (twice per year) on the topic of "Pagerank und Trustrank"
 - 2013-05: Started working at [Tchibo GmbH](http://www.tchibo.com/) as Technical SEO Manager
 - 2016-04: Started working at [ABOUT YOU GmbH](http://corporate.aboutyou.de/en/) as Lead/Head of Marketing Technology
   - 2017-07: + Head of SEO
