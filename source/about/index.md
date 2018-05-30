@@ -25,7 +25,7 @@ Laravel. Oh, and Gooogle BigQuery (lots of love <3) Apart from that I've always 
 was a lot more fun when Google was not that sophisticated tbh :) Besides that, I tend to work out.
 </div>
 
-There are same basic philosophies and ground rules I've found particularly useful (this list will grow, give it some time:P):
+There are same basic philosophies and ground rules I've found particularly useful (this list will grow, give it some time :P):
 
 > give a man a fish and you feed him for a day; teach a man to fish and you feed him for a lifetime
 
