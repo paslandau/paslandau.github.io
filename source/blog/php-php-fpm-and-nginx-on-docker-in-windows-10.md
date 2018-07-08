@@ -2,12 +2,12 @@
 extends: _layouts.post
 section: content
 title: "How to setup PHP, PHP-FPM and NGINX on Docker in Windows 10 [Tutorial Part 1]"
-subheading: "A primer on PHP on Docker under Windows."
+subheading: "A primer on PHP on Docker under Windows 10."
 h1: "Setting up PHP, PHP-FPM and NGINX for local development on Docker"
-description: "Step-by-Step tutorial for setting up PHP Docker containers (cli and fpm)  for local development."
+description: "Step-by-Step tutorial for setting up PHP Docker containers (cli and fpm)  for local development on Windows 10."
 author: "Pascal Landau"
-published_at: "2018-05-30 16:00:00"
-vgwort: ""
+published_at: "2018-07-08 22:00:00"
+vgwort: "e8a8b08253d04d8f96ba390a1d2a0037"
 category: "development"
 slug: "php-fpm-nginx-xdebug-docker-windows-10"
 ---
@@ -28,6 +28,9 @@ files for php-fpm are located), but that are imho important to understand, becau
 solve problems later on your own. 
 
 But if you are short on time, you might also jump directly to <a href="#tl-dr">the tl;dr</a>.
+
+This is the first part of a (probably) multi-part series on Docker. The next part will explain how
+to set up PHP in Docker containers in order to work nicely with PHPStorm when using XDebug.
 
 ## Table of contents
 <ul>
@@ -139,7 +142,7 @@ to must be made available here. After clicking "Apply", you will be prompted for
 
 Next, open tab "Advanced". You don't actually have to change any of the settings but if you (like me) 
 don't have `C:/` set up as you biggest partition, you might want to change the "Disk image location". 
-I'm putting mine at `D:\Hyper-V\Virtual Hard Disks\MobyLinuxVM.vhdx`. It might take some minutes for Docker to process the changes.
+I'm putting mine at `C:\Hyper-V\Virtual Hard Disks\MobyLinuxVM.vhdx`. It might take some minutes for Docker to process the changes.
 
 Docker "physically" stores the container images in that location.
 
@@ -149,17 +152,17 @@ Congratulations, Docker is now set up on your machine 😊
 
 ## <a id="setup-php-cli"></a>Setting up the PHP cli container 
 Now that we have the general stuff out of the way, let's set up our first container. 
-I've created the directory `D:/codebase/docker-php/` and will run the remaining examples in there. 
+I've created the directory `C:/codebase/docker-php/` and will run the remaining examples in there. 
 
 Firstly, lets create a directory for our sourcecode:
 ```
-mkdir -p "D:/codebase/docker-php/app"
+mkdir -p "C:/codebase/docker-php/app"
 ```
 
 For the sake of simplicity, we will stick to the [official PHP image](https://hub.docker.com/_/php/) and run:
 
 ```
-docker run -d --name docker-php -v "D:/codebase/docker-php/app":/var/www php:7.0-cli
+docker run -d --name docker-php -v "C:/codebase/docker-php/app":/var/www php:7.0-cli
 ```
 
 Which means:
@@ -168,14 +171,14 @@ Which means:
 docker run                               // run a container
 -d                                       // in the background (detached)
 --name docker-php                        // named docker-php
--v "D:/codebase/docker-php/app":/var/www // sync the directory D:/codebase/docker-php/app on the 
+-v "C:/codebase/docker-php/app":/var/www // sync the directory C:/codebase/docker-php/app on the 
                                          // windows host with /var/www in the container
 php:7.0-cli                              // use this image to build the container
 ```
 
 The result looks something like this:
 ```
-$ docker run -d --name docker-php -v "D:/codebase/docker-php/app":/var/www php:7.0-cli
+$ docker run -d --name docker-php -v "C:/codebase/docker-php/app":/var/www php:7.0-cli
 Unable to find image 'php:7.0-cli' locally
 7.0-cli: Pulling from library/php
 f2aa67a397c4: Pulling fs layer
@@ -250,16 +253,17 @@ According to [the docs](https://docs.docker.com/config/containers/multi-service_
 [This answer explains the difference between CMD and ENTRYPOINT](https://stackoverflow.com/a/21564990/413531) quite well. 
 Since we don't have a Dockerfile defined, we would need to look at the 
 [Dockerfile of the base image](https://github.com/docker-library/php/blob/27c65bbd606d1745765b89bf43f39b06efad1e43/7.0/stretch/cli/Dockerfile) 
-we're using, but I actually don't wanna go down this rabbit hole for now. To keep the container alive, 
-we need to add the `-i` flag to the `docker run` command:
+we're using, but I actually don't wanna go down this rabbit hole for now. Basically, the "problem" is, that the
+container doesn't have a long running process / service defined, (as the php-fpm or the nginx containers do later on).
+To keep the container alive, we need to add the `-i` flag to the `docker run` command:
 ````
-docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www php:7.0-cli
+docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www php:7.0-cli
 ````
 
 But then this happens:
 ````
 Pascal@Landau-Laptop MINGW64 /
-$ docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www php:7.0-cli
+$ docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www php:7.0-cli
 C:\Program Files\Docker\Docker\Resources\bin\docker.exe: Error response from daemon: Conflict. The container name "/docker-php" is already in use by container "56af890e1a61f8ffa5528b040756dc62a94c0b929c29df82b9bf5dec6255321f". You have to remove (or rename) that container to be able to reuse that name.
 See 'C:\Program Files\Docker\Docker\Resources\bin\docker.exe run --help'.
 ````
@@ -274,17 +278,17 @@ Pascal@Landau-Laptop MINGW64 /
 $ docker rm docker-php
 docker-php
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
-docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www php:7.0-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
+docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www php:7.0-cli
 7b3024a542a2d25fd36cef96f4ea689ec7ebb758818758300097a7be3ad2c2f6
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker ps
 CONTAINER ID    	IMAGE           	COMMAND              	CREATED         	STATUS          	PORTS           	NAMES
 7b3024a542a2    	php:7.0-cli     	"docker-php-entrypoi…"   5 seconds ago   	Up 4 seconds                        	docker-php
 ````
 
-Sweet, so now that the container is up and running, let's "log in" via 
+Sweet, so now that the container is up and running, let's "[log in](https://stackoverflow.com/a/30173220)" via 
 ````
 docker exec -it docker-php bash
 ````
@@ -292,7 +296,7 @@ docker exec -it docker-php bash
 You might get the following error message
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker exec -it docker-php bash
 the input device is not a TTY.  If you are using mintty, try prefixing the command with 'winpty'
 ````
@@ -304,7 +308,7 @@ winpty docker exec -it docker-php bash
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ winpty docker exec -it docker-php bash
 root@7b3024a542a2:/#
 ````
@@ -319,17 +323,17 @@ Zend Engine v3.0.0, Copyright (c) 1998-2017 Zend Technologies
 ````
 
 Remember the path mapping, that we specified? Let's create a simple "hello world" script **on the windows 10 host machine** 
-at `D:\codebase\docker-php\app\hello-world.php` to make sure it works:
+at `C:\codebase\docker-php\app\hello-world.php` to make sure it works:
 
 ````
-cd "D:\codebase\docker-php\app"
+cd "C:\codebase\docker-php\app"
 echo '<?php echo "Hello World (php)\n"; ?>' > hello-world.php
 ````
 
 Should look like this on the host machine:
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ ls -alh app
 total 1,0K
 drwxr-xr-x 1 Pascal 197121  0 Mai 28 12:29 ./
@@ -424,11 +428,11 @@ docker stop docker-php
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker stop docker-php
 docker-php
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker ps -a
 CONTAINER ID    	IMAGE           	COMMAND              	CREATED         	STATUS                   	PORTS           	NAMES
 7b3024a542a2    	php:7.0-cli     	"docker-php-entrypoi…"   2 hours ago     	Exited (137) 7 seconds ago                   	docker-php
@@ -443,11 +447,11 @@ docker start docker-php
 log back in and check if xdebug is still there:
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker start docker-php
 docker-php
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ winpty docker exec -it docker-php bash
 root@7b3024a542a2:/# php -m | grep xdebug
 xdebug
@@ -464,7 +468,7 @@ The `-f` flag forces the container to stop. Otherwise we would need an additiona
 Then we rebuild it, log in
 
 ````
-docker run -di --name docker-php -v "D:/codebase/docker-php/":/codebase php:7.0-cli
+docker run -di --name docker-php -v "C:/codebase/docker-php/":/codebase php:7.0-cli
 inpty docker exec -it docker-php bash
 ````
 
@@ -475,15 +479,15 @@ php -m | grep xdebug
 ... which won't be there anymore.
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker rm -f docker-php
 docker-php
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
-$ docker run -di --name docker-php -v "D:/codebase/docker-php/":/codebase php:7.0-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
+$ docker run -di --name docker-php -v "C:/codebase/docker-php/":/codebase php:7.0-cli
 1da17524418f5327760eb113904b7ceec30f22b41e4b4bd77f9fa2f7b92b4ead
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ winpty docker exec -it docker-php bash
 root@1da17524418f:/# php -m | grep xdebug
 root@1da17524418f:/#
@@ -495,12 +499,12 @@ Note the new container ID (before: `7b3024a542a2`; now: `1da17524418f`) and that
 Simply put, a [Dockerfile](https://docs.docker.com/engine/reference/builder/) describes the changes we make to a base image, 
 so we (and everybody else) can easily recreate the same environment. In our case, 
 we need to define the PHP base image that we used as well as instructions for installing and enabling xdebug.
-To clearly separate infrastructure from code, we'll create a new directory at `D:/codebase/docker-php/php-cli/`. 
+To clearly separate infrastructure from code, we'll create a new directory at `C:/codebase/docker-php/php-cli/`. 
 Create a file named `Dockerfile` in this directory
 
 ````
-mkdir "D:/codebase/docker-php/php-cli/"
-touch "D:/codebase/docker-php/php-cli/Dockerfile"
+mkdir "C:/codebase/docker-php/php-cli/"
+touch "C:/codebase/docker-php/php-cli/Dockerfile"
 ````
 
 and give it the following content:
@@ -511,14 +515,14 @@ RUN pecl install xdebug-2.6.0 \
 	&& docker-php-ext-enable xdebug
 ````
 
-Change to the `D:/codebase/docker-php/php-cli/` directory and build the image based on that Dockerfile
+Change to the `C:/codebase/docker-php/php-cli/` directory and build the image based on that Dockerfile
 
 ````
-cd "D:/codebase/docker-php/php-cli/"
+cd "C:/codebase/docker-php/php-cli/"
 docker build -t docker-php-image -f Dockerfile .
 ````
 
-The `-f Dockerfile` is actually optional as this is the default anyway). "docker-php-image" is the name of our new image. 
+The `-f Dockerfile` is actually optional as this is the default anyway. "docker-php-image" is the name of our new image. 
 
 If you encounter the following error 
 ````
@@ -533,7 +537,7 @@ Build an image from a Dockerfile
 you probably missed the trailing `.` at the end of `docker build -t docker-php-image -f Dockerfile .` ;)
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
 $ docker build -t docker-php-image -f Dockerfile .
 Sending build context to Docker daemon   5.12kB
 Step 1/2 : FROM php:7.0-cli
@@ -555,12 +559,12 @@ Note, that the building takes longer than before, because Docker now needs to do
 Instead of using the base `php:7.0-cli` image, we'll now use our new, shiny `docker-php-image` image to start the container and check for xdebug.
 
 ````
-docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www docker-php-image
+docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www docker-php-image
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
-$ docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www docker-php-image
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
+$ docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www docker-php-image
 C:\Program Files\Docker\Docker\Resources\bin\docker.exe: Error response from daemon: Conflict. The container name "/docker-php" is already in use by container "2e84cb536fc573142a9951331b16393e3028d9c6eff87f89cfda682279634a2b". You have to remove (or rename) that container to be able to reuse that name.
 See 'C:\Program Files\Docker\Docker\Resources\bin\docker.exe run --help'.
 ````
@@ -575,19 +579,19 @@ docker rm -f docker-php
 Retry 
 
 ````
-docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www docker-php-image
+docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www docker-php-image
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
 $ docker rm -f docker-php
 docker-php
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
-$ docker run -di --name docker-php -v "D:/codebase/docker-php/app":/var/www docker-php-image
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
+$ docker run -di --name docker-php -v "C:/codebase/docker-php/app":/var/www docker-php-image
 f27cc1310c836b15b7062e1fd381f283250a85133fb379c4cf1f891dec63770b
 
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
 $ winpty docker exec -it docker-php bash
 root@f27cc1310c83:/# php -m | grep xdebug
 xdebug
@@ -596,7 +600,7 @@ xdebug
 Yep, all good. Btw. since we "only" want to check if xdebug was installed, we could also simply pass `-m` to the `docker run` command:
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
 $ docker run docker-php-image php -m | grep xdebug
 xdebug
 ````
@@ -604,14 +608,14 @@ xdebug
 Be aware that this will create a new container every time it's run (, note the first entry with the wonderful name "distracted_mclean"):
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
 $ docker ps -a
 CONTAINER ID    	IMAGE           	COMMAND              	CREATED         	STATUS                   	PORTS           	NAMES
 abc9fec8a88b    	docker-php-image	"docker-php-entrypoi…"   4 minutes ago   	Exited (0) 4 minutes ago                     	distracted_mclean
 f27cc1310c83    	docker-php-image	"docker-php-entrypoi…"   10 minutes ago  	Exited (137) 6 minutes ago                   	docker-php
 ````
 
-Before we move on, let's stop and remove all containers via.
+Before we move on, let's []stop and remove all containers via](https://coderwall.com/p/ewk0mq/stop-remove-all-docker-containers).
 ````
 docker rm -f $(docker ps -aq)
 ````
@@ -619,7 +623,7 @@ docker rm -f $(docker ps -aq)
 The `$(docker ps -aq)` part returns only the numeric ids of all containers and passes them to the `docker rm -f` command.
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-cli
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-cli
 $ docker rm -f $(docker ps -aq)
 abc9fec8a88b
 f27cc1310c83
@@ -863,7 +867,7 @@ Looks good! Now let's customize some stuff:
 
 ````
 sed -i "s#/usr/share/nginx/html#/var/www#" /etc/nginx/conf.d/default.conf
-mkdir /var/www -p
+mkdir -p /var/www
 echo "Hello world!" > /var/www/index.html
 ````
 
@@ -888,7 +892,7 @@ Hello world!
 With all that new information we can set up our nginx image with the following folder structure on the host machine:
 
 ````
-D:\codebase\docker-php
+C:\codebase\docker-php
 + nginx\
   + conf.d\
     - site.conf
@@ -917,21 +921,21 @@ server {
 Hello World
 ````
 
-Clean up the "exploration" nginx container, `cd` into `/d/codebase/docker-php/nginx` and build the new image: 
+Clean up the "exploration" nginx container, `cd` into `/c/codebase/docker-php/nginx` and build the new image: 
 
 ````
 docker rm -f $(docker ps -aq)
-cd /d/codebase/docker-php/nginx
+cd /c/codebase/docker-php/nginx
 docker build -t docker-nginx-image .
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker rm -f $(docker ps -aq)
 15c6b8d8a2bf
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ cd nginx
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/nginx
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/nginx
 $ docker build -t docker-nginx-image .
 Sending build context to Docker daemon  3.584kB
 Step 1/1 : FROM nginx:latest
@@ -944,14 +948,14 @@ SECURITY WARNING: You are building a Docker image from Windows against a non-Win
 And then run the "new" container via 
 
 ````
-docker run -di --name docker-nginx -p 8080:80 -v "D:\codebase\docker-php\nginx\conf.d":/etc/nginx/conf.d/ -v "D:\codebase\docker-php\app":/var/www docker-nginx-image
+docker run -di --name docker-nginx -p 8080:80 -v "C:\codebase\docker-php\nginx\conf.d":/etc/nginx/conf.d/ -v "C:\codebase\docker-php\app":/var/www docker-nginx-image
 ````
 
 where
 ````
 -p 8080:80                                                  // maps port 8080 on the windows host to port 80 in the container
--v "D:\codebase\docker-php\nginx\conf.d":/etc/nginx/conf.d/ // mounts the conf.d folder on the host to the correct directory in the container
--v "D:\codebase\docker-php\app":/var/www                    // mounts the "code" directory in the correct place
+-v "C:\codebase\docker-php\nginx\conf.d":/etc/nginx/conf.d/ // mounts the conf.d folder on the host to the correct directory in the container
+-v "C:\codebase\docker-php\app":/var/www                    // mounts the "code" directory in the correct place
 ````
 
 Thanks to the port mapping we can now simply open http://127.0.0.1:8080/ in a browser on the host machine 
@@ -1078,7 +1082,7 @@ php-fpm -m | grep xdebug
 Of course we'll also put that in its own Dockerfile:
 
 ````
-D:\codebase\docker-php
+C:\codebase\docker-php
 + php-fpm\
   - Dockerfile
 ````
@@ -1093,7 +1097,7 @@ RUN pecl install xdebug-2.6.0 \
 Clean up the test container and build the new image
 ````
 docker rm -f php-fpm-test
-cd /d/codebase/docker-php/php-fpm
+cd /c/codebase/docker-php/php-fpm
 docker build -t docker-php-fpm-image .
 ````
 
@@ -1123,7 +1127,7 @@ NETWORK ID          NAME                DRIVER              SCOPE
 03fecefbe8c9        none                null                loca
 ````
 
-Now let's add a new one for our web stack via 
+Now let's add a new one called `web-network` for our web stack via 
 
 ````
 docker network create --driver bridge web-network
@@ -1154,7 +1158,7 @@ Finally, we need to mount the local code folder `app\` we mounted to the nginx c
 also in the php-fpm container in the same location:
 
 ````
-docker run -di --name docker-php-fpm -v "D:\codebase\docker-php\app":/var/www --network web-network docker-php-fpm-image
+docker run -di --name docker-php-fpm -v "C:\codebase\docker-php\app":/var/www --network web-network docker-php-fpm-image
 ````
 
 Note that we specified the network in the run command via the `--network` option.
@@ -1164,7 +1168,7 @@ docker network inspect web-network
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-fpm
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-fpm
 $ docker network inspect web-network
 [
     {
@@ -1227,7 +1231,7 @@ ping 172.18.0.3 -c 2
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php/php-fpm
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php/php-fpm
 $ winpty docker exec -ti docker-nginx bash
 root@eaa5c0594278:/# ping 172.18.0.3 -c 2
 bash: ping: command not found
@@ -1308,9 +1312,9 @@ Lets sum up what we have do now to get everything up and running:
 3. start php-fpm
 
 ````
-docker run -di --name docker-php -v "D:\codebase\docker-php\app":/var/www --network web-network docker-php-image
-docker run -di --name docker-nginx -p 8080:80 -v "D:\codebase\docker-php\nginx\conf.d":/etc/nginx/conf.d/ -v "D:\codebase\docker-php\app":/var/www  --network web-network docker-nginx-image
-docker run -di --name docker-php-fpm -v "D:\codebase\docker-php\app":/var/www --network web-network docker-php-fpm-image
+docker run -di --name docker-php -v "C:\codebase\docker-php\app":/var/www --network web-network docker-php-image
+docker run -di --name docker-nginx -p 8080:80 -v "C:\codebase\docker-php\nginx\conf.d":/etc/nginx/conf.d/ -v "C:\codebase\docker-php\app":/var/www  --network web-network docker-nginx-image
+docker run -di --name docker-php-fpm -v "C:\codebase\docker-php\app":/var/www --network web-network docker-php-fpm-image
 ````
 
 Hm. That's alright I guess... but it also feels like "a lot". Wouldn't it be much better to have everything neatly defined in one place? 
@@ -1320,7 +1324,7 @@ I bet so! Let me introduce you to [docker-compose](https://docs.docker.com/compo
 > With Compose, you use a YAML file to configure your application's services. 
 > Then, with a single command, you create and start all the services from your configuration.
 
-Lets do this step by step, starting with the php-cli container. Create the file `D:\codebase\docker-php\docker-compose.yml`:
+Lets do this step by step, starting with the php-cli container. Create the file `C:\codebase\docker-php\docker-compose.yml`:
 
 ````
 # tell docker what version of the docker-compose.yml we're using
@@ -1359,16 +1363,16 @@ Before we get started, we're gonna clean up the old containers:
 docker rm -f $(docker ps -aq)
 ````
 
-To test the docker-compose.yml we need to run `docker-compose up -d` from `D:\codebase\docker-php`
+To test the docker-compose.yml we need to run `docker-compose up -d` from `C:\codebase\docker-php`
 
 ````
-cd "D:\codebase\docker-php"
+cd "C:\codebase\docker-php"
 docker-compose up -d
 ````
 
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker-compose up -d
 Creating network "docker-php_web-network" with the default driver
 Building docker-php-cli
@@ -1387,7 +1391,7 @@ Note that the image is build from scratch when we run `docker-compose up` for th
 A `docker ps -a` shows that the container is running fine, we can log in and execute source code from the host machine.
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker ps -a
 CONTAINER ID        IMAGE                       COMMAND                  CREATED             STATUS              PORTS               NAMES
 adf794f27315        docker-php_docker-php-cli   "docker-php-entrypoi…"   3 minutes ago       Up 2 minutes                            docker-php_docker-php-cli_1
@@ -1418,7 +1422,7 @@ docker-compose down
 to shut the container down again:
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker-compose down
 Stopping docker-php_docker-php-cli_1 ... done
 Removing docker-php_docker-php-cli_1 ... done
@@ -1467,7 +1471,7 @@ services:
     tty: true
     volumes:
       - ./app:/var/www
-      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/conf.C:/etc/nginx/conf.d
     networks:
       - web-network
 
@@ -1488,7 +1492,7 @@ docker-compose up -d
 ````
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php
+Pascal@Landau-Laptop MINGW64 /c/codebase/docker-php
 $ docker-compose up -d
 Building docker-nginx
 Step 1/1 : FROM nginx:latest
@@ -1526,12 +1530,12 @@ The whole article is a lot to take in and it is most likely not the most efficie
 So in this section we'll boil it down to only the necessary steps without in depth explanations.
 
 - [Download Docker for Windows](https://store.docker.com/editions/community/docker-ce-desktop-windows)
-- Install Docker
+- [Install Docker](#setup-docker)
   - activate Hyper-V (Virtual Box will stop working) 
   - enable Disk Sharing in the settings
 - Set up the following folder structure
     ````
-    D:\codebase\docker-php
+    C:\codebase\docker-php
     + nginx\
       + conf.d\
         - site.conf
@@ -1546,7 +1550,7 @@ So in this section we'll boil it down to only the necessary steps without in dep
     - docker-compose.yml
     ````
   - or simply `git clone git@github.com:paslandau/docker-php-tutorial.git docker-php && git checkout part_1`
-- Open a shell at `D:\codebase\docker-php`
+- Open a shell at `C:\codebase\docker-php`
 - run `docker-compose up -d`
 - check in browser via
   - 127.0.0.1:8080
