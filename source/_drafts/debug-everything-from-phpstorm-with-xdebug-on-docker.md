@@ -1,36 +1,444 @@
 ---
 extends: _layouts.post
 section: content
-title: "How to setup PHP, PHP-FPM and NGINX on Docker in Windows 10 [Tutorial Part 1]"
-subheading: "A primer on PHP on Docker under Windows 10."
-h1: "Setting up PHP, PHP-FPM and NGINX for local development on Docker"
-description: "Step-by-Step tutorial for setting up PHP Docker containers (cli and fpm)  for local development on Windows 10."
+title: "How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2]"
+subheading: "... to debug PHP CLI scripts, PHP-FPM from the Browser, Unit Tests, etc."
+h1: "Setting up PhpStorm with Xdebug for local development on Docker"
+description: "Detailed instructions on how to setup PhpStorm  properly to work with XDebug in Docker containers (cli and fpm) for local development."
 author: "Pascal Landau"
-published_at: "2018-07-08 22:00:00"
-vgwort: "e8a8b08253d04d8f96ba390a1d2a0037"
+published_at: "2018-07-29 22:00:00"
+vgwort: ""
 category: "development"
-slug: "php-fpm-nginx-xdebug-docker-windows-10"
+slug: "setup-phpstorm-with-xdebug-on-docker"
 ---
 
-You probably heard from the new kid around the block called "Docker"?
-You are a PHP developer and would like to get into that, but you didn't have the time to look into it, yet? 
-Then this tutorial is for you! By the end of it, you should know:
-- how to setup Docker "natively" on a Windows 10 machine
-- how to build and run containers from the command line
-- how to log into containers and explore them for information
-- what a Dockerfile is and how to use it
-- how containers can talk to each other
-- how `docker-compose` can be used to fit everything nicely together
+In the second part of this tutorial series on developing PHP on Docker we're taking a good hard look
+at PhpStorm and Xdebug. We will
+- learn how to run scripts from within PhpStorm on Docker (e.g. Unit Tests)
+- understand how Xdebug and PhpStorm work together in order to debug pretty much everything locally
+  (CLI scripts, HTTP calls triggered from the browser, PHP workers/daemons)
 
-**Note**: I will not only walk on the happy path during this tutorial. That means I'll deep-dive into
-some things that are not completely related to docker (e.g. how to find out where the configuration
-files for php-fpm are located), but that are imho important to understand, because they enable you to
-solve problems later on your own. 
+And just as a reminder, the first part is over at 
+[Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/).
 
-But if you are short on time, you might also jump directly to <a href="#tl-dr">the tl;dr</a>.
+**Note**: The setup that I am going to use is for demonstration purposes only! I do **not** recommend that you use it
+"as is" as your development setup. Some problems that I won't solve here include:
+- everything is owned by root (no dedicated user; that will in particular be problematic for linux users)
+- SSH login credentials are hard-coded in the container (inherently insecure)
+- `host.docker.internal` will only exist for Windows and Mac users 8, NOT for unix users
 
-This is the first part of a (probably) multi-part series on Docker. The second part explains how
-to [set up PHP in Docker containers in order to work nicely with PHPStorm when using XDebug](/blog/setup-phpstorm-with-xdebug-on-docker).
+There will be a third part of this series that will deal with all of those (and some more common) problems and 
+aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
+
+TOC
+- the docker containers
+-- general preconditions
+-- xdebug installed, all synced to the same codebase
+-- Troubleshooting for linux users:
+--- make host.docker.internal available
+--- use correct user to run scripts
+-- final docker-compose file
+- How xdebug works
+-- graphic
+-- connect-back
+- php scripts from php storm
+- Troubleshooting
+-- enable xdebug log
+-- containers can see hosts and vice-versa
+-- ports are open / connection works
+-- PHP is listening for connections
+
+## Setup: The docker containers
+We will need three different containers in order to test all our use cases:
+1. php-fpm 
+2. nginx
+3. php-cli (workspace [for cli scripts and unit tests] and as daemon / worker)
+
+Luckily, we already have a good understanding on how to create those, although we'll need to make some 
+adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
+but I'd still recommend to clone the corresponding git repository [docker-php-tutorial](https://github.com/paslandau/docker-php-tutorial)
+(unless you've already done that in part 1), checkout branch [`part_2`](https://github.com/paslandau/docker-php-tutorial/tree/part_2) and
+build the containers now.
+
+As in part 1, I'm assuming your codebase lives at `/c/codesbase`:
+
+````
+cd /c/codebase/
+git clone https://github.com/paslandau/docker-php-tutorial.git
+cd docker-php-tutorial
+git checkout part_2
+docker-compose docker-compose build
+````
+
+Further, make sure to open `/c/codebase/docker-php-tutorial` as a project in PhpStorm.
+
+## Running PHP from PhpStorm in Docker
+In general, there are two ways to run PHP from PhpStorm using Docker:
+1. via the built-in Docker setup
+2. via deployment configuration (treating docker more or less like a VM)
+
+### Run PHP via built-in Docker setup
+This is the "easier" way and should mostly work "out of the box". When you run a PHP script using this method, PhpStorm will start a 
+docker container and configure it automatically (path mappings, network setup, ...). Next, the script in question is executed and the container 
+is stopped afterwards. Though this is nice, it doesn't give me enough have enough control for my taste (e.g. I prefer to have a container 
+running all the time and not only for the execution time of the script). However, here are the steps to make this work:
+
+#### Enable docker to communicate on port 2375 
+Open the Docker Setting in tab "General" and activate the checkbox that says 
+"Expose daemon on tcp://localhost:2375 without TLS".
+
+[screenshot]
+
+#### Configure Docker in PhpStorm
+In PhpStorm, open settings and navigate to `File | Settings | Build, Execution, Deployment | Docker`. Fill out `Name` and `Engine API URL`:
+- Name: Docker
+- Engine API URL: tcp://localhost:2375
+
+PhpStorm will automatically validate your settings and show a "Connection successful" below the path mappings box:
+
+[screenshot]
+
+#### Configure PHP CLI Interpreter
+Open settings and navigate to `File | Settings | Languages & Frameworks | PHP`. Click on the three dots "..." next to "CLI Interpreter".
+
+[screenshot]
+
+In the newly opened pop up click on the "+" sign on the top left and choose "From Docker,Vagrant,VM,Remote..."
+
+[screenshot]
+
+Next, choose "Docker" from the radio buttons and select our previously created Docker server (named "Docker").
+As image, choose "docker-php-tutorial_docker-php-cli:latest" (which is one of the images used in this tutorial). If you don't see this 
+this image you've probably not yet built the containers. In that case, please checkout the repo and build the containers: 
+
+````
+cd /c/codebase/
+git clone https://github.com/paslandau/docker-php-tutorial.git
+cd docker-php-tutorial
+git checkout part_2
+docker-compose docker-compose build
+````
+
+[screenshot]
+
+PhpStorm will no try to create the container and figure out if it can run PHP. If all goes well, you should see the following screenshot
+with information about the PHP and Xdebug versions in the image/container.
+
+_Note_: Sometimes, this does not work immediately. If that's the case for you, try to click the "Refresh" icon next to "PHP executable".
+
+[screenshot]
+
+After you hit okay, you'll be back in the PHP Interpreter screen where our newly configured Docker interpreter should be already selected:
+
+[screenshot]
+
+Note that PhpStorm has automatically configure the path mappings as `-v` command line option for the Docker container. After hitting okay
+one last time, everything is set up.
+
+#### Run/debug a php script on docker
+To verify that everything is working, open the file `app/hello-world.php` in PhpStorm, right click in the editor pane and choose "Run".
+
+[screenshot]
+
+PhpStorm will start the configured container and run the script. The output is then visible in at the bottom of the IDE:
+
+[screenshot]
+
+Since we're using an image that has Xdebug installed, we can also set a breakpoint and use "Debug" instead of "Run" to trigger a debug session:
+
+[screenshot]
+
+PhpStorm should stop on the marked line. 
+
+[screenshot]
+
+When you take a look at the "Console" panel at the bottom of the IDE, you should see something like this:
+
+````
+docker://docker-php-tutorial_docker-php-cli:latest/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=192.168.10.1 /opt/project/app/hello-world.php
+````
+
+Please keep the `-dxdebug.remote_host=192.168.10.1` option in mind - this will be "interesting" when we set up a Docker-bases PHP Interpreter
+via deployment configuration ;)
+
+PS: You find the official documentation for the built-in Docker support at 
+[Docker Support in PhpStorm](https://confluence.jetbrains.com/display/PhpStorm/Docker+Support+in+PhpStorm).
+
+### Run PHP on Docker via deployment configuration
+The previously explained method is nice, but it is lacking flexibility and it's also pretty slow as the container used to run
+the script needs to be started each time we want to execute something. Luckily, there is an additional way of running PHP scripts
+on Docker in PhpStorm, which is closely related to the Vagrant setup that I explained in 
+[Configuring PhpStorm to use the vagrant box](https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#configuring-phpstorm-to-use-the-vagrant-box).
+
+To make this work, we will keep a docker container running all the time and configure PhpStorm to connect to it via SSH. Thus, PhpStorm
+effectively treats the docker container as any other remote host.
+
+#### Preparing the "workspace" container
+Please make sure to checkout my demo repository and switch to the correct branch first:
+
+````
+cd /c/codebase/
+git clone https://github.com/paslandau/docker-php-tutorial.git
+cd docker-php-tutorial
+git checkout part_2
+````
+
+For now, we only need the `php-cli` container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
+an SSH server so that we can log in via SSH. Let's take a look a the `Dockerfile`:
+
+````
+FROM php:7.0-cli
+
+RUN apt-get update -yqq \
+ && apt-get install -yqq \
+    # install sshd
+    openssh-server \
+    # install ping and netcat (for debugging xdebug connectivity)
+    iputils-ping netcat \
+    # fix ssh start up bug
+    # @see https://github.com/ansible/ansible-container/issues/141
+ && mkdir /var/run/sshd \
+;
+
+# add default public key to authorized_keys
+COPY ./ssh/insecure_id_rsa.pub /root/insecure_id_rsa.pub
+RUN mkdir -p /root/.ssh \
+ && cat /root/insecure_id_rsa.pub >> /root/.ssh/authorized_keys \
+ && rm -rf /root/insecure_id_rsa.pub \
+;
+
+RUN pecl -q install xdebug-2.6.0 \
+;
+COPY ./conf.d/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
+
+# @see https://docs.docker.com/engine/examples/running_ssh_service/
+CMD ["/usr/sbin/sshd", "-D"]
+
+````
+
+and the `docker-compose.yml`:
+````
+  docker-php-cli:
+    # define the directory where the build should happened,
+    # i.e. where the Dockerfile of the service is located
+    # all paths are relative to the location of docker-compose.yml
+    build: 
+      context: ./php-cli
+    # make the SSH port available via port mapping
+    ports:
+      - "2222:22"
+    # reserve a tty - otherwise the container shuts down immediately
+    # corresponds to the "-i" flag
+    tty: true
+    # mount the app directory of the host to /var/www in the container
+    # corresponds to the "-v" option
+    volumes:
+      - ./app:/var/www
+    # connect to the network
+    # corresponds to the "--network" option
+    networks:
+      - web-network
+````
+
+There are four things to note:
+1. installing the server 
+2. adding the ssh keys to actually log in
+3. changing the default `CMD` to keep the SSH daemon running
+4. port- and volume mapping
+
+##### Installing the server
+The server installation is straight forward:
+````
+apt-get install -yqq openssh-server
+````
+the only none-intuitive thing is, that we need to "manually" create the directory `/var/run/sshd`, [due to some bug]( https://github.com/ansible/ansible-container/issues/141).
+
+##### Adding the ssh keys
+For the ssh keys, I'm choosing the easy route (for now) and use a pre-generated ssh key pair (see `php-cli/ssh/*`).
+The content of the public key is appended to `/root/.ssh/authorized_keys` so that I can log in to the container as user `root` using the 
+corresponding private key from `php-cli/ssh/insecure_id_rsa`.
+
+**Caution**: Of course, this is massively insecure! Those keys are part of the repository, making them available to everybody with access to the repo.
+That makes sense for this publicly available tutorial (because everything works "out of the box" for everybody following along) but it is also one 
+of the reasons you should **not** use that repo as your **actual** development setup.
+
+Again, there will be another part of this tutorial in which I'll present a solution to this problem (using volumes to share my local ssh keys with a 
+container and an `ENTRYPOINT` to put them in the right place).
+
+##### Keep the SSH daemon running
+For SSH to work, we must start `sshd` and keep it running in the container. We achieve this by using `CMD ["/usr/sbin/sshd", "-D"]` in the 
+Dockerfile, following the official docker example [Dockerize an SSH service](https://docs.docker.com/engine/examples/running_ssh_service/).
+
+##### Port- and volume mapping
+Since docker containers do not have deterministic IP addresses, we map port 22 from the container to port 2222 on our host machine and we 
+further provide a path mapping from our local `./app` folder to `/var/www` in the container. Both pieces of information a required when
+we configure PhpStorm later on.
+
+Now that everything is in place, let's build and run the container:
+
+````
+cd /c/codebase/docker-php-tutorial
+docker-compose up -d docker-php-cli
+````
+
+yielding
+
+````
+Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2)
+$ docker-compose up -d docker-php-cli
+Creating docker-php-tutorial_docker-php-cli_1 ... done
+````
+
+_Note_: One might argue, that it's kinda "defeating" the purpose of docker, when we now treat it as a VM, installing SSH and neglecting it's
+"one process per container" rule. But honestly, I don't care about that when
+it comes to my local development setup as my main goal is to have something lightweight, that is easily shareable with my team to have a 
+consistent infrastructure setup ;)
+
+#### Configure the deployment configuration
+In PhpStorm, navigate to `File | Settings | Build, Execution, Deployment | Deployment`. 
+In the newly opened pop up click on the "+" sign on the top left and choose "From Docker,Vagrant,VM,Remote..." with:
+- Name: Docker (SSH)
+- Type: SFTP
+
+[screenshot]
+
+In the `Connection` tab, choose the following settings:
+- SFTP host: 127.0.0.1
+- Port: 2222
+- User name: root
+- Auth type: Key pair (OpenSSH or PuTTY)
+- Private key file: `C:\codebase\docker-php-tutorial\php-cli\ssh\insecure_id_rsa`
+
+_Notes_:
+- the "Port" corresponds to the port mapping that we defined in the `docker-compose.yml` file
+- the "Private key file" is the "insecure" ssh key that matches the public key we specified in the `php-cli/Dockerfile`
+
+[screenshot]
+
+Hit the "Test SFT connection" button to test the settings. You should see
+
+[screenshot]
+
+(there might also appear a fingerprint warning because we're using 127.0.0.1 as host. You can simply ignore that warning).
+
+Now choose the `Mapping` tab and fill it the fields as follows:
+- Local path: `C:\codebase\docker-php-tutorial\app`
+- Deployment path on server 'Docker (SSH)': `/var/www/`
+
+Those mappings correspond to the volume definition for the `docker-php-cli` service in `docker-compose.yml`:
+````
+[...]
+    # mount the app directory of the host to /var/www in the container
+    # corresponds to the "-v" option
+    volumes:
+      - ./app:/var/www
+[...]
+````
+
+[screenshot]
+Next, we need to create an PHP Interpreter based on our newly created Deployment Configuration. 
+Open settings and navigate to `File | Settings | Languages & Frameworks | PHP`. Click on the three dots "..." next to "CLI Interpreter".
+
+[screenshot]
+
+In the newly opened pop up click on the "+" sign on the top left and choose "From Docker,Vagrant,VM,Remote..."
+
+[screenshot]
+
+Next, choose "Deployment Configuration" from the radio buttons and select the "Docker (SSH)" entry. Please make sure to enter 
+`/usr/local/bin/php` as path for the PHP executable (as PhpStorm by default will set this path to `/usr/bin/php`).
+
+[screenshot]
+
+Set "Docker (SSH)" as name for the new interpreter and click Okay. Confirm the new PHP Interpreter to close the settings dialog.
+
+#### Run/debug a php script on docker
+To verify that everything is working, open the file `app/hello-world.php` in PhpStorm, right click in the editor pane and choose "Run".
+
+[screenshot]
+
+PhpStorm will start the configured container and run the script. The output is then visible in at the bottom of the IDE:
+
+[screenshot]
+
+Since we're using an image that has Xdebug installed, we can also set a breakpoint and use "Debug" instead of "Run" to trigger a debug session:
+
+[screenshot]
+
+Hm weird... Although this worked flawlessly when we used the built-in functionality, it does not when we use the deployment configuration and shows
+a "Connection with `Xdebug 2.6.0` not established." error.
+
+[screenshot]
+
+#### Fix Xdebug on PhpStorm when run from a Docker container
+
+Long story short: There is a bug in the networking setup of Docker for Win that makes PhpStorm use the wrong `remote_host` when it starts a 
+debugging session. When you take a look at the "Console" panel at the bottom of the IDE, you should see something like this:
+
+````
+sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 /var/www/hello-world.php
+````
+
+The `-dxdebug.remote_host=172.18.0.1` option is our suspect here. Luckily, since 
+[Docker v18.03](https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds) there is a "magic" DNS entry called `host.docker.internal`
+that we can use to reach the host from a container.
+
+So, how can we solve this? PhpStorm enables us to 
+[pass custom options to Xdebug](https://www.jetbrains.com/help/phpstorm/configuring-xdebug.html#d165872e407) when a debugging session is initiated.
+Open `File | Settings | Languages & Frameworks | PHP` and click on the "..." next to "PHP Interpreter" to bring up the interpreters. Choose 
+"Docker (SSH)" in the left pane and click on the little folder icon on the bottom of the window next to "Configuration options". In the pop up enter
+`xdebug.remote_host` as key and `host.docker.internal` as value and hit "OK".
+
+[screenshot]
+
+This results in the configuration setting `-dxdebug.remote_host=host.docker.internal` that is now appended to the remaining (default) arguments 
+that PhpStorm uses and will **override** any existing options (including the inccorect `xdebug.remote_host`).
+
+[screenshot]
+
+Initiating a debug session on `app/hello-world.php` will now finally stop the execution as expected and the 
+"Console" panel at the bottom of the IDE, shows
+
+````
+sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 -dxdebug.remote_host=host.docker.internal /var/www/hello-world.php
+````
+
+## Xdebug all the things!
+
+### How Xdebug works
+I've used Xdebug for a couple of years now, but I've actually never _really_ understood what is happening under the
+hood and how my IDE "magically" suspends the execution at a specific line in my source code. That has also never 
+been a problem, because mostly "it just worked". But with docker, it didn't and I felt quite helpless because 
+I just didn't know how to "debug" the problem. I can imagine I'm not alone in this, so I'm gonna dedicate at least a 
+small chapter in this tutorial to Xdebug itself.
+
+Fortunately, the Xdebug homepage does a really good job at explaining the communication flow. 
+The following information is taken from their [(Remote) Communication Set Up explanation](https://xdebug.org/docs/remote#communication):
+
+> With remote debugging, Xdebug embedded in PHP acts like the client, and the IDE as the server. The following animation shows how the communication channel is set-up:
+> [![Xdebug Communication Set Up](https://xdebug.org/images/docs/dbgp-setup.gif)](https://xdebug.org/images/docs/dbgp-setup.gif)
+> - The IP of the server is 10.0.1.2 with HTTP on port 80
+> - The IDE is on IP 10.0.1.42, so xdebug.remote_host is set to 10.0.1.42
+> - The IDE listens on port 9000, so xdebug.remote_port is set to 9000
+> - The HTTP request is started on the machine running the IDE
+> - Xdebug connects to 10.0.1.42:9000
+> - Debugging runs, HTTP Response provided
+
+In addition, I'd like to add some points that are important from my perspective:
+- the xdebug extension has to be installed and enabled on the server we want to debug
+- `$something` (e.g. a HTTP request through the browser; PhpStorm when executing a unit test) triggers a PHP execution
+- xdebug steps in and tries to establish a communication with `$something` by connecting "back" on a preconfigured port
+  (9000 by default). The IDE should thus listen on the same port for incoming connections.
+  - this one was especially new to me because I always thought xdebug is somehow running on my local machine / in my IDE
+- if the connection can be established, xdebug starts to send information, e.g. which "server" it is 
+  running on and what file / line is being executed
+- your IDE receives the information and tries to match it to your source code (usually something that you need to configure upfront,
+  in PhpStorm it's called "Path Mapping")
+- if there's a breakpoint registered at that specific location, the execution is suspended
+
+By understanding the full cycle of a debug session, we can now rule out every potential source of error step by step.
+
+## How Xdebug works
 
 ## Table of contents
 <ul>

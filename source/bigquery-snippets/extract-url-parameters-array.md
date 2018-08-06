@@ -17,6 +17,7 @@ to extract parameters from the query part of a URL and return them as an ARRAY.
 
 ## Code
 ```
+#standardSQL
 SELECT
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&)((?:[^=]+)=(?:[^&]*))') as params,
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&)(?:([^=]+)=(?:[^&]*))') as keys,
