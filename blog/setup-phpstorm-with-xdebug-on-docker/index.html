@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Detailed instructions on how to setup PhpStorm  properly to work with XDebug in Docker containers for local development.">
+            <meta name="author" content="Pascal Landau">
+        <title>How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw" />
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/" />
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml" />
+
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+                ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Setting up PhpStorm with Xdebug for local development on Docker</h1>
+                                            <h2 class="subheading">... natively and via Deployment Configuration.</h2>
+                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2018-08-06 12:00:00</span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In the second part of this tutorial series on developing PHP on Docker we're taking a good hard look
+at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Docker.</p>
+<p>And just as a reminder, the first part is over at
+<a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>.</p>
+<div style="text-align:center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/27KBaI24jKI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+</div>
+<p><strong>Note</strong>: The setup that I am going to use is for demonstration purposes only! I do <strong>not</strong> recommend that you use it
+&quot;as is&quot; as your development setup. Some problems that I won't solve here include:</p>
+<ul>
+<li>everything is owned by root (no dedicated user; that will in particular be problematic for linux users)</li>
+<li>SSH login credentials are hard-coded in the container (inherently insecure)</li>
+<li><code>host.docker.internal</code> will only exist for Windows and Mac users, NOT for unix users</li>
+</ul>
+<p>There will be a another part of this series that will deal with all of those (and some more common) problems and
+aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
+Please subscribe to the <a href="http://localhost:3000/feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
+<h2>Table of contents</h2>
+<ul>
+<li><a href="#setup-the-docker-containers">Setup: The docker containers</a></li>
+<li><a href="#run-php-via-built-in-docker-setup">Run PHP via built-in Docker setup</a><ul>
+ <li><a href="#enable-docker-to-communicate-on-port 2375">Enable docker to communicate on port 2375</a></li>
+ <li><a href="#configure-docker-server-in-phpstorm">Configure Docker Server in PhpStorm</a></li>
+ <li><a href="#configure-docker-php-cli-interpreter">Configure Docker PHP CLI Interpreter</a></li>
+ <li><a href="#run-debug-a-php-script-on-docker-server">Run/debug a php script on docker</a></li>
+</ul></li>
+<li><a href="#run-php-on-docker-via-deployment-configuration">Run PHP on Docker via Deployment Configuration</a><ul>
+ <li><a href="#preparing-the-workspace-container">Preparing the "workspace" container</a></li>
+ <li><a href="#configure-the-deployment-configuration">Configure the Deployment Configuration</a></li>
+ <li><a href="#run-debug-a-php-script-on-docker">Run/debug a php script on docker</a></li>
+ <li><a href="#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a></li>
+</ul></li>
+</ul>
+<h2><a id="setup-the-docker-containers"></a>Setup: The docker containers</h2>
+<p>We will only need the php-cli container for this part.
+Luckily, we already have a good understanding on how to create the container, although we'll need to make some
+adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
+but I'd still recommend to clone the corresponding git repository <a href="https://github.com/paslandau/docker-php-tutorial">docker-php-tutorial</a>
+(unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2"><code>part_2</code></a> and
+build the containers now.</p>
+<p>As in part 1, I'm assuming your codebase lives at <code>/c/codesbase</code>:</p>
+<pre><code>cd /c/codebase/
+git clone https://github.com/paslandau/docker-php-tutorial.git
+cd docker-php-tutorial
+git checkout part_2
+docker-compose docker-compose build</code></pre>
+<p>Further, make sure to open <code>/c/codebase/docker-php-tutorial</code> as a project in PhpStorm.</p>
+<p>In general, there are two ways to run PHP from PhpStorm using Docker:</p>
+<ol>
+<li>via the built-in Docker setup</li>
+<li>via Deployment Configuration (treating docker more or less like a VM)</li>
+</ol>
+<h2><a id="run-php-via-built-in-docker-setup"></a>Run PHP via built-in Docker setup</h2>
+<p>This is the &quot;easier&quot; way and should mostly work &quot;out of the box&quot;. When you run a PHP script using this method, PhpStorm will start a
+docker container and configure it automatically (path mappings, network setup, ...). Next, the script in question is executed and the container
+is stopped afterwards.</p>
+<h3><a id="enable-docker-to-communicate-on-port 2375"></a>Enable docker to communicate on port 2375</h3>
+<p>Open the Docker Setting in tab &quot;General&quot; and activate the checkbox that says
+&quot;Expose daemon on tcp://localhost:2375 without TLS&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-port-tcp-2375.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-port-tcp-2375.PNG" alt="Enable docker to communicate on port 2375" /></a></p>
+<h3><a id="configure-docker-server-in-phpstorm"></a>Configure Docker Server in PhpStorm</h3>
+<p>In PhpStorm, navigate to <code>File | Settings | Build, Execution, Deployment | Docker</code>. Fill out <code>Name</code> and <code>Engine API URL</code>:</p>
+<ul>
+<li>Name: Docker</li>
+<li>Engine API URL: <code>tcp://localhost:2375</code></li>
+</ul>
+<p>PhpStorm will automatically validate your settings and show a &quot;Connection successful&quot; info below the path mappings box:</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/php-built-in-docker-setup.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/php-built-in-docker-setup.PNG" alt="Configure Docker server in PhpStorm" /></a></p>
+<h3><a id="configure-docker-php-cli-interpreter"></a>Configure Docker PHP CLI Interpreter</h3>
+<p>Navigate to <code>File | Settings | Languages &amp; Frameworks | PHP</code>. Click on the three dots &quot;...&quot; next to &quot;CLI Interpreter&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG" alt="Setup CLI Interpreter PhpStorm" /></a></p>
+<p>In the newly opened pop up click on the &quot;+&quot; sign on the top left and choose &quot;From Docker,Vagrant,VM,Remote...&quot;</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG" alt="New CLI Interpreter" /></a></p>
+<p>Next, choose &quot;Docker&quot; from the radio buttons and select our previously created Docker server (named &quot;Docker&quot;).
+As image, choose <code>docker-php-tutorial_docker-php-cli:latest</code> (which is one of the images used in this tutorial). If you don't see
+this image you've probably not yet built the containers. In that case, please checkout the repo and build the containers: </p>
+<pre><code>cd /c/codebase/
+git clone https://github.com/paslandau/docker-php-tutorial.git
+cd docker-php-tutorial
+git checkout part_2
+docker-compose docker-compose build</code></pre>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG" alt="New CLI Interpreter from Docker server" /></a></p>
+<p>PhpStorm will now try to create the container and figure out if it can run PHP. If all goes well, you should see the following screenshot
+with information about the PHP and Xdebug versions in the image/container.</p>
+<p><em>Note</em>: Sometimes, this does not work immediately. If that's the case for you, try to click the &quot;Refresh&quot; icon next to &quot;PHP executable&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-configured.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-configured.PNG" alt="New CLI Interpreter from Docker configured" /></a></p>
+<p>After you hit &quot;OK&quot;, you'll be back in the PHP Interpreter screen where our newly configured Docker interpreter should be already selected:</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-done.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-done.PNG" alt="New CLI Interpreter from Docker chosen" /></a></p>
+<p>Note that PhpStorm has automatically configured the path mappings as <code>-v</code> command line option for the Docker container. After hitting &quot;OK&quot;
+one last time, everything is set up.</p>
+<h3><a id="run-debug-a-php-script-on-docker-server"></a>Run/debug a php script on docker</h3>
+<p>To verify that everything is working, open the file <code>app/hello-world.php</code> in PhpStorm, right click in the editor pane and choose &quot;Run&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG" alt="Run PHP script" /></a></p>
+<p>PhpStorm will start the configured container and run the script. The output is then visible at the bottom of the IDE:</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/built-in-docker-run-php-script-finished.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/built-in-docker-run-php-script-finished.PNG" alt="PHP script output" /></a></p>
+<p>Since we're using an image that has Xdebug installed, we can also set a breakpoint and use &quot;Debug&quot; instead of &quot;Run&quot; to trigger a debug session:</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG" alt="Debug PHP script" /></a></p>
+<p>PhpStorm should stop on the marked line. </p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script-breakpoint.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script-breakpoint.PNG" alt="Debug PHP script pausing" /></a></p>
+<p>When you take a look at the &quot;Console&quot; panel at the bottom of the IDE, you should see something like this:</p>
+<pre><code>docker://docker-php-tutorial_docker-php-cli:latest/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=192.168.10.1 /opt/project/app/hello-world.php</code></pre>
+<p>Please keep the <code>-dxdebug.remote_host=192.168.10.1</code> option in mind - this will be &quot;interesting&quot; when we set up a Docker-based PHP Interpreter
+via Deployment Configuration ;)</p>
+<p>PS: You find the official documentation for the built-in Docker support at
+<a href="https://confluence.jetbrains.com/display/PhpStorm/Docker+Support+in+PhpStorm">Docker Support in PhpStorm</a>.</p>
+<h2><a id="run-php-on-docker-via-deployment-configuration"></a>Run PHP on Docker via Deployment Configuration</h2>
+<p>The previously explained method is nice, but it is lacking flexibility and it's also pretty slow as the container used to run
+the script needs to be started each time we want to execute something. Luckily, there is an additional way of running PHP scripts
+on Docker in PhpStorm, which is closely related to the Vagrant setup that I explained in
+<a href="https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#configuring-phpstorm-to-use-the-vagrant-box">Configuring PhpStorm to use the vagrant box</a>.</p>
+<p>To make this work, we will keep a docker container running all the time and configure PhpStorm to connect to it via SSH. Thus, PhpStorm
+effectively treats the docker container as any other remote host.</p>
+<h3><a id="preparing-the-workspace-container"></a>Preparing the &quot;workspace&quot; container</h3>
+<p>Please make sure to checkout my demo repository and switch to the correct branch first:</p>
+<pre><code>cd /c/codebase/
+git clone https://github.com/paslandau/docker-php-tutorial.git
+cd docker-php-tutorial
+git checkout part_2</code></pre>
+<p>For now, we only need the <code>php-cli</code> container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
+an SSH server so that we can log in via SSH. Let's take a look a the <code>Dockerfile</code>:</p>
+<pre><code>FROM php:7.0-cli
+
+RUN apt-get update -yqq \
+ &amp;&amp; apt-get install -yqq \
+    # install sshd
+    openssh-server \
+    # install ping and netcat (for debugging xdebug connectivity)
+    iputils-ping netcat \
+    # fix ssh start up bug
+    # @see https://github.com/ansible/ansible-container/issues/141
+ &amp;&amp; mkdir /var/run/sshd \
+;
+
+# add default public key to authorized_keys
+COPY ./ssh/insecure_id_rsa.pub /root/insecure_id_rsa.pub
+RUN mkdir -p /root/.ssh \
+ &amp;&amp; cat /root/insecure_id_rsa.pub &gt;&gt; /root/.ssh/authorized_keys \
+ &amp;&amp; rm -rf /root/insecure_id_rsa.pub \
+;
+
+RUN pecl -q install xdebug-2.6.0 \
+;
+COPY ./conf.d/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
+
+# @see https://docs.docker.com/engine/examples/running_ssh_service/
+CMD ["/usr/sbin/sshd", "-D"]
+</code></pre>
+<p>and the <code>docker-compose.yml</code>:</p>
+<pre><code>  docker-php-cli:
+    # define the directory where the build should happened,
+    # i.e. where the Dockerfile of the service is located
+    # all paths are relative to the location of docker-compose.yml
+    build: 
+      context: ./php-cli
+    # make the SSH port available via port mapping
+    ports:
+      - "2222:22"
+    # reserve a tty - otherwise the container shuts down immediately
+    # corresponds to the "-i" flag
+    tty: true
+    # mount the app directory of the host to /var/www in the container
+    # corresponds to the "-v" option
+    volumes:
+      - ./app:/var/www
+    # connect to the network
+    # corresponds to the "--network" option
+    networks:
+      - web-network</code></pre>
+<p>There are four things to note:</p>
+<ol>
+<li>installing the server </li>
+<li>adding the ssh keys to actually log in</li>
+<li>changing the default <code>CMD</code> to keep the SSH daemon running</li>
+<li>port- and volume mapping</li>
+</ol>
+<h4><a id="installing-the-server"></a>Installing the server</h4>
+<p>The server installation is straight forward:</p>
+<pre><code>apt-get install -yqq openssh-server</code></pre>
+<p>the only none-intuitive thing is, that we need to &quot;manually&quot; create the directory <code>/var/run/sshd</code>
+( [due to a bug]( <a href="https://github.com/ansible/ansible-container/issues/141">https://github.com/ansible/ansible-container/issues/141</a>) ).</p>
+<h4><a id="adding-the-ssh-keys"></a>Adding the ssh keys</h4>
+<p>For the ssh keys, I'm choosing the easy route (for now) and use a pre-generated ssh key pair (see <code>php-cli/ssh/*</code>).
+The content of the public key is appended to <code>/root/.ssh/authorized_keys</code> so that I can log in to the container as user <code>root</code> using the
+corresponding private key from <code>php-cli/ssh/insecure_id_rsa</code>.</p>
+<p><strong>Caution</strong>: Of course, this is massively insecure! Those keys are part of the repository, making them available to everybody with access to the repo.
+That makes sense for this publicly available tutorial (because everything works &quot;out of the box&quot; for everybody following along) but it is also one
+of the reasons you should <strong>not</strong> use that repo as your <strong>actual</strong> development setup.</p>
+<p>Again, there will be another part of this tutorial in which I'll present a solution to this problem (using volumes to share my local ssh keys with a
+container and an <code>ENTRYPOINT</code> to put them in the right place).</p>
+<h4><a id="keep-the-ssh-daemon-running"></a>Keep the SSH daemon running</h4>
+<p>For SSH to work, we must start <code>sshd</code> and keep it running in the container. We achieve this by using <code>CMD ["/usr/sbin/sshd", "-D"]</code> in the
+Dockerfile, following the official docker example to <a href="https://docs.docker.com/engine/examples/running_ssh_service/">Dockerize an SSH service</a>.</p>
+<h4><a id="port-and-volume-mapping"></a>Port- and volume mapping</h4>
+<p>Since docker containers do not have deterministic IP addresses, we map port 22 from the container to port 2222 on our host machine and we
+further provide a path mapping from our local <code>./app</code> folder to <code>/var/www</code> in the container. Both pieces of information a required when
+we configure PhpStorm later on.</p>
+<p>Now that everything is in place, let's build and run the container:</p>
+<pre><code>cd /c/codebase/docker-php-tutorial
+docker-compose up -d docker-php-cli</code></pre>
+<p>yielding</p>
+<pre><code>Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2)
+$ docker-compose up -d docker-php-cli
+Creating docker-php-tutorial_docker-php-cli_1 ... done</code></pre>
+<p><em>Note</em>: One might argue, that it's kinda defeating the purpose of docker, when we now treat it as a VM, installing SSH and neglecting it's
+&quot;one process per container&quot; rule. But honestly, I don't care about that when
+it comes to my local development setup as my main goal is to have something lightweight, that is easily shareable with my team to have a
+consistent infrastructure setup ;)</p>
+<h3><a id="configure-the-deployment-configuration"></a>Configure the Deployment Configuration</h3>
+<p>In PhpStorm, navigate to <code>File | Settings | Build, Execution, Deployment | Deployment</code>.
+In the newly opened pop up click on the &quot;+&quot; sign on the top left and choose &quot;From Docker,Vagrant,VM,Remote...&quot; with:</p>
+<ul>
+<li>Name: Docker (SSH)</li>
+<li>Type: SFTP</li>
+</ul>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/new-deployment-configuration.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/new-deployment-configuration.PNG" alt="New SFTP Deployment Configuration" /></a></p>
+<p>In the <code>Connection</code> tab, choose the following settings:</p>
+<ul>
+<li>SFTP host: 127.0.0.1</li>
+<li>Port: 2222</li>
+<li>User name: root</li>
+<li>Auth type: Key pair (OpenSSH or PuTTY)</li>
+<li>Private key file: <code>C:\codebase\docker-php-tutorial\php-cli\ssh\insecure_id_rsa</code></li>
+</ul>
+<p><em>Notes</em>:</p>
+<ul>
+<li>the &quot;Port&quot; corresponds to the port mapping that we defined in the <code>docker-compose.yml</code> file</li>
+<li>the &quot;Private key file&quot; is the &quot;insecure&quot; ssh key that matches the public key we specified in the <code>php-cli/Dockerfile</code></li>
+</ul>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection.PNG" alt="Deployment Configuration: Connection" /></a></p>
+<p>Hit the &quot;Test SFT connection...&quot; button to test the settings. You should see</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection-test.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection-test.PNG" alt="Deployment Configuration: Test Connection" /></a></p>
+<p>(there might also appear a fingerprint warning because we're using 127.0.0.1 as host. You can simply ignore that warning).</p>
+<p>Now choose the <code>Mappings</code> tab and fill it the fields as follows:</p>
+<ul>
+<li>Local path: <code>C:\codebase\docker-php-tutorial\app</code></li>
+<li>Deployment path on server 'Docker (SSH)': <code>/var/www/</code></li>
+</ul>
+<p>Those mappings correspond to the volume definition for the <code>docker-php-cli</code> service in <code>docker-compose.yml</code>:</p>
+<pre><code>[...]
+    # mount the app directory of the host to /var/www in the container
+    # corresponds to the "-v" option
+    volumes:
+      - ./app:/var/www
+[...]</code></pre>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-path-mappings.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-path-mappings.PNG" alt="Deployment Configuration: Path Mappings" /></a></p>
+<p>Next, we need to create a PHP Interpreter based on our newly created Deployment Configuration.
+Open settings and navigate to <code>File | Settings | Languages &amp; Frameworks | PHP</code>. Click on the three dots &quot;...&quot; next to &quot;CLI Interpreter&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG" alt="Setup CLI Interpreter PhpStorm" /></a></p>
+<p>In the newly opened pop up click on the &quot;+&quot; sign on the top left and choose &quot;From Docker,Vagrant,VM,Remote...&quot;</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG" alt="New CLI Interpreter" /></a></p>
+<p>Choose &quot;Deployment Configuration&quot; from the radio buttons and select the &quot;Docker (SSH)&quot; entry. Please make sure to enter
+<code>/usr/local/bin/php</code> as path for the PHP executable (as PhpStorm by default will set this path to <code>/usr/bin/php</code>).</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-deployment-configuration.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-deployment-configuration.PNG" alt="Setup Docker (SSH) Interpreter" /></a></p>
+<p>Set &quot;Docker (SSH)&quot; as name for the new interpreter and click &quot;OK&quot;. </p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-docker-deployment-configuration.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-docker-deployment-configuration.PNG" alt="Finalize Docker (SSH) Interpreter" /></a></p>
+<p>Confirm the new PHP Interpreter to close the settings dialog.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-deployment-configuration-done.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-deployment-configuration-done.PNG" alt="Confirm Deployment Configuration Interpreter" /></a></p>
+<h3><a id="run-debug-a-php-script-on-docker"></a>Run/debug a php script on docker</h3>
+<p>To verify that everything is working, open the file <code>app/hello-world.php</code> in PhpStorm, right click in the editor pane and choose &quot;Run&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG" alt="Run PHP script" /></a></p>
+<p>PhpStorm will start the configured container and run the script. The output is then visible in at the bottom of the IDE:</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-ssh-run-php-script-finished.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-ssh-run-php-script-finished.PNG" alt="PHP script output when run via SFTP" /></a></p>
+<p>Since we're using an image that has Xdebug installed, we can also set a breakpoint and use &quot;Debug&quot; instead of &quot;Run&quot; to trigger a debug session:</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG" alt="Debug PHP script" /></a></p>
+<p>Hm weird... Although this worked flawlessly when we used the built-in functionality, it does not when we use the Deployment Configuration and shows
+a &quot;Connection with 'Xdebug 2.6.0' not established.&quot; error.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/failing-xdebug-connection.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/failing-xdebug-connection.PNG" alt="Xdebug connection cannot be established error" /></a></p>
+<h3><a id="fix-xdebug-on-phpstorm-when-run-from-a-docker-container"></a>Fix Xdebug on PhpStorm when run from a Docker container</h3>
+<p>Long story short: There is a bug in the networking setup of Docker for Win that makes PhpStorm use the wrong <code>remote_host</code> when it starts a
+debugging session. When you take a look at the &quot;Console&quot; panel at the bottom of the IDE, you should see something like this:</p>
+<pre><code>sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 /var/www/hello-world.php</code></pre>
+<p>The <code>-dxdebug.remote_host=172.18.0.1</code> option is our suspect here. Luckily, since
+<a href="https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds">Docker v18.03</a> there is a &quot;magic&quot; DNS entry called <code>host.docker.internal</code>
+that we can use to reach the host from a container.</p>
+<p>So, how can we solve this? PhpStorm enables us to
+<a href="https://www.jetbrains.com/help/phpstorm/configuring-xdebug.html#d165872e407">pass custom options to Xdebug</a> when a debugging session is initiated.
+Open <code>File | Settings | Languages &amp; Frameworks | PHP</code> and click on the &quot;...&quot; next to &quot;PHP Interpreter&quot; to bring up the interpreters. Choose
+&quot;Docker (SSH)&quot; in the left pane and click on the little folder icon on the bottom of the window next to &quot;Configuration options&quot;. In the pop up enter
+<code>xdebug.remote_host</code> as key and <code>host.docker.internal</code> as value and hit &quot;OK&quot;.</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options.PNG" alt="Configure Xdebug options" /></a></p>
+<p>This results in the configuration setting <code>-dxdebug.remote_host=host.docker.internal</code> that is now appended to the remaining (default) arguments
+that PhpStorm uses and will <strong>override</strong> any existing options (including the incorrect <code>xdebug.remote_host</code>).</p>
+<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options-configured.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options-configured.PNG" alt="Configured Xdebug options" /></a></p>
+<p>Initiating a debug session on <code>app/hello-world.php</code> will now finally stop the execution as expected and the
+&quot;Console&quot; panel at the bottom of the IDE, shows</p>
+<pre><code>sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 -dxdebug.remote_host=host.docker.internal /var/www/hello-world.php</code></pre>
+<p>This setup denotes the end of the second tutorial. In the next part we will take a <strong>much</strong> deeper look into Xdebug to fully understand how it works
+(especially in combination with PhpStorm), how to fix common problems and make it work in different scenarios (debugging from the browser, from php workers, etc.).</p>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/";
+                                                     this.page.identifier = "setup-phpstorm-with-xdebug-on-docker";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.facebook.com/pascal.landau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2018                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/a7f2d7de4d4247dda3492c876274c35b" width="1" height="1" alt="" />
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-4233326-17', 'auto');
+    ga('send', 'pageview');
+    ga("set","anonymizeIp",!0);
+
+</script>
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+
+</body>
+
+</html>

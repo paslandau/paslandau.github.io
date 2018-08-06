@@ -94,7 +94,8 @@
 function provided in the Standard SQL dialect of BigQuery
 to extract parameters from the query part of a URL and return them as an ARRAY.</p>
 <h2>Code</h2>
-<pre><code>SELECT
+<pre><code>#standardSQL
+SELECT
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)((?:[^=]+)=(?:[^&amp;]*))') as params,
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)(?:([^=]+)=(?:[^&amp;]*))') as keys,
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values

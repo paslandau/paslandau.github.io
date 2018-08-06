@@ -106,7 +106,8 @@ can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. 
 <li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></li>
 </ul>
 <h2>Code</h2>
-<pre><code>SELECT
+<pre><code>#standardSQL
+SELECT
   DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
   DATE(timestamp, "Europe/Berlin") as date_berlin,
   TIME(timestamp, "Europe/Berlin") as time_berlin,
@@ -129,8 +130,8 @@ FROM
 dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
 <p>Common formats:</p>
 <pre><code>FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATE("%F", DATETIME(timestamp, "Europe/Berlin"))     # %Y-%m-%d          =&gt; 2018-04-08
-FORMAT_DATE("%V", DATETIME(timestamp, "Europe/Berlin"))     # calendar week     =&gt; 14
+FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))     # %Y-%m-%d          =&gt; 2018-04-08
+FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))     # calendar week     =&gt; 14
 FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))     #          %H:%M:%S =&gt; 18:28:01</code></pre>
                 <h2>Comments</h2>
                 <div id="disqus_thread"></div>
