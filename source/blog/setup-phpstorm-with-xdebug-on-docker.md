@@ -13,10 +13,14 @@ slug: "setup-phpstorm-with-xdebug-on-docker"
 ---
 
 In the second part of this tutorial series on developing PHP on Docker we're taking a good hard look
-at PhpStorm and Xdebug. We will learn how to run and debug scripts from within PhpStorm on Docker.
+at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Docker.
 
 And just as a reminder, the first part is over at 
 [Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/).
+
+<div style="text-align:center">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/27KBaI24jKI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+</div>
 
 **Note**: The setup that I am going to use is for demonstration purposes only! I do **not** recommend that you use it
 "as is" as your development setup. Some problems that I won't solve here include:
