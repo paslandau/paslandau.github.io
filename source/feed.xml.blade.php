@@ -10,8 +10,12 @@ $lessons = collect($jigsaw->getMeta())
         })
         ->sortByDesc("published_at")
         ->take(10);
-xdebug_break();
 $url = $site["url"];
+$utm = http_build_query([
+    "utm_source" => "blog",
+    "utm_medium" => "rss",
+    "utm_campaign" => "global-feed",
+]);
 ?>
 <?xml version = "1.0" encoding = "UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -33,7 +37,7 @@ $url = $site["url"];
                 @if($date)
                     <pubDate>{{ $date->format(DATE_RSS) }}</pubDate>
                 @endif
-                <link>{{$url}}/{{ $lesson['url-path'] }}</link>
+                <link>{{$url}}/{{ $lesson['url-path'] }}?{{$utm}}</link>
                 <guid isPermaLink="true">{{$url}}/{{ $lesson['url-path'] }}</guid>
             </item>
         @endforeach
