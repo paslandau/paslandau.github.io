@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 06 Aug 2018 14:44:05 +0000</pubDate>
-        <lastBuildDate>Mon, 06 Aug 2018 14:44:05 +0000</lastBuildDate>
+        <pubDate>Wed, 08 Aug 2018 08:06:11 +0000</pubDate>
+        <lastBuildDate>Wed, 08 Aug 2018 08:06:11 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2]</title>
@@ -299,7 +299,7 @@ that PhpStorm uses and will <strong>override</strong> any existing options (incl
 <p>This setup denotes the end of the second tutorial. In the next part we will take a <strong>much</strong> deeper look into Xdebug to fully understand how it works
 (especially in combination with PhpStorm), how to fix common problems and make it work in different scenarios (debugging from the browser, from php workers, etc.).</p>]]></description>
                                                     <pubDate>Mon, 06 Aug 2018 12:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/</link>
+                                <link>https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/</guid>
             </item>
                     <item>
@@ -1388,7 +1388,7 @@ So in this section we'll boil it down to only the necessary steps without in dep
 This setup denotes the end of the first tutorial. In the next part we will learn how to set up Docker in PHPStorm,
 especially in combination with xdebug.</p>]]></description>
                                                     <pubDate>Sun, 08 Jul 2018 22:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/</link>
+                                <link>https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/</guid>
             </item>
                     <item>
@@ -1437,7 +1437,7 @@ FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))     # %Y-%m-%d          =&gt
 FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))     # calendar week     =&gt; 14
 FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))     #          %H:%M:%S =&gt; 18:28:01</code></pre>]]></description>
                                                     <pubDate>Sun, 08 Apr 2018 18:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/</link>
+                                <link>https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/</guid>
             </item>
                     <item>
@@ -1552,7 +1552,7 @@ r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values</code></pre></li>
 <li>evaluate the frequency of parameters keys/values</li>
 </ul>]]></description>
                                                     <pubDate>Sun, 08 Apr 2018 12:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/bigquery-snippets/extract-url-parameters-array/</link>
+                                <link>https://www.pascallandau.com/bigquery-snippets/extract-url-parameters-array/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/extract-url-parameters-array/</guid>
             </item>
                     <item>
@@ -2079,7 +2079,7 @@ You should now be able to open http://laravelexample.app/ in your browser and se
 <p>Cool, now we are basically done and could <a href="https://help.github.com/articles/adding-an-existing-project-to-github-using-the-command-line/">upload our project e.g. on Github</a>.
 I actually <a href="https://github.com/paslandau/laravelexample">went ahead and did exactly that with the &quot;LaravelExample&quot; project</a> I used in this tutorial.</p>]]></description>
                                                     <pubDate>Sun, 07 Aug 2016 16:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/</link>
+                                <link>https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/</guid>
             </item>
                     <item>
@@ -2462,7 +2462,7 @@ machine</em> - now is that something or what? Before we go on let's shut down th
 the VM but all changes we made to it stay in place. If you want to make a completely fresh start, use <code>vagrant destroy</code> and confirm that you really want
 to &quot;destroy&quot; the VM.</p>]]></description>
                                                     <pubDate>Sun, 07 Aug 2016 13:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/</link>
+                                <link>https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/</guid>
             </item>
                     <item>
@@ -2808,7 +2808,7 @@ to either write them out in full length or to look them up. Here's my short list
 </tbody>
 </table>]]></description>
                                                     <pubDate>Sun, 07 Aug 2016 10:00:00 +0000</pubDate>
-                                <link>https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/</link>
+                                <link>https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/</guid>
             </item>
             </channel>
