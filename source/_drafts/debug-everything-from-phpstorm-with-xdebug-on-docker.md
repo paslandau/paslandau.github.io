@@ -57,7 +57,7 @@ We will need three different containers in order to test all our use cases:
 Luckily, we already have a good understanding on how to create those, although we'll need to make some 
 adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
 but I'd still recommend to clone the corresponding git repository [docker-php-tutorial](https://github.com/paslandau/docker-php-tutorial)
-(unless you've already done that in part 1), checkout branch [`part_2`](https://github.com/paslandau/docker-php-tutorial/tree/part_2) and
+(unless you've already done that in part 1), checkout branch [`part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker`](https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker) and
 build the containers now.
 
 As in part 1, I'm assuming your codebase lives at `/c/codesbase`:
@@ -66,8 +66,8 @@ As in part 1, I'm assuming your codebase lives at `/c/codesbase`:
 cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build
 ````
 
 Further, make sure to open `/c/codebase/docker-php-tutorial` as a project in PhpStorm.
@@ -115,8 +115,8 @@ this image you've probably not yet built the containers. In that case, please ch
 cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build
 ````
 
 [screenshot]
@@ -180,7 +180,7 @@ Please make sure to checkout my demo repository and switch to the correct branch
 cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
 ````
 
 For now, we only need the `php-cli` container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
@@ -284,7 +284,7 @@ docker-compose up -d docker-php-cli
 yielding
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2)
+Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker)
 $ docker-compose up -d docker-php-cli
 Creating docker-php-tutorial_docker-php-cli_1 ... done
 ````
@@ -1879,7 +1879,7 @@ services:
     tty: true
     volumes:
       - ./app:/var/www
-      - ./nginx/conf.C:/etc/nginx/conf.d
+      - ./nginx/conf.d:/etc/nginx/conf.d
     networks:
       - web-network
 
@@ -1957,7 +1957,7 @@ So in this section we'll boil it down to only the necessary steps without in dep
       - hello-world.html
     - docker-compose.yml
     ````
-  - or simply `git clone git@github.com:paslandau/docker-php-tutorial.git docker-php && git checkout part_1`
+  - or simply `git clone git@github.com:paslandau/docker-php-tutorial.git docker-php && git checkout part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker`
 - Open a shell at `C:\codebase\docker-php`
 - run `docker-compose up -d`
 - check in browser via

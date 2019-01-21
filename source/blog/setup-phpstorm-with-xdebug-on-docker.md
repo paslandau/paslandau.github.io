@@ -30,7 +30,7 @@ And just as a reminder, the first part is over at
 
 There will be a another part of this series that will deal with all of those (and some more common) problems and 
 aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
-Please subscribe to the [RSS feed](http://localhost:3000/feed.xml) to get automatic notifications when that part comes out :)
+Please subscribe to the [RSS feed](http:///feed.xml) to get automatic notifications when that part comes out :)
 
 ## Table of contents
 <ul>
@@ -54,7 +54,7 @@ We will only need the php-cli container for this part.
 Luckily, we already have a good understanding on how to create the container, although we'll need to make some 
 adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
 but I'd still recommend to clone the corresponding git repository [docker-php-tutorial](https://github.com/paslandau/docker-php-tutorial)
-(unless you've already done that in part 1), checkout branch [`part_2`](https://github.com/paslandau/docker-php-tutorial/tree/part_2) and
+(unless you've already done that in part 1), checkout branch [`part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker`](https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker) and
 build the containers now.
 
 As in part 1, I'm assuming your codebase lives at `/c/codesbase`:
@@ -63,8 +63,8 @@ As in part 1, I'm assuming your codebase lives at `/c/codesbase`:
 cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build
 ````
 
 Further, make sure to open `/c/codebase/docker-php-tutorial` as a project in PhpStorm.
@@ -110,8 +110,8 @@ this image you've probably not yet built the containers. In that case, please ch
 cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build
 ````
 
 [![New CLI Interpreter from Docker server](/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG)](/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG)
@@ -175,7 +175,7 @@ Please make sure to checkout my demo repository and switch to the correct branch
 cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
 ````
 
 For now, we only need the `php-cli` container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
@@ -248,7 +248,7 @@ The server installation is straight forward:
 apt-get install -yqq openssh-server
 ````
 the only none-intuitive thing is, that we need to "manually" create the directory `/var/run/sshd` 
-( [due to a bug]( https://github.com/ansible/ansible-container/issues/141) ).
+( [due to a bug](https://github.com/ansible/ansible-container/issues/141) ).
 
 #### <a id="adding-the-ssh-keys"></a>Adding the ssh keys
 For the ssh keys, I'm choosing the easy route (for now) and use a pre-generated ssh key pair (see `php-cli/ssh/*`).
@@ -281,7 +281,7 @@ docker-compose up -d docker-php-cli
 yielding
 
 ````
-Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2)
+Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker)
 $ docker-compose up -d docker-php-cli
 Creating docker-php-tutorial_docker-php-cli_1 ... done
 ````

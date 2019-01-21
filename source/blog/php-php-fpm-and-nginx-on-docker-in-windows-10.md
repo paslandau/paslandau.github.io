@@ -1471,7 +1471,7 @@ services:
     tty: true
     volumes:
       - ./app:/var/www
-      - ./nginx/conf.C:/etc/nginx/conf.d
+      - ./nginx/conf.d:/etc/nginx/conf.d
     networks:
       - web-network
 
@@ -1549,7 +1549,7 @@ So in this section we'll boil it down to only the necessary steps without in dep
       - hello-world.html
     - docker-compose.yml
     ````
-  - or simply `git clone git@github.com:paslandau/docker-php-tutorial.git docker-php && git checkout part_1`
+  - or simply `git clone git@github.com:paslandau/docker-php-tutorial.git docker-php && git checkout part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker`
 - Open a shell at `C:\codebase\docker-php`
 - run `docker-compose up -d`
 - check in browser via

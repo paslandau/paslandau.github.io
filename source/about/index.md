@@ -18,14 +18,16 @@ slug: "about"
 </figure> 
 </div>
 <div class="col-md-6 col-s-12">
-I'm a 30 year old tech enthusiast who currently works as Head of Marketing Technology, Webtracking and SEO 
+I'm a tech enthusiast in my (very early) thirties who currently works as Head of Marketing Technology, Webtracking and SEO 
 at <a href="http://corporate.aboutyou.de/en/">ABOUT YOU GmbH</a>.
 At this particular point in time, I'm really digging software development especially backend PHP coding particularly with 
 Laravel. Oh, and Google BigQuery (lots of love <3) Apart from that I've always enjoyed earning money on the internet - which initially brought me to SEO. Which 
 was a lot more fun when Google was not that sophisticated tbh :) Besides that, I tend to work out.
 </div>
 
-There are same basic philosophies and ground rules I've found particularly useful (this list will grow, give it some time :P):
+There are same basic philosophies and ground rules I've found particularly useful (this list will grow, give it some time :P)
+
+![Dev meme wall](/img/meme-wall.jpg "My dev meme wall")
 
 > give a man a fish and you feed him for a day; teach a man to fish and you feed him for a lifetime
 
@@ -68,8 +70,6 @@ As a software engineer, you're probably familiar with "the cost of a bug":
 After realizing that, the phrase "... but we didn't have time to write tests!" becomes almost comical.
 Making errors is human. Things break, that is absolutely normal. But isn't it so much better to see
 that _immediately_ instead of "crossing-fingers and hoping that nothing breaks - and if so that no one notices"?
-
-_tbc..._
 
 ## Short facts
 
