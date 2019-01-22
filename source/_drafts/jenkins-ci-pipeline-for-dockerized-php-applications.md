@@ -77,9 +77,26 @@ Please subscribe to the [RSS feed](/feed.xml) or [via email](#newsletter) to get
  - pull code, use 'make' for qa/testing/code metrics
  - How to get the code metrics out of the container? 
  - configure emails after builds via `email-ext` plugin
+ - trigger from UI
 - creating a "PR" pipeline job
  - Use hooks on github / bitbucket
  - configure parametrized Job
  - send PR ID in the job, checkout only that PR for running the pipeline
- 
+ - trigger via curl
+   ````
+   # get CSRF crumb
+   curl -u admin:admin -s 'http://jenkins.atmo.local:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+   
+   # ==> e.g.: Jenkins-Crumb:2d319669134e923842ab55a10a6cb36d
+   
+   # get PR Id from bitbucket, e.g. "44"
+   # https://bitbucket.collins.kg/projects/SEM/repos/atmo/pull-requests/44/overview
+   # ------------------------------------------------------------------^^^
+   # start build
+   curl -u admin:admin -X POST --data "PR=44" -H "Jenkins-Crumb:2d319669134e923842ab55a10a6cb36d" http://jenkins.atmo.local:8080/job/atmo-pr/buildWithParameters?token=YOUR_TOKEN
+   ````
+   - https://bjurr.com/continuous-integration-with-bitbucket-server-and-jenkins/
+   - https://github.com/tomasbjerre/pull-request-notifier-for-bitbucket/blob/master/README_jenkins.md
+
+## Setting up Github / Bitbucket
  
