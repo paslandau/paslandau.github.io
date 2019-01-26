@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 08 Aug 2018 08:54:16 +0000</pubDate>
-        <lastBuildDate>Wed, 08 Aug 2018 08:54:16 +0000</lastBuildDate>
+        <pubDate>Sat, 26 Jan 2019 10:03:28 +0000</pubDate>
+        <lastBuildDate>Sat, 26 Jan 2019 10:03:28 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2]</title>
@@ -26,7 +26,7 @@ at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Doc
 </ul>
 <p>There will be a another part of this series that will deal with all of those (and some more common) problems and
 aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
-Please subscribe to the <a href="http://localhost:3000/feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
+Please subscribe to the <a href="http:///feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
 <h2>Table of contents</h2>
 <ul>
 <li><a href="#setup-the-docker-containers">Setup: The docker containers</a></li>
@@ -48,14 +48,14 @@ Please subscribe to the <a href="http://localhost:3000/feed.xml">RSS feed</a> to
 Luckily, we already have a good understanding on how to create the container, although we'll need to make some
 adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
 but I'd still recommend to clone the corresponding git repository <a href="https://github.com/paslandau/docker-php-tutorial">docker-php-tutorial</a>
-(unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2"><code>part_2</code></a> and
+(unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker"><code>part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></a> and
 build the containers now.</p>
 <p>As in part 1, I'm assuming your codebase lives at <code>/c/codesbase</code>:</p>
 <pre><code>cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build</code></pre>
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build</code></pre>
 <p>Further, make sure to open <code>/c/codebase/docker-php-tutorial</code> as a project in PhpStorm.</p>
 <p>In general, there are two ways to run PHP from PhpStorm using Docker:</p>
 <ol>
@@ -89,8 +89,8 @@ this image you've probably not yet built the containers. In that case, please ch
 <pre><code>cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build</code></pre>
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build</code></pre>
 <p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG" alt="New CLI Interpreter from Docker server" /></a></p>
 <p>PhpStorm will now try to create the container and figure out if it can run PHP. If all goes well, you should see the following screenshot
 with information about the PHP and Xdebug versions in the image/container.</p>
@@ -127,7 +127,7 @@ effectively treats the docker container as any other remote host.</p>
 <pre><code>cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2</code></pre>
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></pre>
 <p>For now, we only need the <code>php-cli</code> container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
 an SSH server so that we can log in via SSH. Let's take a look a the <code>Dockerfile</code>:</p>
 <pre><code>FROM php:7.0-cli
@@ -189,7 +189,7 @@ CMD ["/usr/sbin/sshd", "-D"]
 <p>The server installation is straight forward:</p>
 <pre><code>apt-get install -yqq openssh-server</code></pre>
 <p>the only none-intuitive thing is, that we need to &quot;manually&quot; create the directory <code>/var/run/sshd</code>
-( [due to a bug]( <a href="https://github.com/ansible/ansible-container/issues/141">https://github.com/ansible/ansible-container/issues/141</a>) ).</p>
+( <a href="https://github.com/ansible/ansible-container/issues/141">due to a bug</a> ).</p>
 <h4><a id="adding-the-ssh-keys"></a>Adding the ssh keys</h4>
 <p>For the ssh keys, I'm choosing the easy route (for now) and use a pre-generated ssh key pair (see <code>php-cli/ssh/*</code>).
 The content of the public key is appended to <code>/root/.ssh/authorized_keys</code> so that I can log in to the container as user <code>root</code> using the
@@ -210,7 +210,7 @@ we configure PhpStorm later on.</p>
 <pre><code>cd /c/codebase/docker-php-tutorial
 docker-compose up -d docker-php-cli</code></pre>
 <p>yielding</p>
-<pre><code>Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2)
+<pre><code>Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker)
 $ docker-compose up -d docker-php-cli
 Creating docker-php-tutorial_docker-php-cli_1 ... done</code></pre>
 <p><em>Note</em>: One might argue, that it's kinda defeating the purpose of docker, when we now treat it as a VM, installing SSH and neglecting it's
@@ -1306,7 +1306,7 @@ services:
     tty: true
     volumes:
       - ./app:/var/www
-      - ./nginx/conf.C:/etc/nginx/conf.d
+      - ./nginx/conf.d:/etc/nginx/conf.d
     networks:
       - web-network
 
@@ -1373,7 +1373,7 @@ So in this section we'll boil it down to only the necessary steps without in dep
   - hello-world.html
 - docker-compose.yml</code></pre>
 <ul>
-<li>or simply <code>git clone git@github.com:paslandau/docker-php-tutorial.git docker-php &amp;&amp; git checkout part_1</code></li>
+<li>or simply <code>git clone git@github.com:paslandau/docker-php-tutorial.git docker-php &amp;&amp; git checkout part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker</code></li>
 </ul></li>
 <li>Open a shell at <code>C:\codebase\docker-php</code></li>
 <li>run <code>docker-compose up -d</code></li>

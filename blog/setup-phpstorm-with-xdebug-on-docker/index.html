@@ -105,7 +105,7 @@ at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Doc
 </ul>
 <p>There will be a another part of this series that will deal with all of those (and some more common) problems and
 aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
-Please subscribe to the <a href="http://localhost:3000/feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
+Please subscribe to the <a href="http:///feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
 <h2>Table of contents</h2>
 <ul>
 <li><a href="#setup-the-docker-containers">Setup: The docker containers</a></li>
@@ -127,14 +127,14 @@ Please subscribe to the <a href="http://localhost:3000/feed.xml">RSS feed</a> to
 Luckily, we already have a good understanding on how to create the container, although we'll need to make some
 adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
 but I'd still recommend to clone the corresponding git repository <a href="https://github.com/paslandau/docker-php-tutorial">docker-php-tutorial</a>
-(unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2"><code>part_2</code></a> and
+(unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker"><code>part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></a> and
 build the containers now.</p>
 <p>As in part 1, I'm assuming your codebase lives at <code>/c/codesbase</code>:</p>
 <pre><code>cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build</code></pre>
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build</code></pre>
 <p>Further, make sure to open <code>/c/codebase/docker-php-tutorial</code> as a project in PhpStorm.</p>
 <p>In general, there are two ways to run PHP from PhpStorm using Docker:</p>
 <ol>
@@ -168,8 +168,8 @@ this image you've probably not yet built the containers. In that case, please ch
 <pre><code>cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2
-docker-compose docker-compose build</code></pre>
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
+docker-compose build</code></pre>
 <p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG" alt="New CLI Interpreter from Docker server" /></a></p>
 <p>PhpStorm will now try to create the container and figure out if it can run PHP. If all goes well, you should see the following screenshot
 with information about the PHP and Xdebug versions in the image/container.</p>
@@ -206,7 +206,7 @@ effectively treats the docker container as any other remote host.</p>
 <pre><code>cd /c/codebase/
 git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_2</code></pre>
+git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></pre>
 <p>For now, we only need the <code>php-cli</code> container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
 an SSH server so that we can log in via SSH. Let's take a look a the <code>Dockerfile</code>:</p>
 <pre><code>FROM php:7.0-cli
@@ -268,7 +268,7 @@ CMD ["/usr/sbin/sshd", "-D"]
 <p>The server installation is straight forward:</p>
 <pre><code>apt-get install -yqq openssh-server</code></pre>
 <p>the only none-intuitive thing is, that we need to &quot;manually&quot; create the directory <code>/var/run/sshd</code>
-( [due to a bug]( <a href="https://github.com/ansible/ansible-container/issues/141">https://github.com/ansible/ansible-container/issues/141</a>) ).</p>
+( <a href="https://github.com/ansible/ansible-container/issues/141">due to a bug</a> ).</p>
 <h4><a id="adding-the-ssh-keys"></a>Adding the ssh keys</h4>
 <p>For the ssh keys, I'm choosing the easy route (for now) and use a pre-generated ssh key pair (see <code>php-cli/ssh/*</code>).
 The content of the public key is appended to <code>/root/.ssh/authorized_keys</code> so that I can log in to the container as user <code>root</code> using the
@@ -289,7 +289,7 @@ we configure PhpStorm later on.</p>
 <pre><code>cd /c/codebase/docker-php-tutorial
 docker-compose up -d docker-php-cli</code></pre>
 <p>yielding</p>
-<pre><code>Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2)
+<pre><code>Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker)
 $ docker-compose up -d docker-php-cli
 Creating docker-php-tutorial_docker-php-cli_1 ... done</code></pre>
 <p><em>Note</em>: One might argue, that it's kinda defeating the purpose of docker, when we now treat it as a VM, installing SSH and neglecting it's
@@ -384,13 +384,54 @@ that PhpStorm uses and will <strong>override</strong> any existing options (incl
                 </p><p>
                 So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
                 connect with me on
-                <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a>,
-                <a href="https://twitter.com/PascalLandau">Twitter</a> or
-                <a href="https://www.facebook.com/pascal.landau">Facebook</a>
-                - or simply subscribe to my
-                <a href="/feed.xml">RSS feed</a>
-                and leave a comment ;)
+                <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
                 </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
                 <div style="text-align:center; margin-top:1em;">
                     <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
                 </div>
@@ -457,7 +498,7 @@ that PhpStorm uses and will <strong>override</strong> any existing options (incl
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2018                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2019                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
             </div>
         </div>
     </div>
