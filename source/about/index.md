@@ -18,11 +18,11 @@ slug: "about"
 </figure> 
 </div>
 <div class="col-md-6 col-s-12">
-I'm a tech enthusiast in my (very early) thirties who currently works as Head of Marketing Technology, Webtracking and SEO 
+I'm a tech enthusiast in my early thirties who currently works as Head of Marketing Technology, Webtracking and SEO 
 at <a href="http://corporate.aboutyou.de/en/">ABOUT YOU GmbH</a>.
-At this particular point in time, I'm really digging software development especially backend PHP coding particularly with 
+I'm passionate about software development especially backend PHP coding particularly with 
 Laravel. Oh, and Google BigQuery (lots of love <3) Apart from that I've always enjoyed earning money on the internet - which initially brought me to SEO. Which 
-was a lot more fun when Google was not that sophisticated tbh :) Besides that, I tend to work out.
+was a lot more fun when Google was not that sophisticated tbh :)
 </div>
 
 There are same basic philosophies and ground rules I've found particularly useful (this list will grow, give it some time :P)
@@ -70,6 +70,40 @@ As a software engineer, you're probably familiar with "the cost of a bug":
 After realizing that, the phrase "... but we didn't have time to write tests!" becomes almost comical.
 Making errors is human. Things break, that is absolutely normal. But isn't it so much better to see
 that _immediately_ instead of "crossing-fingers and hoping that nothing breaks - and if so that no one notices"?
+
+## Open Source
+I am a big fan of Open Source Software. Not only because it provides priceless software for free, but also
+because it is a great resource to learn and develop. Developing OSS basically means to deal with a potentially 
+infinite pool of developers/contributors all across the world as well as managing and prioritizing
+feature requests and bug reports of actual end users. 
+
+To make this even possible, you **must** introduce a certain level of automation and quality assurance, which 
+ultimately leads to becoming a better developer automatically. Examples include:
+- solving onboarding issues
+  - provide reproducible environments (vagrant/docker)
+  - automate common actions (composer scripts/Makefile)
+- aligning multiple developers
+  - enforcing code style (.editorconfig, .gitattributes, PSR-2)
+  - bug / code smell prevention (code linters, static analyzers)
+  - provide git-hooks
+- building continous integration pipelines
+  - set up multi-level testing structures (unit/integration/end2end)
+  - automatically check pull requests (jenkins)
+  - provide code metrics (code coverage, cyclomatic complexity)
+- writing documentation
+- semantic versioning
+- code deprecation strategies
+- ...
+
+In the end, this is the same set of skills that I would expect from a great inhouse teamlead
+of a software engineering team. But it's actually rather the exception than the norm to meet such developers
+in my experience (I interview up to 5 developers of all levels [junior, intermediate, senior, lead] per week).
+
+### Projects that I currently support:
+- https://github.com/phpro/grumphp
+  - Task runner for code quality tools
+- https://github.com/paratestphp/paratest
+  - Framework for the parallel execution of test suites
 
 ## Short facts
 
