@@ -184,8 +184,8 @@ the required environment variables including reasonable default values. A new de
 understand (mostly because I associated them with C). Boy, did I miss out. I was comparing different strategies
 to provide code quality tooling (style checkers, static analyzers, tests, ...) and went from custom bash scripts
 over [composer scripts](https://getcomposer.org/doc/articles/scripts.md) to finally end up at `Makefile`s. Some articles 
-I would recommend are [Makefile for lazy developers|https://localheinz.com/blog/2018/01/24/makefile-for-lazy-developers/]
-and [Why you Need a Makefile on your Project|https://blog.theodo.fr/2018/05/why-you-need-a-makefile-on-your-project/]. 
+I would recommend are [Makefile for lazy developers](https://localheinz.com/blog/2018/01/24/makefile-for-lazy-developers/)
+and [Why you Need a Makefile on your Project](https://blog.theodo.fr/2018/05/why-you-need-a-makefile-on-your-project/). 
 Both are written with a PHP context in mind.
 
 The `Makefile` serves as a central entry point and simplifies the management of the docker containers, e.g. for
@@ -193,8 +193,14 @@ The `Makefile` serves as a central entry point and simplifies the management of 
 will go deeper into that topic. 
 
 ## Fundamentals on building the containers
+I assume that you are already somewhat familiar with `Dockerfile`s and have used `docker-compose` to orchestrate multiple 
+services (if not, check out 
+[Persisting image changes with a Dockerfile](blog/php-php-fpm-and-nginx-on-docker-in-windows-10/#dockerfile) and
+[Putting it all together: Meet docker-compose](blog/php-php-fpm-and-nginx-on-docker-in-windows-10/#docker-compose)). But
+there are two points I would like to cover in a little more detail.
 
 ### Understanding build context
+
 
 ### Using entrypoint for post-build/pre-run configuration
 
@@ -206,10 +212,21 @@ We will use this container as our main development tool, i.e. this is the contai
 (to run our unit tests for instance). If you are used to something like 
 [Homestead on Vagrant](https://github.com/laravel/homestead), then consider this "workspace" of kinda the same thing.
 
-Since this is also the "heaviest" container, i'll conveniently force us to solve a lot of problems 
+Since this is also the "heaviest" container, it will conveniently force us to solve a lot of problems 
 that are also relevant for other services later on.
 
 #### phusion base image
+First of all we will "break" with the docker mantra to make containers as small as possible, containing
+only the minimum required software and use the [phusion base image](https://github.com/phusion/baseimage-docker) - a 
+"A minimal Ubuntu base image modified for Docker-friendliness". This decision is inspired by the 
+[laradoc workspace image](https://github.com/laradock/workspace) and has proven to be very convenient in a dev 
+context for someone that is used to Vagrant virtual machines (especially homestead) or cloud instances on AWS EC2, 
+Digital Ocean, etc.
+
+**Dockerfile**
+````
+FROM phusion/baseimage:latest
+````
 
 #### software
 
