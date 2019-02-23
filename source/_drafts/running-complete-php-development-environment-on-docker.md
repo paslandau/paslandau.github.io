@@ -82,7 +82,7 @@ relied on Vagrant (namely: Homestead) as our development infrastructure. Though 
 working on our local machines, we've run into a couple of problems along the way (e.g. diverging software,
 bloated images, slow starting times, complicated readme for onboarding, upgrading php, ...).
 
-Roughly two years later we  switched to Docker. The onboarding process is now reduced to 
+Roughly two years later we switched to Docker. The onboarding process is now reduced to 
 
 ````
 make docker-setup
@@ -115,9 +115,9 @@ make docker-setup
 ````
 
 **Caution** 
-- If you're running Windows and don't have make installed, see section 
+- If you're running Windows and don't have `make` installed, see section 
   [Install make on Windows (MinGW)](#install-make-on-windows-mingw)
-- If anything is occupying port 80 on you machine, you need to change the mapped `HTTP_PORT`, see section
+- If anything is occupying port 80 on your machine, you need to change the mapped `HTTP_PORT`, see section
   [Modyfing the .env file](#LINK)
 
 ## Structuring the repository
@@ -148,17 +148,19 @@ The result looks roughly like this:
 
 ### The .docker folder
 As I mentioned, for me it makes a lot of sense to keep the infrastructure definition close to the codebase, because
-it is immediately available to every developer. For bigger projects with multiple components there will be a coupling 
-anyways (e.g. in my experience it is usually not possible to simply switch mysql for postgresql without any other changes) 
-and for a library it is a very convenient (although opinionated) way to get started. I personally find i rather 
+it is immediately available to every developer. For bigger projects with multiple components there will be a
+code-infrastructure coupling anyways 
+(e.g. in my experience it is usually not possible to simply switch mysql for postgresql without any other changes) 
+and for a library it is a very convenient (although opinionated) way to get started. I personally find it rather 
 frustrating when I want to contribute to an open source project but find myself spending a significant amount of time
-setting the environment up correctly instead of being able to just "fix that bug".
+setting the environment up correctly instead of being able to just work on the code.
 
-Ymmv, though (e.g. because you don't want everybody with write access to your app repo also be able to change your 
+Ymmv, though (e.g. because you don't want everybody with write access to your app repo also to be able to change your 
 infrastructure code). We actually went a different route previously and had a second repository ("<app>-inf") 
 that would contain the contents of the `.docker` folder. Worked as well, but we often ran into situations where 
 the contents of the repo would be stale for some devs, plus it was simply additional overhead with not other benefits 
-to us at that point.
+to us at that point. Maybe [git submodules](https://medium.com/@porteneuve/mastering-git-submodules-34c65e940407) will
+enable us to get the best of both worlds - I'll blog about it once we try ;)
 
 ### The .shared folder
 When dealing with multiple services, chances are high that some of those services will be configured similarly, e.g. for
@@ -166,7 +168,7 @@ When dealing with multiple services, chances are high that some of those service
 - setting up unix users (with the same ids)
 - configuration (think php-cli for workers and php-fpm for web requests)
 
-To avoid duplication, I place scripts (bash files) and config files in the `.shared` folder and make it available in
+To avoid duplication, I place scripts (simple bash files) and config files in the `.shared` folder and make it available in
 the build context for each service. I'll explain the process in more detail under 
 [providing the correct build context](#LINK).
 
@@ -197,23 +199,183 @@ I assume that you are already somewhat familiar with `Dockerfile`s and have used
 services (if not, check out 
 [Persisting image changes with a Dockerfile](blog/php-php-fpm-and-nginx-on-docker-in-windows-10/#dockerfile) and
 [Putting it all together: Meet docker-compose](blog/php-php-fpm-and-nginx-on-docker-in-windows-10/#docker-compose)). But
-there are two points I would like to cover in a little more detail.
+there are some points I would like to cover in a little more detail.
 
 ### Understanding build context
+There are two essential parts when building a container:
+
+- the base image
+- the build context
+
+You can read about the official description in the [Dockerfile reference](http://docs.docker.com/engine/reference/builder/#usage).
+
+For me, the gist is this: The build context defines the files and folders (recursively) on your machine that are send 
+from the [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/) to 
+the [Docker Daemon](https://docs.docker.com/engine/reference/commandline/dockerd/) that executes the build process
+of a container so that you can reference those files in the Dockerfile (e.g. via `COPY`). The build context for all of our containers 
+will be the `.docker` directory, so that all build processes have access to the `.shared` scripts and config. Yes, that
+also means that the `php-fpm` container has access to files that are only relevant to the `mysql` container (for
+instance), but the performance penalty is absolutely neglectable. Plus, as long as we don't actively `COPY` those irrelevant
+files, they won't bloat up our images.
+
+A couple of notes:
+- I used to think that the build context is *always* tied to the location of the Dockerfile but that's only the default,
+  it can be any directory
+- the build context is **actually send** to the build process - i.e. you should avoid unnecessary files / folders as this might
+  affect performance, especially on big files (don't use `/`!)
+- similar to `git`, Docker knows the concept of a [`.dockerignore` file](https://docs.docker.com/engine/reference/builder/#dockerignore-file)
+  to exclude files from being included in the build context
+
+### Using `ENTRYPOINT` for pre-run configuration
+Docker went back to the unix roots with the 
+[do on thing and do it well philosophy](https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well) which is 
+manifested in the [`CMD` and `ENTRYPOINT` instructions](https://medium.freecodecamp.org/docker-entrypoint-cmd-dockerfile-best-practices-abc591c30e21).
+
+As I had a hard time understanding those instructions when I started with Docker, here's my take at a layman's terms description:
+- since a container should do one thing, we need to specify that thing. That's what we do with `ENTRYPOINT`. Concrete examples:
+  - a `mysql` container should probably run the `mysqld` daemon
+  - a `php-fpm` container.. well, `php-fpm`
+- the `CMD` is passed as the default argument to the `ENTRYPOINT`
+- the `ENTRYPOINT` is executed every time we *run* a container. Some things can't be done during build but only at runtime
+  (e.g. find the IP of the host from within a container - see section [TODO]) - `ENTRYPOINT` is a good solution for that problem
+- technically, we can only override an already existing `ENTRYPOINT` from the base image. But: We can structure the new 
+  `ENTRYPOINT` like a [decorator](https://en.wikipedia.org/wiki/Decorator_pattern) by adding `exec "$@"` at the end to 
+  simulate inheritance from the parent image
+
+To expand on the last point, consider the default 
+[`ENTRYPOINT` of the current [2019-02-23; PHP 7.3] `php-fpm` image](https://github.com/docker-library/php/blob/640a30e8ff27b1ad7523a212522472fda84d56ff/7.3/stretch/fpm/docker-php-entrypoint)
+````
+#!/bin/sh
+set -e
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+	set -- php-fpm "$@"
+fi
+
+exec "$@"
+````
+In the [corresponding Dockerfile](https://github.com/docker-library/php/blob/640a30e8ff27b1ad7523a212522472fda84d56ff/7.3/stretch/fpm/Dockerfile#L223)
+we find the following instructions:
+````
+# [...]
+ENTRYPOINT ["docker-php-entrypoint"]
+# [...]
+CMD ["php-fpm"]
+````
+That means: When we run the container it will pass the string "php-fpm" to the `ENTRYPOINT` script `docker-php-entrypoint` 
+as argument which will then execute it (due to the `exec "$@"` instruction at the end):
+````
+$ docker run --name test --rm php:fpm
+[23-Feb-2019 14:49:20] NOTICE: fpm is running, pid 1
+[23-Feb-2019 14:49:20] NOTICE: ready to handle connections
+# php-fpm is running
+# Hit ctrl + c to close the connection
+$ docker stop test
+````
+
+We could now override the default `CMD` "php-fpm" with something else, e.g. a simple `echo "hello"`. The `ENTRYPOINT`
+will happily execute it:
+````
+$ docker run --name test --rm php:fpm echo "hello"
+hello
+````
+But now the `php-fpm` process isn't started any more. How can we echo "hello" but still keep the fpm process running?
+By adding our own `ENTRYPOINT` script:
+````
+#!/bin/bash
+echo 'hello'
+
+exec "$@"
+````
+Full example (using [stdin to pass the Dockerfile](https://docs.docker.com/engine/reference/commandline/build/#build-with--) 
+via [Heredoc string](https://stackoverflow.com/q/2953081/413531))
+````
+$ docker build -t my-fpm -<<'EOF'
+FROM php:fpm
+
+RUN  touch "/usr/bin/my-entrypoint.sh" \
+  && echo "#!/bin/bash" >> "/usr/bin/my-entrypoint.sh" \
+  && echo "echo 'hello'" >> "/usr/bin/my-entrypoint.sh" \
+  && echo "exec \"\$@\"" >> "/usr/bin/my-entrypoint.sh" \
+  && chmod +x "/usr/bin/my-entrypoint.sh" \
+  && cat "/usr/bin/my-entrypoint.sh" \
+;
+
+ENTRYPOINT ["/usr/bin/my-entrypoint.sh", "docker-php-entrypoint"]
+CMD ["php-fpm"]
+EOF
+````
+Note that we added the `ENTRYPOINT` of the parent image `docker-php-entrypoint` as argument to our own `ENTRYPOINT` script
+`/usr/bin/my-entrypoint.sh` so that we don't loose its functionality. And we need to define the `CMD` instruction explicitly,
+because the one from the parent image is [automatically removed once we define our own `ENTRYPOINT`](https://stackoverflow.com/a/49031590/413531).
+
+But: It works: 
+````
+$ docker run --name test --rm my-fpm
+hello
+[23-Feb-2019 15:43:25] NOTICE: fpm is running, pid 1
+[23-Feb-2019 15:43:25] NOTICE: ready to handle connections
+# Hit ctrl + c to close the connection
+$ docker stop test
+````
+
+We will use that technique during this tutorial when [Resolving the `host.docker.internal` hostname (for Linux)](#LINK) and
+[Sync the hosts SSH keys (for Windows)](#LINK)
+
+### Synchronizing file and folder ownership on shared volumes
+Docker makes it really easy to share files between containers by using [volumes](https://docs.docker.com/storage/volumes/). 
+For simplicities sake, you can picture a volume simply as an additional disk that multiple containers have access to.
+As long as you are only dealing with one container, life is easy: You can simply `chown` files to the correct user.
+But since the containers might have a different user setup, permissions/ownership becomes a problem.
+
+The first thing for me was understanding that file ownership does not depend on the user **name** but rather on the user **id**. 
+And you might have guessed it: Two containers might have a user with the same name but with a different id. 
+The same is true for groups, btw. You can check the id by running `su - <user name> -c id -s /bin/sh`, e.g.
+````
+su - www-data -c id -s /bin/sh
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+````
+
+That's inconvenient but rather easy to solve in most cases, because we have full control over the containers and
+can assign ids as we like, using `usermod -u <id> <name>`.
 
 
-### Using entrypoint for post-build/pre-run configuration
+ - and it gets even
+worse when the volume in question is mounted from the host system (at least for linux users ;)).
 
+
+https://medium.com/@mccode/understanding-how-uid-and-gid-work-in-docker-containers-c37a01d01cf
 ### Installing php extensions
+When php extensions are missing, googling will often point to answers for normal linux systems using `apt-get` or `yum`, 
+e.g. `sudo apt-get install php-xdebug`. But for the official docker images, the recommended way is using the 
+[docker-php-ext-configure, docker-php-ext-install, and docker-php-ext-enable helper scripts](https://github.com/docker-library/docs/blob/master/php/README.md#how-to-install-more-php-extensions).
+Unfortunately, some extensions have rather complicated dependencies, so that the installation fails.
+Fortunately, there is a great project on Github called 
+[docker-php-extension-installer](https://github.com/mlocati/docker-php-extension-installer) that takes care of that for us
+and is super easy to use:
+
+````
+FROM php:7.2-cli
+
+ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
+
+RUN chmod uga+x /usr/local/bin/install-php-extensions && sync && \
+    install-php-extensions xdebug
+````
+
+The readme also contains an 
+[overview of supported extension](https://github.com/mlocati/docker-php-extension-installer#supported-php-extensions) 
+per PHP version. 
 
 ### A real example: The workspace container
 To give you a better idea how everything plays together in practice, we'll start by defining the "workspace" container.
-We will use this container as our main development tool, i.e. this is the container will point our IDE to
-(to run our unit tests for instance). If you are used to something like 
+We will use this container as our main development tool, i.e. we will point our IDE to this container
+(to run our unit tests, for instance). If you are used to something like 
 [Homestead on Vagrant](https://github.com/laravel/homestead), then consider this "workspace" of kinda the same thing.
 
-Since this is also the "heaviest" container, it will conveniently force us to solve a lot of problems 
-that are also relevant for other services later on.
+Since it is also the "heaviest" container in the whole setup, it will conveniently force us to solve a lot of problems 
+that are also relevant for other services.
 
 #### phusion base image
 First of all we will "break" with the docker mantra to make containers as small as possible, containing
