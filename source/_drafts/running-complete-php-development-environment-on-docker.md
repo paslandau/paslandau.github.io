@@ -162,7 +162,7 @@ the contents of the repo would be stale for some devs, plus it was simply additi
 to us at that point. Maybe [git submodules](https://medium.com/@porteneuve/mastering-git-submodules-34c65e940407) will
 enable us to get the best of both worlds - I'll blog about it once we try ;)
 
-### The .shared folder
+### The `.shared` folder
 When dealing with multiple services, chances are high that some of those services will be configured similarly, e.g. for
 - installing common software 
 - setting up unix users (with the same ids)
@@ -225,6 +225,255 @@ A couple of notes:
   affect performance, especially on big files (don't use `/`!)
 - similar to `git`, Docker knows the concept of a [`.dockerignore` file](https://docs.docker.com/engine/reference/builder/#dockerignore-file)
   to exclude files from being included in the build context
+  
+### Dockerfile blueprint
+The Dockerfiles for the containers will follow the structure outlined below:
+
+````
+FROM ...
+
+# path to the directory where the Dockerfile lives
+ARG DOCKERFILE_DIR="./"
+
+# get the scripts from the build context and make sure they are executable
+COPY ${DOCKERFILE_DIR}/../.shared/scripts/ /tmp/scripts/
+RUN chmod +x -R /tmp/scripts/
+
+# add users
+ARG APP_USER=www-data
+ARG APP_USER_ID=1000
+ARG APP_GROUP=$(APP_USER)
+ARG APP_GROUP_ID=$(APP_USER_ID)
+
+RUN /tmp/scripts/create_user.sh ${APP_USER} ${APP_GROUP} ${APP_USER_ID} ${APP_GROUP_ID}
+
+# install php extensions
+RUN /tmp/scripts/install_php_extensions.sh
+
+# install other (common) software
+RUN /tmp/scripts/install_software.sh
+
+# perform any other, container specific build steps
+# [...]
+
+# cleanup 
+RUN /tmp/scripts/cleanup.sh
+
+# set default work directory
+WORKDIR "..."
+
+# define ENTRYPOINT
+ENTRYPOINT [...]
+CMD [...]
+````
+
+The comments should suffice to give you an overview - so let's talk about the individual parts in detail.
+
+### Synchronizing file and folder ownership on shared volumes
+**Script: `create_user.sh`**
+
+Docker makes it really easy to share files between containers by using [volumes](https://docs.docker.com/storage/volumes/). 
+For simplicities sake, you can picture a volume simply as an additional disk that multiple containers have access to.
+And since it's PHP we're talking about here, sharing the same application files is a common requirement 
+(e.g. for `php-fpm`, `nginx`, `php-workers`).
+
+As long as you are only dealing with one container, life is easy: You can simply `chown` files to the correct user.
+But since the containers might have a different user setup, permissions/ownership becomes a problem. Checkout 
+[this video on Docker & File Permissions](https://serversforhackers.com/c/dckr-file-permissions) for a practical 
+example in a Laravel application.
+
+The first thing for me was understanding that file ownership does not depend on the user **name** but rather on the user **id**. 
+And you might have guessed it: Two containers might have a user with the same name but with a different id. 
+The same is true for groups, btw. You can check the id by running `id <name>`, e.g.
+````
+id www-data
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+````
+
+[![File ownership with multiple containers using a shared volume](/img/running-complete-php-development-environment-on-docker/docker-file-ownership-volume.png)](/img/running-complete-php-development-environment-on-docker/docker-file-ownership-volume.png)
+
+That's inconvenient but rather easy to solve in most cases, because we have full control over the containers and
+can [assign ids as we like](https://www.cyberciti.biz/faq/linux-change-user-group-uid-gid-for-all-owned-files/) 
+(using `usermod -u <id> <name>`) and thus making sure every container uses the same user names with the same user ids.
+
+Things get complicated when the volume isn't just a Docker volume but a shared folder on the host. This is usually
+what we want for development, so that changes on the host are immediately reflected in all the containers.
+
+[![File ownership with multiple containers using a shared volume from the host](/img/running-complete-php-development-environment-on-docker/docker-file-ownership-host.png)](/img/running-complete-php-development-environment-on-docker/docker-file-ownership-host.png)
+
+This issue **only affects users with a linux host system**! Docker Desktop (previously known as Docker for Mac / Docker for Win)
+has a virtualization layer in between that will effectively erase all ownership settings and make everything shared
+from the host available to every user in a container. But even for those cases it makes sense to apply the same solution.
+
+We use the following script to ensure a consistent user setup when building a container:
+
+````
+#!/usr/bin/env bash
+APP_USER=$1
+APP_GROUP=$2
+APP_USER_ID=$3
+APP_GROUP_ID=$4
+
+new_user_id_exists=$(id ${APP_USER_ID} > /dev/null 2>&1; echo $?) 
+if [ "$new_user_id_exists" = "0" ]; then
+    (>&2 echo "ERROR: APP_USER_ID $APP_USER_ID already exists - Aborting!");
+    exit 1;
+fi
+
+new_group_id_exists=$(getent group ${APP_GROUP_ID} > /dev/null 2>&1; echo $?) 
+if [ "$new_group_id_exists" = "0" ]; then
+    (>&2 echo "ERROR: APP_GROUP_ID $APP_GROUP_ID already exists - Aborting!");
+    exit 1;
+fi
+
+old_user_id=$(id -u ${APP_USER})
+old_user_exists=$(id -u ${APP_USER} > /dev/null 2>&1; echo $?) 
+old_group_id=$(getent group ${APP_GROUP} | cut -d: -f3)
+old_group_exists=$(getent group ${APP_GROUP} > /dev/null 2>&1; echo $?)
+
+if [ "$old_group_id" != "${APP_GROUP_ID}" ]; then
+    # create the group
+    groupadd -f ${APP_GROUP}
+    # and the correct id
+    groupmod -g ${APP_GROUP_ID} ${APP_GROUP}
+    if [ "$old_group_exists" = "0" ]; then
+        # set the permissions of all "old" files and folder to the new group
+        find / -group $old_group_id -exec chgrp -h ${APP_GROUP} {} \;
+    fi
+fi
+
+if [ "$old_user_id" != "${APP_USER_ID}" ]; then
+    # create the user if it does not exist
+    if [ "$old_user_exists" != "0" ]; then
+        useradd ${APP_USER} -g ${APP_GROUP}
+    fi
+    
+    # make sure the home directory exists with the correct permissions
+    mkdir -p /home/${APP_USER} && chmod 755 /home/${APP_USER} && chown ${APP_USER}:${APP_GROUP} /home/${APP_USER} 
+    
+    # change the user id, set the home directory and make sure the user has a login shell
+    usermod -u ${APP_USER_ID} -m -d /home/${APP_USER} ${APP_USER} -s $(which bash)
+
+    if [ "$old_user_exists" = "0" ]; then
+        # set the permissions of all "old" files and folder to the new user 
+        find / -user $old_user_id -exec chown -h ${APP_USER} {} \;
+    fi
+fi
+````
+
+The script is then called from the `Dockerfile` via
+````
+ARG APP_USER=www-data
+ARG APP_USER_ID=1000
+ARG APP_GROUP=$(APP_USER)
+ARG APP_GROUP_ID=$(APP_USER_ID)
+
+RUN /tmp/scripts/create_user.sh ${APP_USER} ${APP_GROUP} ${APP_USER_ID} ${APP_GROUP_ID}
+````
+
+The default values can be overriden by passing in the corresponding 
+[build args](https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg). Linux 
+users should use the user id of the user on their host system.
+
+### Installing php extensions
+**Script: `install_php_extensions.sh`**
+
+When php extensions are missing, googling will often point to answers for normal linux systems using `apt-get` or `yum`, 
+e.g. `sudo apt-get install php-xdebug`. But for the official docker images, the recommended way is using the 
+[docker-php-ext-configure, docker-php-ext-install, and docker-php-ext-enable helper scripts](https://github.com/docker-library/docs/blob/master/php/README.md#how-to-install-more-php-extensions).
+Unfortunately, some extensions have rather complicated dependencies, so that the installation fails.
+Fortunately, there is a great project on Github called 
+[docker-php-extension-installer](https://github.com/mlocati/docker-php-extension-installer) that takes care of that for us
+and is super easy to use:
+
+````
+FROM php:7.3-cli
+
+ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
+
+RUN chmod uga+x /usr/local/bin/install-php-extensions && sync && install-php-extensions xdebug
+````
+
+The readme also contains an 
+[overview of supported extension](https://github.com/mlocati/docker-php-extension-installer#supported-php-extensions) 
+per PHP version. To ensure that all of our PHP containers have the same extensions, we provide the following script:
+
+````
+#!/usr/bin/env bash
+# add wget
+apt-get update -yqq && apt-get -f install -yyq wget
+
+# download helper script
+wget -q -O /usr/local/bin/install-php-extensions https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions \
+    | (echo "Failed while downloading php extension installer!"; exit 1)
+
+# install all required extensions
+chmod uga+x /usr/local/bin/install-php-extensions && sync && install-php-extensions \
+    redis \
+    pdo_mysql \
+    mysqli \
+    pcntl \
+    zip \
+    opcache \
+;
+````
+
+### Installing common software
+**Script: `install_software.sh`**
+
+There is a certain set of software that I want to have readily available in every container. Since this a development 
+setup, I'd prioritize ease of use / debug over performance / image size, so this might seem like a little "too much".
+I think I'm also kinda spoiled by my Homestead past, because it's so damn convenient to have everything right at
+your fingertips :)
+
+Anyway, the script is straight forward:
+````
+#!/bin/sh
+
+apt-get update -yqq && apt-get install -yqq \
+    curl \
+    dnsutils \
+    gdb \
+    git \
+    htop \
+    iputils-ping \
+    iproute2 \
+    ltrace \
+    make \
+    mysql-client \
+    procps \
+    redis-tools \
+    strace \
+    sudo \
+    sysstat \
+    unzip \
+    vim \
+    wget \
+;
+````
+
+Notes:
+- this list should match your own set of go-to tools. I'm fairly open to adding new stuff here if it speeds up the
+  dev workflow
+- sorting the software alphabetically is a good practice and avoid unnecessary duplicates. Don't do this by hand, though!
+  If you're using an IDE / established text editor, chances are high that this is either a build-in functionality or
+  there's a plugin available. I'm using [Lines Sorter for PhpStorm](https://plugins.jetbrains.com/plugin/5919-lines-sorter)
+
+### Cleaning up
+**Script: `cleanup.sh`**
+
+Nice and simple:
+
+````
+#!/usr/bin/env bash
+
+apt-get clean
+rm -rf /var/lib/apt/lists/* \
+       /tmp/* \
+       /var/tmp/* \
+       /var/log/lastlog \
+       /var/log/faillog
+````
 
 ### Using `ENTRYPOINT` for pre-run configuration
 Docker went back to the unix roots with the 
@@ -323,50 +572,132 @@ $ docker stop test
 We will use that technique during this tutorial when [Resolving the `host.docker.internal` hostname (for Linux)](#LINK) and
 [Sync the hosts SSH keys (for Windows)](#LINK)
 
-### Synchronizing file and folder ownership on shared volumes
-Docker makes it really easy to share files between containers by using [volumes](https://docs.docker.com/storage/volumes/). 
-For simplicities sake, you can picture a volume simply as an additional disk that multiple containers have access to.
-As long as you are only dealing with one container, life is easy: You can simply `chown` files to the correct user.
-But since the containers might have a different user setup, permissions/ownership becomes a problem.
+#### Providing `host.docker.internal` for linux host systems
+**Script: `docker-entrypoint/resolve-docker-host-ip.sh`**
 
-The first thing for me was understanding that file ownership does not depend on the user **name** but rather on the user **id**. 
-And you might have guessed it: Two containers might have a user with the same name but with a different id. 
-The same is true for groups, btw. You can check the id by running `su - <user name> -c id -s /bin/sh`, e.g.
-````
-su - www-data -c id -s /bin/sh
-uid=33(www-data) gid=33(www-data) groups=33(www-data)
-````
-
-That's inconvenient but rather easy to solve in most cases, because we have full control over the containers and
-can assign ids as we like, using `usermod -u <id> <name>`.
-
-
- - and it gets even
-worse when the volume in question is mounted from the host system (at least for linux users ;)).
-
-
-https://medium.com/@mccode/understanding-how-uid-and-gid-work-in-docker-containers-c37a01d01cf
-### Installing php extensions
-When php extensions are missing, googling will often point to answers for normal linux systems using `apt-get` or `yum`, 
-e.g. `sudo apt-get install php-xdebug`. But for the official docker images, the recommended way is using the 
-[docker-php-ext-configure, docker-php-ext-install, and docker-php-ext-enable helper scripts](https://github.com/docker-library/docs/blob/master/php/README.md#how-to-install-more-php-extensions).
-Unfortunately, some extensions have rather complicated dependencies, so that the installation fails.
-Fortunately, there is a great project on Github called 
-[docker-php-extension-installer](https://github.com/mlocati/docker-php-extension-installer) that takes care of that for us
-and is super easy to use:
+In the last part of this tutorial series, I explained how to build the 
+[Docker container in a way that it plays nice with PhpStorm and Xdebug](/blog/setup-phpstorm-with-xdebug-on-docker). 
+The key parts were SSH access and the magical `host.docker.internal` DNS entry. This works great for Docker Desktop (Windows and Mac)
+but not for linux. The DNS entry [doesn't exist there](https://github.com/docker/for-linux/issues/264). 
+Since we rely on that entry 
+[to make debugging possible](/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container),
+we will set it "manually" [if the host doesn't exist](ttps://stackoverflow.com/a/24049165/413531) 
+with the following script 
+(inspired by [Access host from a docker container](https://dev.to/bufferings/access-host-from-a-docker-container-4099)):
 
 ````
-FROM php:7.2-cli
+#!/bin/sh
+set -e
 
-ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
+HOST_DOMAIN="host.docker.internal"
 
-RUN chmod uga+x /usr/local/bin/install-php-extensions && sync && \
-    install-php-extensions xdebug
+# check if the host exists - this will fail on linux
+if dig ${HOST_DOMAIN} | grep -q 'NXDOMAIN'
+then
+  # resolve the host IP
+  HOST_IP=$(ip route | awk 'NR==1 {print $3}')
+  # and write it to the hosts file
+  echo "$HOST_IP\t$HOST_DOMAIN" >> /etc/hosts
+fi
+
+exec "$@"
 ````
 
-The readme also contains an 
-[overview of supported extension](https://github.com/mlocati/docker-php-extension-installer#supported-php-extensions) 
-per PHP version. 
+The script is placed at `.shared/docker-entrypoint/resolve-docker-host-ip.sh` and added as `ENTRYPOINT` in the Dockerfile via 
+
+````
+COPY ${DOCKERFILE_DIR}/../.shared/scripts/ /tmp/scripts/
+
+RUN mkdir -p /bin/docker-entrypoint \
+ && cp /tmp/scripts/docker-entrypoint/* /bin/docker-entrypoint \
+;
+
+ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh", ...]
+````
+
+Notes:
+- since this script depends on runtime configuration, we need to run it as an `ENTRYPOINT`
+- there is no need to explicitly check for the OS type - we simply make sure that the DNS entry exists
+  and add it if it doesn't
+- we're using `dig` and `ip` which need to be installed via 
+  ````
+  apt-get update -yqq && apt-get install -yqq \
+      dnsutils \
+      iproute2 \
+  ;
+  ````
+  during the build time of the container
+- this workaround is only required in containers we want to debug via xdebug
+
+#### Adding SSH keys from the host system
+**Script: `docker-entrypoint/copy-host-ssh.sh`**
+
+Another challenge popped up when we needed access to our private bitbucket repository from within a Docker container
+to run `composer install`. The access is controlled via SSH keys, i.e. each dev has added his public SSH key to
+his bitbucket account. Works great from the host... not so much from a within a container, because we can't simply
+"bake" the private key into the image at build time. 
+
+So we do it at runtime. Should work by simply mounting our keys, right? Well.. might work on linux (when using 
+the [correct user setup](#LINK-to-create-user-script)), but it definitely does not work on Windows as the mounted
+files will have the wrong permissions. The [required permissions](https://superuser.com/a/215506) are as follows:
+
+> .ssh directory: 700 (drwx------)
+> public key (.pub file): 644 (-rw-r--r--)
+> private key (id_rsa): 600 (-rw-------)
+> home directory: 755 (drwxr-xr-x)).
+
+**Caution:** Getting this wrong is really annoying, because the error messages will usually be like 
+`ssh permission denied (publickey)` instead of `wrong permissions on .ssh folder` or so.
+
+Luckily, `ENTRYPOINT` comes to the rescue again. We'll use the following script 
+(inspired by [Docker Tip #56: Volume Mounting SSH Keys into a Docker Container](https://nickjanetakis.com/blog/docker-tip-56-volume-mounting-ssh-keys-into-a-docker-container)):
+
+````
+#!/bin/sh
+set -e
+
+# replace from outside!
+user=__APP_USER
+ssh_key_file=__SSH_KEY_FILE
+
+ssh_dir="/home/$user/.ssh"
+
+# caution: we rely on the host to mount its SSH keys to /tmp/.ssh/
+cp /tmp/.ssh/${ssh_key_file} ${ssh_dir}/${ssh_key_file}
+chown -R ${user}: ${ssh_dir}
+chmod 700 ${ssh_dir}
+chmod 600 ${ssh_dir}/${ssh_key_file}
+
+exec "$@"
+````
+
+The script is placed at `.shared/docker-entrypoint/copy-host-ssh.sh` and added as `ENTRYPOINT` in the Dockerfile via 
+
+````
+COPY ${DOCKERFILE_DIR}/../.shared/scripts/ /tmp/scripts/
+
+ARG APP_USER=www-data
+ARG SSH_KEY_FILE=id_rsa
+
+RUN mkdir -p /bin/docker-entrypoint \
+ && cp /tmp/scripts/docker-entrypoint/* /bin/docker-entrypoint \
+ && RUN sed -i -e "s#__APP_USER#${APP_USER}#" /bin/docker-entrypoint/copy-host-ssh.sh \
+ && RUN sed -i -e "s#__SSH_KEY_FILE#${SSH_KEY_FILE}#" /bin/docker-entrypoint/copy-host-ssh.sh \
+;
+
+ENTRYPOINT ["/bin/docker-entrypoint/copy-host-ssh.sh", ...]
+````
+
+Notes:
+- we don't pass the variables to the script but rather use `sed` to replace them directly in the file.
+  I'm using this workaround because you 
+  [can't use variables in the exec form of `ENTRYPOINT`](https://github.com/moby/moby/issues/4783)
+- due to the `exec "$@"` we can chain the `ENTRYPOINT` scripts if required, e.g. 
+  ````
+  ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh", "/bin/docker-entrypoint/copy-host-ssh.sh", ...]
+  ````
+- on startup we must remember to mount the SSH folder from the host to `/tmp/.ssh/` in the container.
+  This is defined [in the `docker-compose` setup](#LINK-to-docker-compose) later on 
 
 ### A real example: The workspace container
 To give you a better idea how everything plays together in practice, we'll start by defining the "workspace" container.
@@ -397,10 +728,6 @@ FROM phusion/baseimage:latest
 #### ssh
 
 #### php extensions and configuration
-
-#### mounting host configuration (ssh keys, .gitconfig, ...)
-
-#### Providing `host.docker.internal` for linux
 
 ### Refactoring shared scripts and config
 - Note: File mode on windows

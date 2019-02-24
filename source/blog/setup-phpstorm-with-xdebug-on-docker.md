@@ -42,7 +42,7 @@ Please subscribe to the [RSS feed](http:///feed.xml) to get automatic notificati
  <li><a href="#run-debug-a-php-script-on-docker-server">Run/debug a php script on docker</a></li>
 </ul></li>
 <li><a href="#run-php-on-docker-via-deployment-configuration">Run PHP on Docker via Deployment Configuration</a><ul>
- <li><a href="#preparing-the-workspace-container">Preparing the "workspace" container</a></li>
+ <li><a href="#preparing-the-internal-container">Preparing the "workspace" container</a></li>
  <li><a href="#configure-the-deployment-configuration">Configure the Deployment Configuration</a></li>
  <li><a href="#run-debug-a-php-script-on-docker">Run/debug a php script on docker</a></li>
  <li><a href="#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a></li>
@@ -383,7 +383,7 @@ sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.r
 ````
 
 The `-dxdebug.remote_host=172.18.0.1` option is our suspect here. Luckily, since 
-[Docker v18.03](https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds) there is a "magic" DNS entry called `host.docker.internal`
+[Docker v18.03](https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds) there is a "magic" DNS entry called `host.docker.internal
 that we can use to reach the host from a container.
 
 So, how can we solve this? PhpStorm enables us to 
