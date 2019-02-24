@@ -222,7 +222,7 @@ A couple of notes:
 - I used to think that the build context is *always* tied to the location of the Dockerfile but that's only the default,
   it can be any directory
 - the build context is **actually send** to the build process - i.e. you should avoid unnecessary files / folders as this might
-  affect performance, especially on big files (don't use `/`!)
+  affect performance, especially on big files (don't use `/` as context!)
 - similar to `git`, Docker knows the concept of a [`.dockerignore` file](https://docs.docker.com/engine/reference/builder/#dockerignore-file)
   to exclude files from being included in the build context
   
@@ -303,7 +303,7 @@ what we want for development, so that changes on the host are immediately reflec
 
 This issue **only affects users with a linux host system**! Docker Desktop (previously known as Docker for Mac / Docker for Win)
 has a virtualization layer in between that will effectively erase all ownership settings and make everything shared
-from the host available to every user in a container. But even for those cases it makes sense to apply the same solution.
+from the host available to every user in a container.
 
 We use the following script to ensure a consistent user setup when building a container:
 
@@ -455,7 +455,7 @@ apt-get update -yqq && apt-get install -yqq \
 Notes:
 - this list should match your own set of go-to tools. I'm fairly open to adding new stuff here if it speeds up the
   dev workflow
-- sorting the software alphabetically is a good practice and avoid unnecessary duplicates. Don't do this by hand, though!
+- sorting the software alphabetically is a good practice to avoid unnecessary duplicates. Don't do this by hand, though!
   If you're using an IDE / established text editor, chances are high that this is either a build-in functionality or
   there's a plugin available. I'm using [Lines Sorter for PhpStorm](https://plugins.jetbrains.com/plugin/5919-lines-sorter)
 
@@ -619,14 +619,13 @@ Notes:
 - since this script depends on runtime configuration, we need to run it as an `ENTRYPOINT`
 - there is no need to explicitly check for the OS type - we simply make sure that the DNS entry exists
   and add it if it doesn't
-- we're using `dig` and `ip` which need to be installed via 
+- we're using `dig` and `ip` which need to be installed during the build time of the container via 
   ````
   apt-get update -yqq && apt-get install -yqq \
       dnsutils \
       iproute2 \
   ;
   ````
-  during the build time of the container
 - this workaround is only required in containers we want to debug via xdebug
 
 #### Adding SSH keys from the host system
@@ -641,10 +640,12 @@ So we do it at runtime. Should work by simply mounting our keys, right? Well.. m
 the [correct user setup](#LINK-to-create-user-script)), but it definitely does not work on Windows as the mounted
 files will have the wrong permissions. The [required permissions](https://superuser.com/a/215506) are as follows:
 
-> .ssh directory: 700 (drwx------)
-> public key (.pub file): 644 (-rw-r--r--)
-> private key (id_rsa): 600 (-rw-------)
-> home directory: 755 (drwxr-xr-x)).
+````
+.ssh directory: 700 (drwx------)
+public key (.pub file): 644 (-rw-r--r--)
+private key (id_rsa): 600 (-rw-------)
+home directory: 755 (drwxr-xr-x)).
+````
 
 **Caution:** Getting this wrong is really annoying, because the error messages will usually be like 
 `ssh permission denied (publickey)` instead of `wrong permissions on .ssh folder` or so.
