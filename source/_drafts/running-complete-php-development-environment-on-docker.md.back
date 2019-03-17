@@ -12,9 +12,45 @@ category: "development"
 slug: "running-complete-php-development-environment-on-docker"
 ---
 
+````
+<project>/
+├── .docker/
+|   ├── .shared/
+|   |   ├── config/
+|   |   |   └── php/
+|   |   |       └── fpm/
+|   |   |           └── conf.d/
+|   |   |               └── zz-app.ini
+|   |   |
+|   |   └── scripts/
+|   |       └── docker-entrypoint/
+|   |           ├── copy-host-ssh.sh
+|   |           └── resolve-docker-host-ip.sh
+|   ├── php-fpm/
+|   |   ├── php-fpm.d/
+|   |   |   └── pool.conf
+|   |   ├── conf.d/
+|   |   |   └── zz-app.ini
+|   |   └── Dockerfile
+|   ├── nginx/
+|   |   ├── site-available/
+|   |   |   └── app.conf
+|   |   ├── Dockerfile
+|   |   └── nginx.conf
+|   ├── .env.example
+|   └── docker-compose.yml
+├── Makefile
+└── index.php
+````
+
 In the third part of this tutorial series on developing PHP on Docker we'll tie everything together,
 polish some stuff up (SSH keys, user permissions, ...), build the complete development infrastructure
-via docker-compose and provide a nice, clean workflow to start in a productive coding day.
+via docker-compose and provide a nice, clean workflow to start in a productive coding day. Unfortunately,
+this thing has grown incredibly big and complex so that I needed to break it down into some easier-to-consume 
+parts:
+<ul>
+<li>Structure and Fundamentals of Docker as part of a PHP project</li>
+<li>Structure and Fundamentals of Docker as part of a PHP project</li>
 
 If you're still completely new to Docker, you might want to start with the first part
 [Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/)
@@ -29,7 +65,7 @@ in production. When moving to production, there are some more things to keep in 
 - we'll use a registry for our "built" container images
 
 There will be a another part of this series that will explain how we mitigate some of those issues. Although the next one 
-will probably start with an explanation of how to set up a CI pipeline based on Jenkins... but we'll see ¯\_(ツ)_/¯
+will probably start with an explanation of how to set up a CI pipeline based on Jenkins... but we'll see ¯\\\_(ツ)\_/¯
 
 Please subscribe to the [RSS feed](/feed.xml) or [via email](#newsletter) to get automatic notifications when the next part comes out :)
 
@@ -204,7 +240,7 @@ there are some points I would like to cover in a little more detail.
 ### Understanding build context
 There are two essential parts when building a container:
 
-- the base image
+- the Dockerfile
 - the build context
 
 You can read about the official description in the [Dockerfile reference](http://docs.docker.com/engine/reference/builder/#usage).
@@ -691,7 +727,7 @@ ENTRYPOINT ["/bin/docker-entrypoint/copy-host-ssh.sh", ...]
 
 Notes:
 - we don't pass the variables to the script but rather use `sed` to replace them directly in the file.
-  I'm using this workaround because you 
+  I'm using this workaround because you
   [can't use variables in the exec form of `ENTRYPOINT`](https://github.com/moby/moby/issues/4783)
 - due to the `exec "$@"` we can chain the `ENTRYPOINT` scripts if required, e.g. 
   ````
