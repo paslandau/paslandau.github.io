@@ -219,11 +219,11 @@ The Dockerfiles for the containers will follow the structure outlined below:
 ````
 FROM ...
 
-# path to the directory where the Dockerfile lives
-ARG SERVICE_DIR="./"
+# path to the directory where the Dockerfile lives relative to the build context
+ARG SERVICE_DIR="./service"
 
 # get the scripts from the build context and make sure they are executable
-COPY ${SERVICE_DIR}/../.shared/scripts/ /tmp/scripts/
+COPY .shared/scripts/ /tmp/scripts/
 RUN chmod +x -R /tmp/scripts/
 
 # add users
@@ -241,6 +241,7 @@ RUN /tmp/scripts/install_php_extensions.sh
 RUN /tmp/scripts/install_software.sh
 
 # perform any other, container specific build steps
+COPY ${SERVICE_DIR}/config/* /etc/service/config
 # [...]
 
 # cleanup 
@@ -525,8 +526,8 @@ apt-get update -yqq && apt-get install -yqq \
 ````
 
 Notes:
-- this list should match your own set of go-to tools. I'm fairly open to adding new stuff here if it speeds up the
-  dev workflow
+- this list should match **your own set of go-to tools**. I'm fairly open to adding new stuff here if it speeds up the
+  dev workflow. But if you don't require some of the tools (e.g. not using redis? Better drop the `redis-tools`).
 - sorting the software alphabetically is a good practice to avoid unnecessary duplicates. Don't do this by hand, though!
   If you're using an IDE / established text editor, chances are high that this is either a build-in functionality or
   there's a plugin available. I'm using [Lines Sorter for PhpStorm](https://plugins.jetbrains.com/plugin/5919-lines-sorter)
@@ -675,10 +676,11 @@ exec "$@"
 The script is placed at `.shared/docker-entrypoint/resolve-docker-host-ip.sh` and added as `ENTRYPOINT` in the Dockerfile via 
 
 ````
-COPY ${SERVICE_DIR}/../.shared/scripts/ /tmp/scripts/
+COPY .shared/scripts/ /tmp/scripts/
 
-RUN mkdir -p /bin/docker-entrypoint \
- && cp /tmp/scripts/docker-entrypoint/* /bin/docker-entrypoint \
+RUN mkdir -p /bin/docker-entrypoint/ \
+ && cp /tmp/scripts/docker-entrypoint/* /bin/docker-entrypoint/ \
+ && chmod +x -R /bin/docker-entrypoint/ \
 ;
 
 ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh", ...]
@@ -725,9 +727,122 @@ containers from the first part of this tutorial series. This is the folder struc
 ````
 
 ### php-fpm
+Though we will be only having one PHP container in this part, I'm still putting the config in the `.shared` directory,
+as we will use the same config for other containers (workspace, workers) later on. 
+
+````
+|   ├── .shared/
+|   |   ├── config/
+|   |   |   └── php/ 
+|   |   |       └── zz-app.ini
+````
+
+The pool configuration is only relevant for php-fpm, so it goes in the directory of the service. Btw. I highly 
+recommend [this video on PHP-FPM Configuration](https://serversforhackers.com/c/lemp-php-fpm-config) if your 
+php-fpm foo isn't already over 9000.
+
+````
+|   ├── php-fpm/
+|   |   ├── php-fpm.d/
+|   |   |   └── pool.conf
+````
+
+I won't repeat the full Dockerfile here 
+([you can check it out in the repository](TODO)),
+but I want to point out a couple of things:
+
+#### Setting the timezone
+Nothing fancy, just ensuring that all containers use the same timezone. This becomes especially important
+when containers log to the same file, for instance.
+
+````
+# set timezone
+ARG TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+````
+
+#### Modifying the pool configuration
+We're using the [`modify_config.sh` script](TODO) to set the user and group that owns the php-fpm processes.
+
+````
+# php-fpm pool config
+COPY ${SERVICE_DIR}/php-fpm.d/* /usr/local/etc/php-fpm.d
+RUN /tmp/scripts/modify_config.sh /usr/local/etc/php-fpm.d/zz-app.conf \
+    "__APP_USER" \
+    "${APP_USER}" \
+ && /tmp/scripts/modify_config.sh /usr/local/etc/php-fpm.d/zz-app.conf \
+    "__APP_GROUP" \
+    "${APP_GROUP}" \
+;
+````
+
+#### Custom ENTRYPOINT
+Since php-fpm needs to be debuggable, we need to ensure that the `docker.host.internal` DNS entry exists,
+so we'll use the [corresponding ENTRYPOINT](TODO) to do that.
+
+````
+# entrypoint
+RUN mkdir -p /bin/docker-entrypoint/ \
+ && cp /tmp/scripts/docker-entrypoint/* /bin/docker-entrypoint/ \
+ && chmod +x -R /bin/docker-entrypoint/ \
+;
+
+ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh","php-fpm"]
+````
 
 ### nginx
+The nginx setup is even simpler. There is no shared config, so that everything we need resides in
+````
+|   ├── nginx/
+|   |   ├── sites-available/
+|   |   |   └── app.conf
+|   |   ├── Dockerfile
+|   |   └── nginx.conf
+````
+
+Please note, that nginx only has the `nginx.conf` file for configuration (i.e. there is no `conf.d` directory or so),
+so we need to define the **full** config in there. There are two things to note about that file:
+
+- user and group are modified dynamically
+- we specify `/etc/nginx/sites-available/` as the directory that holds the config files for the individual files via
+  `include /etc/nginx/sites-available/*.conf;`
   
+We need to keep the last point in mind, because we must use the same directory in the [Dockerfile](TODO):
+
+````
+# nginx app config
+COPY ${SERVICE_DIR}/sites-available/* /etc/nginx/sites-available/
+````
+
+The site's config file `app.conf` has a variable (`__APP_CODE_PATH`) for the `root` directive:
+
+````
+ARG APP_CODE_PATH
+RUN /tmp/scripts/modify_config.sh /etc/nginx/sites-available/app.conf \
+    "__APP_CODE_PATH" \
+    "${APP_CODE_PATH}" \
+;
+````
+
+We will pass that the value via docker-compose when we build the container and will mount it as a shared directory 
+from the host system. Further, we "connect" it with the fpm-container via 
+
+````
+server {
+    # ...
+
+    location ~ \.php$ {
+        # ...
+        fastcgi_pass php-fpm:9000;
+    }
+}
+````
+
+where `php-fpm` will resolve to the `php-fpm` container, because we use php-fpm as the service name in the docker-compose
+file, so it will be [automatically use as the hostname](https://docs.docker.com/compose/compose-file/#aliases):
+
+>  Other containers on the same network can use either the service name or [an] alias to connect to one of the service’s containers.
+
 ## Setting up docker-compose 
 In order to orchestrate the build process, we'll use docker-compose.
 
