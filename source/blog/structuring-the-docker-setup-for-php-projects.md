@@ -88,8 +88,8 @@ To get a feeling for how the process _feels_ like, simply execute the following 
 
 ````
 git clone https://github.com/paslandau/docker-php-tutorial.git
-git checkout part_3_structuring-the-docker-setup-for-php-projects
 cd docker-php-tutorial
+git checkout part_3_structuring-the-docker-setup-for-php-projects
 make docker-clean
 make docker-init
 make docker-build-from-scratch
@@ -499,8 +499,8 @@ and checkout the
 
 ````
 git clone https://github.com/paslandau/docker-php-tutorial.git
-git checkout part_3_structuring-the-docker-setup-for-php-projects
 cd docker-php-tutorial
+git checkout part_3_structuring-the-docker-setup-for-php-projects
 ````
 
 Now copy the `.env.exmaple` to `.env`. All the default values  should work out of the box - unless you already have something
