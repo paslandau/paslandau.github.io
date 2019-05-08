@@ -1,13 +1,13 @@
 ---
 extends: _layouts.post
 section: content
-title: "How to structure the Docker setup for PHP Projects [Tutorial Part 3]"
+title: "How to build a Docker development setup for PHP Projects [Tutorial Part 3]"
 subheading: "... folder structure, Dockerfile templates and general fundamentals"
 h1: "Structuring the Docker setup for PHP Projects"
 description: "Dockerfiles, folder structures, etc. - In this article I'll got through the fundamentals for a PHP development environment on Docker."
 author: "Pascal Landau"
-published_at: "2019-03-17 12:00:00"
-vgwort: ""
+published_at: "2019-05-08 09:00:00"
+vgwort: "380e34fac15043f5b80fecf412d4d831"
 category: "development"
 slug: "structuring-the-docker-setup-for-php-projects"
 ---
@@ -17,23 +17,24 @@ build a complete development infrastructure and explain how to "structure" the D
 of a PHP project. Structure as in 
 - folder structure ("what to put where")
 - Dockerfile templates
-- solving common problems
+- solving common problems (file permissions, runtime configuration, ...)
 
 We will also create a minimal container setup consisting of php-fpm, nginx and a workspace container that we 
 refactor from the previous parts of this tutorial.
 
-If you're still completely new to Docker, you might want to start with the first part
-[Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/)
-and also take a look at the second one
-[Setting up PhpStorm with Xdebug for local development on Docker](/blog/setup-phpstorm-with-xdebug-on-docker/) and then
-come back here.
+<iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Previous parts of the Docker PHP Tutorial
+- [Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/)
+- [Setting up PhpStorm with Xdebug for local development on Docker](/blog/setup-phpstorm-with-xdebug-on-docker/) 
 
 All code sample are publicly available in my 
 [Docker PHP Tutorial repository on github](https://github.com/paslandau/docker-php-tutorial). 
 The branch for this tutorial is 
 [part_3_structuring-the-docker-setup-for-php-projects](https://github.com/paslandau/docker-php-tutorial/tree/part_3_structuring-the-docker-setup-for-php-projects).
 
-Please subscribe to the [RSS feed](/feed.xml) or [via email](#newsletter) to get automatic notifications when the next part comes out :)
+If you want to follow along, please subscribe to the [RSS feed](/feed.xml) or [via email](#newsletter) 
+to get automatic notifications when the next part comes out :)
 
 ## Table of contents
 - <a href="#introduction">Introduction</a>
@@ -75,7 +76,8 @@ Please subscribe to the [RSS feed](/feed.xml) or [via email](#newsletter) to get
     
 ## <a id="introduction"></a>Introduction
 When I started my current role as Head of Marketing Technology at ABOUT YOU back in 2016, we heavily
-relied on Vagrant (namely: Homestead) as our development infrastructure. Though that was much better than 
+relied on [Vagrant (namely: Homestead) as our development infrastructure](/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/). 
+Though that was much better than 
 working on our local machines, we've run into a couple of problems along the way (e.g. diverging software,
 bloated images, slow starting times, complicated readme for onboarding, upgrading php, ...).
 
@@ -485,6 +487,9 @@ APP_HOST=docker-php-tutorial.local
 # nginx
 NGINX_HOST_HTTP_PORT=80
 NGINX_HOST_HTTPS_PORT=443
+
+# workspace
+WORKSPACE_HOST_SSH_PORT=2222
 ````
 
 The `COMPOSE_` variables in the beginning set some reasonable 
@@ -793,12 +798,13 @@ Assume, that the current working directory is `<project>/`. If we started a buil
 ````
 docker build .docker/nginx -f .docker/nginx/Dockerfile
 ````
-the context would **not** include the `.shared` folder so we wouldn't be able to `COPY` the `scripts/` subfolder.
+the context would **not** include the `.shared` folder so we wouldn't be able to `COPY` the `scripts/` subfolder. 
+If we ran
 
 ````
 docker build .docker -f .docker/nginx/Dockerfile
 ````
-however would make the `.shared` folder available. In the Dockerfile itself, I need to know what the build context
+however, that would make the `.shared` folder available. In the Dockerfile itself, I need to know what the build context
 is, because I need to adjust the paths accordingly. Concrete example for the folder structure above and build 
 triggered via `docker build .docker -f .docker/nginx/Dockerfile`:
 
@@ -1294,7 +1300,7 @@ Since we rely on that entry
 [to make debugging possible](/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container),
 we will set it "manually" [if the host doesn't exist](https://stackoverflow.com/a/24049165/413531) 
 with the following script 
-(inspired by [Access host from a docker container](https://dev.to/bufferings/access-host-from-a-docker-container-4099)):
+(inspired by the article [Access host from a docker container](https://dev.to/bufferings/access-host-from-a-docker-container-4099)):
 
 ````
 #!/bin/sh
