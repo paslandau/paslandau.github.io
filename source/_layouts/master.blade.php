@@ -16,6 +16,7 @@ $vars = [
         "subheading",
         "author",
         "published_at",
+        "robots",
          */
 foreach ($vars as $var) {
     $$var = isset($$var) ? $$var : "['$var' NOT SET]";
@@ -41,6 +42,9 @@ foreach ($vars as $var) {
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="{{$canonical}}" />
+    @if(isset($currentMeta["status"]) && $currentMeta["status"] === "draft")
+        <meta name="robots" content="noindex" />
+    @endif
     <link rel="alternate" type="application/rss+xml" title="{{$site["title"]}}" href="{{$site["url"]}}{{$jigsaw->getMeta()["feed.xml.blade.php"]["target-path"]}}" />
 
     <!-- Custom Fonts -->

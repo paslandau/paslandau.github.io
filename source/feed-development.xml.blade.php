@@ -5,8 +5,11 @@
 
 $lessons = collect($jigsaw->getMeta())
         ->filter(function ($item, $path) {
+            $isDraft = ($item["status"] ?? "") === "draft";
             $sep = preg_quote(DIRECTORY_SEPARATOR, "#");
-            return preg_match("#^blog{$sep}#", $path) && isset($item["category"]) && $item["category"] == "development";
+            return preg_match("#^blog{$sep}#", $path) && isset($item["category"])
+                && $item["category"] == "development"
+                && !$isDraft;
         })
         ->sortByDesc("published_at")
         ->take(10);

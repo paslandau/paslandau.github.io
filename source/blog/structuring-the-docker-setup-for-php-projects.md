@@ -9,6 +9,7 @@ author: "Pascal Landau"
 published_at: "2019-05-08 09:00:00"
 vgwort: "380e34fac15043f5b80fecf412d4d831"
 category: "development"
+status: "draft"
 slug: "structuring-the-docker-setup-for-php-projects"
 ---
 

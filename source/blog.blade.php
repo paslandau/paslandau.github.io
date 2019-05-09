@@ -11,8 +11,9 @@ $slug = "blog";
 
 $posts = collect($jigsaw->getMeta())
         ->filter(function ($item, $path) {
+            $isDraft = ($item["status"] ?? "") === "draft";
             $sep = preg_quote(DIRECTORY_SEPARATOR, "#");
-            return preg_match("#^blog{$sep}#", $path);
+            return preg_match("#^blog{$sep}#", $path) && !$isDraft;
         })
         ->sortByDesc("published_at")
         ->take(10);
