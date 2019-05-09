@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 27 Jan 2019 15:54:26 +0000</pubDate>
-        <lastBuildDate>Sun, 27 Jan 2019 15:54:26 +0000</lastBuildDate>
+        <pubDate>Thu, 09 May 2019 08:57:49 +0000</pubDate>
+        <lastBuildDate>Thu, 09 May 2019 08:57:49 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2]</title>
@@ -37,7 +37,7 @@ Please subscribe to the <a href="http:///feed.xml">RSS feed</a> to get automatic
  <li><a href="#run-debug-a-php-script-on-docker-server">Run/debug a php script on docker</a></li>
 </ul></li>
 <li><a href="#run-php-on-docker-via-deployment-configuration">Run PHP on Docker via Deployment Configuration</a><ul>
- <li><a href="#preparing-the-workspace-container">Preparing the "workspace" container</a></li>
+ <li><a href="#preparing-the-internal-container">Preparing the "workspace" container</a></li>
  <li><a href="#configure-the-deployment-configuration">Configure the Deployment Configuration</a></li>
  <li><a href="#run-debug-a-php-script-on-docker">Run/debug a php script on docker</a></li>
  <li><a href="#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a></li>
@@ -282,7 +282,7 @@ a &quot;Connection with 'Xdebug 2.6.0' not established.&quot; error.</p>
 debugging session. When you take a look at the &quot;Console&quot; panel at the bottom of the IDE, you should see something like this:</p>
 <pre><code>sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 /var/www/hello-world.php</code></pre>
 <p>The <code>-dxdebug.remote_host=172.18.0.1</code> option is our suspect here. Luckily, since
-<a href="https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds">Docker v18.03</a> there is a &quot;magic&quot; DNS entry called <code>host.docker.internal</code>
+<a href="https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds">Docker v18.03</a> there is a &quot;magic&quot; DNS entry called `host.docker.internal
 that we can use to reach the host from a container.</p>
 <p>So, how can we solve this? PhpStorm enables us to
 <a href="https://www.jetbrains.com/help/phpstorm/configuring-xdebug.html#d165872e407">pass custom options to Xdebug</a> when a debugging session is initiated.
