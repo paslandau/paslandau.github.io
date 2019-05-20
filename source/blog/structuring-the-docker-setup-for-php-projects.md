@@ -1353,7 +1353,7 @@ Notes:
 - this workaround is only required in containers we want to debug via xdebug
 
 ## <a id="wrapping-up"></a>Wrapping up
-Congratulation, you made it! If some things are not completely clear by now, don't hesitate to leave a comment.
+Congratulations, you made it! If some things are not completely clear by now, don't hesitate to leave a comment.
 Apart from that, you should now have a running docker setup for your local PHP development as well as a nice "flow"
 to get started each day.
 

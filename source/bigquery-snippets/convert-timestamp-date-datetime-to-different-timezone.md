@@ -32,7 +32,7 @@ SELECT
   DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
   DATE(timestamp, "Europe/Berlin") as date_berlin,
   TIME(timestamp, "Europe/Berlin") as time_berlin,
-  FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
+  FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
 FROM
   table
 ````
@@ -56,7 +56,7 @@ dates and times can be off. Converting the datetimes prior formatting into the c
 
 Common formats:
 ````
-FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S => 2018-04-08 18:28:01
+FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S => 2018-04-08 18:28:01
 FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))     # %Y-%m-%d          => 2018-04-08
 FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))     # calendar week     => 14
 FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))     #          %H:%M:%S => 18:28:01
