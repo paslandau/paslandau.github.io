@@ -29,6 +29,14 @@ solve problems later on your own.
 
 But if you are short on time, you might also jump directly to <a href="#tl-dr">the tl;dr</a>.
 
+## Published parts of the Docker PHP Tutorial
+- [Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/)
+  (2018-07-08)
+- [Setting up PhpStorm with Xdebug for local development on Docker](/blog/setup-phpstorm-with-xdebug-on-docker/) 
+  (2018-08-06)
+- [Structuring the Docker setup for PHP Projects](/blog/structuring-the-docker-setup-for-php-projects/)
+  (2019-05-20)
+
 This is the first part of a (probably) multi-part series on Docker. The second part explains how
 to [set up PHP in Docker containers in order to work nicely with PHPStorm when using XDebug](/blog/setup-phpstorm-with-xdebug-on-docker).
 

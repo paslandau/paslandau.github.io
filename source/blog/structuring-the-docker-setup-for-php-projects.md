@@ -6,10 +6,9 @@ subheading: "... folder structure, Dockerfile templates and general fundamentals
 h1: "Structuring the Docker setup for PHP Projects"
 description: "Dockerfiles, folder structures, etc. - In this article I'll got through the fundamentals for a PHP development environment on Docker."
 author: "Pascal Landau"
-published_at: "2019-05-08 09:00:00"
+published_at: "2019-05-20 10:00:00"
 vgwort: "380e34fac15043f5b80fecf412d4d831"
 category: "development"
-status: "draft"
 slug: "structuring-the-docker-setup-for-php-projects"
 ---
 
@@ -25,17 +24,25 @@ refactor from the previous parts of this tutorial.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-## Previous parts of the Docker PHP Tutorial
+## Published parts of the Docker PHP Tutorial
 - [Setting up PHP, PHP-FPM and NGINX for local development on Docker](/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/)
+  (2018-07-08)
 - [Setting up PhpStorm with Xdebug for local development on Docker](/blog/setup-phpstorm-with-xdebug-on-docker/) 
-
-All code sample are publicly available in my 
+  (2018-08-06)
+- [Structuring the Docker setup for PHP Projects](/blog/structuring-the-docker-setup-for-php-projects/)
+  (2019-05-20)
+  
+All code samples are publicly available in my 
 [Docker PHP Tutorial repository on github](https://github.com/paslandau/docker-php-tutorial). 
 The branch for this tutorial is 
 [part_3_structuring-the-docker-setup-for-php-projects](https://github.com/paslandau/docker-php-tutorial/tree/part_3_structuring-the-docker-setup-for-php-projects).
 
 If you want to follow along, please subscribe to the [RSS feed](/feed.xml) or [via email](#newsletter) 
 to get automatic notifications when the next part comes out :)
+
+## Acknowledgements
+Shout out to [Nils Meyer](https://www.xing.com/profile/Nils_Meyer7) 
+for giving the final "[...] nichts offensichtlich falsch" ("nothing obviously wrong") :)
 
 ## Table of contents
 - <a href="#introduction">Introduction</a>
