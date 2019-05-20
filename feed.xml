@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 20 May 2019 07:42:23 +0000</pubDate>
-        <lastBuildDate>Mon, 20 May 2019 07:42:23 +0000</lastBuildDate>
+        <pubDate>Mon, 20 May 2019 07:50:20 +0000</pubDate>
+        <lastBuildDate>Mon, 20 May 2019 07:50:20 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>How to build a Docker development setup for PHP Projects [Tutorial Part 3]</title>
@@ -1110,7 +1110,7 @@ give <a href="https://command-not-found.com/"><a href="https://command-not-found
 <li>this workaround is only required in containers we want to debug via xdebug</li>
 </ul>
 <h2><a id="wrapping-up"></a>Wrapping up</h2>
-<p>Congratulation, you made it! If some things are not completely clear by now, don't hesitate to leave a comment.
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to leave a comment.
 Apart from that, you should now have a running docker setup for your local PHP development as well as a nice &quot;flow&quot;
 to get started each day.</p>
 <p>In the next part of this tutorial, we will add some more containers (php workers, mysql, redis, blackfire) and use
@@ -2546,7 +2546,7 @@ SELECT
   DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
   DATE(timestamp, "Europe/Berlin") as date_berlin,
   TIME(timestamp, "Europe/Berlin") as time_berlin,
-  FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
+  FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
 FROM
   table</code></pre>
 <h2>Working Example</h2>
@@ -2564,7 +2564,7 @@ FROM
 <p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
 dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
 <p>Common formats:</p>
-<pre><code>FORMAT_DATETIME("%c", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
+<pre><code>FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
 FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))     # %Y-%m-%d          =&gt; 2018-04-08
 FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))     # calendar week     =&gt; 14
 FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))     #          %H:%M:%S =&gt; 18:28:01</code></pre>]]></description>
