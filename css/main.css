@@ -16,4 +16,7 @@ table th {
 .container img {
   width: 100%; }
 
-/*# sourceMappingURL=main.css.map */
+.container .center-div {
+  padding: auto; 
+  text-align: center; 
+}
