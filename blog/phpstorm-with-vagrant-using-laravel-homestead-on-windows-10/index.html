@@ -8,14 +8,14 @@
     <meta name="description" content="Step-by-Step tutorial for setting up a new PhpStorm project running on a Homestead Vagrant box.">
             <meta name="author" content="Pascal Landau">
         <title>How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial  Part 2] | pascallandau.com</title>
-    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw" />
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="canonical" href="https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/" />
-        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml" />
+    <link rel="canonical" href="https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
 
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
@@ -28,18 +28,28 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-5B9NRTM');</script>
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
     <!-- End Google Tag Manager -->
 </head>
 
 <body>
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
-                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
 <!-- End Google Tag Manager (noscript) -->
 <!-- Navigation -->
 <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
@@ -81,14 +91,14 @@
 <!-- Page Header -->
 <!-- Set your background image for this header on the line below. -->
 <header class="intro-header" style="background: #000
-                ">
+        ">
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
                     <h1>Setting up PhpStorm with Vagrant and Laravel Homestead</h1>
                                             <h2 class="subheading">... on a Windows 10 machine. Plus Git and Git bash</h2>
-                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-08-07 13:00:00</span>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2016-08-07 13:00:00</span>
                                     </div>
             </div>
         </div>
@@ -475,8 +485,7 @@ Process finished with exit code 0</code></pre>
 <p>Whoop whoop, that's it :) Oh and because homestead comes pre-installed with Xdebug, we could even set a breakpoint and halt the execution <em>within the virtual
 machine</em> - now is that something or what? Before we go on let's shut down the VM by running <code>vagrant halt</code> on the host machine. This will simply shut down
 the VM but all changes we made to it stay in place. If you want to make a completely fresh start, use <code>vagrant destroy</code> and confirm that you really want
-to &quot;destroy&quot; the VM.</p>
-                <hr />
+to &quot;destroy&quot; the VM.</p>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
@@ -485,7 +494,7 @@ to &quot;destroy&quot; the VM.</p>
                 connect with me on
                 <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a> or
                 <a href="https://twitter.com/PascalLandau">Twitter</a>
-                or simply subscribe to my <a href="/feed.xml">RSS feed</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
                 or go the crazy route and subscribe via mail
                 and don't forget to leave a comment :)
                 </p>
@@ -573,10 +582,10 @@ to &quot;destroy&quot; the VM.</p>
                         </a>
                     </li>
                     <li>
-                        <a href="https://www.facebook.com/pascal.landau">
+                        <a href="https://de.linkedin.com/in/pascallandau">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
                                 </span>
                         </a>
                     </li>
@@ -589,7 +598,7 @@ to &quot;destroy&quot; the VM.</p>
                         </a>
                     </li>
                     <li>
-                        <a href="/feed.xml">
+                        <a href="https://www.pascallandau.com/feed.xml">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
@@ -597,29 +606,47 @@ to &quot;destroy&quot; the VM.</p>
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2019                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2019                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
             </div>
         </div>
     </div>
 </footer>
-    <img src="https://ssl-vg03.met.vgwort.de/na/9cf2ebaf25a5461f806db747de63335c" width="1" height="1" alt="" />
-<!-- Facebook Pixel Code -->
-<script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '277461143063521');
-    fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-               src="https://www.facebook.com/tr?id=277461143063521&ev=PageView&noscript=1"
-    /></noscript>
-<!-- End Facebook Pixel Code -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>

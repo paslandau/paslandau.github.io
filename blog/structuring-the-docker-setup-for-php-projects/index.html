@@ -8,14 +8,14 @@
     <meta name="description" content="Dockerfiles, folder structures, etc. - In this article I&#039;ll got through the fundamentals for a PHP development environment on Docker.">
             <meta name="author" content="Pascal Landau">
         <title>How to build a Docker development setup for PHP Projects [Tutorial Part 3] | pascallandau.com</title>
-    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw" />
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="canonical" href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/" />
-        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml" />
+    <link rel="canonical" href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
 
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
@@ -28,18 +28,28 @@
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-5B9NRTM');</script>
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
     <!-- End Google Tag Manager -->
 </head>
 
 <body>
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
-                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
 <!-- End Google Tag Manager (noscript) -->
 <!-- Navigation -->
 <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
@@ -81,14 +91,14 @@
 <!-- Page Header -->
 <!-- Set your background image for this header on the line below. -->
 <header class="intro-header" style="background: #000
-                ">
+        ">
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
                     <h1>Structuring the Docker setup for PHP Projects</h1>
                                             <h2 class="subheading">... folder structure, Dockerfile templates and general fundamentals</h2>
-                                                            <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2019-05-20 10:00:00</span>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2019-05-20 10:00:00</span>
                                     </div>
             </div>
         </div>
@@ -109,7 +119,7 @@ of a PHP project. Structure as in </p>
 </ul>
 <p>We will also create a minimal container setup consisting of php-fpm, nginx and a workspace container that we
 refactor from the previous parts of this tutorial.</p>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen><iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></iframe>
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
 <li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
@@ -661,7 +671,7 @@ make docker-test</code></pre>
 (click here <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#git-and-git-bash">to learn how to setup MinGW</a>)
 Setting is up is straight forward but as with &quot;everything UI&quot; it's easier if you can
 actually &quot;see what I'm doing&quot; - so here's a video:</p>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen><iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></iframe>
 <p>The steps are as follows:</p>
 <ul>
 <li>Set up <code>mingw-get</code>
@@ -1194,7 +1204,7 @@ ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh", ...]</code></pre
 and add it if it doesn't</li>
 <li>we're using <code>dig</code> (package <code>dnsutils</code>) and <code>ip</code> (package <code>iproute2</code>) which need to be installed
 during the build time of the container. Tip: If you need to figure out the package for a specific command,
-give <a href="https://command-not-found.com/"><a href="https://command-not-found.com/">https://command-not-found.com/</a></a> a try. See the
+give <a href="https://command-not-found.com/">https://command-not-found.com/</a> a try. See the
 <a href="https://command-not-found.com/dig">entry for <code>dig</code></a> for instance.</li>
 <li>this workaround is only required in containers we want to debug via xdebug</li>
 </ul>
@@ -1204,8 +1214,7 @@ Apart from that, you should now have a running docker setup for your local PHP d
 to get started each day.</p>
 <p>In the next part of this tutorial, we will add some more containers (php workers, mysql, redis, blackfire) and use
 a fresh installation of Laravel to make use of them.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic notifications when this next part comes out :)</p>
-                <hr />
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic notifications when this next part comes out :)</p>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
@@ -1214,7 +1223,7 @@ a fresh installation of Laravel to make use of them.</p>
                 connect with me on
                 <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a> or
                 <a href="https://twitter.com/PascalLandau">Twitter</a>
-                or simply subscribe to my <a href="/feed.xml">RSS feed</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
                 or go the crazy route and subscribe via mail
                 and don't forget to leave a comment :)
                 </p>
@@ -1302,10 +1311,10 @@ a fresh installation of Laravel to make use of them.</p>
                         </a>
                     </li>
                     <li>
-                        <a href="https://www.facebook.com/pascal.landau">
+                        <a href="https://de.linkedin.com/in/pascallandau">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
                                 </span>
                         </a>
                     </li>
@@ -1318,7 +1327,7 @@ a fresh installation of Laravel to make use of them.</p>
                         </a>
                     </li>
                     <li>
-                        <a href="/feed.xml">
+                        <a href="https://www.pascallandau.com/feed.xml">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
@@ -1326,29 +1335,47 @@ a fresh installation of Laravel to make use of them.</p>
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2019                    built with (a slighty modified version of) <a href="https://github.com/paslandau/jigsaw/tree/develop">Jigsaw</a></p>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2019                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
             </div>
         </div>
     </div>
 </footer>
-    <img src="https://ssl-vg03.met.vgwort.de/na/380e34fac15043f5b80fecf412d4d831" width="1" height="1" alt="" />
-<!-- Facebook Pixel Code -->
-<script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '277461143063521');
-    fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-               src="https://www.facebook.com/tr?id=277461143063521&ev=PageView&noscript=1"
-    /></noscript>
-<!-- End Facebook Pixel Code -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
