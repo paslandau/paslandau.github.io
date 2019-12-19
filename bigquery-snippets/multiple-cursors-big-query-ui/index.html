@@ -5,15 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="A collection of BigQuery snippets including example code and a short explanation.">
-        <title>BigQuery Snippets | pascallandau.com</title>
+    <meta name="description" content="The BigQuery UI provides multiple hotkeys, amongst other for using multiple cursors (column / rectangular selection) via ALT + left-mouse-drag">
+            <meta name="author" content="Pascal Landau">
+        <title>BigQuery: Using multiple cursors / rectangular selection in BigQuery UI | pascallandau.com</title>
     <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/"/>
+    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/multiple-cursors-big-query-ui/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
 
     <!-- Custom Fonts -->
@@ -95,9 +96,10 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>BigQuery Snippets</h1>
-                                            <h2 class="subheading">A collection of BigQuery snippets for fun and non-profit</h2>
-                                                        </div>
+                    <h1>How to use multiple cursors in the BigQuery UI?</h1>
+                                            <h2 class="subheading">Aka column selection / rectangular selection</h2>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2019-12-19 18:00:00</span>
+                                    </div>
             </div>
         </div>
     </div>
@@ -107,16 +109,23 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                            <h2><a href="/bigquery-snippets/multiple-cursors-big-query-ui/">BigQuery: Using multiple cursors / rectangular selection in BigQuery UI</a></h2>
-        <small>Published at 2019-12-19 18:00:00 by Pascal Landau </small>
-        <p>The BigQuery UI provides multiple hotkeys, amongst other for using multiple cursors (column / rectangular selection) via ALT + left-mouse-drag</p>
-            <h2><a href="/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/">BigQuery: Convert timestamp/date/datetime to different timezone</a></h2>
-        <small>Published at 2018-04-08 18:00:00 by Pascal Landau </small>
-        <p>Converting a timestamp/date/datetime to a different timezone with Google BigQuery</p>
-            <h2><a href="/bigquery-snippets/extract-url-parameters-array/">BigQuery: Extract URL parameters as ARRAY</a></h2>
-        <small>Published at 2018-04-08 12:00:00 by Pascal Landau </small>
-        <p>Extracting parameters in the query of a URL as ARRAY with Google BigQuery</p>
-                    <hr />
+                <p>Multiple keyboard shortcuts usable in the <a href="https://console.cloud.google.com/bigquery">BigQuery UI</a> are listed in the
+<a href="https://cloud.google.com/bigquery/docs/bigquery-web-ui?hl=en#keyboard_shortcuts">official documentation</a>, though the one for
+using multiple cursors is missing:</p>
+<div class="center-div" style="font-size:2em">
+    <code>ALT + left-mouse-button-drag</code>
+</div>
+<p><a href="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-multiple-cursors.gif"><img src="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-multiple-cursors.gif" alt="Using multiple cursors in the BigQuery UI via ATL + left mouse drag" /></a></p>
+<h2>Instructions</h2>
+<ul>
+<li>keep the <code>ALT</code> key pressed first and then click the left mouse button and drag it up or down vertically</li>
+<li>the same hotkeys can be used to draw a <strong>rectangular selection</strong> (aka column selection)
+<a href="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-rectangular-column-selection.png"><img src="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-rectangular-column-selection.png" alt="Rectangular / column selection in BigQuery" /></a></li>
+<li>using <code>ALT + LEFT</code> and <code>ALT + RIGHT</code> will position one (or all) cursors at the beginning respectively end of the line</li>
+</ul>
+<h2>Use cases</h2>
+<p>We often deal with multiple datasets and tables that have the exact same structure, e.g. due to sharding. In those cases it's
+often required to modify different parts of the query in the exact same way so that multiple cursors come in handy.</p>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
@@ -178,8 +187,8 @@
                 <div id="disqus_thread"></div>
                 <script>
                      var disqus_config = function () {
-                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/";
-                                                     this.page.identifier = "bigquery-snippets";
+                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/multiple-cursors-big-query-ui/";
+                                                     this.page.identifier = "multiple-cursors-big-query-ui";
                                               };
                     (function() {  // DON'T EDIT BELOW THIS LINE
                         var d = document, s = d.createElement('script');

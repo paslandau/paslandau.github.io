@@ -5,9 +5,32 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 18 Dec 2019 16:57:56 +0000</pubDate>
-        <lastBuildDate>Wed, 18 Dec 2019 16:57:56 +0000</lastBuildDate>
+        <pubDate>Thu, 19 Dec 2019 13:01:29 +0000</pubDate>
+        <lastBuildDate>Thu, 19 Dec 2019 13:01:29 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>BigQuery: Using multiple cursors / rectangular selection in BigQuery UI</title>
+                <description><![CDATA[<p>Multiple keyboard shortcuts usable in the <a href="https://console.cloud.google.com/bigquery">BigQuery UI</a> are listed in the
+<a href="https://cloud.google.com/bigquery/docs/bigquery-web-ui?hl=en#keyboard_shortcuts">official documentation</a>, though the one for
+using multiple cursors is missing:</p>
+<div class="center-div" style="font-size:2em">
+    <code>ALT + left-mouse-button-drag</code>
+</div>
+<p><a href="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-multiple-cursors.gif"><img src="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-multiple-cursors.gif" alt="Using multiple cursors in the BigQuery UI via ATL + left mouse drag" /></a></p>
+<h2>Instructions</h2>
+<ul>
+<li>keep the <code>ALT</code> key pressed first and then click the left mouse button and drag it up or down vertically</li>
+<li>the same hotkeys can be used to draw a <strong>rectangular selection</strong> (aka column selection)
+<a href="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-rectangular-column-selection.png"><img src="/img/bigquery-snippets/multiple-cursors-big-query-ui/bigquery-rectangular-column-selection.png" alt="Rectangular / column selection in BigQuery" /></a></li>
+<li>using <code>ALT + LEFT</code> and <code>ALT + RIGHT</code> will position one (or all) cursors at the beginning respectively end of the line</li>
+</ul>
+<h2>Use cases</h2>
+<p>We often deal with multiple datasets and tables that have the exact same structure, e.g. due to sharding. In those cases it's
+often required to modify different parts of the query in the exact same way so that multiple cursors come in handy.</p>]]></description>
+                <pubDate>Thu, 19 Dec 2019 18:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/bigquery-snippets/multiple-cursors-big-query-ui/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/multiple-cursors-big-query-ui/</guid>
+            </item>
                     <item>
                 <title>How to build a Docker development setup for PHP Projects [Tutorial Part 3]</title>
                 <description><![CDATA[<p>In the third part of this tutorial series on developing PHP on Docker we'll lay the fundamentals to
@@ -574,7 +597,9 @@ make docker-test</code></pre>
 (click here <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#git-and-git-bash">to learn how to setup MinGW</a>)
 Setting is up is straight forward but as with &quot;everything UI&quot; it's easier if you can
 actually &quot;see what I'm doing&quot; - so here's a video:</p>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen><iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></iframe>
+<div class="center-div">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p>The steps are as follows:</p>
 <ul>
 <li>Set up <code>mingw-get</code>
