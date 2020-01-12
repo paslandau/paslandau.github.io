@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 12 Jan 2020 21:49:30 +0000</pubDate>
-        <lastBuildDate>Sun, 12 Jan 2020 21:49:30 +0000</lastBuildDate>
+        <pubDate>Sun, 12 Jan 2020 21:54:37 +0000</pubDate>
+        <lastBuildDate>Sun, 12 Jan 2020 21:54:37 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>BigQuery: Using multiple cursors / rectangular selection in BigQuery UI</title>
