@@ -1,1 +1,3 @@
 User-Agent: *
+
+Sitemap: https://www.pascallandau.com/sitemap.txt
