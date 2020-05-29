@@ -5,16 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="Converting a timestamp/date/datetime to a different timezone with Google BigQuery">
+    <meta name="description" content="Using &quot;temporary tables&quot; via WITH (named subqueries) in Google BigQuery">
             <meta name="author" content="Pascal Landau">
-        <title>BigQuery: Convert timestamp/date/datetime to different timezone | pascallandau.com</title>
+        <title>BigQuery: Use &quot;temporary tables&quot; via WITH (named subqueries) | pascallandau.com</title>
     <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/"/>
+    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
 
@@ -100,9 +100,9 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>How to convert a timestamp/date/datetime to a different timezone in Google BigQuery</h1>
+                    <h1>How to use &quot;temporary tables&quot; via WITH (named subqueries) in Google BigQuery</h1>
                                             <h2 class="subheading"></h2>
-                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2018-04-08 18:00:00</span>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2020-05-29 13:00:00</span>
                                     </div>
             </div>
         </div>
@@ -113,50 +113,56 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>BigQuery provides multiple functions to convert timestamps / dates / datetimes to a different timezone:</p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#date">DATE(timestamp_expression, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#time">TIME(timestamp, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#datetime">DATETIME(timestamp_expression, timezone)</a></li>
-</ul>
-<p>According to the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#time-zones">docu</a> the <code>timezone</code>
-can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. <code>Europe/Berlin</code>). See this
-<a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">list of IANA timezone offsets and names</a>.</p>
-<p>The converted dates/times can than be formatted with via </p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_date">FORMAT_DATE(format_string, date_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_time">FORMAT_TIME(format_string, time_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></li>
-</ul>
+                <p>In Google BigQuery we can define named subqueries via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax?hl=en#with_clause"><code>WITH</code> clauses</a>.
+Those <code>WITH</code> clauses are a very comfortable way to structure complex queries as it allows to reference those queries like actual tables later on.</p>
+<p><strong>Note</strong>: BigQuery also supports <em>actcual</em> temporary tables via <code>CREATE TEMPORARY TABLE</code>. See the official documention on
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-definition-language#temporary_tables">temporary tables</a> for further infos.
+This is out of scope for this snippet, though.</p>
 <h2>Code</h2>
-<pre><code>#standardSQL
+<pre><code>WITH filtered_data as (
+  SELECT 
+    id
+  FROM
+    table
+  WHERE
+    id BETWEEN 5 and 10
+)
 SELECT
-  DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
-  DATE(timestamp, "Europe/Berlin") as date_berlin,
-  TIME(timestamp, "Europe/Berlin") as time_berlin,
-  FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
+  *
 FROM
-  table</code></pre>
+  filtered_data  </code></pre>
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"><script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script></script>
+<script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"><script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"></script></script>
 <h2>Run on BigQuery</h2>
-<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
-<p><a href="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png"><img src="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png" alt="BigQuery Console: Convert timestamp to different timezone example" title="BigQuery Console: Convert timestamp to different timezone" /></a></p>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png"><img src="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png" alt="BigQuery Console: How to use temporay tables via WITH named subqueries example" title="BigQuery Console: How to use temporay tables via WITH named subqueries example" /></a></p>
 <h2>Links</h2>
 <ul>
-<li><a href="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9">Gist on Github</a></li>
-<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
-<li><a href="https://stackoverflow.com/a/43349229/413531">Answer to &quot;BigQuery converting to a different timezone&quot; on Stackoverflow</a></li>
+<li><a href="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99">Gist on Github</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Example on BigQuery</a></li>
+<li><a href="https://stackoverflow.com/a/38149549/413531">Answer to &quot;How to create temporary table in Google BigQuery&quot; on Stackoverflow</a></li>
 </ul>
 <h2>Use cases</h2>
-<p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
-dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
-<p>Common formats:</p>
-<pre><code>FORMAT_TIMESTAMP("%F %X", timestamp)                            # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin"))  # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))             # %Y-%m-%d          =&gt; 2018-04-08
-FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))             # calendar week     =&gt; 14
-FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S          =&gt; 18:28:01</code></pre>                <hr />
+<p>Named subqueries are a great way to structure complex queries and give sub-results a meaningful name.
+When working with partitioned tables, I always use temporary tables via WITH to make sure I restrict the query to
+scan only a limited number of partitions.</p>
+<p>Conceptual example:</p>
+<pre><code>DECLARE from_date TIMESTAMP DEFAULT "2018-04-09";
+DECLARE to_date TIMESTAMP DEFAULT "2018-04-10";
+
+WITH huge_table_partition as(
+  SELECT 
+    *
+  FROM 
+    huge_table
+  WHERE
+    _PARTITIONTIME BETWEEN from_date AND to_date
+)
+
+SELECT 
+  *
+FROM
+  huge_table_partition</code></pre>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
@@ -218,8 +224,8 @@ FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S      
                 <div id="disqus_thread"></div>
                 <script>
                      var disqus_config = function () {
-                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/";
-                                                     this.page.identifier = "convert-timestamp-date-datetime-to-different-timezone";
+                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/";
+                                                     this.page.identifier = "use-temporary-tables-with-named-subqueries";
                                               };
                     (function() {  // DON'T EDIT BELOW THIS LINE
                         var d = document, s = d.createElement('script');

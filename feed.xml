@@ -5,9 +5,193 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 16 Feb 2020 19:43:36 +0000</pubDate>
-        <lastBuildDate>Sun, 16 Feb 2020 19:43:36 +0000</lastBuildDate>
+        <pubDate>Fri, 29 May 2020 21:07:55 +0000</pubDate>
+        <lastBuildDate>Fri, 29 May 2020 21:07:55 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>BigQuery: Use expression subqueries for querying nested and repeated fields</title>
+                <description><![CDATA[<p>BigQuery allows to define <a href="https://cloud.google.com/bigquery/docs/nested-repeated">nested and repeated fields</a>
+in a table. Although this is very powerful, it makes it much more complex to retrieve the
+data if one is not used to such structures. Especially beginners tend to use an
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"><code>UNNEST</code> statement</a>
+on the nested fields, followed by a huge
+<code>GROUP BY</code> statement on the not-originally-repeated fields. Imho, using
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/expression_subqueries?hl=en">expression subqueries</a>
+is oftentimes the better approach here.</p>
+<h2>Code</h2>
+<pre><code>SELECT
+  id,
+  (SELECT value from t.repeated_fields LIMIT 1)
+FROM
+  table t  </code></pre>
+<p><strong>Caution</strong>: When using expression subqueries, you need to make sure that the result is a single value (scalar or array), otherwise you will
+get the error message</p>
+<blockquote>
+<p>Scalar subquery produced more than one element</p>
+</blockquote>
+<p>In the example code above this is ensured by enforcing one result via <code>LIMIT 1</code>.</p>
+<h2>Working Example</h2>
+<script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"><script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"></script></script>
+<h2>Run on BigQuery</h2>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:a3ca0564513344a2981ac658365112c1">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png"><img src="/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png" alt="BigQuery Console: How to use expression subqueries for nested and repeated fields example" title="BigQuery Console: How to use expression subqueries for nested and repeated fields example" /></a></p>
+<h2>Links</h2>
+<ul>
+<li><a href="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125">Gist on Github</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:a3ca0564513344a2981ac658365112c1">Example on BigQuery</a></li>
+</ul>
+<h2>Use cases</h2>
+<p>The most prominent use case is probably the <a href="https://support.google.com/analytics/answer/3437719?hl=en">BigQuery export schema of Google Analytics</a>.
+To be honest, I also feel that the schema is not very friendly for newcomers with its ~30 RECORD-type (nested) fields and 300+ columns.</p>
+<p>In a nutshell, each row represents one <a href="https://support.google.com/analytics/answer/2731565?hl=en">session</a>.
+A session consists of multiple hits. Those hits are also available in the nested and repeated <code>hits</code> field. But wait, there is more...
+Each hit can have a number of so called <code>customDimensions</code> (meta data that can be attached to each hit). So the resulting table structue looks something
+like this:</p>
+<pre><code>- field_1
+- field_2
+- hits
+  - field_1 
+  - field_2
+  - customDimensions
+    - index 
+    - value </code></pre>
+<p>The following example uses the public <a href="https://support.google.com/analytics/answer/7586738?hl=en">Google Analytics sample dataset for BigQuery</a> and shows
+a couple of sample expression subqueries</p>
+<pre><code>SELECT 
+  fullVisitorId,
+  visitStartTime,
+  TIMESTAMP_SECONDS(visitStartTime) as started_at,
+  TIMESTAMP_SECONDS(visitStartTime + CAST( (SELECT time from t.hits ORDER BY hitNumber DESC LIMIT 1) /1000 AS INT64)) as ended_at,
+  (SELECT COUNT(*) from t.hits) as hit_count,
+  (SELECT page.hostname || page.pagePath from t.hits WHERE isEntrance = TRUE) as landing_page,
+  (
+    SELECT  
+      (SELECT COUNT(*) from h.customDimensions) 
+    FROM 
+      t.hits h
+    WHERE 
+      hitNumber = 1
+   ) as customDimension_count_of_first_hit, 
+FROM 
+  `bigquery-public-data.google_analytics_sample.ga_sessions_20170801` t
+ORDER BY
+  visitStartTime asc</code></pre>]]></description>
+                <pubDate>Fri, 29 May 2020 14:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/</guid>
+            </item>
+                    <item>
+                <title>BigQuery: Use &quot;temporary tables&quot; via WITH (named subqueries)</title>
+                <description><![CDATA[<p>In Google BigQuery we can define named subqueries via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax?hl=en#with_clause"><code>WITH</code> clauses</a>.
+Those <code>WITH</code> clauses are a very comfortable way to structure complex queries as it allows to reference those queries like actual tables later on.</p>
+<p><strong>Note</strong>: BigQuery also supports <em>actcual</em> temporary tables via <code>CREATE TEMPORARY TABLE</code>. See the official documention on
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-definition-language#temporary_tables">temporary tables</a> for further infos.
+This is out of scope for this snippet, though.</p>
+<h2>Code</h2>
+<pre><code>WITH filtered_data as (
+  SELECT 
+    id
+  FROM
+    table
+  WHERE
+    id BETWEEN 5 and 10
+)
+SELECT
+  *
+FROM
+  filtered_data  </code></pre>
+<h2>Working Example</h2>
+<script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"><script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"></script></script>
+<h2>Run on BigQuery</h2>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png"><img src="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png" alt="BigQuery Console: How to use temporay tables via WITH named subqueries example" title="BigQuery Console: How to use temporay tables via WITH named subqueries example" /></a></p>
+<h2>Links</h2>
+<ul>
+<li><a href="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99">Gist on Github</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Example on BigQuery</a></li>
+<li><a href="https://stackoverflow.com/a/38149549/413531">Answer to &quot;How to create temporary table in Google BigQuery&quot; on Stackoverflow</a></li>
+</ul>
+<h2>Use cases</h2>
+<p>Named subqueries are a great way to structure complex queries and give sub-results a meaningful name.
+When working with partitioned tables, I always use temporary tables via WITH to make sure I restrict the query to
+scan only a limited number of partitions.</p>
+<p>Conceptual example:</p>
+<pre><code>DECLARE from_date TIMESTAMP DEFAULT "2018-04-09";
+DECLARE to_date TIMESTAMP DEFAULT "2018-04-10";
+
+WITH huge_table_partition as(
+  SELECT 
+    *
+  FROM 
+    huge_table
+  WHERE
+    _PARTITIONTIME BETWEEN from_date AND to_date
+)
+
+SELECT 
+  *
+FROM
+  huge_table_partition</code></pre>]]></description>
+                <pubDate>Fri, 29 May 2020 13:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/</guid>
+            </item>
+                    <item>
+                <title>BigQuery: Declare and use Variables</title>
+                <description><![CDATA[<p>We can use variables by defining them with a <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting#declare"><code>DECLARE</code> statement</a>,
+e.g. </p>
+<pre><code>DECLARE foo STRING DEFAULT "foo";
+
+#DECLARE &lt;variable&gt; &lt;type&gt; DEFAULT &lt;value&gt;;</code></pre>
+<p>with <code>&lt;type&gt;</code> being one of the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types">BigQuery's built-in standard-sql data types</a></p>
+<p>This is equivalent to variables of other SQL databases, e.g.</p>
+<ul>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/user-variables.html">MySQL variables</a>: 
+<pre><code>SET @foo = 'bar';</code></pre></li>
+<li><a href="https://www.postgresql.org/docs/9.1/plpgsql-declarations.html">PostgreSQL variables</a>:
+<pre><code>foo varchar := 'bar';</code></pre></li>
+</ul>
+<h2>Code</h2>
+<pre><code>DECLARE foo_var STRING DEFAULT "foo";
+
+SELECT foo_var</code></pre>
+<h2>Working Example</h2>
+<script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"><script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"></script></script>
+<h2>Run on BigQuery</h2>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:200d3282989c48b7893b3c3145b46a6d">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/use-variables/use-variables-example.png"><img src="/img/bigquery-snippets/use-variables/use-variables-example.png" alt="BigQuery Console: How to declare and use variables example" title="BigQuery Console: How to declare and use variables example" /></a></p>
+<h2>Links</h2>
+<ul>
+<li><a href="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5">Gist on Github</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:200d3282989c48b7893b3c3145b46a6d">Example on BigQuery</a></li>
+<li><a href="https://stackoverflow.com/a/58227996/413531">Answer to &quot;Setting Big Query variables like mysql&quot; on Stackoverflow</a></li>
+</ul>
+<h2>Use cases</h2>
+<p>Hardcoding variables is generally considered a bad practice as it makes it harder to understand and modify a query.
+A frequent use case for me is the definition of date ranges (from and to dates) that are used for querying partitioned tables:</p>
+<pre><code>DECLARE from_date DATE DEFAULT DATE("2018-04-09");
+DECLARE to_date DATE DEFAULT DATE("2018-04-10");
+
+WITH data as(
+  SELECT 
+    1 as id,
+    DATE("2018-04-08") AS date,
+  UNION ALL SELECT 2, DATE("2018-04-09") 
+  UNION ALL SELECT 3, DATE("2018-04-10") 
+  UNION ALL SELECT 4, DATE("2018-04-11") 
+)
+
+SELECT 
+    id, 
+    date
+FROM
+    data
+WHERE
+    date BETWEEN from_date AND to_date</code></pre>]]></description>
+                <pubDate>Fri, 29 May 2020 12:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/bigquery-snippets/use-variables/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/use-variables/</guid>
+            </item>
                     <item>
                 <title>BigQuery: Using multiple cursors / rectangular selection in BigQuery UI</title>
                 <description><![CDATA[<p>Multiple keyboard shortcuts usable in the <a href="https://console.cloud.google.com/bigquery">BigQuery UI</a> are listed in the
@@ -2579,22 +2763,23 @@ FROM
 <h2>Working Example</h2>
 <script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"><script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script></script>
 <h2>Run on BigQuery</h2>
-<p><a href="https://bigquery.cloud.google.com/savedquery/106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
 <p><a href="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png"><img src="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png" alt="BigQuery Console: Convert timestamp to different timezone example" title="BigQuery Console: Convert timestamp to different timezone" /></a></p>
 <h2>Links</h2>
 <ul>
 <li><a href="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9">Gist on Github</a></li>
-<li><a href="https://bigquery.cloud.google.com/savedquery/106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
 <li><a href="https://stackoverflow.com/a/43349229/413531">Answer to &quot;BigQuery converting to a different timezone&quot; on Stackoverflow</a></li>
 </ul>
 <h2>Use cases</h2>
 <p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
 dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
 <p>Common formats:</p>
-<pre><code>FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))     # %Y-%m-%d          =&gt; 2018-04-08
-FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))     # calendar week     =&gt; 14
-FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))     #          %H:%M:%S =&gt; 18:28:01</code></pre>]]></description>
+<pre><code>FORMAT_TIMESTAMP("%F %X", timestamp)                            # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
+FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin"))  # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
+FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))             # %Y-%m-%d          =&gt; 2018-04-08
+FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))             # calendar week     =&gt; 14
+FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S          =&gt; 18:28:01</code></pre>]]></description>
                 <pubDate>Sun, 08 Apr 2018 18:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/</guid>
@@ -2685,7 +2870,7 @@ FROM
 </tbody>
 </table>
 <h2>Run on BigQuery</h2>
-<p><a href="https://bigquery.cloud.google.com/savedquery/106862046541:e5da849d652a4502b12443a2f14b355a">Open in BigQuery Console</a></p>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:e5da849d652a4502b12443a2f14b355a">Open in BigQuery Console</a></p>
 <p><a href="/img/bigquery-snippets/extract-url-parameters-array/extract-url-parameters-array-bigquery-example.png"><img src="/img/bigquery-snippets/extract-url-parameters-array/extract-url-parameters-array-bigquery-example.png" alt="BigQuery Console: Extract URL parameters example" title="BigQuery Console: Extract URL parameters example" /></a></p>
 <h2>Notes</h2>
 <ul>
@@ -2702,7 +2887,7 @@ r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values</code></pre></li>
 <h2>Links</h2>
 <ul>
 <li><a href="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a">Gist on Github</a></li>
-<li><a href="https://bigquery.cloud.google.com/savedquery/106862046541:e5da849d652a4502b12443a2f14b355a">Example on BigQuery</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:e5da849d652a4502b12443a2f14b355a">Example on BigQuery</a></li>
 <li><a href="https://regex101.com/r/iqwgxD/1/">REGEX explanation on Regex101</a></li>
 </ul>
 <h2>Use cases</h2>
@@ -3240,735 +3425,6 @@ I actually <a href="https://github.com/paslandau/laravelexample">went ahead and 
                 <pubDate>Sun, 07 Aug 2016 16:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/</guid>
-            </item>
-                    <item>
-                <title>How to setup PhpStorm with Vagrant and Laravel Homestead [Tutorial  Part 2]</title>
-                <description><![CDATA[<p>In this second part we're going to cover the setup of Vagrant as local development environment. In the end we'll learn how to</p>
-<ul>
-<li>install and configure VirtualBox, Vagrant and Laravel Homestead</li>
-<li>setup Vagrant in PhpStorm for (remote) PHP execution and debugging</li>
-</ul>
-<p>And just as a reminder, the first part is over at
-<a href="http://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">Setting up PHP7 with Xdebug 2.4 for PhpStorm</a>,
-the third at <a href="http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
-<h2>Table of contents</h2>
-<ul>
-<li><a href="#setting-up-the-software">Setting up the software</a><ul>
- <li><a href="#git-and-git-bash">Git and Git Bash</a></li>
- <li><a href="#oracle-virtualbox">Oracle VirtualBox</a></li>
- <li><a href="#vagrant">Vagrant</a></li>
- <li><a href="#homestead">Homestead</a></li>
-</ul></li>
-<li><a href="#configuring-phpstorm-to-use-the-vagrant-box">Configuring PhpStorm to use the vagrant box</a></li>
-</ul>
-<h2><a id="setting-up-the-software"></a>Setting up the software</h2>
-<h3><a id="git-and-git-bash"></a>Git and Git Bash</h3>
-<p>First of all, we're going to install a decent terminal on windows, because we will have to do some stuff on the command line and once you're
-working with vagrant you'll have to do this via SSH and it's just convenient to have a similar tool set available on Windows as on Unix (e.g. history search).</p>
-<ul>
-<li>Download the current Git version from the <a href="https://git-scm.com/download/win">Git download page for Windows</a>. Download should start automatically
-when you open the link.</li>
-<li>Open the file to start the installation</li>
-<li>When you hit the &quot;Select Components&quot; step, make sure the checkbox next to &quot;Git Bash here&quot; is checked. That option enables a new entry in the
-context menu when right-clicking in a windows folder to open a Git Bash at this directory.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-select-components.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-select-components.PNG" alt="Git Bash select components" /></a></li>
-<li>During the installation we'll have the convenient opportunity that the installation wizard adjusts our <code>PATH</code> variable automatically,
-so that we can access the <code>git</code> commands globally. I prefer to go with the middle option &quot;Use Git from Windows Command Prompt&quot;.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-adjust-path.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-adjust-path.PNG" alt="Git Bash adjust PATH" /></a></li>
-<li>When being asked for the preferred way to handle line endings, I would advise to go for the middle option again. &quot;Checkout as-is, commit
-Unix-style line endings&quot;. Since we're using PhpStorm we don't need to have CRLF as line ending - just LF does fine and is cross-plattform
-compatible. Just be advised that only LF line endings are not not shown as new lines when using the &quot;normal&quot; windows text editor.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-configure-line-endings.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-configure-line-endings.PNG" alt="Git Bash configure line endings" /></a></li>
-<li>When being asked for the terminal emulator make sure to choose &quot;Use MinTTY (the default terminal of MYSY2)&quot;.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-terminal-emulator.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-terminal-emulator.PNG" alt="Git Bash terminal emulator" /></a></li>
-<li>Confirm the remaining steps with &quot;Next&quot; and finish the installation</li>
-<li>Open a new Git Bash shell and do the most basic setup step:
-<pre><code>$ git config --global user.name "John Doe"
-$ git config --global user.email johndoe@example.com</code></pre>
-<p><a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-initial-setup.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/git-bash/git-initial-setup.PNG" alt="Git initial setup" /></a></p></li>
-</ul>
-<p>Cool, we now have a much prettier (and more powerful) shell to work with. I won't get any deeper into Git itself as
-there are <a href="https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control">much better introductions/tutorials on Git</a>
-out there than I could possibly write :) </p>
-<h3><a id="oracle-virtualbox"></a>Oracle VirtualBox</h3>
-<p>VirtualBox is the software that runs the virtual machine that we can use to run our code on. Using a virtual machine
-makes it possible to use the environment/infrastructure of a production system during local development and thus
-minimizes the error potential when finally going to production. When you're just starting out, those benefits probably
-aren't immediately clear to you, but once you begin to design whole systems with multiple components like databases,
-caches, web servers etc., this approach becomes incredibly helpful. </p>
-<ul>
-<li>Download the latest version of VirtualBox from the <a href="https://www.virtualbox.org/wiki/Downloads">VirtualBox download page</a>.
-As of writing this tutorial, the current version is &quot;VirtualBox 5.0.20 for Windows hosts&quot;.</li>
-<li>Run the downloaded file and follow the installation instructions. There's actually nothing to explain ;)</li>
-</ul>
-<h3><a id="vagrant"></a>Vagrant</h3>
-<p>Technically, we wouldn't even need vagrant for our development as the &quot;heavy lifting&quot; is done by VirtualBox and once
-we've got our virtual machine up and running, we can start running code on it. But getting the setup right is actually not an
-easy task and requires manual involvement. We don't want that. We want a simple, reproducible, formalized way of defining
-our virtual machine. Vagrant does exactly that: It gives us a simple configuration language that fulfills those requirements
-and makes it even sharable with other team members to get them started quickly.</p>
-<ul>
-<li>
-<p>Download the 1.7.4 version of Vagrant from the <a href="https://releases.hashicorp.com/vagrant/1.7.4/">Vagrant download archive page</a>
-(the <a href="https://releases.hashicorp.com/vagrant/1.7.4/vagrant_1.7.4.msi">vagrant_1.7.4.msi file</a> is the installer for Windows)
-As of writing this tutorial, the current version is 1.8.5 but that didn't work for me. (More concrete, I got the error</p>
-<blockquote>
-<p>The box 'laravel/homestead' could not be found</p>
-</blockquote>
-<p>when trying to set up homestead.)</p>
-</li>
-<li>Run the downloaded file and follow the installation instructions. Again, nothing fancy here but you'll probably
-need to restart your system after the installation.</li>
-</ul>
-<p>Vagrant will automatically be added to the <code>PATH</code> variable, so it can be called globally. To confirm that the
-installation was successful, run &quot;vagrant -v&quot;, which should yield a similar output to this:</p>
-<pre><code>$ vagrant -v
-Vagrant 1.7.4</code></pre>
-<h3><a id="homestead"></a>Homestead</h3>
-<p>Homestead is a vagrant base box that is maintained by the creator of Laravel, Taylor Otwell. There's actually a chapter
-on <a href="https://laravel.com/docs/5.2/homestead">Homestead in the Laravel documentation</a> that does a pretty good job explaining
-how to set homestead up, so I'll keep this section rather short.</p>
-<p>Since we've already installed VirtualBox and Vagrant, all we need to do is running <code>vagrant box add laravel/homestead --box-version 0.4.4</code>.
-That command will download <a href="https://atlas.hashicorp.com/laravel/boxes/homestead/versions/0.4.4">the homestead box version v0.4.4 from the vagrant catalogue</a>
-to (by default) <code>~/.vagrant.d/boxes</code> or in Windows terms <code>C:\Users\&lt;Username&gt;\.vagrant.d\boxes</code>. You can change this location
-by setting the <code>VAGRANT_HOME</code> path variable as explained <a href="http://stackoverflow.com/a/10226134/413531">here</a>.</p>
-<p><strong>Caution:</strong> We specified the concrete version because a simple <code>vagrant box add laravel/homestead</code> would download the
-<em>latest</em> version of homestead which is (at the time of this writing) v0.5.0 and contains the newest Ubuntu release 16.04.
-If you want to go with that version, make sure to also download and install the <em>latest</em> vagrant version (currently 1.8.5).
-It is possible ot have multiple versions of a vagrant box on your host machine, but it requires some additional
-setup to choose the right box. Please refer to this <a href="http://laravel.io/forum/02-03-2016-install-specific-laravel-homestead-version-and-502-bad-gateway-nginx-solved?page=1#reply-29937">answer</a>
-for further information.</p>
-<p><em>Note:</em> You might encounter the following error message:</p>
-<blockquote>
-<p>$ vagrant box add laravel/homestead
-==&gt; box: Loading metadata for box 'laravel/homestead'
-box: URL: <a href="https://atlas.hashicorp.com/laravel/homestead">https://atlas.hashicorp.com/laravel/homestead</a>
-Vagrant is attempting to interface with the UI in a way that requires
-a TTY. Most actions in Vagrant that require a TTY have configuration
-switches to disable this requirement. Please do that or run Vagrant
-with TTY.</p>
-</blockquote>
-<p>Explanation: The homestead box can work with either VMware or VirtualBox and Vagrant leaves this decision to you. The error
-indicates that Vagrant doesn't understand which terminal (TTY) you are using and thus cannot display the options for you to
-choose from.</p>
-<p>Solution (as found <a href="http://stackoverflow.com/a/32398981">here</a>): Define the new environment variable
-<code>VAGRANT_DETECTED_OS=cygwin</code>. </p>
-<p><a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/homestead/vagrant-detected-os-environment-variable.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/homestead/vagrant-detected-os-environment-variable.PNG" alt="VAGRANT_DETECTED_OS=cygwin" /></a></p>
-<p>Open up a new shell and run <code>vagrant box add laravel/homestead</code> again. The output should look like this:</p>
-<pre><code>$ vagrant box add laravel/homestead
-==&gt; box: Loading metadata for box 'laravel/homestead'
-    box: URL: https://atlas.hashicorp.com/laravel/homestead
-This box can work with multiple providers! The providers that it
-can work with are listed below. Please review the list and choose
-the provider you will be working with.
-
-1) virtualbox
-2) vmware_desktop
-
-Enter your choice: </code></pre>
-<p>Type <code>1</code> and press <code>Enter</code>. This might take some time but should in the end look like this:</p>
-<pre><code>Enter your choice: 1
-==&gt; box: Adding box 'laravel/homestead' (v0.4.4) for provider: virtualbox
-    box: Downloading: https://atlas.hashicorp.com/laravel/boxes/homestead/versions/0.4.4/providers/virtualbox.box
-    box:
-==&gt; box: Successfully added box 'laravel/homestead' (v0.4.4) for 'virtualbox'!</code></pre>
-<p>Let's make sure everything works as expected by following these steps:</p>
-<ul>
-<li>create a new directory and <code>cd</code> into it
-<pre><code>$ mkdir test &amp;&amp; cd test</code></pre></li>
-<li>Run <code>vagrant init laravel/homestead</code> to create an initial <code>Vagrantfile</code> with our new homestead box as base in the <code>test</code> directory
-<pre><code>$ vagrant init laravel/homestead
-A `Vagrantfile` has been placed in this directory. You are now
-ready to `vagrant up` your first virtual environment! Please read
-the comments in the Vagrantfile as well as documentation on
-`vagrantup.com` for more information on using Vagrant.</code></pre>
-<p>The <code>Vagrantfile</code> holds the configuration options for the vagrant box, but we don't need to change anything in there for now
-(unless you have a device on your network that is occupying the 192.169.10.10 IP address,
-which is the default IP that vagrant will assign to the VM)</p></li>
-<li>
-<p>Run <code>vagrant up</code> to start the virtual machine</p>
-<pre><code>$ vagrant up
-Bringing machine 'default' up with 'virtualbox' provider...
-==&gt; default: Importing base box 'laravel/homestead'...
-==&gt; default: Matching MAC address for NAT networking...
-==&gt; default: Checking if box 'laravel/homestead' is up to date...
-==&gt; default: Setting the name of the VM: test_default_1466931613297_29944
-==&gt; default: Clearing any previously set network interfaces...
-==&gt; default: Preparing network interfaces based on configuration...
-  default: Adapter 1: nat
-  default: Adapter 2: hostonly
-==&gt; default: Forwarding ports...
-  default: 22 =&gt; 2222 (adapter 1)
-==&gt; default: Booting VM...
-==&gt; default: Waiting for machine to boot. This may take a few minutes...
-  default: SSH address: 127.0.0.1:2222
-  default: SSH username: vagrant
-  default: SSH auth method: private key
-  default: Warning: Remote connection disconnect. Retrying...</code></pre>
-<p>Caution: The boot process might get stuck at </p>
-<pre><code>default: Warning: Remote connection disconnect. Retrying..</code></pre>
-<p>and finally become</p>
-<pre><code>Timed out while waiting for the machine to boot. This means that
-Vagrant was unable to communicate with the guest machine within
-the configured ("config.vm.boot_timeout" value) time period.
-
-If you look above, you should be able to see the error(s) that
-Vagrant had when attempting to connect to the machine. These errors
-are usually good hints as to what may be wrong.
-
-If you're using a custom box, make sure that networking is properly
-working and you're able to connect to the machine. It is a common
-problem that networking isn't setup properly in these boxes.
-Verify that authentication configurations are also setup properly,
-as well.
-
-If the box appears to be booting properly, you may want to increase
-the timeout ("config.vm.boot_timeout") value.</code></pre>
-<p>Trying to login from the VirtualBox GUI reveals:</p>
-<blockquote>
-<p>VT-x/AMD-V hardware acceleration is not available on your system</p>
-</blockquote>
-<p><a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/homestead/vt-x-hardware-virtualization-error.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/homestead/vt-x-hardware-virtualization-error.PNG" alt="VT-x hardware virtualization error" /></a>
-There's actually even a note in the <a href="https://laravel.com/docs/5.2/homestead#introduction">docs</a>:</p>
-<blockquote>
-<p>Note: If you are using Windows, you may need to enable hardware virtualization (VT-x). It can usually be enabled via your BIOS. If you are using Hyper-V on a UEFI system you may additionally need to disable Hyper-V in order to access VT-x.</p>
-</blockquote>
-<p>Please refer to the article <a href="http://www.howtogeek.com/213795/how-to-enable-intel-vt-x-in-your-computers-bios-or-uefi-firmware/">How to Enable Intel VT-x in Your Computer’s BIOS or UEFI Firmware</a>
-which does a great job explaining exactly how to enable the hardware virtualization. <em>Note</em>: the most easy way for me to get to the BIOS
-was simply to hit the WIN key and search for &quot;Advanced Startup&quot; and then clicking on the &quot;Restart now&quot; button. In the upcoming screens I chose
-<code>Troubleshoot &gt; Advanced options &gt; UEFI Firmware Settings</code>. If you still have problems to get into the BIOS, read on <a href="http://www.howtogeek.com/126016/three-ways-to-access-the-windows-8-boot-options-menu/">here</a></p>
-</li>
-</ul>
-<p><em>Note: So far, I used my own virtual machine for this tutorial so I could install everything &quot;from scratch&quot; to get the screenshots and a run into the
-<em>actual</em> problems that can occur. Unfortunately, I will now have to switch to my &quot;real&quot; laptop because currently it is not possible to run a 64-bit vagrant box
-within a virtual machine (yeah, talk about virtualiception ;)). Reason: I can't enable VT-x/AMD-x in the virtual machine. More in depth info on that problem
-can be found <a href="http://superuser.com/a/760318">here</a> and <a href="https://www.virtualbox.org/ticket/4032">here</a></em>.</p>
-<ul>
-<li>Run <code>vagrant up</code> again to start the virtual machine
-<pre><code>$ vagrant up
-Bringing machine 'default' up with 'virtualbox' provider...
-==&gt; default: Importing base box 'laravel/homestead'...
-==&gt; default: Matching MAC address for NAT networking...
-==&gt; default: Checking if box 'laravel/homestead' is up to date...
-==&gt; default: Setting the name of the VM: test_default_1466937242196_51857
-==&gt; default: Clearing any previously set network interfaces...
-==&gt; default: Preparing network interfaces based on configuration...
-  default: Adapter 1: nat
-==&gt; default: Forwarding ports...
-  default: 22 =&gt; 2222 (adapter 1)
-==&gt; default: Booting VM...
-==&gt; default: Waiting for machine to boot. This may take a few minutes...
-  default: SSH address: 127.0.0.1:2222
-  default: SSH username: vagrant
-  default: SSH auth method: private key
-  default: Warning: Connection timeout. Retrying...
-  default:
-  default: Vagrant insecure key detected. Vagrant will automatically replace
-  default: this with a newly generated keypair for better security.
-  default:
-  default: Inserting generated public key within guest...
-  default: Removing insecure key from the guest if it's present...
-  default: Key inserted! Disconnecting and reconnecting using new SSH key...
-==&gt; default: Machine booted and ready!
-==&gt; default: Checking for guest additions in VM...
-==&gt; default: Mounting shared folders...
-  default: /vagrant =&gt; C:/Users/Pascal/Desktop/test</code></pre></li>
-<li>SSH into the machine
-<pre><code>$ vagrant ssh</code></pre></li>
-</ul>
-<p>You should now see something like this:</p>
-<pre><code>Welcome to Ubuntu 14.04.4 LTS (GNU/Linux 3.19.0-25-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com/
-vagrant@homestead:~$</code></pre>
-<p>Congratulations, you've successfully overcome every obstacle and are now the proud owner
-of a working vagrant homestead setup.</p>
-<h2><a id="configuring-phpstorm-to-use-the-vagrant-box"></a>Configuring PhpStorm to use the vagrant box</h2>
-<p>Setting up PhpStorm to work with your newly created vagrant box can be a little tricky, as the process is not really
-that straight forward. But in the end it's just a matter of &quot;knowing where to click&quot; (and having a little bit of background
-info on what's happening behind the scenes is also helpful ;)). And it will <em>not</em> work as expected, but I think it's still
-helpful to explain why that is the case and how to work around it.</p>
-<p>PS: There is also a <a href="https://confluence.jetbrains.com/display/PhpStorm/Working+with+Advanced+Vagrant+features+in+PhpStorm">Working with Advanced Vagrant features in PhpStorm</a>
-tutorial. Although their approach is a little different, so take it as a nice to know :)</p>
-<ul>
-<li>open up PhpStorm and open the settings via <code>File &gt; Settings...</code></li>
-<li>enter the search box at the top left, type &quot;PHP&quot; and choose the entry named &quot;PHP&quot; under &quot;Laguages &amp; Frameworks&quot; from the resulting list
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/select-php-interpreter.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/select-php-interpreter.PNG" alt="Select a new PHP interpreter in PhpStorm" /></a></li>
-<li>click on the &quot;...&quot; next to &quot;Interpreter&quot;. This opens the interpreter settings for PhpStorm</li>
-<li>click on the green &quot;+&quot; on the top left and choose &quot;Remote...&quot; to add a new interpreter. Technically, vagrant is a
-&quot;remote&quot; interpreter as we're going to access it via SSH over our local network. </li>
-<li>in the pop up window choose &quot;Vagrant&quot; and select the directory that your &quot;Vagrantfile&quot; is in
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/add-vagrant-remote.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/add-vagrant-remote.PNG" alt="Add vagrant as remote interpreter" /></a>
-After clicking &quot;OK&quot;, PhpStorm will perform some checks (e.g. connect via SSH to vagrant and look for PHP).</li>
-<li>
-<p>The &quot;Interpreters&quot; window now contains a new entry with the newly generated vagrant remote interpreter.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-no-path-mappings.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-no-path-mappings.PNG" alt="Vagrant interpreter" /></a>
-By default, it should be named something like &quot;Remote PHP 7&quot; which I would recommend renaming to &quot;Vagrant PHP 7&quot;.
-Also note the warning that says </p>
-<blockquote>
-<p>No path mapping were found. Please, configure them at Vagrantfile</p>
-</blockquote>
-<p>Since we didn't touch the <code>Vagrantfile</code>, it's true that we didn't configure any path mapping. That means, we did not tell vagrant which folder of
-our host machine should be made available to the virtual machine. Why do we need this? Well, we're going to execute the source code that we are editing
-within PhpStorm in the <em>host</em> system in the virtual machine (the <em>remote</em> system), so we need to make it available to the <em>remote</em> system. </p>
-</li>
-<li>Open up your <code>Vagrantfile</code> in the <code>test</code> directory. There's a lot of stuff in there, but it is mostly commented out and just serves as a blueprint
-if you need to change the defaults. You can actually delete all of it and replace it with the following content:
-<pre><code>Vagrant.configure(2) do |config|
-config.vm.box = "laravel/homestead"
-config.vm.synced_folder "C:\\Users\\Pascal\\PhpstormProjects\\untitled", "/vagrant_data"
-end</code></pre>
-<p>where <code>C:\\Users\\Pascal\\PhpstormProjects\\untitled</code> is the path to my PhpStorm project. You can easily get that path if you right-click
-on the project folder within PhpStorm and select <code>Copy as path</code> from the context menu. Please make sure to use double <code>\\</code> instead of single <code>\</code> within the path!
-This makes the project folder on your host machine available to the virtual machine at the directory <code>/vagrant_data</code></p></li>
-<li>To enable the changes, we need to restart the vagrant box via <code>vagrant reload</code>. Run the command on your host machine in the directory that holds the
-<code>Vagrantfile</code>. If you are still logged into the virtual machine, press CTRL + D to logout.
-<pre><code>$ vagrant reload
-==&gt; default: Attempting graceful shutdown of VM...
-==&gt; default: Checking if box 'laravel/homestead' is up to date...
-==&gt; default: Clearing any previously set forwarded ports...
-==&gt; default: Clearing any previously set network interfaces...
-==&gt; default: Preparing network interfaces based on configuration...
-  default: Adapter 1: nat
-==&gt; default: Forwarding ports...
-  default: 22 =&gt; 2222 (adapter 1)
-==&gt; default: Booting VM...
-==&gt; default: Waiting for machine to boot. This may take a few minutes...
-  default: SSH address: 127.0.0.1:2222
-  default: SSH username: vagrant
-  default: SSH auth method: private key
-  default: Warning: Connection timeout. Retrying...
-==&gt; default: Machine booted and ready!
-==&gt; default: Checking for guest additions in VM...
-==&gt; default: Mounting shared folders...
-  default: /vagrant =&gt; C:/Users/Pascal/Desktop/test
-  default: /vagrant_data =&gt; C:/Users/Pascal/PhpstormProjects/untitled
-==&gt; default: Machine already provisioned. Run `vagrant provision` or use the `--provision`
-==&gt; default: flag to force provisioning. Provisioners marked to run always will still run.</code></pre>
-<p>Please note the line <code>default: /vagrant_data =&gt; C:/Users/Pascal/PhpstormProjects/untitled</code> which tells us that the path mapping is in place.
-Also, take note of the lines</p>
-<pre><code>==&gt; default: Forwarding ports...
-    default: 22 =&gt; 2222 (adapter 1)
-==&gt; default: Booting VM...
-==&gt; default: Waiting for machine to boot. This may take a few minutes...
-    default: SSH address: 127.0.0.1:2222</code></pre>
-<p>That basically means, that the port 22 on the virtual machine is tunneled to port 2222 on the host machine.
-2222 is the vagrant default but we could override this setting in the Vagrantfile.</p></li>
-<li>
-<p>Ok, let's get back to the &quot;Interpreters&quot; window in PhpStorm. In case you closed it, just repeat the first steps of this section.
-But: <strong>The warning still isn't gone!</strong> That is the part that always through me off in the beginning, because I would have expected PhpStorm
-to figure the path mappings out automagically. But if we run <code>test.php</code> right now, we get the following result:</p>
-<pre><code>vagrant://C:/Users/Pascal/Desktop/test/usr/bin/php C:\Users\Pascal\PhpstormProjects\untitled\test.php
-bash: line 0: cd: C:/Users/Pascal/PhpstormProjects/untitled: No such file or directory
-Could not open input file: C:UsersPascalPhpstormProjectsuntitledtest.php
-
-Process finished with exit code 1</code></pre>
-<p>PhpStorm has no idea where to look within the virtual machine. How can we still get this to work?</p>
-</li>
-<li>Well, here's how: Enter the search box at the top left, type &quot;Deployment&quot; and choose the entry named &quot;Deployment&quot; from the resulting list.
-Now click on the green &quot;+&quot; at the top left, enter &quot;Vagrant&quot; as name and choose &quot;SFTP&quot; as type.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-deployment-settings.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-deployment-settings.PNG" alt="Add vagrant via sftp deployment" /></a>
-Actually, the name doesn't matter, you can enter what ever you want there ;)</li>
-<li>
-<p>in the &quot;Connection&quot; tab, enter the following information:</p>
-<ul>
-<li>SFTP host: 127.0.0.1</li>
-<li>Port: 2222</li>
-<li>User name: vagrant</li>
-<li>Auth type: Password</li>
-<li>Password: vagrant</li>
-<li>check the &quot;Save password&quot; checkbox</li>
-</ul>
-<p><a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-deployment-connection.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-deployment-connection.PNG" alt="Deployment connection settings for vagrant" /></a>
-So what does that mean? Those settings tell PhpStorm to connect via SFTP to our vagrant box by using the port 2222 on our host machine -
-which tunnels to port 22 on the virtual machine as mentioned above. To do so, it uses the username &quot;vagrant&quot; and the password &quot;vagrant&quot;
-for authentication. Again, those credentials are the default values for vagrant (and will be used &quot;behind the scenes&quot; if you use <code>vagrant ssh</code>
-to ssh into a vagrant machine).</p>
-</li>
-<li>
-<p>Next, open the &quot;Mappings&quot; tab and enter the following information:</p>
-<ul>
-<li>Local path: [path to your local PhpStorm project - this should already be set]</li>
-<li>Deployment path on server 'Vagrant': /vagrant_data </li>
-</ul>
-<p><a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-path-mappings.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/vagrant-path-mappings.PNG" alt="Path mappings for vagrant" /></a>
-We're basically telling PhpStorm what we told vagrant via the Vagrantfile:
-<code>C:/Users/Pascal/PhpstormProjects/untitled</code> (in my case) maps to <code>/vagrant_data</code></p>
-</li>
-<li>Confirm with &quot;OK&quot; and go back to the &quot;Interpreters&quot; window in PhpStorm. Repeat the first steps of this section to get there.
-Choose the remote interpreter we added before but instead of the &quot;Vagrant&quot; radio button, check the &quot;Deployment configuration&quot; radio button.
-Choose the &quot;Vagrant&quot; configuration we just created and hit &quot;Apply&quot;. There should be no warnings left.
-<a href="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/interpreter-vagrant-via-deployment.PNG"><img src="/img/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/phpstorm/interpreter-vagrant-via-deployment.PNG" alt="Run vagrant via deployment" /></a></li>
-<li>
-<p>Hit &quot;OK&quot; in all open windows to save the changes we just made and run the &quot;test.php&quot; file.
-This should generate the following output:</p>
-<pre><code>sftp://vagrant@127.0.0.1:2222/usr/bin/php /vagrant_data/test.php
-1
-
-Process finished with exit code 0</code></pre>
-<p>The line <code>sftp://vagrant@127.0.0.1:2222/usr/bin/php /vagrant_data/test.php</code> verifies, that we are actually using the php interpreter within the vagrant box:</p>
-<ul>
-<li>via <code>sftp://</code></li>
-<li>with username <code>vagrant</code></li>
-<li>on <code>127.0.0.1:2222</code></li>
-<li>using <code>/usr/bin/php</code></li>
-<li>to execute <code>/vagrant_data/test.php</code></li>
-</ul>
-</li>
-</ul>
-<p>Whoop whoop, that's it :) Oh and because homestead comes pre-installed with Xdebug, we could even set a breakpoint and halt the execution <em>within the virtual
-machine</em> - now is that something or what? Before we go on let's shut down the VM by running <code>vagrant halt</code> on the host machine. This will simply shut down
-the VM but all changes we made to it stay in place. If you want to make a completely fresh start, use <code>vagrant destroy</code> and confirm that you really want
-to &quot;destroy&quot; the VM.</p>]]></description>
-                <pubDate>Sun, 07 Aug 2016 13:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/</guid>
-            </item>
-                    <item>
-                <title>How to setup PHP7 with Xdebug 2.4 for PhpStorm [Tutorial Part 1]</title>
-                <description><![CDATA[<p>In this tutorial I'll show my typical procedure when setting up a new development environment on a fresh Windows 10 laptop.
-It's not like I do this every day (as 'typical' might suggest) but when I started my current job, I had to do it
-several times for me (switched my laptop) as well as for some of my co-workers. I'm going to cover this step-by-step
-and will include (hopefully) all necessary information for you to get this setup running as well.</p>
-<p>This is the first part of a three-part tutorial, focusing on the development on Windows. In the second part I will
-explain how to make the shift to using a virtual machine and in the third we'll setup a fresh Laravel installation
-and put it all together.</p>
-<p>The second part is over at
-<a href="http://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Setting up PhpStorm with Vagrant and Laravel Homestead</a>,
-the third at <a href="http://www.pascallandau.com/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">Setting up Laravel with PHPUnit on Vagrant in PhpStorm</a></p>
-<p>Let's get to it, shall we?</p>
-<h2>Table of contents</h2>
-<ul>
-<li><a href="#setup-php-7">Setup PHP 7</a><ul>
-<li><a href="#installation">Installation</a></li>
-<li><a href="#the-path-variable">The `PATH` variable</a></li>
-</ul></li>
-<li><a href="#setup-phpstorm">Setup PhpStorm</a><ul>
-<li><a href="#setup-for-local-php-development">Setup for local PHP development</a></li>
-</ul></li>
-<li><a href="#installing-xdebug">Installing Xdebug</a></li>
-<li><a href="#setup-composer">Setup Composer</a><ul>
-<li><a href="#enabling-the-openssl-php-extension">Enabling the openssl PHP extension</a></li>
-</ul></li>
-<li><a href="#phrase-express">Phrase Express</a><ul>
-<li><a href="#clipboard-cache">Clipboard cache</a></li>
-<li><a href="#text-expansion">Text expansion</a></li>
-</ul></li></ul>
-<h2><a id="setup-php-7"></a>Setup PHP 7</h2>
-<p>I do almost all of my development in a virtual machine because the final product usually runs on a unix server, but
-from time to time I find it helpful to have a local setup available as well.</p>
-<h3><a id="installation"></a>Installation</h3>
-<ul>
-<li>Download the current version of PHP 7 from the <a href="http://windows.php.net/download/">PHP download page for Windows</a>.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/download-php.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/download-php.PNG" alt="Download PHP 7" title="Download PHP 7" /></a>
-Simply take the version at the top of the right panel which should be the latest NTS (non thread safe) build.
-If you have 64-bit system, choose the <em>VC14 x64 Non Thread Safe</em> variant.
-Click on the link labeled &quot;zip&quot; to start the download. </li>
-<li>create a new folder named <code>php7</code> in your Program Files directory (e.g. <code>C:\Program Files</code>) and unzip the downloaded archive there
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/install-php.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/install-php.PNG" alt="Install PHP 7" title="Install PHP 7" /></a></li>
-<li>double-click the file &quot;php.exe&quot; to confirm no error message shows up. You might encounter the error
-<em>Unable to start the program as VCRUNTIME140.dll is missing on your computer. Try reinstalling the program to fix this problem.</em>
-It can be fixed by downloading and installing the corresponding file from <a href="https://www.microsoft.com/en-us/download/details.aspx?id=48145">here</a>
-(found at <a href="http://stackoverflow.com/a/30826746">stackoverflow</a>)
-Please make sure you pick the architecture (x64/x86) that matches the previously downloaded PHP7 version!</li>
-</ul>
-<p>We're almost done, but we should modify the <code>PATH</code> variable in order to make PHP globally available.</p>
-<h3><a id="the-path-variable"></a>The <code>PATH</code> variable</h3>
-<p>Simply put, the <code>PATH</code> variable defines where Windows looks for executable files when the specified file is not found
-in the current directory. So lets say you would like to know the current PHP version on your system, then
-<a href="http://stackoverflow.com/a/15517857/413531">stackoverflow</a> will tell you something along the lines of</p>
-<pre><code>C:\&gt;php -v</code></pre>
-<p>But you will probably get this</p>
-<blockquote>
-<p>php: command not found</p>
-</blockquote>
-<p>or this</p>
-<blockquote>
-<p>'php' is not recognized as an internal or external command,
-operable program or batch file.</p>
-</blockquote>
-<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/php-command-not-found.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/php/php-command-not-found.PNG" alt="php command not found" title="php command not found" /></a></p>
-<p>That command would only work if our current working directory (the location from where we executed the <code>php -v</code> command) would
-contain the correct php.exe file. In other words: Calling the command is not location-agnostic yet. To make it, though,
-we need to modify the <code>PATH</code> environment variable and make it aware of the location PHP is installed at.</p>
-<p>To do so, we need to modify the System Properties... and might as well learn some nifty shortcuts to get there along the way :)</p>
-<ul>
-<li>open the &quot;run&quot; window by pressing <code>WIN + R</code></li>
-<li>type <code>SystemPropertiesAdvanced</code> and hit Enter</li>
-<li>click on &quot;Environment Variables...&quot; at the bottom of the window
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/SystemPropertiesAdvanced.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/SystemPropertiesAdvanced.PNG" alt="SystemPropertiesAdvanced" title="SystemPropertiesAdvanced" /></a></li>
-<li>select the <code>PATH</code> entry in the list of system variables (lower half) and click &quot;Edit...&quot;
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/environment-variables.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/environment-variables.PNG" alt="Environment variables" title="Environment variables" /></a></li>
-<li>hit the &quot;New&quot; button and enter the full path to the directory that should be used to look up commands/programs.
-So in the case of PHP that's the directory containing the php.exe file.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/new-environment-variable.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/path/new-environment-variable.PNG" alt="New environment variable" title="New environment variable" /></a></li>
-<li>confirm with &quot;OK&quot;</li>
-<li>open a new shell by hitting <code>WIN + R</code>, type <code>cmd</code> and confirm with Enter
-<ul>
-<li><em>Caution:</em> Any existing shell will <em>not</em> be aware of the changes in the environment variables so you need to restart a new one!</li>
-</ul></li>
-<li>running <code>php -v</code> again should now yield something like this:
-<pre><code>C:\&gt;php -v
-PHP 7.0.7 (cli) (built: May 25 2016 13:08:31) ( NTS )
-Copyright (c) 1997-2016 The PHP Group
-Zend Engine v3.0.0, Copyright (c) 1998-2016 Zend Technologies</code></pre></li>
-</ul>
-<p>Cool, now on to the IDE.</p>
-<h2><a id="setup-phpstorm"></a>Setup PhpStorm</h2>
-<h3><a id="installation"></a>Installation</h3>
-<ul>
-<li>Download the current version of PhpStorm from the <a href="https://www.jetbrains.com/phpstorm/download/">PhpStorm download page</a>
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/download.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/download.PNG" alt="Download PhpStorm" title="Download PhpStorm" /></a>
-<ul>
-<li>Yes, it's paid but so far the best IDE I've come across + you get a 30 day free trial ;)</li>
-</ul></li>
-<li>Double-click the downloaded file (probably something like PhpStorm-2016.1.2.exe) and follow the instructions.
-Nothing fancy there.</li>
-<li>After the installation finished, run PhpStorm. You should be greeted with the question for importing previous settings.
-We'll go with the &quot;I do not have a previous version of PhpStorm or I do not want to import my settings&quot; option as we
-can always do that later.</li>
-<li>After accepting the Privacy Policy you'll be prompted for the license activation. Unless you have a valid license,
-go with the &quot;Evaluation for free for 30 days&quot; option and accept the license agreement afterwards.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/evaluate.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/evaluate.PNG" alt="PhpStorm license" title="PhpStorm license" /></a></li>
-<li>PhpStorm will now start and ask you for the Initial Configuration - that is Keymap scheme, IDE theme and colors/fonts.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/initial-configuration.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/initial-configuration.PNG" alt="Initial configuration" title="Initial configuration" /></a>
-Unless you have anything to change a that point, go with the defaults and hit OK.</li>
-<li>In the following New Project screen choose &quot;PHP Empty Project&quot; in the left hand list and hit &quot;Create&quot;</li>
-</ul>
-<p>That'll conclude the installation :)</p>
-<h3><a id="setup-for-local-php-development"></a>Setup for local PHP development</h3>
-<p>First, let's create a new PHP file by right-clicking on the project folder and choosing <code>New &gt; PHP File</code>.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/new-file.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/new-file.PNG" alt="Create new PHP file" title="Create new PHP file" /></a></p>
-<p>Name the file <code>test.php</code> and give it the following content:</p>
-<pre><code>&lt;?php
-$i = 1;
-echo $i."\n";</code></pre>
-<p>Now select <code>Run &gt; Run...</code> and choose the test.php with the small PHP icon in the front.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run.PNG" alt="Run PHP file" title="Run PHP file" /></a></p>
-<p>A new window should appear because we did not specify a PHP interpreter yet so PhpStorm doesn't know how to run the file.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/no-interpreter.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/no-interpreter.PNG" alt="Interpreter error" title="Interpreter error" /></a></p>
-<p>A click on the &quot;Fix&quot; button with the red exclamation mark will open up the PHP interpreter settings. You can get to the
-same screen via <code>File &gt; Settings... &gt; Languages &amp; Frameworks &gt; PHP</code>. First, choose <em>7 (return types,
-scalar type hints, etc.)</em> as PHP language level so that scalar type hints won't get marked as an error, for instance.
-Second, hit the <code>...</code> button to specify an new (local) PHP interpreter and click on the green &quot;+&quot; icon on the top left.
-Since we installed PHP 7 before, PhpStorm should automatically provide that as an option. Otherwise choose &quot;Other Local...&quot;
-and select the php.exe file from the install location of PHP on your system.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/select-interpreter.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/select-interpreter.PNG" alt="Select interpreter" title="Select interpreter" /></a></p>
-<p>A little warning sign should appear, stating that the</p>
-<blockquote>
-<p>Configuration php.ini file does not exist</p>
-</blockquote>
-<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/php-no-ini.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/php-no-ini.PNG" alt="No php.ini warning" title="No php.ini warning" /></a></p>
-<p>Clicking on the &quot;How To Fix&quot; help link reveals, that PHP expects a file called php.ini in either its installation directory
-or at C:\Windows. But we'll come to that in a moment. For now, we can just confirm all dialogs with &quot;OK&quot; and should now
-be able to run the PHP file - either by right-click + selecting &quot;Run&quot; or (by default) hitting <code>Shift + F10</code>.
-The console window of PhpStorm should open at the bottom and show something like this</p>
-<pre><code>"C:\Program Files\php7\php.exe" C:\Users\IEUser\PhpstormProjects\untitled\test.php
-1
-
-Process finished with exit code 0</code></pre>
-<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run-output.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/phpstorm/run-output.PNG" alt="Run output" title="Run output" /></a></p>
-<p>Splendid, PhpStorm is now up and running with PHP7 :)</p>
-<h2><a id="installing-xdebug"></a>Installing Xdebug</h2>
-<p>Debugging is an invaluable asset during development as it lets you walk step-by-step through the source code, showing
-exactly what is happening. <code>var_dump()</code> on freakin' steroids! Choose <code>Run &gt; Debug 'test.php'</code> (or hit <code>Shift + F9</code>) -
-and be greeted by a little error message at the bottom that goes like this:</p>
-<blockquote>
-<p>Connection was no established: debug extension is not installed. </p>
-</blockquote>
-<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-extension-not-installed.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-extension-not-installed.PNG" alt="Debug extension not installed" title="Debug extension not installed" /></a></p>
-<p>Unfortunately, the  help link &quot;Update interpreter info&quot; is not really useful at that point... So what's actually going on?
-In order enable debugging, we need to install the Xdebug extension. To do so, go to the
-<a href="https://xdebug.org/download.php">Xdebug download page</a> and download the appropriate installer for your PHP version...
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-versions.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-versions.PNG" alt="Download Xdebug" title="Download Xdebug" /></a></p>
-<p>Just kidding, of course I'm going to explain how to find the right one ;) Actually it's pretty straight forward:
-We installed PHP 7 NTS, probably in the 64 bit version, so the link &quot;PHP 7.0 VC14 (64bit)&quot; should be the correct one.
-But since I tend forget the exact version I installed, I would like to point to
-<a href="https://xdebug.org/wizard.php">Xdebug's fantastic installation wizard</a> which simply requires us to print, copy and
-paste some information of our PHP installation. And here's how we gonna do that:</p>
-<ul>
-<li>click on the test.php file in the left pane of your PhpStorm window and select &quot;Show in Explorer&quot;
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/show-in-explorer.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/show-in-explorer.PNG" alt="Show in Explorer" title="Show in Explorer" /></a>
-<ul>
-<li>a new window opens up at the location of the file</li>
-</ul></li>
-<li>press (and hold) Shift while right-clicking on an empty space within the opened folder. A new option
-called &quot;Open command window here&quot; shows up. Click on it.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/open-command-window-here.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/open-command-window-here.PNG" alt="Open CMD at path" title="Open CMD at path" /></a>
-<ul>
-<li>a new shell opens at the location of the folder (I know.. neat, right?)</li>
-</ul></li>
-<li>type <code>php -i</code>... and be overwhelmed by too much output. Since we need to copy and paste the output,
-echoing on the command line is somewhat cumbersome.</li>
-<li>type <code>php -i &gt; phpinfo.txt</code> instead to redirect the output to the file <code>phpinfo.txt</code> (that will be created at
-the location of the shell which conveniently is also the location of our PhpStorm project).
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/phpinfo-output.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/phpinfo-output.PNG" alt="Capture php -i output" title="Capture php -i output" /></a>
-If the file doesn't show up in PhpStorm after some seconds you can right-click
-on the parent folder and select &quot;Synchronize [foldername]` ([foldername] is &quot;untitled&quot; in my example) to make
-PhpStorm aware of changes in the filesystem.</li>
-<li>open <code>phpinfo.txt</code>, hit <code>CTRL + A</code> to select everything and <code>CTRL + C</code> to copy. </li>
-<li>hurry back to the Xdebug installation wizard, paste everything in the textarea and click the &quot;Analyse my phpinfo() output&quot; button.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard.PNG" alt="Xdebug wizard" title="Xdebug wizard" /></a>
-The wizard will provide you with exact installation instructions for your system. For me, it looks like this:
-<ol>
-<li>Download <a href="http://xdebug.org/files/php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll">php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll</a></li>
-<li>Move the downloaded file to <code>C:\php\ext</code></li>
-<li>Create php.ini in the same folder as where php.exe is and add the line
-<code>zend_extension = C:\php\ext\php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll</code></li>
-</ol></li>
-</ul>
-<p>You <em>could</em> follow those instructions directly, but I would recommend to change the directory of the extension. <code>C:\php\ext</code> is
-the default directory for PHP to look for extensions if not specified otherwise in <em>drumroll</em>  the <code>php.ini</code> - that we
-shall create now. To do so, open you PHP installation directory (just as a reminder: mine was at <code>C:\Program Files\php7</code>), look for the file
-<code>php.ini-development</code> copy and rename it to <code>php.ini</code> and open that file. Search for &quot;extension_dir&quot; which should lead
-you to a passage that looks like this:</p>
-<pre><code>; Directory in which the loadable extensions (modules) reside.
-; http://php.net/extension-dir
-; extension_dir = "./"
-; On windows:
-; extension_dir = "ext"</code></pre>
-<p>Remove the leading  &quot;;&quot; in front of the &quot;extension_dir&quot; directive and set the path to the &quot;ext&quot; folder in your PHP installation
-directory as value. For me, the line now looks like this:</p>
-<pre><code>extension_dir = "C:\Program Files\php7\ext"</code></pre>
-<p><em>Hint:</em> If you don't find any &quot;extension_dir&quot; string in your original php.ini file just add it at the end of the file.
-Also, don't forget to save the file.</p>
-<p>When re-running the <code>php -i &gt; phpinfo.txt</code> step including the Xdebug wizard, the instructions now look like this:
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard-result.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/xdebug-installation-wizard-result.PNG" alt="Xdebug wizard installation instructions" title="Xdebug wizard installation instructions" /></a></p>
-<ol>
-<li>Download <a href="http://xdebug.org/files/php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll">php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll</a></li>
-<li>Move the downloaded file to &quot;C:\Program Files\php7\ext&quot;</li>
-<li>Edit C:\Program Files\php7\php.ini and add the line
-<code>zend_extension = "C:\Program Files\php7\ext\php_xdebug-2.4.0-7.0-vc14-nts-x86_64.dll"</code></li>
-</ol>
-<p>You can add the &quot;zend_extension&quot; line simply at the end of the php.ini.</p>
-<p>Now we should be good to go - or better to debug. Open up the test.php file in PhpStorm and click on the
-little green bug icon on the top right to run the file in debug mode.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-mode.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/debug-mode.PNG" alt="Run in debug mode" title="Run in debug mode" /></a></p>
-<p>The console window pops up again and yields something like this:</p>
-<pre><code>"C:\Program Files\php7\php.exe" -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=127.0.0.1 C:\Users\IEUser\PhpstormProjects\untitled\test.php
-1
-
-Process finished with exit code 0</code></pre>
-<p>Please note the <code>-dxdebug</code> parameters following the php.exe call. To actually <em>use</em> the debugger, set a breakpoint in the
-second line of the script (that says <code>$i = 1;</code>) by left-clicking on the little margin on the left of said line (you can
-unset the breakpoint by simply clicking on it again).
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/set-breakpoint.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/xdebug/set-breakpoint.PNG" alt="Set breakpoint" title="Set breakpoint" /></a></p>
-<p>Running the script now (again in debug mode) will stop the execution at that position.</p>
-<p>Phew. Glad we got that thing working :)</p>
-<h2><a id="setup-composer"></a>Setup Composer</h2>
-<p>Next in line: PHP's beloved dependency manager Composer. I deeply believe that there's hardly a way around
-this wonderful tool when it comes to modern PHP development. </p>
-<h3><a id="installation"></a>Installation</h3>
-<ul>
-<li>download the current Windows installer from the <a href="https://getcomposer.org/download/">Composer download page</a>
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/download-installer.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/download-installer.PNG" alt="Download Composer installer" title="Download Composer installer" /></a></li>
-<li>double-click the file to start the installation</li>
-<li>choose the PHP version you want composer to use. The installation wizard should already show you
-the installed PHP 7 php.exe file.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/choose-php-version.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/choose-php-version.PNG" alt="Choose PHP version" title="Choose PHP version" /></a></li>
-<li>next, you might get a security warning because the open-ssl extension is not activated and
-composer can't connect via https to download some some necessary files.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-warning.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-warning.PNG" alt="Openssl warning" title="Openssl warning" /></a></li>
-</ul>
-<p>So let's quickly take care of this before we continue. (We could also ignore this requirement by checking
-the checkbox but I'll take this opportunity to show you how extensions are enabled for PHP).</p>
-<h3><a id="enabling-the-openssl-php-extension"></a>Enabling the openssl PHP extension</h3>
-<p>Open up the php.ini file in your PHP installation directory and search for &quot;php_openssl&quot;. You should now see
-a line like this:</p>
-<pre><code>;extension=php_openssl.dll</code></pre>
-<p>The <code>php_openssl.dll</code> file should already come pre-installed in the &quot;ext&quot; directory within your PHP installation
-directory. (It's starting to make sense that we adjusted the &quot;extension_dir&quot;, doesn't id ;)). So you can simply
-remove the &quot;;&quot; in front of this line. To verify that the extension is actually loaded, open up a shell and type
-<code>php -m</code> to list all enabled modules. The list should contain an item that says <code>openssl</code>.
-<a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-module.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/openssl-module.PNG" alt="Show PHP modules" title="Show PHP modules" /></a></p>
-<p>Cool. Now that that's working we shall continue with the installation process. Try hitting the &quot;&lt; Back&quot; button
-once to get back to the PHP executable selection. Upon clicking &quot;Next &gt;&quot;, the openssl warning should be gone.
-If not, cancel and restart the setup. You can ignore the Proxy Settings dialog and just hit &quot;Next &gt;&quot; and &quot;Install&quot;.
-Since we installed Xdebug before, Composer will show a warning that this slows down Composer but that's nothing
-to worry about. Just keep hitting &quot;Next &gt;&quot; and &quot;Finish&quot;. Composer will add itself automatically to your <code>PATH</code>
-environment variable so you can call it globally. As mentioned before, this will only affect freshly opened shells,
-so let's do a quick <code>WIN + R</code> and a <code>cmd</code>.</p>
-<p>Type <code>composer -V</code> to print the Composer version, which should generate something along the lines of </p>
-<pre><code>C:\Users\IEUser&gt;composer -V
-You are running composer with xdebug enabled. This has a major impact on runtime performance. See https://getcomposer.org/xdebug
-Composer version 1.1.1 2016-05-17 12:25:44</code></pre>
-<p><a href="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/composer-version.PNG"><img src="/img/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/composer/composer-version.PNG" alt="Show Composer version" title="Show composer version" /></a></p>
-<p>Aaaand we're done.</p>
-<h2><a id="phrase-express"></a>Phrase Express</h2>
-<p>This is more of bonus since it's a somewhat opinionated software but I've grown very fond of it over the last
-couple of years. Phrase Express is a clipboard manager / text expander for Windows. You can download the
-tool for free at the <a href="http://www.phraseexpress.com/download.php">Phrase Express download page</a> (Download Client).</p>
-<p>There's actually not much to tell about the installation process so I'm just gonna outline my major use cases.</p>
-<h3><a id="clipboard-cache"></a>Clipboard cache</h3>
-<p>This one is a biggie: Phrase Express saves everything you copy to the clipboard in a cache that can be accessed
-via <code>CRTL + ALT + V</code> (by default). I cannot emphasize how incredibly handy that is.</p>
-<h3><a id="text-expansion"></a>Text expansion</h3>
-<p>There's a couple of things I have to type frequently (or at least from time to time) and it's just cumbersome
-to either write them out in full length or to look them up. Here's my short list to give you an idea:</p>
-<table>
-<thead>
-<tr>
-<th>auto text</th>
-<th></th>
-<th>meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>mee</td>
-<td></td>
-<td><em>my email address</em></td>
-</tr>
-<tr>
-<td>myssh</td>
-<td></td>
-<td><em>my public ssh key</em></td>
-</tr>
-<tr>
-<td>mytax</td>
-<td></td>
-<td><em>my tax id</em></td>
-</tr>
-<tr>
-<td>myserver</td>
-<td></td>
-<td><em>ip address of my server</em></td>
-</tr>
-<tr>
-<td>ts</td>
-<td></td>
-<td><em>the current timestamp in Y-m-d format</em></td>
-</tr>
-<tr>
-<td>tsf</td>
-<td></td>
-<td><em>the current timestamp in Y-m-d H:i:s format</em></td>
-</tr>
-<tr>
-<td>*shrug</td>
-<td></td>
-<td>¯\_(ツ)_/¯</td>
-</tr>
-<tr>
-<td>*party</td>
-<td></td>
-<td>(ツ)_\m/</td>
-</tr>
-<tr>
-<td>cmark</td>
-<td></td>
-<td>✓</td>
-</tr>
-<tr>
-<td>killphp</td>
-<td></td>
-<td><code>ps aux | grep php | awk '{print $2}' | sudo xargs kill</code></td>
-</tr>
-</tbody>
-</table>]]></description>
-                <pubDate>Sun, 07 Aug 2016 10:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/</guid>
             </item>
             </channel>
 </rss>

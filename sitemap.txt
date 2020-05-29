@@ -3,6 +3,9 @@ https://www.pascallandau.com/about/
 https://www.pascallandau.com/blog/
 https://www.pascallandau.com/bigquery-snippets/
 https://www.pascallandau.com/personal-finance/
+https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/
+https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/
+https://www.pascallandau.com/bigquery-snippets/use-variables/
 https://www.pascallandau.com/personal-finance/geld-anlegen-investment-tipps-einsteiger/
 https://www.pascallandau.com/bigquery-snippets/multiple-cursors-big-query-ui/
 https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/

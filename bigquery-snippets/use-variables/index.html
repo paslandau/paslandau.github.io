@@ -5,16 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="Converting a timestamp/date/datetime to a different timezone with Google BigQuery">
+    <meta name="description" content="Declaring variables and using them in queries with Google BigQuery">
             <meta name="author" content="Pascal Landau">
-        <title>BigQuery: Convert timestamp/date/datetime to different timezone | pascallandau.com</title>
+        <title>BigQuery: Declare and use Variables | pascallandau.com</title>
     <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/"/>
+    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/use-variables/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
 
@@ -100,9 +100,9 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>How to convert a timestamp/date/datetime to a different timezone in Google BigQuery</h1>
+                    <h1>How to use variables in Google BigQuery</h1>
                                             <h2 class="subheading"></h2>
-                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2018-04-08 18:00:00</span>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2020-05-29 12:00:00</span>
                                     </div>
             </div>
         </div>
@@ -113,50 +113,56 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>BigQuery provides multiple functions to convert timestamps / dates / datetimes to a different timezone:</p>
+                <p>We can use variables by defining them with a <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting#declare"><code>DECLARE</code> statement</a>,
+e.g. </p>
+<pre><code>DECLARE foo STRING DEFAULT "foo";
+
+#DECLARE &lt;variable&gt; &lt;type&gt; DEFAULT &lt;value&gt;;</code></pre>
+<p>with <code>&lt;type&gt;</code> being one of the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types">BigQuery's built-in standard-sql data types</a></p>
+<p>This is equivalent to variables of other SQL databases, e.g.</p>
 <ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#date">DATE(timestamp_expression, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#time">TIME(timestamp, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#datetime">DATETIME(timestamp_expression, timezone)</a></li>
-</ul>
-<p>According to the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#time-zones">docu</a> the <code>timezone</code>
-can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. <code>Europe/Berlin</code>). See this
-<a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">list of IANA timezone offsets and names</a>.</p>
-<p>The converted dates/times can than be formatted with via </p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_date">FORMAT_DATE(format_string, date_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_time">FORMAT_TIME(format_string, time_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/user-variables.html">MySQL variables</a>: 
+<pre><code>SET @foo = 'bar';</code></pre></li>
+<li><a href="https://www.postgresql.org/docs/9.1/plpgsql-declarations.html">PostgreSQL variables</a>:
+<pre><code>foo varchar := 'bar';</code></pre></li>
 </ul>
 <h2>Code</h2>
-<pre><code>#standardSQL
-SELECT
-  DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
-  DATE(timestamp, "Europe/Berlin") as date_berlin,
-  TIME(timestamp, "Europe/Berlin") as time_berlin,
-  FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
-FROM
-  table</code></pre>
+<pre><code>DECLARE foo_var STRING DEFAULT "foo";
+
+SELECT foo_var</code></pre>
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"><script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script></script>
+<script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"><script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"></script></script>
 <h2>Run on BigQuery</h2>
-<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
-<p><a href="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png"><img src="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png" alt="BigQuery Console: Convert timestamp to different timezone example" title="BigQuery Console: Convert timestamp to different timezone" /></a></p>
+<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:200d3282989c48b7893b3c3145b46a6d">Open in BigQuery Console</a></p>
+<p><a href="/img/bigquery-snippets/use-variables/use-variables-example.png"><img src="/img/bigquery-snippets/use-variables/use-variables-example.png" alt="BigQuery Console: How to declare and use variables example" title="BigQuery Console: How to declare and use variables example" /></a></p>
 <h2>Links</h2>
 <ul>
-<li><a href="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9">Gist on Github</a></li>
-<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
-<li><a href="https://stackoverflow.com/a/43349229/413531">Answer to &quot;BigQuery converting to a different timezone&quot; on Stackoverflow</a></li>
+<li><a href="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5">Gist on Github</a></li>
+<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:200d3282989c48b7893b3c3145b46a6d">Example on BigQuery</a></li>
+<li><a href="https://stackoverflow.com/a/58227996/413531">Answer to &quot;Setting Big Query variables like mysql&quot; on Stackoverflow</a></li>
 </ul>
 <h2>Use cases</h2>
-<p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
-dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
-<p>Common formats:</p>
-<pre><code>FORMAT_TIMESTAMP("%F %X", timestamp)                            # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin"))  # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))             # %Y-%m-%d          =&gt; 2018-04-08
-FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))             # calendar week     =&gt; 14
-FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S          =&gt; 18:28:01</code></pre>                <hr />
+<p>Hardcoding variables is generally considered a bad practice as it makes it harder to understand and modify a query.
+A frequent use case for me is the definition of date ranges (from and to dates) that are used for querying partitioned tables:</p>
+<pre><code>DECLARE from_date DATE DEFAULT DATE("2018-04-09");
+DECLARE to_date DATE DEFAULT DATE("2018-04-10");
+
+WITH data as(
+  SELECT 
+    1 as id,
+    DATE("2018-04-08") AS date,
+  UNION ALL SELECT 2, DATE("2018-04-09") 
+  UNION ALL SELECT 3, DATE("2018-04-10") 
+  UNION ALL SELECT 4, DATE("2018-04-11") 
+)
+
+SELECT 
+    id, 
+    date
+FROM
+    data
+WHERE
+    date BETWEEN from_date AND to_date</code></pre>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
@@ -218,8 +224,8 @@ FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S      
                 <div id="disqus_thread"></div>
                 <script>
                      var disqus_config = function () {
-                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/";
-                                                     this.page.identifier = "convert-timestamp-date-datetime-to-different-timezone";
+                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/use-variables/";
+                                                     this.page.identifier = "use-variables";
                                               };
                     (function() {  // DON'T EDIT BELOW THIS LINE
                         var d = document, s = d.createElement('script');
