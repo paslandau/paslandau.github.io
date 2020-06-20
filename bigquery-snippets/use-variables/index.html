@@ -5,9 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="Declaring variables and using them in queries with Google BigQuery">
+    <meta name="description" content="Variables in Google BigQuery can be declared with the DECLARE statement and then used directly in a query">
             <meta name="author" content="Pascal Landau">
-        <title>BigQuery: Declare and use Variables | pascallandau.com</title>
+        <title>BigQuery: Using Variables in BigQuery | pascallandau.com</title>
     <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -113,7 +113,9 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>We can use variables by defining them with a <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting#declare"><code>DECLARE</code> statement</a>,
+                <p>Variables are a good way to keep a query &quot;clean&quot; and separate parameters from code.
+In Google BigQuery, we can use variables in standard sql by defining them with a
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting#declare"><code>DECLARE</code> statement</a>,
 e.g. </p>
 <pre><code>DECLARE foo STRING DEFAULT "foo";
 

@@ -5,15 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="A collection of BigQuery snippets including example code and a short explanation.">
-        <title>BigQuery Snippets | pascallandau.com</title>
+    <meta name="description" content="Calculating the MEDIAN with Google BigQuery is possible by using the PERCENTILE_CONT(x, 0.5) function">
+            <meta name="author" content="Pascal Landau">
+        <title>BigQuery: Calculate the MEDIAN in BigQuery | pascallandau.com</title>
     <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
     <!-- RSS Feed -->
-    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/"/>
+    <link rel="canonical" href="https://www.pascallandau.com/bigquery-snippets/calculate-median/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
 
@@ -99,9 +100,10 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>BigQuery Snippets</h1>
-                                            <h2 class="subheading">A collection of BigQuery snippets for fun and non-profit</h2>
-                                                        </div>
+                    <h1>How to calculate the MEDIAN in Google BigQuery</h1>
+                                            <h2 class="subheading"></h2>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2020-06-20 12:00:00</span>
+                                    </div>
             </div>
         </div>
     </div>
@@ -111,28 +113,77 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                            <h2><a href="/bigquery-snippets/calculate-median/">BigQuery: Calculate the MEDIAN in BigQuery</a></h2>
-        <small>Published at 2020-06-20 12:00:00 by Pascal Landau </small>
-        <p>Calculating the MEDIAN with Google BigQuery is possible by using the PERCENTILE_CONT(x, 0.5) function</p>
-            <h2><a href="/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/">BigQuery: Use expression subqueries for querying nested and repeated fields</a></h2>
-        <small>Published at 2020-05-29 14:00:00 by Pascal Landau </small>
-        <p>Using expression subqueries to query nested  nd repeated fields in Google BigQuery</p>
-            <h2><a href="/bigquery-snippets/use-temporary-tables-with-named-subquery/">BigQuery: Use &quot;temporary tables&quot; via WITH (named subqueries)</a></h2>
-        <small>Published at 2020-05-29 13:00:00 by Pascal Landau </small>
-        <p>Using &quot;temporary tables&quot; via WITH (named subqueries) in Google BigQuery</p>
-            <h2><a href="/bigquery-snippets/use-variables/">BigQuery: Using Variables in BigQuery</a></h2>
-        <small>Published at 2020-05-29 12:00:00 by Pascal Landau </small>
-        <p>Variables in Google BigQuery can be declared with the DECLARE statement and then used directly in a query</p>
-            <h2><a href="/bigquery-snippets/multiple-cursors-big-query-ui/">BigQuery: Using multiple cursors / rectangular selection in BigQuery UI</a></h2>
-        <small>Published at 2019-12-19 18:00:00 by Pascal Landau </small>
-        <p>The BigQuery UI provides multiple hotkeys, amongst other for using multiple cursors (column / rectangular selection) via ALT + left-mouse-drag</p>
-            <h2><a href="/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/">BigQuery: Convert timestamp/date/datetime to different timezone</a></h2>
-        <small>Published at 2018-04-08 18:00:00 by Pascal Landau </small>
-        <p>Converting a timestamp/date/datetime to a different timezone with Google BigQuery</p>
-            <h2><a href="/bigquery-snippets/extract-url-parameters-array/">BigQuery: Extract URL parameters as ARRAY</a></h2>
-        <small>Published at 2018-04-08 12:00:00 by Pascal Landau </small>
-        <p>Extracting parameters in the query of a URL as ARRAY with Google BigQuery</p>
-                    <hr />
+                <p>There is no <code>MEDIAN()</code> function in Google BigQuery, but we can still calculate the MEDIAN
+with the
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_cont"><code>PERCENTILE_CONT(x, 0.5)</code></a> or
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_disc"><code>PERCENTILE_DISC(x, 0.5)</code></a>
+functions. The difference between those two functions is the linear interpolation that is applied
+when using <code>PERCENTILE_CONT(x, 0.5)</code> - so that's probably what you want when dealing with numeric
+values. Take the numbers <code>1,2,3,4</code> for example:</p>
+<ul>
+<li><code>PERCENTILE_CONT(x, 0.5)</code> yields <code>2.5</code> (as the 50% percentile is exactly between 2 and 3)</li>
+<li><code>PERCENTILE_DISC(x, 0.5)</code> yields <code>2</code> (as the 50% percentile is &gt;= 2)</li>
+</ul>
+<h2>Example</h2>
+<pre><code>SELECT 
+  PERCENTILE_CONT(x, 0.5) OVER() AS median_cont,
+  PERCENTILE_DISC(x, 0.5) OVER() AS median_disc
+FROM
+  UNNEST([1,2,3,4]) as x 
+LIMIT 1</code></pre>
+<p><strong>Result</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">median_cont</th>
+<th style="text-align: right;">median_disc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">2.5</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Caution</strong>: As of today (2020-06-20), BigQuery only supports <code>PERCENTILE_CONT</code> and <code>PERCENTILE_DISC</code> for window functions
+(hence the <code>OVER()</code> clause and the <code>LIMIT 1</code> in the example above):</p>
+<blockquote>
+<p>PERCENTILE_CONT is under development, and we will publish the documentation once it is GA. We will support it as analytic function first, and we plan to support it as aggregate function (allowing GROUP BY) later.</p>
+</blockquote>
+<p>Source: <a href="https://stackoverflow.com/a/45579962/413531">SO: percentile functions with GROUPBY in BigQuery</a></p>
+<p>The more common use case is probably to calculate the median as a result of a <code>GROUP BY</code> statement.
+I.e. I would <em>like</em> to write something like this to get the median of <code>quantity</code> per <code>product_id</code>.</p>
+<pre><code>SELECT
+  product_id, 
+  PERCENTILE_CONT(quantity, 0.5) AS median
+GROUP BY
+  product_id</code></pre>
+<p>Right now, that is only possible for the average via
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#avg"><code>AVG()</code></a>
+but not for the median. But we can still work around that limitation by using the
+<code>PERCENTILE_CONT</code> function on a window partitioned by <code>product_id</code>, then group by the <code>product_id</code>
+(to get only one row per <code>product_id</code>)
+and resolve a single median value via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#any_value"><code>ANY_VALUE()</code></a>.</p>
+<h2>Working Example</h2>
+<script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"><script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"></script></script>
+<h2>Run on BigQuery</h2>
+<p><a href="https://console.cloud.google.com/bigquery?sq=580364496687:0c40a54f0d044cbebdc2745860a75490">Open in BigQuery UI</a></p>
+<p><a href="/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png"><img src="/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png" alt="BigQuery UI: MEDIAN in BigQuery example" title="BigQuery UI: MEDIAN in BigQuery example" /></a></p>
+<h2>Links</h2>
+<ul>
+<li><a href="https://stackoverflow.com/a/29095240/413531">Answer to &quot;How to calculate median of a numeric sequence in Google BigQuery efficiently?&quot; on Stackoverflow</a></li>
+</ul>
+<h2>Notes</h2>
+<p>There is also the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#approx_quantiles"><code>APPROX_QUANTILES()</code></a>
+function (mentioned <a href="https://stackoverflow.com/a/39843565/413531">here</a>) that <em>can</em> by applied to a <code>GROUP BY</code>. I didn't have a practical use case for approximate functions
+yet, though. Thus, I don't know the implications of &quot;not using an exact calculation&quot; and rather mention
+this for the sake of completeness. Example:</p>
+<pre><code>SELECT
+  product_id, 
+  APPROX_QUANTILES(quantity, 100)[OFFSET(50)] as approx_median
+GROUP BY
+  product_id</code></pre>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
@@ -194,8 +245,8 @@
                 <div id="disqus_thread"></div>
                 <script>
                      var disqus_config = function () {
-                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/";
-                                                     this.page.identifier = "bigquery-snippets";
+                        this.page.url = "https://www.pascallandau.com/bigquery-snippets/calculate-median/";
+                                                     this.page.identifier = "calculate-median";
                                               };
                     (function() {  // DON'T EDIT BELOW THIS LINE
                         var d = document, s = d.createElement('script');
