@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Fri, 28 Jan 2022 13:47:56 +0000</pubDate>
-        <lastBuildDate>Fri, 28 Jan 2022 13:47:56 +0000</lastBuildDate>
+        <pubDate>Mon, 31 Jan 2022 08:20:05 +0000</pubDate>
+        <lastBuildDate>Mon, 31 Jan 2022 08:20:05 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>BigQuery: Monitor Query Costs via INFORMATION_SCHEMA</title>
@@ -1535,7 +1535,7 @@ Please subscribe to the <a href="http:///feed.xml">RSS feed</a> to get automatic
  <li><a href="#run-debug-a-php-script-on-docker-server">Run/debug a php script on docker</a></li>
 </ul></li>
 <li><a href="#run-php-on-docker-via-deployment-configuration">Run PHP on Docker via Deployment Configuration</a><ul>
- <li><a href="#preparing-the-internal-container">Preparing the "workspace" container</a></li>
+ <li><a href="#preparing-the-workspace-container">Preparing the "workspace" container</a></li>
  <li><a href="#configure-the-deployment-configuration">Configure the Deployment Configuration</a></li>
  <li><a href="#run-debug-a-php-script-on-docker">Run/debug a php script on docker</a></li>
  <li><a href="#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a></li>
