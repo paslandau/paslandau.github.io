@@ -5,9 +5,745 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 31 Jan 2022 08:20:05 +0000</pubDate>
-        <lastBuildDate>Mon, 31 Jan 2022 08:20:05 +0000</lastBuildDate>
+        <pubDate>Mon, 21 Mar 2022 07:50:36 +0000</pubDate>
+        <lastBuildDate>Mon, 21 Mar 2022 07:50:36 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Docker from scratch for PHP 8.1 Applications in 2022 [Tutorial Part 4.1]</title>
+                <description><![CDATA[<p>In the fourth part of this tutorial series on developing PHP on Docker we will revisit the previous
+tutorials and update some things to be up-to-date in 2022. The article will be split in 3
+subparts:</p>
+<ul>
+<li>Part 4.1: Update the code structure (<strong>this article</strong>)
+<ul>
+<li>we'll also introduce three new containers (PHP workers, MySQL and redis) and add a small proof
+of concept to tie all containers together</li>
+</ul></li>
+<li>Part 4.2: Add the tools for local development (
+<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>,
+<strong>available at 2022-03-22</strong>)
+<ul>
+<li>make the setup work with PhpStorm, including the ability to execute phpunit tests and run
+xdebug for all php containers (application, fpm and php workers)</li>
+</ul></li>
+<li>Part4.3: Include Laravel (
+<a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>,
+<strong>available at 2022-03-23</strong>)
+<ul>
+<li>refactor the code to use Commands, Controllers, Queues, etc.</li>
+</ul></li>
+</ul>
+<div class="center-div">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/NuSWKx9FSso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<p>All code samples are publicly available in my
+<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+You find the branch for this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-1-docker-from-scratch-for-php-applications-in-2022">part-4-1-docker-from-scratch-for-php-applications-in-2022</a></p>
+<!-- generated -->
+<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
+<!-- /generated -->
+<h2>Published parts of the Docker PHP Tutorial</h2>
+<ul>
+<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+(2018-07-08)</li>
+<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+(2018-08-06)</li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+(2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
+</ul>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a>
+to get automatic notifications when the next part comes out :)</p>
+<!-- generated -->
+<p><a id='table-of-contents'> </a></p>
+<!-- /generated -->
+<h2>Table of contents</h2>
+<!-- toc -->
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#local-docker-setup">Local docker setup</a></li>
+<li><a href="#makefile">Makefile</a>
+<ul>
+<li><a href="#make-mk-includes"><code>.make/*.mk</code> includes</a></li>
+<li><a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a>
+<ul>
+<li><a href="#enforce-required-parameters">Enforce required parameters</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#docker">Docker</a>
+<ul>
+<li><a href="#docker-compose">docker-compose</a>
+<ul>
+<li><a href="#docker-env-file-and-required-env-variables"><code>.docker/.env</code> file and required ENV variables</a></li>
+</ul></li>
+<li><a href="#images">Images</a>
+<ul>
+<li><a href="#php-images">PHP images</a>
+<ul>
+<li><a href="#env-vs-arg">ENV vs ARG</a></li>
+</ul></li>
+<li><a href="#image-naming-convention">Image naming convention</a></li>
+<li><a href="#environments-and-build-targets">Environments and build targets</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#make-docker-3">Make + Docker = &lt;3</a>
+<ul>
+<li><a href="#ensuring-the-build-order">Ensuring the build order</a></li>
+<li><a href="#run-commands-in-the-docker-containers">Run commands in the docker containers</a></li>
+</ul></li>
+<li><a href="#php-poc">PHP POC</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- /toc -->
+<!-- generated -->
+<p><a id='introduction'> </a></p>
+<!-- /generated -->
+<h2>Introduction</h2>
+<p>If you have read the previous
+tutorial <a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+you might encounter some significant changes. The tutorial was published over 2 years ago,
+Docker has evolved and I have learned more about it. Plus, I gathered practical
+experience (good and bad) with the previous setup. I would now consider most of the points under
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#fundamentals-on-building-the-containers">Fundamentals on building the containers</a>
+as either &quot;not required&quot; or simply &quot;overengineered / too complex&quot;. To be concrete:</p>
+<ul>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#setting-the-timezone">Setting the timezone</a>
+<ul>
+<li>not required if the default is already UTC (which is almost always the case)</li>
+</ul></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#synchronizing-file-and-folder-ownership-on-shared-volumes">Synchronizing file and folder ownership on shared volumes</a>
+<ul>
+<li>this is only an issue if files need to be <strong>modified</strong> by containers and the host system - which
+is only really relevant for the PHP containers</li>
+<li>in addition, I would recommend adding a completely new user (e.g. <code>application</code>) instead of
+re-using an existing one like <code>www-data</code> - this simplifies the whole user setup <em>a lot</em></li>
+</ul></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#modifying-configuration-files">Modifying configuration files</a>
+<ul>
+<li>just use <code>sed</code> - no need for a dedicated script</li>
+</ul></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#installing-php-extensions">Installing php extensions</a>
+<ul>
+<li>see <a href="#php-images">PHP images</a> - will now be done via <code>apk add</code></li>
+</ul></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#installing-common-software">Installing common software</a>
+<ul>
+<li>see <a href="#php-images">PHP images</a> - since there is only one base image there is no need for a
+dedicated script</li>
+</ul></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#cleaning-up">Cleaning up</a>
+<ul>
+<li>didn't really make sense because the &quot;cleaned up files&quot; were already part of a previous layer</li>
+<li>we might &quot;bring it back&quot; later when we optimize the image size to speed up the pushing/pulling
+of the images to/from the registry</li>
+</ul></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#providing-host-docker-internal-for-linux-host-systems">Providing host.docker.internal for linux host systems</a>
+<ul>
+<li>can now be done via
+the <a href="https://github.com/docker/for-linux/issues/264#issuecomment-965465879"><code>host-gateway</code> magic reference</a>
+<pre><code class="language-yaml">services:
+ myservice:
+      extra_hosts:
+        - host.docker.internal:host-gateway</code></pre></li>
+<li>thus, no custom entrypoint is required any longer</li>
+</ul></li>
+</ul>
+<!-- generated -->
+<p><a id='local-docker-setup'> </a></p>
+<!-- /generated -->
+<h2>Local docker setup</h2>
+<p>The goal of this part is the introduction of a working local setup <strong>without development tools</strong>. In
+other words: We want the bare minimum to have something running locally.</p>
+<p>The main components are:</p>
+<ul>
+<li>the <code>make</code> setup in the <code>Makefile</code> and in the <code>.make/</code> directory</li>
+<li>the docker setup in the <code>.docker/</code> directory</li>
+<li>some PHP files that act as a POC for the end2end functionality of the docker setup</li>
+</ul>
+<p>Check out the code via</p>
+<pre><code>git checkout part_4_section_1_docker_from_scratch_for_php_applications_in_2022_code_structure</code></pre>
+<p>initialize it via</p>
+<pre><code>make make-init
+make docker-build</code></pre>
+<p>and run it via</p>
+<pre><code>make docker-up</code></pre>
+<p>Now you can access the web interface via <a href="http://127.0.0.1">http://127.0.0.1</a>. The following
+diagram shows how the containers are connected</p>
+<p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
+<p>See also the <a href="#php-poc">PHP POC</a> for a full test of the setup.</p>
+<!-- generated -->
+<p><a id='makefile'> </a></p>
+<!-- /generated -->
+<h2>Makefile</h2>
+<p>The <code>make</code> setup introduces a self-documenting <code>make</code> configuration
+that <a href="/blog/structuring-the-docker-setup-for-php-projects/#using-make-as-central-entry-point">acts as the central entrypoint in the application</a>.</p>
+<!-- generated -->
+<p><a id='make-mk-includes'> </a></p>
+<!-- /generated -->
+<h3><code>.make/*.mk</code> includes</h3>
+<p>Over time the <code>make</code> setup will grow substantially, thus we split it into multiple <code>.mk</code> files in
+the <code>.make/</code> directory. The individual files are prefixed with a number to ensure their order when
+we include them in the main <code>Makefile</code> via</p>
+<pre><code>include .make/*.mk</code></pre>
+<pre><code>.
+└── .make/
+    ├── 01-00-application-setup.mk
+    ├── 01-01-application-commands.mk
+    └── 02-00-docker.mk</code></pre>
+<!-- generated -->
+<p><a id='shared-variables-make-env'> </a></p>
+<!-- /generated -->
+<h3>Shared variables: <code>.make/.env</code></h3>
+<p>We try to make <strong>shared variables</strong> available here, because we can then pass them on to individual
+commands as a prefix, e.g.</p>
+<pre><code class="language-makefile">.PHONY: some-target
+some-target: ## Run some target
+    ENV_FOO=BAR some_command --baz</code></pre>
+<p>This will make the <code>ENV_FOO</code> available as environment variable to <code>some_command</code>.</p>
+<p>Shared variables are used by different components, and we always try to maintain only a <strong>single
+source of truth</strong>. An example would be the <code>DOCKER_REGISTRY</code> variable that we need to define the
+<a href="#image-naming-convention">image names of our docker images</a> in the <code>docker-compose.yml</code> files but
+also when pushing/pulling/deploying images via make targets later. In this case, the variable is
+required by <code>make</code> as well as <code>docker-compose</code>.</p>
+<p>To have a clear separation between variables and &quot;code&quot;, we use a <code>.env</code> file located
+at <code>. make/.env</code>. It can be initialized via</p>
+<pre><code>make make-init</code></pre>
+<p>by copying the <code>.make/.env.example</code> to <code>.make/.env</code>. </p>
+<pre><code>.
+└── .make/
+    ├── .make/.env.example
+    └── .make/.env</code></pre>
+<p>The file is included in the main <code>Makefile</code> via</p>
+<pre><code>-include .make/.env</code></pre>
+<p>The <code>-</code> prefix ensures that make doesn't fail if the file does not exist (yet), see
+<a href="https://www.gnu.org/software/make/manual/html_node/Include.html">GNU make: Including Other Makefiles</a></p>
+<!-- generated -->
+<p><a id='enforce-required-parameters'> </a></p>
+<!-- /generated -->
+<h4>Enforce required parameters</h4>
+<p>We kinda &quot;abuse&quot; make for executing arbitrary commands (instead of building artifacts) and some of
+those commands require parameters that can be
+<a href="https://stackoverflow.com/a/2826178/413531">passed as command arguments</a> in the form</p>
+<pre><code>make some-target FOO=bar</code></pre>
+<p>There is no way to &quot;define&quot; those parameters as we would in a method signature - but we can still
+ensure to fail as early as possible if a parameter is missing via</p>
+<pre><code class="language-makefile">@$(if $(FOO),,$(error FOO is empty or undefined))</code></pre>
+<p>See
+also <a href="https://stackoverflow.com/a/10858332/413531">SO: How to abort makefile if variable not set?</a></p>
+<p>We use this technique for example to ensure that all required variables are defined when we execute
+docker targets via the <code>validate-docker-variables</code> precondition target:</p>
+<pre><code class="language-makefile">.PHONY: validate-docker-variables
+validate-docker-variables: 
+    @$(if $(TAG),,$(error TAG is undefined))
+    @$(if $(ENV),,$(error ENV is undefined))
+    @$(if $(DOCKER_REGISTRY),,$(error DOCKER_REGISTRY is undefined - Did you run make-init?))
+    @$(if $(DOCKER_NAMESPACE),,$(error DOCKER_NAMESPACE is undefined - Did you run make-init?))
+    @$(if $(APP_USER_NAME),,$(error APP_USER_NAME is undefined - Did you run make-init?))
+    @$(if $(APP_GROUP_NAME),,$(error APP_GROUP_NAME is undefined - Did you run make-init?))
+
+.PHONY:docker-build-image
+docker-build-image: validate-docker-variables
+    $(DOCKER_COMPOSE) build $(DOCKER_SERVICE_NAME)</code></pre>
+<!-- generated -->
+<p><a id='docker'> </a></p>
+<!-- /generated -->
+<h2>Docker</h2>
+<p>The docker setup consists of</p>
+<ul>
+<li>an nginx container as a webserver</li>
+<li>a MySQL database container</li>
+<li>a Redis container that acts as a queue</li>
+<li>a php base image that is used by
+<ul>
+<li>a php worker container that spawns multiple PHP worker processes via <code>supervisor</code></li>
+<li>a php-fpm container as a backend for the nginx container</li>
+<li>an application container that we use to run commands</li>
+</ul></li>
+</ul>
+<p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG" alt="Docker images" title="Docker images" /></a></p>
+<p>We keep the <a href="/blog/structuring-the-docker-setup-for-php-projects/#the-docker-folder"><code>.docker/</code> directory from the previous tutorial</a>
+, though it will be split into <code>docker-compose/</code> and <code>images/</code> like so:</p>
+<pre><code>.
+└── .docker/
+    ├── docker-compose/
+    |   ├── docker-compose.yml
+    |   └── &lt;other docker-compose files&gt;
+    ├── images/
+    |   ├── nginx/
+    |   |   ├── Dockerfile
+    |   |   └── &lt;other files for the nginx image&gt;
+    |   └── &lt;other folders for docker images&gt;
+    ├── .env
+    └── .env.example</code></pre>
+<!-- generated -->
+<p><a id='docker-compose'> </a></p>
+<!-- /generated -->
+<h3>docker-compose</h3>
+<p>All images are <strong>build</strong> via <code>docker-compose</code> because the <code>docker-compose.yml</code> file(s) provide a nice
+abstraction layer for the build configuration. In addition, we can also use it to <strong>orchestrate</strong> the
+containers, i.e. control volumes, port mappings, networking, etc. - as well as start and stop them
+via <code>docker-compose up</code> and <code>docker-compose down</code>.</p>
+<p>FYI: Even though it is <em>convenient</em> to use <code>docker-compose</code> for both things, I found it also to make
+the setup more complex than it needs to be when running things later in production (when we are
+<em>not</em> using <code>docker-compose</code> any longer). I believe the problem here is that some modifications are
+ONLY required for building while others are ONLY required for running - and combining both in the
+same file yields a certain amount of noise. But: It is what it is.</p>
+<p>We use three separate <code>docker-compose.yml</code> files:</p>
+<ul>
+<li>docker-compose.yml
+<ul>
+<li>contains all information valid for all environments</li>
+</ul></li>
+<li>docker-compose.local.yml
+<ul>
+<li>contains information specific to the <code>local</code> environment,
+see <a href="#environments-and-build-targets">Environments and build targets</a></li>
+</ul></li>
+<li>docker-compose-php-base.yml
+<ul>
+<li>contains information for building the php base image, see <a href="#php-images">PHP images</a></li>
+</ul></li>
+</ul>
+<!-- generated -->
+<p><a id='docker-env-file-and-required-env-variables'> </a></p>
+<!-- /generated -->
+<h4><code>.docker/.env</code> file and required ENV variables</h4>
+<p>In our docker setup we basically have 3 different types of variables:</p>
+<ol>
+<li>variables that <strong>depend on the local setup</strong> of an individual developer, e.g. the
+<code>NGINX_HOST_HTTP_PORT</code> on the host machine (because the default one might already be in use)</li>
+<li>variables that <strong>are used in multiple images</strong>, e.g. the location of the codebase within a
+container's file system</li>
+<li>variables that <strong>hold information that is &quot;likely to change&quot;</strong>, e.g. the exact version of a base
+image</li>
+</ol>
+<p>Since - again - we strive to retain a single source of truth, we extract the information as
+variables and put them in a <code>.docker/.env</code> file. In a perfect world, I would like to separate these
+different types in different files - but <code>docker-compose</code> only allows a single <code>.env</code> file, see
+e.g. <a href="https://github.com/docker/compose/issues/6170#issuecomment-443523663">this comment</a>.
+If the file does not exist, it is copied from <code>.docker/.env.example</code>.</p>
+<p>The variables are then used in the <code>docker-compose.yml</code> file(s). I found it to be &quot;the least
+painful&quot; to always use
+the <a href="https://docs.docker.com/compose/environment-variables/#substitute-environment-variables-in-compose-files"><code>?</code> modifier on variables</a>
+so that <code>docker-compose</code> <strong>fails immediately if the variable is missing</strong>.</p>
+<p>Note: Some variables are expected to be passed via environment variables when <code>docker-compose</code>
+is invoked (i.e. they are required but not defined in the <code>.env</code> file; see also
+<a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></p>
+<!-- generated -->
+<p><a id='images'> </a></p>
+<!-- /generated -->
+<h3>Images</h3>
+<p>For <strong>MySQL</strong> and <strong>redis</strong> we do not use custom-built images but instead <strong>use the official ones
+<em>directly</em></strong> and configure them through environment variables when starting the containers. In
+production, we won't use docker anyway for these services but instead rely on the managed versions,
+e.g.</p>
+<ul>
+<li>redis =&gt; <a href="https://cloud.google.com/memorystore/docs/redis">Memorystore for Redis (GCP)</a> or
+<a href="https://aws.amazon.com/de/elasticache/redis/">ElastiCache für Redis (AWS)</a></li>
+<li>mysql =&gt; <a href="https://cloud.google.com/sql/docs/mysql">Cloud SQL for MySQL (GCP)</a> or
+<a href="https://aws.amazon.com/de/rds/mysql/">RDS for MySQL (AWS)</a></li>
+</ul>
+<p>The remaining containers are defined in their respective subdirectories in the <code>.docker/images/</code>
+directory, e.g. the image for the <code>nginx</code> container is build via the <code>Dockerfile</code> located in
+<code>.docker/images/nginx/Dockerfile</code>.</p>
+<!-- generated -->
+<p><a id='php-images'> </a></p>
+<!-- /generated -->
+<h4>PHP images</h4>
+<p>We need 3 different PHP images (fpm, workers, application) and use a slightly different approach
+than
+in <a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>:</p>
+<p>Instead of using the <a href="https://hub.docker.com/_/php">official PHP base images</a> (i.e. cli or fpm), we
+use a &quot;plain&quot; alpine base image and install PHP and the required extensions manually in it. This
+allows us to build a common base image for all PHP images. Benefits:</p>
+<ul>
+<li>a central place for shared tools and configuration (no more need for a <code>.shared/</code> directory)</li>
+<li>reduced image size when pushing the individual images (the base image is recognized as a layer and
+thus &quot;already exists&quot;)</li>
+<li>installing extensions via <code>apk add</code> is <strong>a lot</strong> faster than via <code>docker-php-ext-install</code></li>
+</ul>
+<p>This new approach has two major downsides:</p>
+<ul>
+<li>we depend on the alpine release cycle of PHP (and PHP extensions)</li>
+<li>the image build process is more complex, because we must build the base image first before we can
+build the final images</li>
+</ul>
+<p>Fortunately, both issues can be solved rather easily:</p>
+<ul>
+<li><a href="https://github.com/codecasts/php-alpine">codecasts/php-alpine</a> maintains an <code>apk</code> repository with
+the latest PHP versions for alpine</li>
+<li>we use a dedicated <code>make</code> target to build the images instead of invoking <code>docker-compose</code>
+directly - this enables us to define a &quot;build order&quot; (base first, rest after) while still having
+to run only a single command as a developer
+(see <a href="#ensuring-the-build-order">Ensuring the build order</a>)</li>
+</ul>
+<!-- generated -->
+<p><a id='env-vs-arg'> </a></p>
+<!-- /generated -->
+<h5>ENV vs ARG</h5>
+<p>I've noticed that some build arguments are required in multiple PHP containers, e.g. the name of the
+application user defined in the <code>APP_USER_NAME</code> ENV variable. The username is needed</p>
+<ul>
+<li>in the base image to create the user</li>
+<li>in the fpm image to define the user that runs the fpm processes (see <code>php-fpm.d/www.conf</code>)</li>
+<li>in the worker image to define the user that runs the worker processes (
+see <code>supervisor/supervisord.conf</code>)</li>
+</ul>
+<p>Instead of passing the name to all images via build argument, i.e.</p>
+<ul>
+<li>define it explicitly under <code>services.*.build.args</code> in the <code>docker-compose.yml</code> file</li>
+<li>&quot;retrieve&quot; it in the Dockerfile via <code>ARG APP_USER_NAME</code></li>
+</ul>
+<p>I've opted to make the username available as an <code>ENV</code> variable in the base image via</p>
+<pre><code>ARG APP_USER_NAME
+ENV APP_USER_NAME=${APP_USER_NAME}</code></pre>
+<p>and thus be able to access it in the child images directly, I can now write</p>
+<pre><code>RUN echo ${APP_USER_NAME}</code></pre>
+<p>instead of</p>
+<pre><code>ARG APP_USER_NAME
+RUN echo ${APP_USER_NAME}</code></pre>
+<p>I'm not 100% certain that I like this approach as I'm more or less &quot;abusing&quot; ENV variables in ways
+that they are likely not intended (&quot;Why would the username need to be stored as an ENV variable?&quot;) -
+but I also don't see any other practical downside yet.</p>
+<!-- generated -->
+<p><a id='image-naming-convention'> </a></p>
+<!-- /generated -->
+<h4>Image naming convention</h4>
+<p>Defining a <a href="https://windsock.io/referencing-docker-images/">fully qualified name for images</a> will
+make it much easier to reference the images later, e.g. when pushing them to the registry.</p>
+<p>The naming convention for the images is
+<code>$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_SERVICE_NAME)-$(ENV)</code>, e.g.</p>
+<pre><code>                   docker.io/dofroscra/nginx-local
+$(DOCKER_REGISTRY)---^          ^        ^     ^        docker.io
+$(DOCKER_NAMESPACE)-------------^        ^     ^        dofroscra
+$(DOCKER_SERVICE_NAME)-------------------^     ^        nginx
+$(ENV)-----------------------------------------^        local</code></pre>
+<p>and it is used as value for <code>services.*.image</code>, e.g. for <code>nginx</code></p>
+<pre><code class="language-yaml">services:
+  nginx:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/nginx-${ENV?}:${TAG?}</code></pre>
+<p>In case you are wondering: <code>dofroscra</code> stems from <strong>Do</strong>cker <strong>Fro</strong>m <strong>Scra</strong>tch</p>
+<!-- generated -->
+<p><a id='environments-and-build-targets'> </a></p>
+<!-- /generated -->
+<h4>Environments and build targets</h4>
+<p>Our final goal is a setup that we can use for</p>
+<ul>
+<li>local development</li>
+<li>in a CI/CD pipeline</li>
+<li>in production</li>
+</ul>
+<p>and even though we strive to for
+a <a href="https://12factor.net/dev-prod-parity">parity between those different environments</a>, there will be
+differences due to fundamentally different requirements. E.g.</p>
+<ul>
+<li>on <em>production</em> I want a container <strong>including the sourcecode without any test dependencies</strong></li>
+<li>on <em>CI</em> I want a container <strong>including the sourcecode WITH test dependencies</strong></li>
+<li>on <em>local</em> I want a container <strong>that mounts the sourcecode from my host (including
+dependencies)</strong></li>
+</ul>
+<p>This is reflected through the <code>ENV</code> environment variable. We use it in two places:</p>
+<ol>
+<li>as part of the image name as a suffix of the service name
+(see <a href="#image-naming-convention">Image naming convention</a>)</li>
+<li>to specify
+the <a href="https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target">target build stage</a></li>
+</ol>
+<p>See the <code>docker-compose-php-base.yml</code> file for example:</p>
+<pre><code>services:
+  php-base:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+    build:
+      dockerfile: images/php/base/Dockerfile
+      target: ${ENV?}</code></pre>
+<p>Using <strong>multiple targets in the same Dockerfile</strong> enables us to keep a <strong>common base</strong> but also
+include <strong>environment specific instructions</strong>. See the Dockerfile of the <code>php-base</code> image for
+example</p>
+<pre><code class="language-Dockerfile">ARG ALPINE_VERSION
+FROM composer:${COMPOSER_VERSION} as composer
+FROM alpine:${ALPINE_VERSION} as base
+
+RUN apk add --update --no-cache \
+        bash
+
+WORKDIR $APP_CODE_PATH
+
+FROM base as local
+
+RUN apk add --no-cache --update \
+        mysql-client \</code></pre>
+<ul>
+<li>it first defines a <code>base</code> stage that includes software required in all environments</li>
+<li>and then defines a <code>local</code> stage that adds additionally a <code>mysql-client</code> that helps us to debug
+connectivity issues</li>
+</ul>
+<p>After the build for <code>local</code> is finished, we end up with an image called <code>php-base-local</code> that used
+the <code>local</code> build stage as target build stage.</p>
+<!-- generated -->
+<p><a id='make-docker-3'> </a></p>
+<!-- /generated -->
+<h2>Make + Docker = &lt;3</h2>
+<p>We already introduced quite some complexity into our setup:</p>
+<ul>
+<li>&quot;global&quot; variables (shared between <code>make</code> and <code>docker</code>)</li>
+<li>multiple <code>docker-compose.yml</code> files</li>
+<li>build dependencies</li>
+</ul>
+<p>Bringing it all together &quot;manually&quot; is quite an effort and prone to errors. But we can nicely tuck
+the complexity away in <code>.make/02-00-docker.mk</code> by defining the two variables
+<code>DOCKER_COMPOSE</code> and <code>DOCKER_COMPOSE_PHP_BASE</code></p>
+<pre><code class="language-makefile">DOCKER_DIR:=./.docker
+DOCKER_ENV_FILE:=$(DOCKER_DIR)/.env
+DOCKER_COMPOSE_DIR:=$(DOCKER_DIR)/docker-compose
+DOCKER_COMPOSE_FILE:=$(DOCKER_COMPOSE_DIR)/docker-compose.yml
+DOCKER_COMPOSE_FILE_LOCAL:=$(DOCKER_COMPOSE_DIR)/docker-compose.local.yml
+DOCKER_COMPOSE_FILE_PHP_BASE:=$(DOCKER_COMPOSE_DIR)/docker-compose-php-base.yml
+DOCKER_COMPOSE_PROJECT_NAME:=dofroscra_$(ENV)
+
+DOCKER_COMPOSE_COMMAND:=ENV=$(ENV) \
+ TAG=$(TAG) \
+ DOCKER_REGISTRY=$(DOCKER_REGISTRY) \
+ DOCKER_NAMESPACE=$(DOCKER_NAMESPACE) \
+ APP_USER_NAME=$(APP_USER_NAME) \
+ APP_GROUP_NAME=$(APP_GROUP_NAME) \
+ docker-compose -p $(DOCKER_COMPOSE_PROJECT_NAME) --env-file $(DOCKER_ENV_FILE)
+
+DOCKER_COMPOSE:=$(DOCKER_COMPOSE_COMMAND) -f $(DOCKER_COMPOSE_FILE) -f $(DOCKER_COMPOSE_FILE_LOCAL)
+DOCKER_COMPOSE_PHP_BASE:=$(DOCKER_COMPOSE_COMMAND) -f $(DOCKER_COMPOSE_FILE_PHP_BASE)</code></pre>
+<ul>
+<li><code>DOCKER_COMPOSE</code> uses <code>docker-compose.yml</code> and extends it with <code>docker-compose.local.yml</code></li>
+<li><code>DOCKER_COMPOSE_PHP_BASE</code> uses only <code>docker-compose-php-base.yml</code></li>
+</ul>
+<p>The variables can then be used later in make recipes. </p>
+<!-- generated -->
+<p><a id='ensuring-the-build-order'> </a></p>
+<!-- /generated -->
+<h3>Ensuring the build order</h3>
+<p>As mentioned under <a href="#php-images">PHP images</a>, we need to build images in a certain order and use
+the following make targets:</p>
+<pre><code class="language-makefile">.PHONY: docker-build-image
+docker-build-image: ## Build all docker images OR a specific image by providing the service name via: make docker-build DOCKER_SERVICE_NAME=&lt;service&gt;
+    $(DOCKER_COMPOSE) build $(DOCKER_SERVICE_NAME)
+
+.PHONY: docker-build-php
+docker-build-php: ## Build the php base image
+    $(DOCKER_COMPOSE_PHP_BASE) build $(DOCKER_SERVICE_NAME_PHP_BASE)
+
+.PHONY: docker-build
+docker-build: docker-build-php docker-build-image ## Build the php image and then all other docker images</code></pre>
+<p>As a developer, I can now simply run <code>make docker-build</code> - which will first build the <code>php-base</code>
+image via <code>docker-build-php</code> and then build all the remaining images via <code>docker-build-image</code>
+(by not specifying the <code>DOCKER_SERVICE_NAME</code> variable, <code>docker-compose</code> will build <strong>all</strong> services
+listed in the <code>docker-compose.yml</code> files).</p>
+<p>I would argue that the make recipes themselves are quite readable and easy to understand but when
+we run
+them with the <a href="https://www.gnu.org/software/make/manual/html_node/Options-Summary.html"><code>-n</code> option</a>
+to only &quot;Print the recipe that would be executed, but not execute it&quot;, we get a feeling for the
+complexity:</p>
+<pre><code>$ make docker-build -n
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose-php-base.yml build php-base
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml build</code></pre>
+<!-- generated -->
+<p><a id='run-commands-in-the-docker-containers'> </a></p>
+<!-- /generated -->
+<h3>Run commands in the docker containers</h3>
+<p>Tooling is an important part in the development workflow. This includes things like linters, static
+analyzers and testing tools but also &quot;custom&quot; tools geared towards your specific workflow. Those
+tools usually <strong>require a PHP runtime</strong>. For now, we only have a single &quot;tool&quot; defined in the
+file <code>setup.php</code>. It ensures that a table called <code>jobs</code> is created.</p>
+<p>To run this tool, we must first start the docker setup via <code>make docker-up</code> and then execute the
+script in the <code>application</code> container. The corresponding target is defined in
+<code>.make/01-00-application-setup.mk</code>:</p>
+<pre><code class="language-makefile">.PHONY: setup-db
+setup-db: ## Setup the DB tables
+    $(EXECUTE_IN_APPLICATION_CONTAINER) php setup.php $(ARGS);</code></pre>
+<p>which essentially translates to</p>
+<pre><code>docker-compose exec -T --user application application php setup.php</code></pre>
+<p>if we are outside of a container and to</p>
+<pre><code>php setup.php</code></pre>
+<p>if we are inside a container. That's quite handy, because we can <strong>run the tooling directly from the
+host system</strong> without having to log into a container.</p>
+<p>The &quot;magic&quot; happens in the <code>EXECUTE_IN_APPLICATION_CONTAINER</code> variable that is defined in
+<code>.make/02-00-docker.mk</code> as</p>
+<pre><code class="language-makefile">EXECUTE_IN_WORKER_CONTAINER?=
+EXECUTE_IN_APPLICATION_CONTAINER?=
+
+EXECUTE_IN_CONTAINER?=
+ifndef EXECUTE_IN_CONTAINER
+    # check if 'make' is executed in a docker container, 
+    # see https://stackoverflow.com/a/25518538/413531
+    # `wildcard $file` checks if $file exists, 
+    # see https://www.gnu.org/software/make/manual/html_node/Wildcard-Function.html
+    # i.e. if the result is "empty" then $file does NOT exist 
+    # =&gt; we are NOT in a container
+    ifeq ("$(wildcard /.dockerenv)","")
+        EXECUTE_IN_CONTAINER=true
+    endif
+endif
+ifeq ($(EXECUTE_IN_CONTAINER),true)
+    EXECUTE_IN_APPLICATION_CONTAINER:=$(DOCKER_COMPOSE) exec -T --user $(APP_USER_NAME) $(DOCKER_SERVICE_NAME_APPLICATION)
+    EXECUTE_IN_WORKER_CONTAINER:=$(DOCKER_COMPOSE) exec -T --user $(APP_USER_NAME) $(DOCKER_SERVICE_NAME_PHP_WORKER)
+endif</code></pre>
+<p>We can take a look via <code>-n</code> again to see the resolved recipe on the host system</p>
+<pre><code>pascal.landau:/c/_codebase/dofroscra# make setup-db ARGS=--drop -n
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application php setup.php --drop</code></pre>
+<p>Within a container it looks like this:</p>
+<pre><code>root:/var/www/app# make setup-db ARGS=--drop -n
+php setup.php --drop;</code></pre>
+<!-- generated -->
+<p><a id='php-poc'> </a></p>
+<!-- /generated -->
+<h2>PHP POC</h2>
+<p>To ensure that everything works as expected, the repository contains a minimal PHP proof of concept.
+By default, port 80 from the host ist forwarded to port 80 of the <code>nginx</code> container.</p>
+<p>FYI: I would also recommend to add the following entry
+<a href="https://www.howtogeek.com/howto/27350/beginner-geek-how-to-edit-your-hosts-file/">in the hosts file on the host machine</a></p>
+<pre><code>127.0.0.1 app.local</code></pre>
+<p>so that we can access the application via <a href="http://app.local">http://app.local</a> instead
+of <a href="http://127.0.0.1">http://127.0.0.1</a>.</p>
+<p>The files of the POC essentially ensure that the container connections outlined in
+<a href="#local-docker-setup">Local docker setup</a> work as expected:</p>
+<p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
+<ul>
+<li><code>dependencies.php</code>
+<ul>
+<li>returns configured <code>Redis</code> and <code>PDO</code> objects to talk to the queue and the database</li>
+</ul></li>
+<li><code>setup.php</code>
+<ul>
+<li>=&gt; <em>ensures that <code>application</code> can talk to <code>mysql</code></em></li>
+</ul></li>
+<li><code>public/index.php</code>
+<ul>
+<li>is the web root file that can be accessed via <a href="http://app.local">http://app.local</a>
+<ul>
+<li>=&gt; <em>ensures that <code>nginx</code> and <code>php-fpm</code> are working</em></li>
+</ul></li>
+<li>contains 3 different &quot;routes&quot;:
+<ul>
+<li><a href="http://app.local?dispatch=some-job-id">http://app.local?dispatch=some-job-id</a>
+<ul>
+<li>dispatches a new &quot;job&quot; with the id <code>some-job-id</code> on the queue to be picked up by a
+worker
+<ul>
+<li>=&gt; <em>ensures that <code>php-fpm</code> can talk to <code>redis</code></em></li>
+</ul></li>
+</ul></li>
+<li><a href="http://app.local?queue">http://app.local?queue</a>
+<ul>
+<li>shows the content of the queue</li>
+</ul></li>
+<li><a href="http://app.local?db">http://app.local?db</a>
+<ul>
+<li>shows the content of the database
+<ul>
+<li>=&gt; <em>ensures that <code>php-fpm</code> can talk to <code>mysql</code></em></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><code>worker.php</code>
+<ul>
+<li>is started as daemon process in the <code>php-worker</code> container</li>
+<li>checks the redis datasbase <code>0</code> for the key <code>"queue"</code> every second</li>
+<li>if a value is found it is stored in the <code>jobs</code> table of the database
+<ul>
+<li>=&gt; <em>ensures that <code>php-worker</code> can talk to <code>redis</code> and <code>mysql</code></em></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>A full test scenario is defined in <code>test.sh</code> and looks like this:</p>
+<pre><code>$ bash test.sh
+
+  Building the docker setup
+
+//...
+
+  Starting the docker setup
+
+//...
+
+  Clearing DB
+
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application php setup.php --drop;
+Dropping table 'jobs'
+Done
+Creating table 'jobs'
+Done
+
+  Stopping workers
+
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl stop worker:*;
+worker:worker_00: stopped
+worker:worker_01: stopped
+worker:worker_02: stopped
+worker:worker_03: stopped
+
+  Ensuring that queue and db are empty
+
+Items in queue
+array(0) {
+}
+Items in db
+array(0) {
+}
+
+  Dispatching a job 'foo'
+
+Adding item 'foo' to queue
+
+  Asserting the job 'foo' is on the queue
+
+Items in queue
+array(1) {
+  [0]=&gt;
+  string(3) "foo"
+}
+
+  Starting the workers
+
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl start worker:*;
+worker:worker_00: started
+worker:worker_01: started
+worker:worker_02: started
+worker:worker_03: started
+
+  Asserting the queue is now empty
+
+Items in queue
+array(0) {
+}
+
+  Asserting the db now contains the job 'foo'
+
+Items in db
+array(1) {
+  [0]=&gt;
+  string(3) "foo"
+}
+</code></pre>
+<!-- generated -->
+<p><a id='wrapping-up'> </a></p>
+<!-- /generated -->
+<h2>Wrapping up</h2>
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. Apart from that, you should now have a running docker setup and the means to
+&quot;control&quot; it conveniently via <code>make</code>.</p>
+<p>In the next part of this tutorial, we will
+<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">configure PhpStorm as our IDE to use the docker setup</a>.</p>
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>]]></description>
+                <pubDate>Mon, 21 Mar 2022 10:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/</guid>
+            </item>
                     <item>
                 <title>BigQuery: Monitor Query Costs via INFORMATION_SCHEMA</title>
                 <description><![CDATA[<p>Cost monitoring in Google BigQuery can be a difficult task, especially within a growing organization and
@@ -381,7 +1117,18 @@ often required to modify different parts of the query in the exact same way so t
             </item>
                     <item>
                 <title>How to build a Docker development setup for PHP Projects [Tutorial Part 3]</title>
-                <description><![CDATA[<p>In the third part of this tutorial series on developing PHP on Docker we'll lay the fundamentals to
+                <description><![CDATA[<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    There is a <strong>follow-up version</strong> of this article available that was published 
+    in <strong>2022</strong> - please make sure to read that as well:
+    <br>
+    <a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+  </div>
+</div>
+<p>In the third part of this tutorial series on developing PHP on Docker we'll lay the fundamentals to
 build a complete development infrastructure and explain how to &quot;structure&quot; the Docker setup as part
 of a PHP project. Structure as in </p>
 <ul>
@@ -402,6 +1149,12 @@ refactor from the previous parts of this tutorial.</p>
 (2018-08-06)</li>
 <li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
 </ul>
 <p>All code samples are publicly available in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
@@ -1497,7 +2250,18 @@ a fresh installation of Laravel to make use of them.</p>
             </item>
                     <item>
                 <title>How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2]</title>
-                <description><![CDATA[<p>In the second part of this tutorial series on developing PHP on Docker we're taking a good hard look
+                <description><![CDATA[<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    A <strong>newer version</strong> of this article for PHP 8.1, Xdebug 3 and PhpStorm 2021.3.2
+    will be available from 2022-03-22 at
+    <br>
+    <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+  </div>
+</div>
+<p>In the second part of this tutorial series on developing PHP on Docker we're taking a good hard look
 at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Docker.</p>
 <div style="text-align:center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/27KBaI24jKI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
@@ -1510,6 +2274,12 @@ at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Doc
 (2018-08-06)</li>
 <li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
 </ul>
 <p>All code samples are publicly available in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
@@ -1826,9 +2596,15 @@ solve problems later on your own. </p>
 (2018-08-06)</li>
 <li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
 </ul>
 <p>This is the first part of a (probably) multi-part series on Docker. The second part explains how
-to <a href="/blog/setup-phpstorm-with-xdebug-on-docker">set up PHP in Docker containers in order to work nicely with PHPStorm when using XDebug</a>.</p>
+to <a href="/blog/setup-phpstorm-with-xdebug-on-docker">set up PHP in Docker containers in order to work nicely with PHPStorm when using Xdebug</a>.</p>
 <h2>Table of contents</h2>
 <ul>
 <li><a id="introduction">Introduction</a>
@@ -2897,56 +3673,6 @@ especially in combination with xdebug.</p>]]></description>
                 <pubDate>Sun, 08 Jul 2018 22:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/</guid>
-            </item>
-                    <item>
-                <title>BigQuery: Convert timestamp/date/datetime to different timezone</title>
-                <description><![CDATA[<p>BigQuery provides multiple functions to convert timestamps / dates / datetimes to a different timezone:</p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#date">DATE(timestamp_expression, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#time">TIME(timestamp, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#datetime">DATETIME(timestamp_expression, timezone)</a></li>
-</ul>
-<p>According to the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#time-zones">docu</a> the <code>timezone</code>
-can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. <code>Europe/Berlin</code>). See this
-<a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">list of IANA timezone offsets and names</a>.</p>
-<p>The converted dates/times can than be formatted with via </p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_date">FORMAT_DATE(format_string, date_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_time">FORMAT_TIME(format_string, time_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></li>
-</ul>
-<h2>Code</h2>
-<pre><code>#standardSQL
-SELECT
-  DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
-  DATE(timestamp, "Europe/Berlin") as date_berlin,
-  TIME(timestamp, "Europe/Berlin") as time_berlin,
-  FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
-FROM
-  table</code></pre>
-<h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"><script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script></script>
-<h2>Run on BigQuery</h2>
-<p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
-<p><a href="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png"><img src="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png" alt="BigQuery Console: Convert timestamp to different timezone example" title="BigQuery Console: Convert timestamp to different timezone" /></a></p>
-<h2>Links</h2>
-<ul>
-<li><a href="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9">Gist on Github</a></li>
-<li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
-<li><a href="https://stackoverflow.com/a/43349229/413531">Answer to &quot;BigQuery converting to a different timezone&quot; on Stackoverflow</a></li>
-</ul>
-<h2>Use cases</h2>
-<p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
-dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
-<p>Common formats:</p>
-<pre><code>FORMAT_TIMESTAMP("%F %X", timestamp)                            # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin"))  # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))             # %Y-%m-%d          =&gt; 2018-04-08
-FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))             # calendar week     =&gt; 14
-FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S          =&gt; 18:28:01</code></pre>]]></description>
-                <pubDate>Sun, 08 Apr 2018 18:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/</guid>
             </item>
             </channel>
 </rss>

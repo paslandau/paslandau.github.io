@@ -20,3 +20,8 @@ table th {
   padding: auto; 
   text-align: center; 
 }
+
+.hljs {
+  white-space: pre;
+  overflow-x: auto;
+}

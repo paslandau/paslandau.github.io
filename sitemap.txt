@@ -3,6 +3,7 @@ https://www.pascallandau.com/about/
 https://www.pascallandau.com/blog/
 https://www.pascallandau.com/bigquery-snippets/
 https://www.pascallandau.com/personal-finance/
+https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/
 https://www.pascallandau.com/personal-finance/geld-anlegen-investment-tipps-einsteiger/
 https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/
 https://www.pascallandau.com/bigquery-snippets/calculate-median/

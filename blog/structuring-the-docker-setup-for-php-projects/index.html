@@ -17,7 +17,8 @@
     <link rel="canonical" href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
-
+    <link rel="stylesheet"
+          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <!-- Custom Fonts -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
           type="text/css">
@@ -27,6 +28,9 @@
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    
+    <!-- Highlight sourcecode -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <![endif]-->
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
@@ -116,7 +120,18 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>In the third part of this tutorial series on developing PHP on Docker we'll lay the fundamentals to
+                <div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    There is a <strong>follow-up version</strong> of this article available that was published 
+    in <strong>2022</strong> - please make sure to read that as well:
+    <br>
+    <a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+  </div>
+</div>
+<p>In the third part of this tutorial series on developing PHP on Docker we'll lay the fundamentals to
 build a complete development infrastructure and explain how to &quot;structure&quot; the Docker setup as part
 of a PHP project. Structure as in </p>
 <ul>
@@ -137,6 +152,12 @@ refactor from the previous parts of this tutorial.</p>
 (2018-08-06)</li>
 <li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
 </ul>
 <p>All code samples are publicly available in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
@@ -1397,7 +1418,8 @@ a fresh installation of Laravel to make use of them.</p>
 <script src="/js/clean-blog.min.js"></script>
 <!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
-
+<!-- Code highlighting -->
+<script>hljs.highlightAll();</script>
 </body>
 
 </html>
