@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="How to configure PhpStorm and Xdebug to run PHP in Docker for php-fpm, cli and daemon worker processes in 2022.">
+            <meta name="author" content="Pascal Landau">
+        <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <link rel="stylesheet"
+          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    
+    <!-- Highlight sourcecode -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+    <![endif]-->
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+                <li>
+                    <a href="/fitness/">Fitness</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</h1>
+                                            <h2 class="subheading">A guide to debug everything (IDE, Browser [fpm], cli and workers)</h2>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2022-03-22 11:00:00</span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In this second subpart of the fourth part of this tutorial series on developing PHP on Docker we
+will <strong>setup our local development environment to be used by PhpStorm and Xdebug</strong>. We will also
+ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw
+the tool <code>strace</code> into the mix for debugging long running processes.</p>
+<div class="center-div">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/bZ1MiynqT98" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<p>All code samples are publicly available in my
+<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+You find the branch for this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
+<!-- generated -->
+<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
+<!-- /generated -->
+<h2>Published parts of the Docker PHP Tutorial</h2>
+<ul>
+<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+(2018-07-08)</li>
+<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+(2018-08-06)</li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+(2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
+</ul>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a>
+to get automatic notifications when the next part comes out :)</p>
+<!-- generated -->
+<p><a id='table-of-contents'> </a></p>
+<!-- /generated -->
+<h2>Table of contents</h2>
+<!-- toc -->
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#install-tools">Install Tools</a>
+<ul>
+<li><a href="#install-composer">Install composer</a></li>
+<li><a href="#install-xdebug">Install Xdebug</a></li>
+<li><a href="#install-phpunit">Install PHPUnit</a></li>
+<li><a href="#install-ssh">Install SSH</a></li>
+</ul></li>
+<li><a href="#setup-phpstorm">Setup PhpStorm</a>
+<ul>
+<li><a href="#ssh-configuration">SSH Configuration</a></li>
+<li><a href="#php-interpreter">PHP Interpreter</a></li>
+<li><a href="#phpunit">PHPUnit</a></li>
+<li><a href="#debugging">Debugging</a>
+<ul>
+<li><a href="#debug-code-executed-via-phpstorm">Debug code executed via PhpStorm</a></li>
+<li><a href="#debug-code-executed-via-php-fpm-cli-or-from-a-worker">Debug code executed via php-fpm, cli or from a worker</a>
+<ul>
+<li><a href="#php-fpm">php-fpm</a></li>
+<li><a href="#cli">cli</a></li>
+<li><a href="#php-workers">php-workers</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><a href="#strace">strace</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- /toc -->
+<!-- generated -->
+<p><a id='introduction'> </a></p>
+<!-- /generated -->
+<h2>Introduction</h2>
+<p>This article is mostly an update of
+<a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+but will also cover the &quot;remaining cases&quot; of <strong>debugging php-fpm</strong> and <strong>php worker processes</strong>. </p>
+<p>We will still rely on an <strong>always-running docker setup</strong> that we connect to via an SSH Configuration
+instead of using the
+<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#run-debug-a-php-script-on-docker-server">built-in docker-compose capabilities</a>
+as I feel it's closer to what we do in CI / production. However, we will <strong>not use SSH keys</strong>
+any longer but simply authenticate via password. This reduces complexity and removes any
+pesky warnings regarding &quot;SSH keys being exposed in a repository&quot;.</p>
+<!-- generated -->
+<p><a id='install-tools'> </a></p>
+<!-- /generated -->
+<h2>Install Tools</h2>
+<!-- generated -->
+<p><a id='install-composer'> </a></p>
+<!-- /generated -->
+<h3>Install composer</h3>
+<p><a href="https://getcomposer.org/">Composer</a> is installed by pulling
+<a href="https://hub.docker.com/_/composer">the official composer docker image</a> and simply &quot;copying&quot; the
+composer executable over to the base php image. In addition, composer needs the extensions
+<code>mbstring</code> and <code>phar</code></p>
+<pre><code># File: .docker/images/php/base/Dockerfile
+
+ARG ALPINE_VERSION
+ARG COMPOSER_VERSION
+FROM composer:${COMPOSER_VERSION} as composer
+FROM alpine:${ALPINE_VERSION} as base
+
+# ...
+
+RUN apk add --update --no-cache  \
+        php-mbstring~=${TARGET_PHP_VERSION} \
+        php-phar~=${TARGET_PHP_VERSION} \
+
+# ...
+
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer</code></pre>
+<p>Because we want our build to be deterministic, we &quot;pin&quot; the composer version by adding a
+<code>COMPOSER_VERSION</code> variable to the <code>.docker/.env</code> file </p>
+<pre><code class="language-dotenv">COMPOSER_VERSION=2.2.5</code></pre>
+<p>and using it in <code>.docker/docker-compose/docker-compose-php-base.yml</code>:</p>
+<pre><code class="language-yaml">services:
+  php-base:
+    build:
+      args:
+        - COMPOSER_VERSION=${COMPOSER_VERSION?}</code></pre>
+<!-- generated -->
+<p><a id='install-xdebug'> </a></p>
+<!-- /generated -->
+<h3>Install Xdebug</h3>
+<p>Install the extension via <code>apk</code> (only for the <code>local</code> target):</p>
+<pre><code class="language-Dockerfile"># File: .docker/images/php/base/Dockerfile
+
+FROM base as local
+
+RUN apk add --no-cache --update \
+        php-xdebug~=${TARGET_PHP_VERSION} \
+    # ensure that xdebug is not enabled by default
+    &amp;&amp; rm -f /etc/php8/conf.d/00_xdebug.ini</code></pre>
+<p>We also don't want to enable <code>xdebug</code> immediately but only when we need it (due to the decrease
+in performance when the extension is enabled), hence we remove the default config file and
+disable the extension in the application <code>.ini</code> file</p>
+<pre><code># File: .docker/images/php/base/conf.d/zz-app-local.ini
+
+; Note:
+; Remove the comment ; to enable debugging
+;zend_extension=xdebug
+xdebug.client_host=host.docker.internal
+xdebug.start_with_request=yes
+xdebug.mode=debug</code></pre>
+<p>See <a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker">Fix Xdebug on PhpStorm when run from a Docker container</a>
+for an explanation of the <code>xdebug.client_host=host.docker.internal</code> setting (previously called
+<code>xdebug.remote_host</code> in xdebug &lt; 3). This will still work out of the box for Docker Desktop, but
+for Linux users we need to add the
+<a href="https://github.com/docker/for-linux/issues/264#issuecomment-965465879"><code>host-gateway</code> magic reference</a>
+<strong>to all PHP containers</strong> (we can't add it to the php base image because this is a runtime setting):</p>
+<pre><code class="language-yaml">services:
+  service:
+    extra_hosts:
+      - host.docker.internal:host-gateway</code></pre>
+<p>Finally, we need to add
+<a href="https://www.jetbrains.com/help/phpstorm/debugging-a-php-cli-script.html">the environment variable <code>PHP_IDE_CONFIG</code></a>
+<strong>to all PHP containers</strong>. The variable is defined as <code>PHP_IDE_CONFIG=serverName=dofroscra</code>, where
+&quot;dofroscra&quot; is the name of the server that we will configure later for debugging. Because we
+need the same value in multiple places, the variable is configured in <code>.docker/.env</code>:</p>
+<pre><code>PHP_IDE_CONFIG=serverName=dofroscra</code></pre>
+<p>And then added in
+<code>.docker/docker-compose/docker-compose.local.yml</code></p>
+<pre><code class="language-yaml">services:
+  php-fpm:
+    environment:
+      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
+
+  php-worker:
+    environment:
+      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
+
+  application:
+    environment:
+      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}</code></pre>
+<!-- generated -->
+<p><a id='install-phpunit'> </a></p>
+<!-- /generated -->
+<h3>Install PHPUnit</h3>
+<p>PHPUnit will be installed via <code>composer</code> but will not be &quot;baked into the image&quot; for local
+development. Thus, we must run <code>composer require</code> <strong>in the container</strong>. To make this more
+convenient a make target for running arbitrary composer commands is added in
+<code>.make/01-00-application-setup.mk</code>:</p>
+<pre><code class="language-makefile">.PHONY: composer
+composer: ## Run composer commands. Specify the command e.g. via ARGS="install"
+    $(EXECUTE_IN_APPLICATION_CONTAINER) composer $(ARGS);</code></pre>
+<p>This allows me to run <code>make composer ARGS="install"</code> from the host system to execute <code>composer install</code> in the container. In consequence, <code>composer</code> will use the PHP version and extensions of
+the <code>application</code> container to install the dependencies, yet I will still see the installed files
+locally because the codebase is configured as a volume for the container.</p>
+<p>Before installing phpunit, we must add the required extensions <code>dom</code> and <code>xml</code> to the container</p>
+<pre><code># File: .docker/images/php/base/Dockerfile
+
+# ...
+
+RUN apk add --update --no-cache  \
+        php-dom~=${TARGET_PHP_VERSION} \
+        php-xml~=${TARGET_PHP_VERSION} \</code></pre>
+<p>as well as rebuild and restart the docker setup via </p>
+<pre><code>make docker-build
+make docker-down
+make docker-up</code></pre>
+<p>Now we can add phpunit via</p>
+<pre><code>make composer ARGS='require "phpunit/phpunit"'</code></pre>
+<p>which will create a <code>composer.json</code> file and setup up the <code>vendor/</code> directory:</p>
+<pre><code>$ make composer ARGS='require "phpunit/phpunit"'
+Using version ^9.5 for phpunit/phpunit
+./composer.json has been created
+Running composer update phpunit/phpunit
+Loading composer repositories with package information
+Updating dependencies
+...
+</code></pre>
+<p>I have also added </p>
+<ul>
+<li>a minimal <code>phpunit.xml</code> config file</li>
+<li>a test case at <code>tests/SomeTest.php</code> </li>
+<li>and a new Makefile for &quot;anything related to qa&quot; at <code>.make/01-02-application-qa.mk</code>:</li>
+</ul>
+<pre><code class="language-Makefile">##@ [Application: QA]
+
+.PHONY: test
+test: ## Run the test suite 
+    $(EXECUTE_IN_WORKER_CONTAINER) vendor/bin/phpunit -c phpunit.xml</code></pre>
+<p>So I can run tests simply via <code>make test</code></p>
+<pre><code>$ make test
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit
+PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
+
+.                                                                   1 / 1 (100%)
+
+Time: 00:00.324, Memory: 4.00 MB
+
+OK (1 test, 1 assertion)</code></pre>
+<!-- generated -->
+<p><a id='install-ssh'> </a></p>
+<!-- /generated -->
+<h3>Install SSH</h3>
+<p>We will execute commands from PhpStorm via ssh in the <code>application</code> container. As mentioned, we
+won't use a key file for authentication but will instead simply use a password that is
+configured via the <code>APP_SSH_PASSWORD</code> variable in <code>.docker/.env</code> and passed to the image in
+<code>.docker/docker-compose/docker-compose.local.yml</code>. In addition, we map port <code>2222</code> from the
+host system to port <code>22</code> of the application container and make sure that the codebase is shared
+as a volume between host and container</p>
+<pre><code class="language-yaml">  application:
+    build:
+      args:
+        - APP_SSH_PASSWORD=${APP_SSH_PASSWORD?}
+    volumes:
+      - ${APP_CODE_PATH_HOST?}:${APP_CODE_PATH_CONTAINER?}
+    ports:
+      - "${APPLICATION_SSH_HOST_PORT:-2222}:22"</code></pre>
+<p>The container already contains <code>openssh</code> and sets the password</p>
+<pre><code class="language-Dockerfile">ARG BASE_IMAGE
+FROM ${BASE_IMAGE} as base
+
+FROM base as local
+
+RUN apk add --no-cache --update \
+        openssh
+
+ARG APP_SSH_PASSWORD
+RUN echo "$APP_USER_NAME:$APP_SSH_PASSWORD" | chpasswd 2&gt;&amp;1
+
+# Required to start sshd, otherwise the container will error out on startup with the message
+# "sshd: no hostkeys available -- exiting."
+# @see https://stackoverflow.com/a/65348102/413531 
+RUN ssh-keygen -A
+
+# we use SSH deployment configuration in PhpStorm for local development
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]</code></pre>
+<!-- generated -->
+<p><a id='setup-phpstorm'> </a></p>
+<!-- /generated -->
+<h2>Setup PhpStorm</h2>
+<p>We will configure a remote PHP interpreter that uses an SSH connection to run commands in the
+<code>application</code> container. Before,
+<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#configure-the-deployment-configuration">we have been using an <code>SFTP Deployment configuration</code></a>
+, which was kinda confusing (&quot;What is SFTP doing here?&quot;), so we will use an
+<a href="https://www.jetbrains.com/help/phpstorm/create-ssh-configurations.html">SSH Configuration</a>
+instead and configure the path mappings in the <strong>Cli Interpreter</strong> interface</p>
+<!-- generated -->
+<p><a id='ssh-configuration'> </a></p>
+<!-- /generated -->
+<h3>SSH Configuration</h3>
+<p>At <code>File | Settings | Tools | SSH Configurations</code> create a new SSH Configuration named
+&quot;Docker PHP Tutorial&quot; with the following settings </p>
+<ul>
+<li>Host: 127.0.0.1</li>
+<li>Port: see <code>APPLICATION_SSH_HOST_PORT</code> in <code>.docker/docker-compose/docker-compose.local.yml</code></li>
+<li>User name: see <code>APP_USER_NAME</code> in <code>.make/.env</code></li>
+<li>Authentication type: Password</li>
+<li>Password: see <code>APP_SSH_PASSWORD</code> in <code>.docker/.env</code></li>
+</ul>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG" alt="PhpStorm SSH Configuration" title="PhpStorm SSH Configuration" /></a></p>
+<!-- generated -->
+<p><a id='php-interpreter'> </a></p>
+<!-- /generated -->
+<h3>PHP Interpreter</h3>
+<p>At <code>File | Settings | PHP</code> add a new PHP CLI interpreter that uses the new SSH Configuration</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG" alt="PhpStorm new CLI interpreter" title="PhpStorm new CLI interpreter" /></a></p>
+<p>In addition, we define the <strong>path to the xdebug extension</strong> because it is disabled by default but
+PhpStorm can enable it automatically if required. You can find the path in the <code>application</code>
+container via</p>
+<pre><code>root:/var/www/app# php -i | grep extension_dir
+extension_dir =&gt; /usr/lib/php8/modules =&gt; /usr/lib/php8/modules
+root:/var/www/app# ll /usr/lib/php8/modules | grep xdebug
+-rwxr-xr-x    1 root     root        303936 Jan  9 00:21 xdebug.so</code></pre>
+<p>We still need to
+<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
+by adding a custom PHP option for <code>xdebug.client_host=host.docker.internal</code>. That's the same value
+we use in <code>.docker/images/php/base/conf.d/zz-app-local.ini</code>.</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG" alt="PhpStorm Xdebug settings for the CLI interpreter" title="PhpStorm Xdebug settings for the CLI interpreter" /></a></p>
+<p>In the interpreter overview we must now configure the <strong>path mappings</strong> so that PhpStorm knows
+&quot;which local file belongs to which remote one&quot;. The remote folder is defined in <code>.docker/.env</code> via</p>
+<pre><code class="language-dotenv">APP_CODE_PATH_CONTAINER=/var/www/app</code></pre>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG" alt="PhpStorm path mappings for the CLI interpreter" title="PhpStorm path mappings for the CLI interpreter" /></a></p>
+<p>Afterwards we can set a breakpoint e.g. in <code>setup.php</code> and start debugging:</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
+<p>The screenshot shows that PhpStorm adds the Xdebug extension that we defined previously.</p>
+<!-- generated -->
+<p><a id='phpunit'> </a></p>
+<!-- /generated -->
+<h3>PHPUnit</h3>
+<p><code>phpunit</code> is configured via <code>File | Settings | PHP | Test Frameworks</code>. First, we select the
+interpreter that we just added</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG" alt="Set up phpunit in PhpStorm" title="Set up phpunit in PhpStorm" /></a></p>
+<p>Then, we add the paths to the composer autoload script and the <code>phpunit.xml</code> configuration file.</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG" alt="phpunit settings in PhpStorm" title="phpunit settings in PhpStorm" /></a></p>
+<p>PhpStorm will now execute tests using the PHP interpreter in the <code>application</code> container</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG" alt="Run a phpunit test in PhpStorm" title="Run a phpunit test in PhpStorm" /></a></p>
+<!-- generated -->
+<p><a id='debugging'> </a></p>
+<!-- /generated -->
+<h3>Debugging</h3>
+<p>First of all, if you haven't already please also take a look at the
+<a href="https://xdebug.org/docs/step_debug">official xdebug documentation</a>. Derick is doing a great job
+at explaining xdebug in detail including some helpful videos like
+<a href="https://www.youtube.com/watch?v=4opFac50Vwo">Xdebug 3: Xdebug with Docker and PhpStorm in 5 minutes</a></p>
+<!-- generated -->
+<p><a id='debug-code-executed-via-phpstorm'> </a></p>
+<!-- /generated -->
+<h4>Debug code executed via PhpStorm</h4>
+<p>This should already work out of the box. Simply set a break point, right-click on a file and choose
+&quot;Debug '...'&quot;</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
+<!-- generated -->
+<p><a id='debug-code-executed-via-php-fpm-cli-or-from-a-worker'> </a></p>
+<!-- /generated -->
+<h4>Debug code executed via php-fpm, cli or from a worker</h4>
+<p>For code that is executed &quot;directly&quot; by a container without PhpStorm, we first need to enable
+<code>xdebug</code> in the container by removing the <code>;</code> in front of the extension in
+<code>/etc/php8/conf.d/zz-app-local.ini</code></p>
+<pre><code>; Note:
+; Remove the comment ; to enable debugging
+zend_extension=xdebug</code></pre>
+<p>To make this a little more convenient, we use dedicated make recipes for those actions in
+<code>.make/01-01-application-commands.mk</code></p>
+<pre><code class="language-Makefile">.PHONY: execute-in-container
+execute-in-container: ## Execute a command in a container. E.g. via "make execute-in-container DOCKER_SERVICE_NAME=php-fpm COMMAND="echo 'hello'"
+    @$(if $(DOCKER_SERVICE_NAME),,$(error DOCKER_SERVICE_NAME is undefined))
+    @$(if $(COMMAND),,$(error COMMAND is undefined))
+    $(EXECUTE_IN_CONTAINER) $(COMMAND);
+
+.PHONY: enable-xdebug
+enable-xdebug: ## Enable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
+    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"
+
+.PHONY: disable-xdebug
+disable-xdebug: ## Disable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
+    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/;zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"</code></pre>
+<p>To capture incoming requests, we need to make PhpStorm listen for PHP Debug connections via
+<code>Run | Start Listening for PHP Debug Connections</code>. </p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG" alt="PhpStorm: Start Listening for PHP Debug Connections" title="PhpStorm: Start Listening for PHP Debug Connections" /></a></p>
+<p>The corresponding ports are configured at <code>File | Settings | PHP | Debug</code>. In Xdebug &lt; 3 the
+default port was <code>9000</code> and in <a href="https://xdebug.org/docs/all_settings#client_port">Xdebug 3 it is <code>9003</code></a> </p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG" alt="PhpStorm: configure xdebug ports" title="PhpStorm: configure xdebug ports" /></a></p>
+<p>Finally, we need to add a server via <code>File | Settings | PHP | Servers</code></p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG" alt="PhpStorm: configure a server" title="PhpStorm: configure a server" /></a></p>
+<p>The name of the server must match the value of the <code>serverName</code> key in the environment variable
+<code>PHP_IDE_CONFIG</code> that we configured previously as <code>serverName=dofroscra</code>.</p>
+<!-- generated -->
+<p><a id='php-fpm'> </a></p>
+<!-- /generated -->
+<h5>php-fpm</h5>
+<p>For <code>php-fpm</code> we must
+<a href="https://stackoverflow.com/a/43076457">restart the <code>php-fpm</code> process without restarting the container</a>
+after we have activated <code>xdebug</code> via</p>
+<pre><code>kill -USR2 1</code></pre>
+<p>Since this is a pain to remember, we add a make target in <code>.make/01-01-application-commands.mk</code></p>
+<pre><code class="language-Makefile"># @see https://stackoverflow.com/a/43076457
+.PHONY: restart-php-fpm
+restart-php-fpm: ## Restart the php-fpm service
+    "$(MAKE)" execute-in-container DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME_PHP_FPM) COMMAND="kill -USR2 1"</code></pre>
+<p>So we can now simply run</p>
+<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-fpm
+make restart-php-fpm</code></pre>
+<p>Setting a breakpoint in <code>public/index.php</code> and opening <a href="http://127.0.0.1/">http://127.0.0.1/</a> in
+a browser or via <code>curl http://127.0.0.1/</code> will halt the execution as expected.</p>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG" alt="PhpStorm debugging breakpoint for php-fpm" title="PhpStorm debugging breakpoint for php-fpm" /></a></p>
+<!-- generated -->
+<p><a id='cli'> </a></p>
+<!-- /generated -->
+<h5>cli</h5>
+<p>Instead of triggering a PHP script via HTTP request, we can also run CLI scripts - think of the
+<code>make setup-db</code> target for instance. To debug such invocations, we need to follow the same steps
+as before:</p>
+<ul>
+<li>enable the <code>xdebug</code> extension in the <code>application</code> container</li>
+<li>&quot;Listening for PHP Debug Connections&quot; from PhpStorm</li>
+</ul>
+<p>Running the following make targets will trigger a breakpoint in <code>setup.php</code>:</p>
+<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=application
+make setup-db</code></pre>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG" alt="PhpStorm debugging breakpoint for cli" title="PhpStorm debugging breakpoint for cli" /></a></p>
+<!-- generated -->
+<p><a id='php-workers'> </a></p>
+<!-- /generated -->
+<h5>php-workers</h5>
+<p>And finally the same thing for long running PHP processes (aka workers). Just as before:</p>
+<ul>
+<li>enable the <code>xdebug</code> extension in the <code>php-worker</code> container</li>
+<li>&quot;Listening for PHP Debug Connections&quot; from PhpStorm</li>
+<li>restart the php workers  </li>
+</ul>
+<p>Running the following make targets will trigger a breakpoint in <code>worker.php</code>:</p>
+<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-worker
+make restart-workers</code></pre>
+<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG" alt="PhpStorm debugging breakpoint for php-workers" title="PhpStorm debugging breakpoint for php-workers" /></a></p>
+<!-- generated -->
+<p><a id='strace'> </a></p>
+<!-- /generated -->
+<h2>strace</h2>
+<p><a href="https://strace.io/">strace</a> is a great tool for debugging long running processes that I've
+adopted after reading <a href="https://derickrethans.nl/what-is-php-doing.html">What is PHP doing?</a>. I've
+added it to the php base image:</p>
+<pre><code class="language-Dockerfile">RUN apk add --update --no-cache \
+        strace</code></pre>
+<p>You can attach to any running process via <code>sudo strace -p $processId</code> - BUT that doesn't work
+out of the box on docker and will fail with the error message</p>
+<pre><code>strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted</code></pre>
+<p>This is caused by a security measure from docker and
+<a href="https://stackoverflow.com/a/46676868">can be circumvented</a> by adding</p>
+<pre><code class="language-yaml">services:
+  service:
+    cap_add:
+      - "SYS_PTRACE"
+    security_opt:
+      - "seccomp=unconfined"</code></pre>
+<p>in <code>.docker/docker-compose/docker-compose.local.yml</code> <strong>to all PHP containers</strong>. After
+rebuilding and restarting the docker setup, you can now e.g. log in the <code>php-worker</code> container
+and run <code>strace</code> on a php worker process:</p>
+<pre><code>application:/var/www/app# ps aux
+PID   USER     TIME  COMMAND
+    1 applicat  0:00 {supervisord} /usr/bin/python3 /usr/bin/supervisord
+    7 applicat  0:00 php /var/www/app/worker.php
+    8 applicat  0:00 php /var/www/app/worker.php
+    9 applicat  0:00 php /var/www/app/worker.php
+   10 applicat  0:00 php /var/www/app/worker.php
+   11 applicat  0:00 bash
+   20 applicat  0:00 ps aux
+application:/var/www/app# sudo strace -p 7
+strace: Process 7 attached
+restart_syscall(&lt;... resuming interrupted read ...&gt;) = 0
+poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
+sendto(4, "*2\r\n$4\r\nRPOP\r\n$5\r\nqueue\r\n", 25, MSG_DONTWAIT, NULL, 0) = 25
+poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 1 ([{fd=4, revents=POLLIN}])
+recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1</code></pre>
+<!-- generated -->
+<p><a id='wrapping-up'> </a></p>
+<!-- /generated -->
+<h2>Wrapping up</h2>
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. Apart from that, you should now have a fully configured development setup that
+works with PhpStorm as your IDE.</p>
+<p>In the next part of this tutorial, we will
+<a href="/blog/run-laravel-9-docker-in-2022/">use a fresh installation of Laravel on top of our setup</a>.</p>
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/";
+                                                     this.page.identifier = "phpstorm-docker-xdebug-3-php-8-1-in-2022";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://de.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/4ccdccfeb9a44d6ab8a001652bc7c9d3" width="1" height="1" alt=""/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting -->
+<script>hljs.highlightAll();</script>
+</body>
+
+</html>
