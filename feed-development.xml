@@ -5,9 +5,759 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Tue, 22 Mar 2022 07:16:15 +0000</pubDate>
-        <lastBuildDate>Tue, 22 Mar 2022 07:16:15 +0000</lastBuildDate>
+        <pubDate>Wed, 23 Mar 2022 07:39:50 +0000</pubDate>
+        <lastBuildDate>Wed, 23 Mar 2022 07:39:50 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</title>
+                <description><![CDATA[<p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
+install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
+for the front end requests.</p>
+<div class="center-div">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/BpsBzpMD87c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<p>All code samples are publicly available in my
+<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+You find the branch for this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a></p>
+<!-- generated -->
+<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
+<!-- /generated -->
+<h2>Published parts of the Docker PHP Tutorial</h2>
+<ul>
+<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+(2018-07-08)</li>
+<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+(2018-08-06)</li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+(2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
+</ul>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a>
+to get automatic notifications when the next part comes out :)</p>
+<!-- generated -->
+<p><a id='table-of-contents'> </a></p>
+<!-- /generated -->
+<h2>Table of contents</h2>
+<!-- toc -->
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#install-extensions">Install extensions</a></li>
+<li><a href="#install-laravel">Install Laravel</a></li>
+<li><a href="#update-the-php-poc">Update the PHP POC</a>
+<ul>
+<li><a href="#config">config</a>
+<ul>
+<li><a href="#database-connection">database connection</a></li>
+<li><a href="#queue-connection">queue connection</a></li>
+</ul></li>
+<li><a href="#controllers">Controllers</a></li>
+<li><a href="#commands">Commands</a></li>
+<li><a href="#jobs-and-workers">Jobs and workers</a></li>
+<li><a href="#tests">Tests</a></li>
+</ul></li>
+<li><a href="#makefile-updates">Makefile updates</a>
+<ul>
+<li><a href="#clearing-the-queue">Clearing the queue</a></li>
+</ul></li>
+<li><a href="#running-the-poc">Running the POC</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- /toc -->
+<!-- generated -->
+<p><a id='introduction'> </a></p>
+<!-- /generated -->
+<h2>Introduction</h2>
+<p>The goal of this tutorial is to run the
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022.md#php-poc">PHP POC from part 4.1</a>
+using Laravel as a framework instead of &quot;plain PHP&quot;.
+We'll use the newest version of Laravel (Laravel 9) that was
+<a href="https://laravel-news.com/laravel-9-released">released at the beginning of February 2022</a>.</p>
+<!-- generated -->
+<p><a id='install-extensions'> </a></p>
+<!-- /generated -->
+<h2>Install extensions</h2>
+<p>Before Laravel can be installed, we need to add the necessary extensions of the framework (and all
+its dependencies) to the <code>php-base</code> image:</p>
+<pre><code># File: .docker/images/php/base/Dockerfile
+
+# ...
+
+RUN apk add --update --no-cache  \
+        php-curl~=${TARGET_PHP_VERSION} \
+</code></pre>
+<!-- generated -->
+<p><a id='install-laravel'> </a></p>
+<!-- /generated -->
+<h2>Install Laravel</h2>
+<p>We'll start by
+<a href="https://laravel.com/docs/9.x/installation#installation-via-composer">creating a new Laravel project with composer</a></p>
+<pre><code>composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts</code></pre>
+<p>The files are added to <code>/tmp/laravel</code> because
+<a href="https://github.com/composer/composer/issues/1135#issuecomment-10358244">composer projects cannot be created in non-empty folders</a>
+, so we need to create the project in a temporary location first and move it afterwards.</p>
+<p>Since I don't have PHP 8 installed on my laptop, I'll execute the command in the <code>application</code>
+docker container via</p>
+<pre><code>make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND='composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts'</code></pre>
+<p>and then move the files into the application directory via</p>
+<pre><code>rm -rf public/ tests/ composer.* phpunit.xml
+make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND="bash -c 'mv -n /tmp/laravel/{.*,*} .' &amp;&amp; rm -f /tmp/laravel"
+cp .env.example .env</code></pre>
+<p><strong>Notes</strong></p>
+<ul>
+<li><code>composer install</code> is skipped via <code>--no-install</code> to avoid having to copy over the <code>vendor/</code> folder
+(which is super slow on Docker Desktop)</li>
+<li><a href="https://unix.stackexchange.com/a/127713">existing directories cannot be overwritten by <code>mv</code></a>
+thus I remove <code>public/</code> and <code>tests/</code> upfront (as well as the <code>composer</code> and <code>phpunit</code> config
+files)</li>
+<li><code>mv</code> uses the <code>-n</code> flag so that existing files like our <code>.editorconfig</code> are not overwritten</li>
+<li>I need to use <code>bash -c</code> to run the command in the container because otherwise
+<a href="https://github.com/moby/moby/issues/12558#issuecomment-94775867">the <code>*</code> wildcard would have no effect in the container</a> </li>
+</ul>
+<p>To finalize the installation I need to install the composer dependencies and execute the
+<code>create-project</code> scripts defined in
+<a href="https://github.com/laravel/laravel/blob/9.x/composer.json#L45"><code>composer.json</code></a>:</p>
+<pre><code>make composer ARGS=install
+make composer ARGS="run-script post-create-project-cmd"</code></pre>
+<p>Since our nginx configuration was already pointing to the <code>public/</code> directory, we can immediately
+open <a href="http://127.0.0.1">http://127.0.0.1</a> in the browser and should see the frontpage of
+a fresh Laravel installation.</p>
+<!-- generated -->
+<p><a id='update-the-php-poc'> </a></p>
+<!-- /generated -->
+<h2>Update the PHP POC</h2>
+<!-- generated -->
+<p><a id='config'> </a></p>
+<!-- /generated -->
+<h3>config</h3>
+<p>We need to update the connection information for the database and the queue (previously
+configured via <code>dependencies.php</code>) in the <code>.env</code> file</p>
+<!-- generated -->
+<p><a id='database-connection'> </a></p>
+<!-- /generated -->
+<h4>database connection</h4>
+<pre><code>DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=application_db
+DB_USERNAME=root
+DB_PASSWORD=secret_mysql_root_password</code></pre>
+<!-- generated -->
+<p><a id='queue-connection'> </a></p>
+<!-- /generated -->
+<h4>queue connection</h4>
+<pre><code>QUEUE_CONNECTION=redis
+
+REDIS_HOST=redis
+REDIS_PASSWORD=secret_redis_password</code></pre>
+<!-- generated -->
+<p><a id='controllers'> </a></p>
+<!-- /generated -->
+<h3>Controllers</h3>
+<p>The functionality of the previous <code>public/index.php</code> file now lives in the <code>HomeController</code> at
+<code>app/Http/Controllers/HomeController.php</code></p>
+<pre><code class="language-php">class HomeController extends Controller
+{
+    use DispatchesJobs;
+
+    public function __invoke(Request $request, QueueManager $queueManager, DatabaseManager $databaseManager): View
+    {
+        $jobId = $request-&gt;input("dispatch") ?? null;
+        if ($jobId !== null) {
+            $job = new InsertInDbJob($jobId);
+            $this-&gt;dispatch($job);
+
+            return $this-&gt;getView("Adding item '$jobId' to queue");
+        }
+
+        if ($request-&gt;has("queue")) {
+
+            /**
+             * @var RedisQueue $redisQueue
+             */
+            $redisQueue = $queueManager-&gt;connection();
+            $redis =  $redisQueue-&gt;getRedis()-&gt;connection();
+            $queueItems = $redis-&gt;lRange("queues:default", 0, 99999);
+
+            $content = "Items in queue\n".var_export($queueItems, true);
+
+            return $this-&gt;getView($content);
+        }
+
+        if ($request-&gt;has("db")) {
+            $items = $databaseManager-&gt;select($databaseManager-&gt;raw("SELECT * FROM jobs"));
+
+            $content = "Items in db\n".var_export($items, true);
+
+            return $this-&gt;getView($content);
+        }
+        $content = &lt;&lt;&lt;HTML
+            &lt;ul&gt;
+                &lt;li&gt;&lt;a href="?dispatch=foo"&gt;Dispatch job 'foo' to the queue.&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="?queue"&gt;Show the queue.&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="?db"&gt;Show the DB.&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+            HTML;
+
+        return $this-&gt;getView($content);
+    }
+
+    private function getView(string $content): View
+    {
+        return view('home')-&gt;with(["content" =&gt; $content]);
+    }
+}
+</code></pre>
+<p>Its content is displayed via the <code>home</code> view located at <code>resources/views/home.blade.php</code>:</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    {!! $content !!}
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>The controller is added as a route in <code>routes/web.php</code>:</p>
+<pre><code class="language-php">Route::get('/', \App\Http\Controllers\HomeController::class)-&gt;name("home");</code></pre>
+<!-- generated -->
+<p><a id='commands'> </a></p>
+<!-- /generated -->
+<h3>Commands</h3>
+<p>We will replace the <code>setup.php</code> script with a <code>SetupDbCommand</code> that is located at
+<code>app/Commands/SetupDbCommand.php</code></p>
+<pre><code class="language-php">class SetupDbCommand extends Command
+{
+    /**
+     * @var string
+     */
+    protected $name = "app:setup-db";
+
+    /**
+     * @var string
+     */
+    protected $description = "Run the application database setup";
+
+    protected function getOptions(): array
+    {
+        return [
+            [
+                "drop",
+                null,
+                InputOption::VALUE_NONE,
+                "If given, the existing database tables are dropped and recreated.",
+            ],
+        ];
+    }
+
+    public function handle()
+    {
+        $drop = $this-&gt;option("drop");
+        if ($drop) {
+            $this-&gt;info("Dropping all database tables...");
+
+            $this-&gt;call(WipeCommand::class);
+
+            $this-&gt;info("Done.");
+        }
+
+        $this-&gt;info("Running database migrations...");
+
+        $this-&gt;call(MigrateCommand::class);
+
+        $this-&gt;info("Done.");
+    }
+}</code></pre>
+<p>Register it the <code>AppServiceProvider</code> in <code>app/Providers/AppServiceProvider.php</code></p>
+<pre><code class="language-php">    public function register()
+    {
+        $this-&gt;commands([
+            \App\Commands\SetupDbCommand::class
+        ]);
+    }</code></pre>
+<p>and update the <code>setup-db</code> target in <code>.make/01-00-application-setup.mk</code> to run the <code>artisan</code> Command</p>
+<pre><code class="language-Makefile">.PHONY: setup-db
+setup-db: ## Setup the DB tables
+    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan app:setup-db $(ARGS);</code></pre>
+<p>We will also create a migration for the <code>jobs</code> table in
+<code>database/migrations/2022_02_10_000000_create_jobs_table.php</code>:</p>
+<pre><code class="language-php">return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('jobs', function (Blueprint $table) {
+            $table-&gt;id();
+            $table-&gt;string('value');
+        });
+    }
+};</code></pre>
+<!-- generated -->
+<p><a id='jobs-and-workers'> </a></p>
+<!-- /generated -->
+<h3>Jobs and workers</h3>
+<p>We will replace the <code>worker.php</code> script with <code>InsertInDbJob</code> located at
+<code>app/Jobs/InsertInDbJob.php</code></p>
+<pre><code class="language-php">class InsertInDbJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    public function __construct(
+        public readonly string $jobId
+    ) {
+    }
+
+    public function handle(DatabaseManager $databaseManager)
+    {
+        $databaseManager-&gt;insert("INSERT INTO `jobs`(value) VALUES(?)", [$this-&gt;jobId]);
+    }
+}</code></pre>
+<p>though this will &quot;only&quot; handle the insertion part. For the worker itself we will use the native
+<code>\Illuminate\Queue\Console\WorkCommand</code> via</p>
+<pre><code>php artisan queue:work</code></pre>
+<p>We need to adjust the <code>.docker/images/php/worker/Dockerfile</code> and change</p>
+<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/worker.php"</code></pre>
+<p>to</p>
+<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/artisan queue:work"</code></pre>
+<p>Since this change takes place directly in the Dockerfile, we must now rebuild the image </p>
+<pre><code>$ make docker-build-image DOCKER_SERVICE_NAME=php-worker</code></pre>
+<p>and restart it</p>
+<pre><code>$ make docker-up</code></pre>
+<!-- generated -->
+<p><a id='tests'> </a></p>
+<!-- /generated -->
+<h3>Tests</h3>
+<p>I'd also like to take this opportunity to add a <code>Feature</code> test for the <code>HomeController</code> at
+<code>tests/Feature/App/Http/Controllers/HomeControllerTest.php</code>:</p>
+<pre><code class="language-php">class HomeControllerTest extends TestCase
+{
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this-&gt;setupDatabase();
+        $this-&gt;setupQueue();
+    }
+
+    /**
+     * @dataProvider __invoke_dataProvider
+     */
+    public function test___invoke(array $params, string $expected): void
+    {
+        $urlGenerator = $this-&gt;getDependency(UrlGenerator::class);
+
+        $url = $urlGenerator-&gt;route("home", $params);
+
+        $response = $this-&gt;get($url);
+
+        $response
+            -&gt;assertStatus(200)
+            -&gt;assertSee($expected, false)
+        ;
+    }
+
+    public function __invoke_dataProvider(): array
+    {
+        return [
+            "default"           =&gt; [
+                "params"   =&gt; [],
+                "expected" =&gt; &lt;&lt;&lt;TEXT
+                        &lt;li&gt;&lt;a href="?dispatch=foo"&gt;Dispatch job 'foo' to the queue.&lt;/a&gt;&lt;/li&gt;
+                        &lt;li&gt;&lt;a href="?queue"&gt;Show the queue.&lt;/a&gt;&lt;/li&gt;
+                        &lt;li&gt;&lt;a href="?db"&gt;Show the DB.&lt;/a&gt;&lt;/li&gt;
+                    TEXT
+                ,
+            ],
+            "database is empty" =&gt; [
+                "params"   =&gt; ["db"],
+                "expected" =&gt; &lt;&lt;&lt;TEXT
+                        Items in db
+                    array (
+                    )
+                    TEXT
+                ,
+            ],
+            "queue is empty"    =&gt; [
+                "params"   =&gt; ["queue"],
+                "expected" =&gt; &lt;&lt;&lt;TEXT
+                        Items in queue
+                    array (
+                    )
+                    TEXT
+                ,
+            ],
+        ];
+    }
+
+    public function test_shows_existing_items_in_database(): void
+    {
+        $databaseManager = $this-&gt;getDependency(DatabaseManager::class);
+
+        $databaseManager-&gt;insert("INSERT INTO `jobs` (id, value) VALUES(1, 'foo');");
+
+        $urlGenerator = $this-&gt;getDependency(UrlGenerator::class);
+
+        $params = ["db"];
+        $url    = $urlGenerator-&gt;route("home", $params);
+
+        $response = $this-&gt;get($url);
+
+        $expected = &lt;&lt;&lt;TEXT
+                Items in db
+            array (
+              0 =&gt; 
+              (object) array(
+                 'id' =&gt; 1,
+                 'value' =&gt; 'foo',
+              ),
+            )
+            TEXT;
+
+        $response
+            -&gt;assertStatus(200)
+            -&gt;assertSee($expected, false)
+        ;
+    }
+
+    public function test_shows_existing_items_in_queue(): void
+    {
+        $queueManager = $this-&gt;getDependency(QueueManager::class);
+
+        $job = new InsertInDbJob("foo");
+        $queueManager-&gt;push($job);
+
+        $urlGenerator = $this-&gt;getDependency(UrlGenerator::class);
+
+        $params = ["queue"];
+        $url    = $urlGenerator-&gt;route("home", $params);
+
+        $response = $this-&gt;get($url);
+
+        $expectedJobsCount = &lt;&lt;&lt;TEXT
+                Items in queue
+            array (
+              0 =&gt; '{
+            TEXT;
+
+        $expected = &lt;&lt;&lt;TEXT
+            \\\\"jobId\\\\";s:3:\\\\"foo\\\\";
+            TEXT;
+
+        $response
+            -&gt;assertStatus(200)
+            -&gt;assertSee($expectedJobsCount, false)
+            -&gt;assertSee($expected, false)
+        ;
+    }
+}</code></pre>
+<p>The test checks the database as well as the queue and uses the helper methods
+<code>$this-&gt;setupDatabase()</code> and <code>$this-&gt;setupQueue()</code> that I defined in the base test case at
+<code>tests/TestCase.php</code> as follows</p>
+<pre><code class="language-php">   /**
+     * @template T
+     * @param class-string&lt;T&gt; $className
+     * @return T
+     */
+    protected function getDependency(string $className)
+    {
+        return $this-&gt;app-&gt;get($className);
+    }
+
+    protected function setupDatabase(): void
+    {
+        $databaseManager = $this-&gt;getDependency(DatabaseManager::class);
+
+        $actualConnection  = $databaseManager-&gt;getDefaultConnection();
+        $testingConnection = "testing";
+        if ($actualConnection !== $testingConnection) {
+            throw new RuntimeException("Database tests are only allowed to run on default connection '$testingConnection'. The current default connection is '$actualConnection'.");
+        }
+
+        $this-&gt;ensureDatabaseExists($databaseManager);
+
+        $this-&gt;artisan(SetupDbCommand::class, ["--drop" =&gt; true]);
+    }
+
+    protected function setupQueue(): void
+    {
+        $queueManager = $this-&gt;getDependency(QueueManager::class);
+
+        $actualDriver  = $queueManager-&gt;getDefaultDriver();
+        $testingDriver = "testing";
+        if ($actualDriver !== $testingDriver) {
+            throw new RuntimeException("Queue tests are only allowed to run on default driver '$testingDriver'. The current default driver is '$actualDriver'.");
+        }
+
+        $this-&gt;artisan(ClearCommand::class);
+    }
+
+    protected function ensureDatabaseExists(DatabaseManager $databaseManager): void
+    {
+        $connection = $databaseManager-&gt;connection();
+
+        try {
+            $connection-&gt;getPdo();
+        } catch (PDOException $e) {
+            // e.g. SQLSTATE[HY000] [1049] Unknown database 'testing'
+            if ($e-&gt;getCode() !== 1049) {
+                throw $e;
+            }
+            $config             = $connection-&gt;getConfig();
+            $config["database"] = "";
+
+            $connector = new MySqlConnector();
+            $pdo       = $connector-&gt;connect($config);
+            $database  = $connection-&gt;getDatabaseName();
+            $pdo-&gt;exec("CREATE DATABASE IF NOT EXISTS `{$database}`;");
+        }
+    }</code></pre>
+<p>The methods ensure that the tests are only executed if the proper database connection and queue
+driver is configured. This is done through environment variables and I like using
+<a href="https://laravel.com/docs/9.x/testing#the-env-testing-environment-file">a dedicated <code>.env</code> file located at <code>.env.testing</code></a><br />
+for all testing <code>ENV</code> values instead of defining them in the <code>phpunit.xml</code> config file via <code>&lt;env&gt;</code>
+elements:</p>
+<pre><code class="language-dotenv"># File: .env.testing
+
+DB_CONNECTION=testing
+DB_DATABASE=testing
+QUEUE_CONNECTION=testing
+REDIS_DB=1000</code></pre>
+<p>The corresponding connections have to be configured in the <code>config</code> files</p>
+<pre><code class="language-php"># File: config/database.php
+
+return [
+// ...
+    'connections' =&gt; [
+// ...
+        'testing' =&gt; [
+            'driver' =&gt; 'mysql',
+            'url' =&gt; env('DATABASE_URL'),
+            'host' =&gt; env('DB_HOST'),
+            'port' =&gt; env('DB_PORT', '3306'),
+            'database' =&gt; env('DB_DATABASE', 'testing'),
+            'username' =&gt; env('DB_USERNAME'),
+            'password' =&gt; env('DB_PASSWORD', ''),
+            'unix_socket' =&gt; env('DB_SOCKET', ''),
+            'charset' =&gt; 'utf8mb4',
+            'collation' =&gt; 'utf8mb4_unicode_ci',
+            'prefix' =&gt; '',
+            'prefix_indexes' =&gt; true,
+            'strict' =&gt; true,
+            'engine' =&gt; null,
+            'options' =&gt; extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA =&gt; env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+    ],
+// ...
+    'redis' =&gt; [
+// ...
+        'testing' =&gt; [
+            'url' =&gt; env('REDIS_URL'),
+            'host' =&gt; env('REDIS_HOST', '127.0.0.1'),
+            'password' =&gt; env('REDIS_PASSWORD'),
+            'port' =&gt; env('REDIS_PORT', '6379'),
+            'database' =&gt; env('REDIS_DB', '1000'),
+        ],
+    ],
+];</code></pre>
+<pre><code class="language-php"># File: config/queue.php
+
+return [
+// ...
+
+    'connections' =&gt; [
+// ...
+        'testing' =&gt; [
+            'driver' =&gt; 'redis',
+            'connection' =&gt; 'testing', // =&gt; refers to the "database.redis.testing" config entry
+            'queue' =&gt; env('REDIS_QUEUE', 'default'),
+            'retry_after' =&gt; 90,
+            'block_for' =&gt; null,
+            'after_commit' =&gt; false,
+        ],
+    ],
+];</code></pre>
+<p>The tests can be executed via <code>make test</code></p>
+<pre><code>$ make test
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit -c phpunit.xml
+PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
+
+.......                                                             7 / 7 (100%)
+
+Time: 00:02.709, Memory: 28.00 MB
+
+OK (7 tests, 13 assertions)</code></pre>
+<!-- generated -->
+<p><a id='makefile-updates'> </a></p>
+<!-- /generated -->
+<h2>Makefile updates</h2>
+<!-- generated -->
+<p><a id='clearing-the-queue'> </a></p>
+<!-- /generated -->
+<h3>Clearing the queue</h3>
+<p>For convenience while testing I added a make target to clear all items from the queue in
+<code>.make/01-01-application-commands.mk</code></p>
+<pre><code class="language-Makefile">.PHONY: clear-queue
+clear-queue: ## Clear the job queue
+    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan queue:clear $(ARGS)</code></pre>
+<!-- generated -->
+<p><a id='running-the-poc'> </a></p>
+<!-- /generated -->
+<h2>Running the POC</h2>
+<p>Since the POC only uses <code>make</code> targets and we basically just &quot;refactored&quot; them, there is no
+modification necessary to make the existing <code>test.sh</code> work:</p>
+<pre><code>$ bash test.sh
+
+  Building the docker setup
+
+//...
+
+  Starting the docker setup
+
+//...
+
+  Clearing DB
+
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application php artisan app:setup-db --drop;
+Dropping all database tables...
+Dropped all tables successfully.
+Done.
+Running database migrations...
+Migration table created successfully.
+Migrating: 2014_10_12_000000_create_users_table
+Migrated:  2014_10_12_000000_create_users_table (64.04ms)
+Migrating: 2014_10_12_100000_create_password_resets_table
+Migrated:  2014_10_12_100000_create_password_resets_table (50.06ms)
+Migrating: 2019_08_19_000000_create_failed_jobs_table
+Migrated:  2019_08_19_000000_create_failed_jobs_table (58.61ms)
+Migrating: 2019_12_14_000001_create_personal_access_tokens_table
+Migrated:  2019_12_14_000001_create_personal_access_tokens_table (94.03ms)
+Migrating: 2022_02_10_000000_create_jobs_table
+Migrated:  2022_02_10_000000_create_jobs_table (31.85ms)
+Done.
+
+  Stopping workers
+
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl stop worker:*;
+worker:worker_00: stopped
+worker:worker_01: stopped
+worker:worker_02: stopped
+worker:worker_03: stopped
+
+  Ensuring that queue and db are empty
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Items in queue
+array (
+)
+    &lt;/body&gt;
+&lt;/html&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Items in db
+array (
+)
+    &lt;/body&gt;
+&lt;/html&gt;
+
+  Dispatching a job 'foo'
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Adding item 'foo' to queue
+    &lt;/body&gt;
+&lt;/html&gt;
+
+  Asserting the job 'foo' is on the queue
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Items in queue
+array (
+  0 =&gt; '{"uuid":"7ea63590-2a86-4739-abf8-8a059d41bd60","displayName":"App\\\\Jobs\\\\InsertInDbJob","job":"Illuminate\\\\Queue\\\\CallQueuedHandler@call","maxTries":null,"maxExceptions":null,"failOnTimeout":false,"backoff":null,"timeout":null,"retryUntil":null,"data":{"commandName":"App\\\\Jobs\\\\InsertInDbJob","command":"O:22:\\"App\\\\Jobs\\\\InsertInDbJob\\":11:{s:5:\\"jobId\\";s:3:\\"foo\\";s:3:\\"job\\";N;s:10:\\"connection\\";N;s:5:\\"queue\\";N;s:15:\\"chainConnection\\";N;s:10:\\"chainQueue\\";N;s:19:\\"chainCatchCallbacks\\";N;s:5:\\"delay\\";N;s:11:\\"afterCommit\\";N;s:10:\\"middleware\\";a:0:{}s:7:\\"chained\\";a:0:{}}"},"id":"I3k5PNyGZc6Z5XWCC4gt0qtSdqUZ84FU","attempts":0}',
+)
+    &lt;/body&gt;
+&lt;/html&gt;
+
+  Starting the workers
+
+ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl start worker:*;
+worker:worker_00: started
+worker:worker_01: started
+worker:worker_02: started
+worker:worker_03: started
+
+  Asserting the queue is now empty
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Items in queue
+array (
+)
+    &lt;/body&gt;
+&lt;/html&gt;
+
+  Asserting the db now contains the job 'foo'
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Items in db
+array (
+  0 =&gt;
+  (object) array(
+     'id' =&gt; 1,
+     'value' =&gt; 'foo',
+  ),
+)
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<!-- generated -->
+<p><a id='wrapping-up'> </a></p>
+<!-- /generated -->
+<h2>Wrapping up</h2>
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. Laravel 9 should now be up and running on the previously set up docker
+infrastructure.</p>
+<p>In the next part of this tutorial, we will add some code quality tools and configure CI/CD
+pipelines on Github and Gitlab.</p>
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>]]></description>
+                <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/</guid>
+            </item>
                     <item>
                 <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</title>
                 <description><![CDATA[<p>In this second subpart of the fourth part of this tutorial series on developing PHP on Docker we
@@ -2728,327 +3478,6 @@ a fresh installation of Laravel to make use of them.</p>
                 <pubDate>Mon, 20 May 2019 10:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/</guid>
-            </item>
-                    <item>
-                <title>How to setup PhpStorm with Xdebug on Docker [Tutorial Part 2]</title>
-                <description><![CDATA[<div class="panel panel-default">
-  <div class="panel-heading">
-    <strong>Caution</strong>
-  </div>
-  <div class="panel-body bg-danger">
-    A <strong>newer version</strong> of this article for PHP 8.1, Xdebug 3 and PhpStorm 2021.3.2
-    <br>
-    <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-  </div>
-</div>
-<p>In the second part of this tutorial series on developing PHP on Docker we're taking a good hard look
-at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Docker.</p>
-<div style="text-align:center">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/27KBaI24jKI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-</div>
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-</ul>
-<p>All code samples are publicly available in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
-The branch for this tutorial is
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker">part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</a>.</p>
-<p><strong>Note</strong>: The setup that I am going to use is for demonstration purposes only! I do <strong>not</strong> recommend that you use it
-&quot;as is&quot; as your development setup. Some problems that I won't solve here include:</p>
-<ul>
-<li>everything is owned by root (no dedicated user; that will in particular be problematic for linux users)</li>
-<li>SSH login credentials are hard-coded in the container (inherently insecure)</li>
-<li><code>host.docker.internal</code> will only exist for Windows and Mac users, NOT for unix users</li>
-</ul>
-<p>There will be a another part of this series that will deal with all of those (and some more common) problems and
-aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
-Please subscribe to the <a href="http:///feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
-<h2>Table of contents</h2>
-<ul>
-<li><a href="#setup-the-docker-containers">Setup: The docker containers</a></li>
-<li><a href="#run-php-via-built-in-docker-setup">Run PHP via built-in Docker setup</a><ul>
- <li><a href="#enable-docker-to-communicate-on-port%202375">Enable docker to communicate on port 2375</a></li>
- <li><a href="#configure-docker-server-in-phpstorm">Configure Docker Server in PhpStorm</a></li>
- <li><a href="#configure-docker-php-cli-interpreter">Configure Docker PHP CLI Interpreter</a></li>
- <li><a href="#run-debug-a-php-script-on-docker-server">Run/debug a php script on docker</a></li>
-</ul></li>
-<li><a href="#run-php-on-docker-via-deployment-configuration">Run PHP on Docker via Deployment Configuration</a><ul>
- <li><a href="#preparing-the-workspace-container">Preparing the "workspace" container</a></li>
- <li><a href="#configure-the-deployment-configuration">Configure the Deployment Configuration</a></li>
- <li><a href="#run-debug-a-php-script-on-docker">Run/debug a php script on docker</a></li>
- <li><a href="#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a></li>
-</ul></li>
-</ul>
-<h2><a id="setup-the-docker-containers"></a>Setup: The docker containers</h2>
-<p>We will only need the php-cli container for this part.
-Luckily, we already have a good understanding on how to create the container, although we'll need to make some
-adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
-but I'd still recommend to clone the corresponding git repository <a href="https://github.com/paslandau/docker-php-tutorial">docker-php-tutorial</a>
-(unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker"><code>part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></a> and
-build the containers now.</p>
-<p>As in part 1, I'm assuming your codebase lives at <code>/c/codesbase</code>:</p>
-<pre><code>cd /c/codebase/
-git clone https://github.com/paslandau/docker-php-tutorial.git
-cd docker-php-tutorial
-git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
-docker-compose build</code></pre>
-<p>Further, make sure to open <code>/c/codebase/docker-php-tutorial</code> as a project in PhpStorm.</p>
-<p>In general, there are two ways to run PHP from PhpStorm using Docker:</p>
-<ol>
-<li>via the built-in Docker setup</li>
-<li>via Deployment Configuration (treating docker more or less like a VM)</li>
-</ol>
-<h2><a id="run-php-via-built-in-docker-setup"></a>Run PHP via built-in Docker setup</h2>
-<p>This is the &quot;easier&quot; way and should mostly work &quot;out of the box&quot;. When you run a PHP script using this method, PhpStorm will start a
-docker container and configure it automatically (path mappings, network setup, ...). Next, the script in question is executed and the container
-is stopped afterwards.</p>
-<h3><a id="enable-docker-to-communicate-on-port 2375"></a>Enable docker to communicate on port 2375</h3>
-<p>Open the Docker Setting in tab &quot;General&quot; and activate the checkbox that says
-&quot;Expose daemon on tcp://localhost:2375 without TLS&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-port-tcp-2375.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-port-tcp-2375.PNG" alt="Enable docker to communicate on port 2375" /></a></p>
-<h3><a id="configure-docker-server-in-phpstorm"></a>Configure Docker Server in PhpStorm</h3>
-<p>In PhpStorm, navigate to <code>File | Settings | Build, Execution, Deployment | Docker</code>. Fill out <code>Name</code> and <code>Engine API URL</code>:</p>
-<ul>
-<li>Name: Docker</li>
-<li>Engine API URL: <code>tcp://localhost:2375</code></li>
-</ul>
-<p>PhpStorm will automatically validate your settings and show a &quot;Connection successful&quot; info below the path mappings box:</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/php-built-in-docker-setup.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/php-built-in-docker-setup.PNG" alt="Configure Docker server in PhpStorm" /></a></p>
-<h3><a id="configure-docker-php-cli-interpreter"></a>Configure Docker PHP CLI Interpreter</h3>
-<p>Navigate to <code>File | Settings | Languages &amp; Frameworks | PHP</code>. Click on the three dots &quot;...&quot; next to &quot;CLI Interpreter&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG" alt="Setup CLI Interpreter PhpStorm" /></a></p>
-<p>In the newly opened pop up click on the &quot;+&quot; sign on the top left and choose &quot;From Docker,Vagrant,VM,Remote...&quot;</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG" alt="New CLI Interpreter" /></a></p>
-<p>Next, choose &quot;Docker&quot; from the radio buttons and select our previously created Docker server (named &quot;Docker&quot;).
-As image, choose <code>docker-php-tutorial_docker-php-cli:latest</code> (which is one of the images used in this tutorial). If you don't see
-this image you've probably not yet built the containers. In that case, please checkout the repo and build the containers: </p>
-<pre><code>cd /c/codebase/
-git clone https://github.com/paslandau/docker-php-tutorial.git
-cd docker-php-tutorial
-git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker
-docker-compose build</code></pre>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-php-cli.PNG" alt="New CLI Interpreter from Docker server" /></a></p>
-<p>PhpStorm will now try to create the container and figure out if it can run PHP. If all goes well, you should see the following screenshot
-with information about the PHP and Xdebug versions in the image/container.</p>
-<p><em>Note</em>: Sometimes, this does not work immediately. If that's the case for you, try to click the &quot;Refresh&quot; icon next to &quot;PHP executable&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-configured.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker-configured.PNG" alt="New CLI Interpreter from Docker configured" /></a></p>
-<p>After you hit &quot;OK&quot;, you'll be back in the PHP Interpreter screen where our newly configured Docker interpreter should be already selected:</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-done.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-done.PNG" alt="New CLI Interpreter from Docker chosen" /></a></p>
-<p>Note that PhpStorm has automatically configured the path mappings as <code>-v</code> command line option for the Docker container. After hitting &quot;OK&quot;
-one last time, everything is set up.</p>
-<h3><a id="run-debug-a-php-script-on-docker-server"></a>Run/debug a php script on docker</h3>
-<p>To verify that everything is working, open the file <code>app/hello-world.php</code> in PhpStorm, right click in the editor pane and choose &quot;Run&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG" alt="Run PHP script" /></a></p>
-<p>PhpStorm will start the configured container and run the script. The output is then visible at the bottom of the IDE:</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/built-in-docker-run-php-script-finished.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/built-in-docker-run-php-script-finished.PNG" alt="PHP script output" /></a></p>
-<p>Since we're using an image that has Xdebug installed, we can also set a breakpoint and use &quot;Debug&quot; instead of &quot;Run&quot; to trigger a debug session:</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG" alt="Debug PHP script" /></a></p>
-<p>PhpStorm should stop on the marked line. </p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script-breakpoint.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script-breakpoint.PNG" alt="Debug PHP script pausing" /></a></p>
-<p>When you take a look at the &quot;Console&quot; panel at the bottom of the IDE, you should see something like this:</p>
-<pre><code>docker://docker-php-tutorial_docker-php-cli:latest/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=192.168.10.1 /opt/project/app/hello-world.php</code></pre>
-<p>Please keep the <code>-dxdebug.remote_host=192.168.10.1</code> option in mind - this will be &quot;interesting&quot; when we set up a Docker-based PHP Interpreter
-via Deployment Configuration ;)</p>
-<p>PS: You find the official documentation for the built-in Docker support at
-<a href="https://confluence.jetbrains.com/display/PhpStorm/Docker+Support+in+PhpStorm">Docker Support in PhpStorm</a>.</p>
-<h2><a id="run-php-on-docker-via-deployment-configuration"></a>Run PHP on Docker via Deployment Configuration</h2>
-<p>The previously explained method is nice, but it is lacking flexibility and it's also pretty slow as the container used to run
-the script needs to be started each time we want to execute something. Luckily, there is an additional way of running PHP scripts
-on Docker in PhpStorm, which is closely related to the Vagrant setup that I explained in
-<a href="https://www.pascallandau.com/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#configuring-phpstorm-to-use-the-vagrant-box">Configuring PhpStorm to use the vagrant box</a>.</p>
-<p>To make this work, we will keep a docker container running all the time and configure PhpStorm to connect to it via SSH. Thus, PhpStorm
-effectively treats the docker container as any other remote host.</p>
-<h3><a id="preparing-the-workspace-container"></a>Preparing the &quot;workspace&quot; container</h3>
-<p>Please make sure to checkout my demo repository and switch to the correct branch first:</p>
-<pre><code>cd /c/codebase/
-git clone https://github.com/paslandau/docker-php-tutorial.git
-cd docker-php-tutorial
-git checkout part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></pre>
-<p>For now, we only need the <code>php-cli</code> container. In it, we need to setup the xdebug extension (already done and explained in the previous part) and
-an SSH server so that we can log in via SSH. Let's take a look a the <code>Dockerfile</code>:</p>
-<pre><code>FROM php:7.0-cli
-
-RUN apt-get update -yqq \
- &amp;&amp; apt-get install -yqq \
-    # install sshd
-    openssh-server \
-    # install ping and netcat (for debugging xdebug connectivity)
-    iputils-ping netcat \
-    # fix ssh start up bug
-    # @see https://github.com/ansible/ansible-container/issues/141
- &amp;&amp; mkdir /var/run/sshd \
-;
-
-# add default public key to authorized_keys
-COPY ./ssh/insecure_id_rsa.pub /root/insecure_id_rsa.pub
-RUN mkdir -p /root/.ssh \
- &amp;&amp; cat /root/insecure_id_rsa.pub &gt;&gt; /root/.ssh/authorized_keys \
- &amp;&amp; rm -rf /root/insecure_id_rsa.pub \
-;
-
-RUN pecl -q install xdebug-2.6.0 \
-;
-COPY ./conf.d/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
-
-# @see https://docs.docker.com/engine/examples/running_ssh_service/
-CMD ["/usr/sbin/sshd", "-D"]
-</code></pre>
-<p>and the <code>docker-compose.yml</code>:</p>
-<pre><code>  docker-php-cli:
-    # define the directory where the build should happened,
-    # i.e. where the Dockerfile of the service is located
-    # all paths are relative to the location of docker-compose.yml
-    build: 
-      context: ./php-cli
-    # make the SSH port available via port mapping
-    ports:
-      - "2222:22"
-    # reserve a tty - otherwise the container shuts down immediately
-    # corresponds to the "-i" flag
-    tty: true
-    # mount the app directory of the host to /var/www in the container
-    # corresponds to the "-v" option
-    volumes:
-      - ./app:/var/www
-    # connect to the network
-    # corresponds to the "--network" option
-    networks:
-      - web-network</code></pre>
-<p>There are four things to note:</p>
-<ol>
-<li>installing the server </li>
-<li>adding the ssh keys to actually log in</li>
-<li>changing the default <code>CMD</code> to keep the SSH daemon running</li>
-<li>port- and volume mapping</li>
-</ol>
-<h4><a id="installing-the-server"></a>Installing the server</h4>
-<p>The server installation is straight forward:</p>
-<pre><code>apt-get install -yqq openssh-server</code></pre>
-<p>the only none-intuitive thing is, that we need to &quot;manually&quot; create the directory <code>/var/run/sshd</code>
-( <a href="https://github.com/ansible/ansible-container/issues/141">due to a bug</a> ).</p>
-<h4><a id="adding-the-ssh-keys"></a>Adding the ssh keys</h4>
-<p>For the ssh keys, I'm choosing the easy route (for now) and use a pre-generated ssh key pair (see <code>php-cli/ssh/*</code>).
-The content of the public key is appended to <code>/root/.ssh/authorized_keys</code> so that I can log in to the container as user <code>root</code> using the
-corresponding private key from <code>php-cli/ssh/insecure_id_rsa</code>.</p>
-<p><strong>Caution</strong>: Of course, this is massively insecure! Those keys are part of the repository, making them available to everybody with access to the repo.
-That makes sense for this publicly available tutorial (because everything works &quot;out of the box&quot; for everybody following along) but it is also one
-of the reasons you should <strong>not</strong> use that repo as your <strong>actual</strong> development setup.</p>
-<p>Again, there will be another part of this tutorial in which I'll present a solution to this problem (using volumes to share my local ssh keys with a
-container and an <code>ENTRYPOINT</code> to put them in the right place).</p>
-<h4><a id="keep-the-ssh-daemon-running"></a>Keep the SSH daemon running</h4>
-<p>For SSH to work, we must start <code>sshd</code> and keep it running in the container. We achieve this by using <code>CMD ["/usr/sbin/sshd", "-D"]</code> in the
-Dockerfile, following the official docker example to <a href="https://docs.docker.com/engine/examples/running_ssh_service/">Dockerize an SSH service</a>.</p>
-<h4><a id="port-and-volume-mapping"></a>Port- and volume mapping</h4>
-<p>Since docker containers do not have deterministic IP addresses, we map port 22 from the container to port 2222 on our host machine and we
-further provide a path mapping from our local <code>./app</code> folder to <code>/var/www</code> in the container. Both pieces of information a required when
-we configure PhpStorm later on.</p>
-<p>Now that everything is in place, let's build and run the container:</p>
-<pre><code>cd /c/codebase/docker-php-tutorial
-docker-compose up -d docker-php-cli</code></pre>
-<p>yielding</p>
-<pre><code>Pascal@Landau-Laptop MINGW64 /d/codebase/docker-php-tutorial (part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker)
-$ docker-compose up -d docker-php-cli
-Creating docker-php-tutorial_docker-php-cli_1 ... done</code></pre>
-<p><em>Note</em>: One might argue, that it's kinda defeating the purpose of docker, when we now treat it as a VM, installing SSH and neglecting it's
-&quot;one process per container&quot; rule. But honestly, I don't care about that when
-it comes to my local development setup as my main goal is to have something lightweight, that is easily shareable with my team to have a
-consistent infrastructure setup ;)</p>
-<h3><a id="configure-the-deployment-configuration"></a>Configure the Deployment Configuration</h3>
-<p>In PhpStorm, navigate to <code>File | Settings | Build, Execution, Deployment | Deployment</code>.
-In the newly opened pop up click on the &quot;+&quot; sign on the top left and choose &quot;From Docker,Vagrant,VM,Remote...&quot; with:</p>
-<ul>
-<li>Name: Docker (SSH)</li>
-<li>Type: SFTP</li>
-</ul>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/new-deployment-configuration.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/new-deployment-configuration.PNG" alt="New SFTP Deployment Configuration" /></a></p>
-<p>In the <code>Connection</code> tab, choose the following settings:</p>
-<ul>
-<li>SFTP host: 127.0.0.1</li>
-<li>Port: 2222</li>
-<li>User name: root</li>
-<li>Auth type: Key pair (OpenSSH or PuTTY)</li>
-<li>Private key file: <code>C:\codebase\docker-php-tutorial\php-cli\ssh\insecure_id_rsa</code></li>
-</ul>
-<p><em>Notes</em>:</p>
-<ul>
-<li>the &quot;Port&quot; corresponds to the port mapping that we defined in the <code>docker-compose.yml</code> file</li>
-<li>the &quot;Private key file&quot; is the &quot;insecure&quot; ssh key that matches the public key we specified in the <code>php-cli/Dockerfile</code></li>
-</ul>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection.PNG" alt="Deployment Configuration: Connection" /></a></p>
-<p>Hit the &quot;Test SFT connection...&quot; button to test the settings. You should see</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection-test.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-connection-test.PNG" alt="Deployment Configuration: Test Connection" /></a></p>
-<p>(there might also appear a fingerprint warning because we're using 127.0.0.1 as host. You can simply ignore that warning).</p>
-<p>Now choose the <code>Mappings</code> tab and fill it the fields as follows:</p>
-<ul>
-<li>Local path: <code>C:\codebase\docker-php-tutorial\app</code></li>
-<li>Deployment path on server 'Docker (SSH)': <code>/var/www/</code></li>
-</ul>
-<p>Those mappings correspond to the volume definition for the <code>docker-php-cli</code> service in <code>docker-compose.yml</code>:</p>
-<pre><code>[...]
-    # mount the app directory of the host to /var/www in the container
-    # corresponds to the "-v" option
-    volumes:
-      - ./app:/var/www
-[...]</code></pre>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-path-mappings.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/deployment-configuration-path-mappings.PNG" alt="Deployment Configuration: Path Mappings" /></a></p>
-<p>Next, we need to create a PHP Interpreter based on our newly created Deployment Configuration.
-Open settings and navigate to <code>File | Settings | Languages &amp; Frameworks | PHP</code>. Click on the three dots &quot;...&quot; next to &quot;CLI Interpreter&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter.PNG" alt="Setup CLI Interpreter PhpStorm" /></a></p>
-<p>In the newly opened pop up click on the &quot;+&quot; sign on the top left and choose &quot;From Docker,Vagrant,VM,Remote...&quot;</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-docker.PNG" alt="New CLI Interpreter" /></a></p>
-<p>Choose &quot;Deployment Configuration&quot; from the radio buttons and select the &quot;Docker (SSH)&quot; entry. Please make sure to enter
-<code>/usr/local/bin/php</code> as path for the PHP executable (as PhpStorm by default will set this path to <code>/usr/bin/php</code>).</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-deployment-configuration.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-from-deployment-configuration.PNG" alt="Setup Docker (SSH) Interpreter" /></a></p>
-<p>Set &quot;Docker (SSH)&quot; as name for the new interpreter and click &quot;OK&quot;. </p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-docker-deployment-configuration.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-docker-deployment-configuration.PNG" alt="Finalize Docker (SSH) Interpreter" /></a></p>
-<p>Confirm the new PHP Interpreter to close the settings dialog.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-deployment-configuration-done.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/cli-interpreter-deployment-configuration-done.PNG" alt="Confirm Deployment Configuration Interpreter" /></a></p>
-<h3><a id="run-debug-a-php-script-on-docker"></a>Run/debug a php script on docker</h3>
-<p>To verify that everything is working, open the file <code>app/hello-world.php</code> in PhpStorm, right click in the editor pane and choose &quot;Run&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-run-php-script.PNG" alt="Run PHP script" /></a></p>
-<p>PhpStorm will start the configured container and run the script. The output is then visible in at the bottom of the IDE:</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-ssh-run-php-script-finished.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-ssh-run-php-script-finished.PNG" alt="PHP script output when run via SFTP" /></a></p>
-<p>Since we're using an image that has Xdebug installed, we can also set a breakpoint and use &quot;Debug&quot; instead of &quot;Run&quot; to trigger a debug session:</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/docker-debug-php-script.PNG" alt="Debug PHP script" /></a></p>
-<p>Hm weird... Although this worked flawlessly when we used the built-in functionality, it does not when we use the Deployment Configuration and shows
-a &quot;Connection with 'Xdebug 2.6.0' not established.&quot; error.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/failing-xdebug-connection.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/failing-xdebug-connection.PNG" alt="Xdebug connection cannot be established error" /></a></p>
-<h3><a id="fix-xdebug-on-phpstorm-when-run-from-a-docker-container"></a>Fix Xdebug on PhpStorm when run from a Docker container</h3>
-<p>Long story short: There is a bug in the networking setup of Docker for Win that makes PhpStorm use the wrong <code>remote_host</code> when it starts a
-debugging session. When you take a look at the &quot;Console&quot; panel at the bottom of the IDE, you should see something like this:</p>
-<pre><code>sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 /var/www/hello-world.php</code></pre>
-<p>The <code>-dxdebug.remote_host=172.18.0.1</code> option is our suspect here. Luckily, since
-<a href="https://docs.docker.com/docker-for-windows/networking/#use-cases-and-workarounds">Docker v18.03</a> there is a &quot;magic&quot; DNS entry called `host.docker.internal
-that we can use to reach the host from a container.</p>
-<p>So, how can we solve this? PhpStorm enables us to
-<a href="https://www.jetbrains.com/help/phpstorm/configuring-xdebug.html#d165872e407">pass custom options to Xdebug</a> when a debugging session is initiated.
-Open <code>File | Settings | Languages &amp; Frameworks | PHP</code> and click on the &quot;...&quot; next to &quot;PHP Interpreter&quot; to bring up the interpreters. Choose
-&quot;Docker (SSH)&quot; in the left pane and click on the little folder icon on the bottom of the window next to &quot;Configuration options&quot;. In the pop up enter
-<code>xdebug.remote_host</code> as key and <code>host.docker.internal</code> as value and hit &quot;OK&quot;.</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options.PNG" alt="Configure Xdebug options" /></a></p>
-<p>This results in the configuration setting <code>-dxdebug.remote_host=host.docker.internal</code> that is now appended to the remaining (default) arguments
-that PhpStorm uses and will <strong>override</strong> any existing options (including the incorrect <code>xdebug.remote_host</code>).</p>
-<p><a href="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options-configured.PNG"><img src="/img/setup-phpstorm-with-xdebug-on-docker/xdebug-options-configured.PNG" alt="Configured Xdebug options" /></a></p>
-<p>Initiating a debug session on <code>app/hello-world.php</code> will now finally stop the execution as expected and the
-&quot;Console&quot; panel at the bottom of the IDE, shows</p>
-<pre><code>sftp://root@127.0.0.1:2222/usr/local/bin/php -dxdebug.remote_enable=1 -dxdebug.remote_mode=req -dxdebug.remote_port=9000 -dxdebug.remote_host=172.18.0.1 -dxdebug.remote_host=host.docker.internal /var/www/hello-world.php</code></pre>
-<p>This setup denotes the end of the second tutorial. In the next part we will take a <strong>much</strong> deeper look into Xdebug to fully understand how it works
-(especially in combination with PhpStorm), how to fix common problems and make it work in different scenarios (debugging from the browser, from php workers, etc.).</p>]]></description>
-                <pubDate>Mon, 06 Aug 2018 12:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/</guid>
             </item>
             </channel>
 </rss>
