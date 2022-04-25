@@ -159,7 +159,7 @@ SELECT * FROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION</code></pre>
 <li>this query will select the most interesting fields in terms of cost monitoring from the <code>INFORMATION_SCHEMA.JOBS_BY_USER</code>
 view for all jobs that have been run in region US in the currently selected project</li>
 <li>the <code>cost_in_dollar</code> is estimate by calculating the <code>total_bytes_processed</code> in Terabyte and
-multiplying the result with $5.00 (which corresponds to the the cost as of today 2020-06-22).
+multiplying the result with $5.00 (which corresponds to the cost as of today 2020-06-22).
 Also, we only take those costs into account if the query was not answered from the cache
 (see the <code>cache_hit != true</code> condition)</li>
 <li>the <code>creation_time</code> is converted to our local timezone</li>

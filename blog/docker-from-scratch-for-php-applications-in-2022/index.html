@@ -167,6 +167,12 @@ You find the branch for this tutorial at
 (2022-03-22)</li>
 <li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
+<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+(2022-04-25)</li>
+<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+(2022-04-25)</li>
+<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+(2022-04-25)</li>
 </ul>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
@@ -179,14 +185,6 @@ to get automatic notifications when the next part comes out :)</p>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#local-docker-setup">Local docker setup</a></li>
-<li><a href="#makefile">Makefile</a>
-<ul>
-<li><a href="#make-mk-includes"><code>.make/*.mk</code> includes</a></li>
-<li><a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a>
-<ul>
-<li><a href="#enforce-required-parameters">Enforce required parameters</a></li>
-</ul></li>
-</ul></li>
 <li><a href="#docker">Docker</a>
 <ul>
 <li><a href="#docker-compose">docker-compose</a>
@@ -202,6 +200,12 @@ to get automatic notifications when the next part comes out :)</p>
 <li><a href="#image-naming-convention">Image naming convention</a></li>
 <li><a href="#environments-and-build-targets">Environments and build targets</a></li>
 </ul></li>
+</ul></li>
+<li><a href="#makefile">Makefile</a>
+<ul>
+<li><a href="#make-mk-includes"><code>.make/*.mk</code> includes</a></li>
+<li><a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></li>
+<li><a href="#enforce-required-parameters">Enforce required parameters</a></li>
 </ul></li>
 <li><a href="#make-docker-3">Make + Docker = &lt;3</a>
 <ul>
@@ -288,79 +292,6 @@ make docker-build</code></pre>
 diagram shows how the containers are connected</p>
 <p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
 <p>See also the <a href="#php-poc">PHP POC</a> for a full test of the setup.</p>
-<!-- generated -->
-<p><a id='makefile'> </a></p>
-<!-- /generated -->
-<h2>Makefile</h2>
-<p>The <code>make</code> setup introduces a self-documenting <code>make</code> configuration
-that <a href="/blog/structuring-the-docker-setup-for-php-projects/#using-make-as-central-entry-point">acts as the central entrypoint in the application</a>.</p>
-<!-- generated -->
-<p><a id='make-mk-includes'> </a></p>
-<!-- /generated -->
-<h3><code>.make/*.mk</code> includes</h3>
-<p>Over time the <code>make</code> setup will grow substantially, thus we split it into multiple <code>.mk</code> files in
-the <code>.make/</code> directory. The individual files are prefixed with a number to ensure their order when
-we include them in the main <code>Makefile</code> via</p>
-<pre><code>include .make/*.mk</code></pre>
-<pre><code>.
-└── .make/
-    ├── 01-00-application-setup.mk
-    ├── 01-01-application-commands.mk
-    └── 02-00-docker.mk</code></pre>
-<!-- generated -->
-<p><a id='shared-variables-make-env'> </a></p>
-<!-- /generated -->
-<h3>Shared variables: <code>.make/.env</code></h3>
-<p>We try to make <strong>shared variables</strong> available here, because we can then pass them on to individual
-commands as a prefix, e.g.</p>
-<pre><code class="language-makefile">.PHONY: some-target
-some-target: ## Run some target
-    ENV_FOO=BAR some_command --baz</code></pre>
-<p>This will make the <code>ENV_FOO</code> available as environment variable to <code>some_command</code>.</p>
-<p>Shared variables are used by different components, and we always try to maintain only a <strong>single
-source of truth</strong>. An example would be the <code>DOCKER_REGISTRY</code> variable that we need to define the
-<a href="#image-naming-convention">image names of our docker images</a> in the <code>docker-compose.yml</code> files but
-also when pushing/pulling/deploying images via make targets later. In this case, the variable is
-required by <code>make</code> as well as <code>docker-compose</code>.</p>
-<p>To have a clear separation between variables and &quot;code&quot;, we use a <code>.env</code> file located
-at <code>. make/.env</code>. It can be initialized via</p>
-<pre><code>make make-init</code></pre>
-<p>by copying the <code>.make/.env.example</code> to <code>.make/.env</code>. </p>
-<pre><code>.
-└── .make/
-    ├── .make/.env.example
-    └── .make/.env</code></pre>
-<p>The file is included in the main <code>Makefile</code> via</p>
-<pre><code>-include .make/.env</code></pre>
-<p>The <code>-</code> prefix ensures that make doesn't fail if the file does not exist (yet), see
-<a href="https://www.gnu.org/software/make/manual/html_node/Include.html">GNU make: Including Other Makefiles</a></p>
-<!-- generated -->
-<p><a id='enforce-required-parameters'> </a></p>
-<!-- /generated -->
-<h4>Enforce required parameters</h4>
-<p>We kinda &quot;abuse&quot; make for executing arbitrary commands (instead of building artifacts) and some of
-those commands require parameters that can be
-<a href="https://stackoverflow.com/a/2826178/413531">passed as command arguments</a> in the form</p>
-<pre><code>make some-target FOO=bar</code></pre>
-<p>There is no way to &quot;define&quot; those parameters as we would in a method signature - but we can still
-ensure to fail as early as possible if a parameter is missing via</p>
-<pre><code class="language-makefile">@$(if $(FOO),,$(error FOO is empty or undefined))</code></pre>
-<p>See
-also <a href="https://stackoverflow.com/a/10858332/413531">SO: How to abort makefile if variable not set?</a></p>
-<p>We use this technique for example to ensure that all required variables are defined when we execute
-docker targets via the <code>validate-docker-variables</code> precondition target:</p>
-<pre><code class="language-makefile">.PHONY: validate-docker-variables
-validate-docker-variables: 
-    @$(if $(TAG),,$(error TAG is undefined))
-    @$(if $(ENV),,$(error ENV is undefined))
-    @$(if $(DOCKER_REGISTRY),,$(error DOCKER_REGISTRY is undefined - Did you run make-init?))
-    @$(if $(DOCKER_NAMESPACE),,$(error DOCKER_NAMESPACE is undefined - Did you run make-init?))
-    @$(if $(APP_USER_NAME),,$(error APP_USER_NAME is undefined - Did you run make-init?))
-    @$(if $(APP_GROUP_NAME),,$(error APP_GROUP_NAME is undefined - Did you run make-init?))
-
-.PHONY:docker-build-image
-docker-build-image: validate-docker-variables
-    $(DOCKER_COMPOSE) build $(DOCKER_SERVICE_NAME)</code></pre>
 <!-- generated -->
 <p><a id='docker'> </a></p>
 <!-- /generated -->
@@ -597,6 +528,86 @@ connectivity issues</li>
 <p>After the build for <code>local</code> is finished, we end up with an image called <code>php-base-local</code> that used
 the <code>local</code> build stage as target build stage.</p>
 <!-- generated -->
+<p><a id='makefile'> </a></p>
+<!-- /generated -->
+<h2>Makefile</h2>
+<p>In the following section I will introduce a couple of commands, e.g. for building and running
+containers. And to be honest, I find it kinda challenging to keep them in mind without having to
+look up the exact options and arguments. I would usually create a helper function or an alias in my
+local .bashrc file in a situation like that - but that wouldn't be available to other members of
+the team then and it would be very specific to this one project.</p>
+<p>Instead we'll use a self-documenting Makefile that
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#using-make-as-central-entry-point">acts as the central entrypoint in the application</a>.
+Since Makefiles tend to grow over time, I've adopted some strategies to keep them
+&quot;sane&quot; via includes, shared variables and better error handling.</p>
+<!-- generated -->
+<p><a id='make-mk-includes'> </a></p>
+<!-- /generated -->
+<h3><code>.make/*.mk</code> includes</h3>
+<p>Over time the <code>make</code> setup will grow substantially, thus we split it into multiple <code>.mk</code> files in
+the <code>.make/</code> directory. The individual files are prefixed with a number to ensure their order when
+we include them in the main <code>Makefile</code> via</p>
+<pre><code>include .make/*.mk</code></pre>
+<pre><code>.
+└── .make/
+    ├── 01-00-application-setup.mk
+    ├── 01-01-application-commands.mk
+    └── 02-00-docker.mk</code></pre>
+<!-- generated -->
+<p><a id='shared-variables-make-env'> </a></p>
+<!-- /generated -->
+<h3>Shared variables: <code>.make/.env</code></h3>
+<p>We try to make <strong>shared variables</strong> available here, because we can then pass them on to individual
+commands as a prefix, e.g.</p>
+<pre><code class="language-makefile">.PHONY: some-target
+some-target: ## Run some target
+    ENV_FOO=BAR some_command --baz</code></pre>
+<p>This will make the <code>ENV_FOO</code> available as environment variable to <code>some_command</code>.</p>
+<p>Shared variables are used by different components, and we always try to maintain only a <strong>single
+source of truth</strong>. An example would be the <code>DOCKER_REGISTRY</code> variable that we need to define the
+<a href="#image-naming-convention">image names of our docker images</a> in the <code>docker-compose.yml</code> files but
+also when pushing/pulling/deploying images via make targets later. In this case, the variable is
+required by <code>make</code> as well as <code>docker-compose</code>.</p>
+<p>To have a clear separation between variables and &quot;code&quot;, we use a <code>.env</code> file located
+at <code>. make/.env</code>. It can be initialized via</p>
+<pre><code>make make-init</code></pre>
+<p>by copying the <code>.make/.env.example</code> to <code>.make/.env</code>.</p>
+<pre><code>.
+└── .make/
+    ├── .make/.env.example
+    └── .make/.env</code></pre>
+<p>The file is included in the main <code>Makefile</code> via</p>
+<pre><code>-include .make/.env</code></pre>
+<p>The <code>-</code> prefix ensures that make doesn't fail if the file does not exist (yet), see
+<a href="https://www.gnu.org/software/make/manual/html_node/Include.html">GNU make: Including Other Makefiles</a></p>
+<!-- generated -->
+<p><a id='enforce-required-parameters'> </a></p>
+<!-- /generated -->
+<h3>Enforce required parameters</h3>
+<p>We kinda &quot;abuse&quot; make for executing arbitrary commands (instead of building artifacts) and some of
+those commands require parameters that can be
+<a href="https://stackoverflow.com/a/2826178/413531">passed as command arguments</a> in the form</p>
+<pre><code>make some-target FOO=bar</code></pre>
+<p>There is no way to &quot;define&quot; those parameters as we would in a method signature - but we can still
+ensure to fail as early as possible if a parameter is missing via</p>
+<pre><code class="language-makefile">@$(if $(FOO),,$(error FOO is empty or undefined))</code></pre>
+<p>See
+also <a href="https://stackoverflow.com/a/10858332/413531">SO: How to abort makefile if variable not set?</a></p>
+<p>We use this technique for example to ensure that all required variables are defined when we execute
+docker targets via the <code>validate-docker-variables</code> precondition target:</p>
+<pre><code class="language-makefile">.PHONY: validate-docker-variables
+validate-docker-variables: 
+    @$(if $(TAG),,$(error TAG is undefined))
+    @$(if $(ENV),,$(error ENV is undefined))
+    @$(if $(DOCKER_REGISTRY),,$(error DOCKER_REGISTRY is undefined - Did you run make-init?))
+    @$(if $(DOCKER_NAMESPACE),,$(error DOCKER_NAMESPACE is undefined - Did you run make-init?))
+    @$(if $(APP_USER_NAME),,$(error APP_USER_NAME is undefined - Did you run make-init?))
+    @$(if $(APP_GROUP_NAME),,$(error APP_GROUP_NAME is undefined - Did you run make-init?))
+
+.PHONY:docker-build-image
+docker-build-image: validate-docker-variables
+    $(DOCKER_COMPOSE) build $(DOCKER_SERVICE_NAME)</code></pre>
+<!-- generated -->
 <p><a id='make-docker-3'> </a></p>
 <!-- /generated -->
 <h2>Make + Docker = &lt;3</h2>
@@ -631,7 +642,7 @@ DOCKER_COMPOSE_PHP_BASE:=$(DOCKER_COMPOSE_COMMAND) -f $(DOCKER_COMPOSE_FILE_PHP_
 <li><code>DOCKER_COMPOSE</code> uses <code>docker-compose.yml</code> and extends it with <code>docker-compose.local.yml</code></li>
 <li><code>DOCKER_COMPOSE_PHP_BASE</code> uses only <code>docker-compose-php-base.yml</code></li>
 </ul>
-<p>The variables can then be used later in make recipes. </p>
+<p>The variables can then be used later in make recipes.</p>
 <!-- generated -->
 <p><a id='ensuring-the-build-order'> </a></p>
 <!-- /generated -->

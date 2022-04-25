@@ -3,6 +3,9 @@ https://www.pascallandau.com/about/
 https://www.pascallandau.com/blog/
 https://www.pascallandau.com/bigquery-snippets/
 https://www.pascallandau.com/personal-finance/
+https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/
+https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/
+https://www.pascallandau.com/blog/php-qa-tools-make-docker/
 https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/
 https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/
 https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/

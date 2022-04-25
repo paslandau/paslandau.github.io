@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="How to setup CI (Continuous Integration) pipelines for dockerized PHP applications with Github Actions and Gitlab Pipelines">
+            <meta name="author" content="Pascal Landau">
+        <title>CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <link rel="stylesheet"
+          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    
+    <!-- Highlight sourcecode -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+    <![endif]-->
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+                <li>
+                    <a href="/fitness/">Fitness</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Create a CI pipeline for dockerized PHP Apps</h1>
+                                            <h2 class="subheading">- Continuous Integration with Github &amp; Gitlab</h2>
+                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2022-04-25 07:00:00</span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
+(Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
+Pipelines</strong>.</p>
+<div class="center-div">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<p>All code samples are publicly available in my
+<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+You find the branch for this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a>.</p>
+<!-- generated -->
+<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
+<!-- /generated -->
+<h2>Published parts of the Docker PHP Tutorial</h2>
+<ul>
+<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+(2018-07-08)</li>
+<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+(2018-08-06)</li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+(2019-05-20)</li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+(2022-03-21)</li>
+<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+(2022-03-22)</li>
+<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+(2022-03-23)</li>
+<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+(2022-04-25)</li>
+<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+(2022-04-25)</li>
+<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+(2022-04-25)</li>
+</ul>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a>
+to get automatic notifications when the next part comes out :)</p>
+<!-- generated -->
+<p><a id='table-of-contents'> </a></p>
+<!-- /generated -->
+<h2>Table of contents</h2>
+<!-- toc -->
+<ul>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#recommended-reading">Recommended reading</a></li>
+<li><a href="#approach">Approach</a></li>
+<li><a href="#try-it-yourself">Try it yourself</a></li>
+</ul></li>
+<li><a href="#ci-setup">CI setup</a>
+<ul>
+<li><a href="#general-ci-notes">General CI notes</a>
+<ul>
+<li><a href="#initialize-make-for-ci">Initialize <code>make</code> for CI</a></li>
+<li><a href="#wait-for-service-sh">wait-for-service.sh</a></li>
+</ul></li>
+<li><a href="#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a>
+<ul>
+<li><a href="#run-details">Run details</a></li>
+<li><a href="#execution-example">Execution example</a></li>
+</ul></li>
+<li><a href="#setup-for-github-actions">Setup for Github Actions</a>
+<ul>
+<li><a href="#the-workflow-file">The Workflow file</a></li>
+</ul></li>
+<li><a href="#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a>
+<ul>
+<li><a href="#the-gitlab-ci-yml-pipeline-file">The <code>.gitlab-ci.yml</code> pipeline file</a></li>
+<li><a href="#performance">Performance</a>
+<ul>
+<li><a href="#the-caching-problem-on-ci">The caching problem on CI</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><a href="#docker-changes">Docker changes</a>
+<ul>
+<li><a href="#compose-file-updates">Compose file updates</a>
+<ul>
+<li><a href="#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a></li>
+</ul></li>
+<li><a href="#build-target-ci">Build target: <code>ci</code></a>
+<ul>
+<li><a href="#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>
+<ul>
+<li><a href="#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a></li>
+<li><a href="#build-the-dependencies">Build the dependencies</a></li>
+<li><a href="#create-the-final-image">Create the final image</a></li>
+</ul></li>
+<li><a href="#build-stage-ci-in-the-application-image">Build stage <code>ci</code> in the <code>application</code> image</a></li>
+</ul></li>
+<li><a href="#dockerignore">.dockerignore</a></li>
+</ul></li>
+<li><a href="#makefile-changes">Makefile changes</a>
+<ul>
+<li><a href="#initialize-the-shared-variables">Initialize the shared variables</a></li>
+<li><a href="#env-based-docker-compose-config">ENV based docker compose config</a></li>
+</ul></li>
+<li><a href="#codebase-changes">Codebase changes</a>
+<ul>
+<li><a href="#add-a-test-for-encrypted-files">Add a test for encrypted files</a></li>
+<li><a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a></li>
+<li><a href="#create-a-junit-report-from-phpunit">Create a JUnit report from PhpUnit</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- /toc -->
+<!-- generated -->
+<p><a id='introduction'> </a></p>
+<!-- /generated -->
+<h2>Introduction</h2>
+<p>CI is short for <strong>C</strong>ontinuous <strong>I</strong>ntegration and to me mostly means <strong>running the code quality
+tools and tests of a codebase in an isolated environment</strong> (preferably automatically). This is<br />
+particularly important when working in a team, because <strong>the CI system acts as the final
+gatekeeper</strong> before features or bugfixes are merged into the main branch.</p>
+<p>I initially learned about CI systems when I stubbed my toes into the open source water. Back in the
+day I used <a href="https://travis-ci.org/">Travis CI</a> for my own projects and replaced it
+with <a href="https://github.com/features/actions">Github Actions</a> at some point. At ABOUT YOU we started
+out with a self-hosted <a href="https://www.jenkins.io/">Jenkins</a> server and then moved on to
+<a href="https://about.gitlab.com/stages-devops-lifecycle/continuous-integration/">Gitlab CI</a> as a fully
+managed solution (though we use <a href="https://docs.gitlab.com/runner/">custom runners</a>).</p>
+<!-- generated -->
+<p><a id='recommended-reading'> </a></p>
+<!-- /generated -->
+<h3>Recommended reading</h3>
+<p>This tutorial builds on top of the previous parts. I'll do my best to cross-reference the
+corresponding articles when necessary, but I would still recommend to do some upfront reading on:</p>
+<ul>
+<li>the <a href="/blog/structuring-the-docker-setup-for-php-projects/#structuring-the-repository">general folder structure</a>, the
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker">update of the <code>.docker/</code> directory</a> and the introduction of a
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-mk-includes"><code>.make/</code> directory</a></li>
+<li>the <a href="/blog/structuring-the-docker-setup-for-php-projects/#makefile-and-bashrc">general usage of <code>make</code></a>
+and <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#makefile">it's evolution</a> as well as
+the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">connection to <code>docker compose</code> commands</a></li>
+<li>the concepts of the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker">docker containers and the <code>docker compose</code> setup</a></li>
+</ul>
+<p>And as a nice-to-know:</p>
+<ul>
+<li>the setup of <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit">PhpUnit for the <code>test</code> make target</a> as well as the
+<a href="/blog/php-qa-tools-make-docker/#qa-make-targets"><code>qa</code> make target</a></li>
+<li>the <a href="/blog/git-secret-encrypt-repository-docker/">usage of <code>git-secret</code> to handle secret values</a></li>
+</ul>
+<!-- generated -->
+<p><a id='approach'> </a></p>
+<!-- /generated -->
+<h3>Approach</h3>
+<p>In this tutorial I'm going to explain <strong>how to make our existing docker setup work with Github Actions
+and <a href="https://docs.gitlab.com/ee/ci/pipelines/">Gitlab CI/CD Pipelines</a></strong>. As I'm a big fan of a
+&quot;progressive enhancement&quot; approach, we will ensure that <strong>all necessary steps can be performed
+locally through <code>make</code></strong>. This has the additional benefit of keeping a single source of truth (the
+<code>Makefile</code>) which will come in handy when we set up the CI system on two different providers
+(Github and Gitlab).</p>
+<p>The general process will look very similar to the one for local development:</p>
+<ul>
+<li>build the docker setup</li>
+<li>start the docker setup</li>
+<li>run the qa tools</li>
+<li>run the tests</li>
+</ul>
+<p>You can see the final results in the <a href="#ci-setup">CI setup</a> section, including the concrete <code>yml</code>
+files and links to the repositories, see</p>
+<ul>
+<li><a href="#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a></li>
+<li><a href="#setup-for-github-actions">Setup for Github Actions</a></li>
+<li><a href="#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a></li>
+</ul>
+<p>On a code level, we will <strong>treat CI as an environment</strong>, configured through the env variable <code>ENV</code>. So
+far we only used <code>ENV=local</code> and we will extend that to also use <code>ENV=ci</code>. The necessary changes
+are explained after the concrete CI setup instructions in the sections</p>
+<ul>
+<li><a href="#docker-changes">Docker changes</a></li>
+<li><a href="#makefile-changes">Makefile changes</a></li>
+<li><a href="#codebase-changes">Codebase changes</a></li>
+</ul>
+<!-- generated -->
+<p><a id='try-it-yourself'> </a></p>
+<!-- /generated -->
+<h3>Try it yourself</h3>
+<p>To get a feeling for what's going on, you can start by
+<a href="#setup-for-a-local-ci-run">executing the local CI run</a>: </p>
+<ul>
+<li>checkout branch
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a></li>
+<li>initialize <code>make</code></li>
+<li>run the <code>.local-ci.sh</code> script </li>
+</ul>
+<p>This should give you a similar output as presented in the <a href="#execution-example">Execution example</a>.</p>
+<pre><code class="language-bash">git checkout part-7-ci-pipeline-docker-php-gitlab-github
+
+# Initialize make
+make make-init
+
+# Execute the local CI run
+bash .local-ci.sh</code></pre>
+<!-- generated -->
+<p><a id='ci-setup'> </a></p>
+<!-- /generated -->
+<h2>CI setup</h2>
+<!-- generated -->
+<p><a id='general-ci-notes'> </a></p>
+<!-- /generated -->
+<h3>General CI notes</h3>
+<!-- generated -->
+<p><a id='initialize-make-for-ci'> </a></p>
+<!-- /generated -->
+<h4>Initialize <code>make</code> for CI</h4>
+<p>As a very first step we need to &quot;configure&quot; the codebase to operate for the <code>ci</code> environment.
+This is done through the <code>make-init</code> target as explained later in more detail in the
+<a href="#makefile-changes">Makefile changes</a> section via</p>
+<pre><code class="language-bash">make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</code></pre>
+<pre><code class="language-text">$ make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
+Created a local .make/.env file</code></pre>
+<p><code>ENV=ci</code> ensures that we</p>
+<ul>
+<li>use <a href="#env-based-docker-compose-config">the correct <code>docker compose</code> config files</a></li>
+<li>use <a href="#build-target-ci">the <code>ci</code> build target</a></li>
+</ul>
+<p><code>TAG=latest</code> is just a simplification for now because we don't do anything with the images yet.
+In an upcoming tutorial we will push them to a container registry for later usage in production
+deployments and then set the <code>TAG</code> to something more meaningful (like the build number).</p>
+<p><code>EXECUTE_IN_CONTAINER=true</code> forces every <code>make</code> command that uses a
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers"><code>RUN_IN_*_CONTAINER</code> setup</a>
+to run in a container. This is important, because <strong>the Gitlab runner will actually run in a
+docker container itself</strong>. However, this would cause any affected target <strong>to omit the
+<code>$(DOCKER_COMPOSER) exec</code> prefix</strong>.</p>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG" alt="Execute all targets in the application docker container" /></a></p>
+<p><code>GPG_PASSWORD=12345678</code> is the password for the secret <code>gpg</code> key as mentioned in
+<a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a>.</p>
+<!-- generated -->
+<p><a id='wait-for-service-sh'> </a></p>
+<!-- /generated -->
+<h4>wait-for-service.sh</h4>
+<p>I'll explain the &quot;container is up and running but the underlying service is not&quot; problem
+for the <code>mysql</code> service and how we can solve it with a health check later in this article at
+<a href="#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a>.
+On purpose, we don't want <code>docker compose</code> to take care of the waiting because we can make
+&quot;better use of the waiting time&quot; and will instead implement it ourselves with a simple bash
+script located at <code>.docker/scripts/wait-for-service.sh</code>:</p>
+<pre><code class="language-bash">#!/bin/bash
+
+name=$1
+max=$2
+interval=$3
+
+[ -z "$1" ] &amp;&amp; echo "Usage example: bash wait-for-service.sh mysql 5 1"
+[ -z "$2" ] &amp;&amp; max=30
+[ -z "$3" ] &amp;&amp; interval=1
+
+echo "Waiting for service '$name' to become healthy, checking every $interval second(s) for max. $max times"
+
+while true; do 
+  ((i++))
+  echo "[$i/$max] ..."; 
+  status=$(docker inspect --format "{{json .State.Health.Status }}" "$(docker ps --filter name="$name" -q)")
+  if echo "$status" | grep -q '"healthy"'; then 
+   echo "SUCCESS";
+   break
+  fi
+  if [ $i == $max ]; then 
+    echo "FAIL"; 
+    exit 1
+  fi 
+  sleep $interval; 
+done</code></pre>
+<p>This script waits for a docker <code>$service</code> to become &quot;healthy&quot; by
+<a href="https://stackoverflow.com/a/42738182/413531">checking the <code>.State.Health.Status</code> info</a>
+of the <code>docker inspect</code> command.</p>
+<p><strong>CAUTION:</strong> The script uses <code>$(docker ps --filter name="$name" -q)</code> to determine the id of the
+container, i.e. it will &quot;match&quot; all running containers against the <code>$name</code> - this would fail if
+there is more than one matching container! I.e. you must ensure that <code>$name</code> is specific
+enough to identify one single container uniquely.</p>
+<p>The script will check up to <code>$max</code> times
+in a interval of <code>$interval</code> seconds. See <a href="https://unix.stackexchange.com/a/82610">these</a>
+<a href="https://unix.stackexchange.com/a/137639">answers</a> on the
+&quot;How do I write a retry logic in script to keep retrying to run it up to 5 times?&quot; question for
+the implementation of the retry logic. To check the health of the <code>mysql</code> service for 5
+times with 1 seconds between each try, it can be called via</p>
+<pre><code class="language-bash">bash wait-for-service.sh mysql 5 1</code></pre>
+<p>Output</p>
+<pre><code class="language-text">$ bash wait-for-service.sh mysql 5 1
+Waiting for service 'mysql' to become healthy, checking every 1 second(s) for max. 5 times
+[1/5] ...
+[2/5] ...
+[3/5] ...
+[4/5] ...
+[5/5] ...
+FAIL
+
+# OR
+
+$ bash wait-for-service.sh mysql 5 1
+Waiting for service 'mysql' to become healthy, checking every 1 second(s) for max. 5 times
+[1/5] ...
+[2/5] ...
+SUCCESS</code></pre>
+<p>The problem of &quot;container dependencies&quot; isn't new and there are already some existing solutions
+out there, e.g.</p>
+<ul>
+<li><a href="https://github.com/eficode/wait-for">wait-for</a></li>
+<li><a href="https://github.com/vishnubob/wait-for-it">wait-for-it</a></li>
+<li><a href="https://github.com/jwilder/dockerize#waiting-for-other-dependencies">dockerize</a></li>
+<li><a href="https://github.com/ufoscout/docker-compose-wait">docker-compose-wait</a></li>
+</ul>
+<p>But unfortunately all of them operate by checking the availability of a <code>host:port</code> combination
+and in the case of <code>mysql</code> that didn't help, because the container was up, the port was reachable
+but the <code>mysql</code> service in the container was not.</p>
+<!-- generated -->
+<p><a id='setup-for-a-local-ci-run'> </a></p>
+<!-- /generated -->
+<h3>Setup for a &quot;local&quot; CI run</h3>
+<p>As mentioned under <a href="#approach">Approach</a>, we want to be able to perform all necessary steps
+locally and I created a corresponding script at <code>.local-ci.sh</code>:</p>
+<pre><code class="language-bash">#!/bin/bash
+# fail on any error 
+# @see https://stackoverflow.com/a/3474556/413531
+set -e
+
+make docker-down ENV=ci || true
+
+start_total=$(date +%s)
+
+# STORE GPG KEY
+cp secret-protected.gpg.example secret.gpg
+
+# DEBUG
+docker version
+docker compose version
+cat /etc/*-release || true
+
+# SETUP DOCKER
+make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
+start_docker_build=$(date +%s)
+make docker-build
+end_docker_build=$(date +%s)
+mkdir -p .build &amp;&amp; chmod 777 .build
+
+# START DOCKER
+start_docker_up=$(date +%s)
+make docker-up
+end_docker_up=$(date +%s)
+make gpg-init
+make secret-decrypt-with-password
+
+# QA
+start_qa=$(date +%s)
+make qa || FAILED=true
+end_qa=$(date +%s)
+
+# WAIT FOR CONTAINERS
+start_wait_for_containers=$(date +%s)
+bash .docker/scripts/wait-for-service.sh mysql 30 1
+end_wait_for_containers=$(date +%s)
+
+# TEST
+start_test=$(date +%s)
+make test || FAILED=true
+end_test=$(date +%s)
+
+end_total=$(date +%s)
+
+# RUNTIMES
+echo "Build docker:        " `expr $end_docker_build - $start_docker_build`
+echo "Start docker:        " `expr $end_docker_up - $start_docker_up  `
+echo "QA:                  " `expr $end_qa - $start_qa`
+echo "Wait for containers: " `expr $end_wait_for_containers - $start_wait_for_containers`
+echo "Tests:               " `expr $end_test - $start_test`
+echo "---------------------"
+echo "Total:               " `expr $end_total - $start_total`
+
+# CLEANUP
+# reset the default make variables
+make make-init
+make docker-down ENV=ci || true
+
+# EVALUATE RESULTS
+if [ "$FAILED" == "true" ]; then echo "FAILED"; exit 1; fi
+
+echo "SUCCESS"</code></pre>
+<!-- generated -->
+<p><a id='run-details'> </a></p>
+<!-- /generated -->
+<h4>Run details</h4>
+<ul>
+<li>as a preparation step, we first ensure that no outdated <code>ci</code> containers are running (this is
+only necessary locally, because runners on a remote CI system will start &quot;from scratch&quot;)
+<pre><code class="language-bash">make docker-down ENV=ci || true</code></pre></li>
+<li>we take some time measurements to understand how long certain parts take via
+<pre><code class="language-bash">start_total=$(date +%s)</code></pre>
+<p>to store the current timestamp</p></li>
+<li>we need the secret <code>gpg</code> key in order to decrypt the secrets and simply copy the
+<a href="#add-a-password-protected-secret-gpg-key">password-protected example key</a>
+(in the actual CI systems the key will be configured as a secret value that is injected in
+the run)
+<pre><code class="language-bash"># STORE GPG KEY
+cp secret-protected.gpg.example secret.gpg</code></pre></li>
+<li>I like printing some debugging info in order to understand which exact circumstances
+we're dealing with (tbh, this is mostly relevant when setting the CI system up or making
+modifications to it)
+<pre><code class="language-bash"># DEBUG
+docker version
+docker compose version
+cat /etc/*-release || true</code></pre></li>
+<li>for the docker setup, we start with
+<a href="#initialize-make-for-ci">initializing the environment for <code>ci</code></a>
+<pre><code class="language-bash"># SETUP DOCKER
+make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</code></pre>
+<p>then build the docker setup</p>
+<pre><code class="language-bash">make docker-build</code></pre>
+<p>and finally add a <code>.build/</code> directory to
+<a href="#create-a-junit-report-from-phpunit">collect the build artifacts</a></p>
+<pre><code class="language-bash">mkdir -p .build &amp;&amp; chmod 777 .build</code></pre></li>
+<li>then, the docker setup is started
+<pre><code class="language-bash"># START DOCKER
+make docker-up</code></pre>
+<p>and <code>gpg</code> is initialized so that
+<a href="#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a></p>
+<pre><code class="language-bash">make gpg-init
+make secret-decrypt-with-password</code></pre>
+<p>We don't need to pass a <code>GPG_PASSWORD</code> to <code>secret-decrypt-with-password</code> because we have set
+it up in the previous step as a default value via <code>make-init</code></p></li>
+<li>once the <code>application</code> container is running, the qa tools are run by invoking the
+<a href="/blog/php-qa-tools-make-docker/#the-qa-target"><code>qa</code> make target</a>
+<pre><code class="language-bash"># QA
+make qa || FAILED=true</code></pre>
+<p>The <code>|| FAILED=true</code> part makes sure that the script will not be terminated if the checks fail.
+Instead, the fact that a failure happened is &quot;recorded&quot; in the <code>FAILED</code> variable so that we
+can evaluate it at the end. We don't want the script to stop here because we want the
+following steps to be executed as well (e.g. the tests).</p></li>
+<li>to mitigate the
+<a href="#adding-a-health-check-for-mysql">&quot;<code>mysql</code> is not ready&quot; problem</a>, we will now apply the
+<a href="#wait-for-service-sh">wait-for-service.sh script</a>
+<pre><code class="language-bash"># WAIT FOR CONTAINERS
+bash .docker/scripts/wait-for-service.sh mysql 30 1</code></pre></li>
+<li>once <code>mysql</code> is ready, we can execute the tests via the
+<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit"><code>test</code> make target</a> and
+apply the same <code>|| FAILED=true</code> workaround as for the qa tools
+<pre><code class="language-bash"># TEST
+make test || FAILED=true</code></pre></li>
+<li>finally, all the timers are printed
+<pre><code class="language-bash"># RUNTIMES
+echo "Build docker:        " `expr $end_docker_build - $start_docker_build`
+echo "Start docker:        " `expr $end_docker_up - $start_docker_up  `
+echo "QA:                  " `expr $end_qa - $start_qa`
+echo "Wait for containers: " `expr $end_wait_for_containers - $start_wait_for_containers`
+echo "Tests:               " `expr $end_test - $start_test`
+echo "---------------------"
+echo "Total:               " `expr $end_total - $start_total`</code></pre></li>
+<li>we clean up the resources (this is only necessary when running locally, because the runner of
+a CI system would be shut down anyways)
+<pre><code class="language-bash"># CLEANUP
+make make-init
+make docker-down ENV=ci || true</code></pre></li>
+<li>
+<p>and finally evaluate if any error occurred when running the qa tools or the tests</p>
+<pre><code class="language-bash"># EVALUATE RESULTS
+if [ "$FAILED" == "true" ]; then echo "FAILED"; exit 1; fi
+
+echo "SUCCESS"</code></pre>
+</li>
+</ul>
+<!-- generated -->
+<p><a id='execution-example'> </a></p>
+<!-- /generated -->
+<h4>Execution example</h4>
+<p>Executing the script via</p>
+<pre><code class="language-bash">bash .local-ci.sh</code></pre>
+<p>yields the following (shortened) output:</p>
+<pre><code class="language-text">$ bash .local-ci.sh
+Container dofroscra_ci-redis-1  Stopping
+# Stopping all other `ci` containers ...
+# ...
+
+Client:
+ Cloud integration: v1.0.22
+ Version:           20.10.13
+# Print more debugging info ...
+# ...
+
+Created a local .make/.env file
+ENV=ci TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker compose -p dofroscra_ci --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose-php-base.yml build php-base
+#1 [internal] load build definition from Dockerfile
+# Output from building the docker containers 
+# ...
+
+ENV=ci TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker compose -p dofroscra_ci --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.local.ci.yml -f ./.docker/docker-compose/docker-compose.ci.yml up -d
+Network dofroscra_ci_network  Creating
+# Starting all `ci` containers ...
+# ...
+
+"C:/Program Files/Git/mingw64/bin/make" -s gpg-import GPG_KEY_FILES="secret.gpg"
+gpg: directory '/home/application/.gnupg' created
+gpg: keybox '/home/application/.gnupg/pubring.kbx' created
+gpg: /home/application/.gnupg/trustdb.gpg: trustdb created
+gpg: key D7A860BBB91B60C7: public key "Alice Doe protected &lt;alice.protected@example.com&gt;" imported
+# Output of importing the secret and public gpg keys
+# ...
+
+"C:/Program Files/Git/mingw64/bin/make" -s git-secret ARGS="reveal -f -p 12345678"
+git-secret: done. 1 of 1 files are revealed.
+"C:/Program Files/Git/mingw64/bin/make" -j 8 -k --no-print-directory --output-sync=target qa-exec NO_PROGRESS=true
+phplint                             done   took 4s
+phpcs                               done   took 4s
+phpstan                             done   took 8s
+composer-require-checker            done   took 8s
+Waiting for service 'mysql' to become healthy, checking every 1 second(s) for max. 30 times
+[1/30] ...
+SUCCESS
+PHPUnit 9.5.19 #StandWithUkraine
+
+........                                                            8 / 8 (100%)
+
+Time: 00:03.077, Memory: 28.00 MB
+
+OK (8 tests, 15 assertions)
+Build docker:         12
+Start docker:         2
+QA:                   9
+Wait for containers:  3
+Tests:                5
+---------------------
+Total:                46
+Created a local .make/.env file
+
+Container dofroscra_ci-application-1  Stopping
+Container dofroscra_ci-mysql-1  Stopping
+# Stopping all other `ci` containers ...
+# ...
+
+SUCCESS</code></pre>
+<!-- generated -->
+<p><a id='setup-for-github-actions'> </a></p>
+<!-- /generated -->
+<h3>Setup for Github Actions</h3>
+<ul>
+<li><a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">Repository (branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code>)</a></li>
+<li><a href="https://github.com/paslandau/docker-php-tutorial/actions">CI/CD overview (Actions)</a></li>
+<li><a href="https://github.com/paslandau/docker-php-tutorial/runs/5866235820?check_suite_focus=true">Example of a successful job</a></li>
+<li><a href="https://github.com/paslandau/docker-php-tutorial/runs/5867485802?check_suite_focus=true">Example of a failed job</a></li>
+</ul>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG" alt="Github Action example" /></a></p>
+<p>If you are completely new to Github Actions, I recommend to start with the
+<a href="https://docs.github.com/en/actions/quickstart">official Quickstart Guide for GitHub Actions</a>
+and the
+<a href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions">Understanding GitHub Actions</a>
+article. In short:</p>
+<ul>
+<li>Github Actions are based on so called <strong>Workflows</strong>
+<ul>
+<li>Workflows are <code>yaml</code> files that  live in the special <code>.github/workflows</code> directory in the
+repository</li>
+</ul></li>
+<li>a Workflow can contain multiple <strong>Jobs</strong></li>
+<li>each Job consists of a series of <strong>Steps</strong></li>
+<li>each Step needs a <code>run:</code> element that represents a command that is executed by a new shell
+<ul>
+<li>multi-line commands that should use the same shell are written as
+<pre><code class="language-yaml">- run : |
+    echo "line 1"
+    echo "line 2"</code></pre>
+<p>See also <a href="https://stackoverflow.com/a/59536836/413531">difference between &quot;run |&quot; and multiple runs in github actions</a></p></li>
+</ul></li>
+</ul>
+<!-- generated -->
+<p><a id='the-workflow-file'> </a></p>
+<!-- /generated -->
+<h4>The Workflow file</h4>
+<p>Github Actions are triggered automatically based on the files in the <code>.github/workflows</code> directory.
+I have added the file <code>.github/workflows/ci.yml</code> with the following content:</p>
+<pre><code class="language-yaml">name: CI build and test
+
+on:
+  # automatically run for pull request and for pushes to branch "part-7-ci-pipeline-docker-php-gitlab-github"
+  # @see https://stackoverflow.com/a/58142412/413531
+  push:
+    branches:
+      - part-7-ci-pipeline-docker-php-gitlab-github
+  pull_request: {}
+  # enable to trigger the action manually
+  # @see https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+  # CAUTION: there is a known bug that makes the "button to trigger the run" not show up
+  # @see https://github.community/t/workflow-dispatch-workflow-not-showing-in-actions-tab/130088/29
+  workflow_dispatch: {}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: start timer
+        run: |
+          echo "START_TOTAL=$(date +%s)" &gt; $GITHUB_ENV
+
+      - name: STORE GPG KEY
+        run: |
+          # Note: make sure to wrap the secret in double quotes (")
+          echo "${{ secrets.GPG_KEY }}" &gt; ./secret.gpg
+
+      - name: SETUP TOOLS
+        run : |
+          DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+          # install docker compose
+          # @see https://docs.docker.com/compose/cli-command/#install-on-linux
+          # @see https://github.com/docker/compose/issues/8630#issuecomment-1073166114
+          mkdir -p $DOCKER_CONFIG/cli-plugins 
+          curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-$(uname -m) -o $DOCKER_CONFIG/cli-plugins/docker-compose
+          chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+
+      - name: DEBUG
+        run: |
+          docker compose version
+          docker --version
+          cat /etc/*-release
+
+      - name: SETUP DOCKER
+        run: |
+          make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=${{ secrets.GPG_PASSWORD }}"
+          make docker-build
+          mkdir .build &amp;&amp; chmod 777 .build
+
+      - name: START DOCKER
+        run: |
+          make docker-up
+          make gpg-init
+          make secret-decrypt-with-password
+
+      - name: QA
+        run: |
+          # Run the tests and qa tools but only store the error instead of failing immediately
+          # @see https://stackoverflow.com/a/59200738/413531
+          make qa || echo "FAILED=qa" &gt;&gt; $GITHUB_ENV
+
+      - name: WAIT FOR CONTAINERS
+        run: |
+          # We need to wait until mysql is available.
+          bash .docker/scripts/wait-for-service.sh mysql 30 1 
+
+      - name: TEST
+        run: |
+          make test || echo "FAILED=test $FAILED" &gt;&gt; $GITHUB_ENV
+
+      - name: RUNTIMES
+        run: |
+          echo `expr $(date +%s) - $START_TOTAL`
+
+      - name: EVALUATE
+        run: |
+          # Check if $FAILED is NOT empty
+          if [ ! -z "$FAILED" ]; then echo "Failed at $FAILED" &amp;&amp; exit 1; fi
+
+      - name: upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: ./.build</code></pre>
+<p>The steps are essentially the same as explained before at
+<a href="#run-details">Run details for the local run</a>. Some additional notes:</p>
+<ul>
+<li>I want the Action to be triggered automatically only when I
+<a href="https://stackoverflow.com/a/58142412/413531">push to branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code></a>
+OR when a pull request is created (via <code>pull_request</code>). In addition, I want to be able to
+<a href="https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/">trigger the Action manually on any branch</a>
+(via <code>workflow_dispatch</code>).
+<pre><code class="language-yaml">on:
+push:
+  branches:
+    - part-7-ci-pipeline-docker-php-gitlab-github
+pull_request: {}
+workflow_dispatch: {}</code></pre>
+<p>For a real project, I would let the action only run automatically on long-living branches like
+<code>main</code> or <code>develop</code>. The manual trigger is helpful if you just want to test your current work
+without putting it up for review. <strong>CAUTION:</strong> There is a
+<a href="https://github.community/t/workflow-dispatch-workflow-not-showing-in-actions-tab/130088/29">known issue that &quot;hides&quot; the &quot;Trigger workflow&quot; button to trigger the action manually</a>.</p></li>
+<li>a new shell is started for each <code>run:</code> instruction, thus we must store our timer in the &quot;global&quot;
+<a href="https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable">environment variable <code>$GITHUB_ENV</code></a>
+<pre><code class="language-yaml">  - name: start timer
+  run: |
+    echo "START_TOTAL=$(date +%s)" &gt; $GITHUB_ENV </code></pre>
+<p>This will be the only timer we use, because the job uses multiple steps that are timed
+automatically - so we don't need to take timestamps manually:
+<a href="/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG" alt="Github Action step times" /></a></p></li>
+<li>
+<p>the <code>gpg</code> key is configured as an
+<a href="https://docs.github.com/en/actions/security-guides/encrypted-secrets">encrypted secret</a> named
+<code>GPG_KEY</code> and is stored in <code>./secret.gpg</code>. The value is the content of the
+<code>secret-protected.gpg.example</code> file</p>
+<pre><code class="language-yaml">  - name: STORE GPG KEY
+    run: |
+      echo "${{ secrets.GPG_KEY }}" &gt; ./secret.gpg</code></pre>
+<p>Secrets are configured in the Github repository under <code>Settings &gt; Secrets &gt; Actions</code> at</p>
+<pre><code class="language-text">https://github.com/$user/$repository/settings/secrets/actions
+
+e.g.
+
+https://github.com/paslandau/docker-php-tutorial/settings/secrets/actions</code></pre>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG" alt="Github Action Secrets UI" /></a></p>
+</li>
+<li>the <code>ubuntu-latest</code> image doesn't contain the <code>docker compose</code> plugin, thus we need to
+<a href="https://docs.docker.com/compose/cli-command/#install-on-linux">install it manually</a>
+<pre><code class="language-yaml">  - name: SETUP TOOLS
+  run : |
+    DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+    mkdir -p $DOCKER_CONFIG/cli-plugins 
+    curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-$(uname -m) -o $DOCKER_CONFIG/cli-plugins/docker-compose
+    chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose</code></pre></li>
+<li>for the <code>make</code> initialization we need the second secret named <code>GPG_PASSWORD</code> - which is
+configured as <code>12345678</code> in our case, see
+<a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret gpg key</a>
+<pre><code class="language-yaml">  - name: SETUP DOCKER
+    run: |
+      make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=${{ secrets.GPG_PASSWORD }}"</code></pre></li>
+<li>because the runner will be shutdown after the run, we need to move the build artifacts to a
+permanent location, using the
+<a href="https://github.com/actions/upload-artifact#upload-an-entire-directory">actions/upload-artifact@v3 action</a>
+<pre><code class="language-yaml">  - name: upload build artifacts
+    uses: actions/upload-artifact@v3
+    with:
+      name: build-artifacts
+      path: ./.build</code></pre>
+<p>You can
+<a href="https://github.com/actions/upload-artifact#where-does-the-upload-go">download the artifacts in the Run overview UI</a>
+<a href="/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG" alt="Github Actions: Run overview UI shows build-artifacts" /></a></p></li>
+</ul>
+<!-- generated -->
+<p><a id='setup-for-gitlab-pipelines'> </a></p>
+<!-- /generated -->
+<h3>Setup for Gitlab Pipelines</h3>
+<ul>
+<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/tree/part-7-ci-pipeline-docker-php-gitlab-github">Repository (branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code>)</a></li>
+<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines">CI/CD overview (Pipelines)</a></li>
+<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511339886">Example of a successful job</a></li>
+<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511341545">Example of a failed job</a></li>
+</ul>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG" alt="Gitlab Pipeline example" /></a></p>
+<p>If you are completely new to Gitlab Pipelines, I recommend to start with the
+<a href="https://docs.gitlab.com/ee/ci/quick_start/">official Get started with GitLab CI/CD guide</a>. In
+short:</p>
+<ul>
+<li>the core concept of Gitlab Pipelines is the <strong>Pipeline</strong>
+<ul>
+<li>it is defined in the <code>yaml</code> file <code>.gitlab-ci.yml</code> that lives in the root of the repository</li>
+</ul></li>
+<li>a Pipeline can contain multiple <strong>Stages</strong></li>
+<li>each Stage consists of a series of <strong>Jobs</strong></li>
+<li>each Job contains a <a href="https://docs.gitlab.com/ee/ci/yaml/index.html#script"><strong><code>script</code></strong> section</a></li>
+<li>the <code>script</code> section consists of a series of shell commands</li>
+</ul>
+<!-- generated -->
+<p><a id='the-gitlab-ci-yml-pipeline-file'> </a></p>
+<!-- /generated -->
+<h4>The <code>.gitlab-ci.yml</code> pipeline file</h4>
+<p>Gitlab Pipelines are triggered automatically based on a <code>.gitlab-ci.yml</code> file located at the
+root of the repository. It has the following content:</p>
+<pre><code class="language-yaml">stages:
+  - build_test
+
+QA and Tests:
+  stage: build_test
+
+  rules:
+    # automatically run for pull request and for pushes to branch "part-7-ci-pipeline-docker-php-gitlab-github"
+    - if: '($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "part-7-ci-pipeline-docker-php-gitlab-github")'
+
+  # see https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-docker-in-docker
+  image: docker:20.10.12
+
+  services:
+    - name: docker:dind
+
+  script:
+    - start_total=$(date +%s)
+
+    ## STORE GPG KEY
+    - cp $GPG_KEY_FILE ./secret.gpg
+
+    ## SETUP TOOLS
+    - start_install_tools=$(date +%s)
+    # "curl" is required to download docker compose
+    - apk add --no-cache make bash curl
+    # install docker compose
+    # @see https://docs.docker.com/compose/cli-command/#install-on-linux
+    - mkdir -p ~/.docker/cli-plugins/
+    - curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+    - chmod +x ~/.docker/cli-plugins/docker-compose
+    - end_install_tools=$(date +%s)
+
+    ## DEBUG
+    - docker version
+    - docker compose version
+    # show linux distro info
+    - cat /etc/*-release
+
+    ## SETUP DOCKER
+    # Pass default values to the make-init command - otherwise we would have to pass those as arguments to every make call
+    - make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=$GPG_PASSWORD"
+    - start_docker_build=$(date +%s)
+    - make docker-build
+    - end_docker_build=$(date +%s)
+    - mkdir .build &amp;&amp; chmod 777 .build
+
+    ## START DOCKER
+    - start_docker_up=$(date +%s)
+    - make docker-up
+    - end_docker_up=$(date +%s)
+    - make gpg-init
+    - make secret-decrypt-with-password
+
+    ## QA
+    # Run the tests and qa tools but only store the error instead of failing immediately
+    # @see https://stackoverflow.com/a/59200738/413531
+    - start_qa=$(date +%s)
+    - make qa ENV=ci || FAILED=true
+    - end_qa=$(date +%s)
+
+    ## WAIT FOR CONTAINERS
+    # We need to wait until mysql is available.
+    - start_wait_for_containers=$(date +%s)
+    - bash .docker/scripts/wait-for-service.sh mysql 30 1
+    - end_wait_for_containers=$(date +%s)
+
+    ## TEST
+    - start_test=$(date +%s)
+    - make test ENV=ci || FAILED=true
+    - end_test=$(date +%s)
+
+    - end_total=$(date +%s)
+
+    # RUNTIMES
+    - echo "Tools:" `expr $end_install_tools - $start_install_tools`
+    - echo "Build docker:" `expr $end_docker_build - $start_docker_build`
+    - echo "Start docker:" `expr $end_docker_up - $start_docker_up  `
+    - echo "QA:" `expr $end_qa - $start_qa`
+    - echo "Wait for containers:" `expr $end_wait_for_containers - $start_wait_for_containers`
+    - echo "Tests:" `expr $end_test - $start_test`
+    - echo "Total:" `expr $end_total - $start_total`
+
+    # EVALUATE RESULTS
+    # Use if-else constructs in Gitlab pipelines
+    # @see https://stackoverflow.com/a/55464100/413531
+    - if [ "$FAILED" == "true" ]; then exit 1; fi
+
+  # Save the build artifact, e.g. the JUNIT report.xml file, so we can download it later
+  # @see https://docs.gitlab.com/ee/ci/pipelines/job_artifacts.html
+  artifacts:
+    when: always
+    paths:
+      # the quotes are required
+      # @see https://stackoverflow.com/questions/38009869/how-to-specify-wildcard-artifacts-subdirectories-in-gitlab-ci-yml#comment101411265_38055730
+      - ".build/*"
+    expire_in: 1 week</code></pre>
+<p>The steps are essentially the same as explained before under
+<a href="#run-details">Run details for the local run</a>. Some additional notes:</p>
+<ul>
+<li>we start by defining the stages of the pipeline - though that's currently just one (<code>build_test</code>)
+<pre><code class="language-yaml">stages:
+- build_test</code></pre></li>
+<li>then we define the job <code>QA and Tests</code> and assign it to the <code>build_test</code> stage
+<pre><code class="language-yaml">QA and Tests:
+stage: build_test</code></pre></li>
+<li>I want the Pipeline to be triggered automatically only when I
+<a href="https://stackoverflow.com/a/66812732/413531">push to branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code></a>
+OR <a href="https://docs.gitlab.com/ee/ci/pipelines/merge_request_pipelines.html#use-rules-to-add-jobs">when a pull request is created</a>
+<a href="https://www.shellhacks.com/gitlab-ci-cd-trigger-pipeline-manually-api/">Triggering the Pipeline manually on any branch is possible by default</a>.
+<pre><code class="language-yaml">rules:
+- if: '($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "part-7-ci-pipeline-docker-php-gitlab-github")'</code></pre></li>
+<li>
+<p>since we want to build and run docker images, we need to use a docker base image and activate the
+<code>docker:dind</code> service. See <a href="https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-docker-in-docker">Use Docker to build Docker images: Use Docker-in-Docker</a></p>
+<pre><code class="language-yaml">image: docker:20.10.12
+
+services:
+- name: docker:dind</code></pre>
+</li>
+<li>
+<p>we store the secret <code>gpg</code> key as a secret file (using the
+<a href="https://docs.gitlab.com/ee/ci/variables/#cicd-variable-types">&quot;file&quot; type</a>) in the
+<a href="https://docs.gitlab.com/ee/ci/variables/#custom-cicd-variables">CI/CD variables configuration of the Gitlab repository</a>
+and move it to <code>./secret.gpg</code> in order to decrypt the secrets later</p>
+<pre><code class="language-yaml">## STORE GPG KEY
+- cp $GPG_KEY_FILE ./secret.gpg</code></pre>
+<p>Secrets can be configured under <code>Settings &gt; CI/CD &gt; Variables</code> at</p>
+<pre><code class="language-text">https://gitlab.com/$project/$repository/-/settings/ci_cd
+
+e.g.
+
+https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/settings/ci_cd</code></pre>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/gitlab-ci-cd-variables-ui.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/gitlab-ci-cd-variables-ui.PNG" alt="Gitlab CI/CD Variables UI" /></a></p>
+</li>
+<li>the docker base image doesn't come with all required tools, thus we need to install the
+missing ones (<code>make</code>, <code>bash</code>, <code>curl</code> and <code>docker compose</code>)
+<pre><code class="language-yaml">  ## SETUP TOOLS
+  - apk add --no-cache make bash curl
+  - mkdir -p ~/.docker/cli-plugins/
+  - curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+  - chmod +x ~/.docker/cli-plugins/docker-compose</code></pre></li>
+<li>for the initialization of <code>make</code> we use the <code>$GPG_PASSWORD</code> variable that we defined in the
+CI/CD settings
+<pre><code class="language-yaml">## SETUP DOCKER
+- make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=$GPG_PASSWORD"</code></pre>
+<p>Note: I have <a href="https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable">marked the variable as &quot;masked&quot;</a>
+so it won't show up in any logs</p></li>
+<li>finally, we store <a href="https://docs.gitlab.com/ee/ci/pipelines/job_artifacts.html">the job artifacts</a>
+<pre><code class="language-yaml">artifacts:
+when: always
+paths:
+  - ".build/*"
+expire_in: 1 week </code></pre>
+<p>They can be accessed in the <a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines">Pipeline overview UI</a>
+<a href="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-build-artifacts.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-build-artifacts.PNG" alt="Gitlab Pipeline overview UI" /></a></p></li>
+</ul>
+<!-- generated -->
+<p><a id='performance'> </a></p>
+<!-- /generated -->
+<h4>Performance</h4>
+<p><strong>Performance isn't an issue right now</strong>, because the CI runs take only about ~1 min (Github Actions)
+and ~2 min (Gitlab Pipelines), but that's mostly because we only ship a super minimal
+application and those times <em>will go up</em> when things get more complex. For the local setup I
+used all 8 cores of my laptop. The time breakdown is roughly as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Gitlab</th>
+<th>Github</th>
+<th>local <br /> without cache</th>
+<th>local <br /> with cached images</th>
+<th>local <br /> with cached images + layers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SETUP TOOLS</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SETUP DOCKER</td>
+<td>33</td>
+<td>17</td>
+<td>39</td>
+<td>39</td>
+<td>5</td>
+</tr>
+<tr>
+<td>START DOCKER</td>
+<td>17</td>
+<td>11</td>
+<td>34</td>
+<td>2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>QA</td>
+<td>17</td>
+<td>5</td>
+<td>10</td>
+<td>13</td>
+<td>1</td>
+</tr>
+<tr>
+<td>WAIT FOR CONTAINERS</td>
+<td>5</td>
+<td>5</td>
+<td>3</td>
+<td>2</td>
+<td>13</td>
+</tr>
+<tr>
+<td>TESTS</td>
+<td>3</td>
+<td>1</td>
+<td>3</td>
+<td>6</td>
+<td>3</td>
+</tr>
+<tr>
+<td><strong>total <br /> (excl. runner startup)</strong></td>
+<td>78</td>
+<td>43</td>
+<td>97</td>
+<td>70</td>
+<td>36</td>
+</tr>
+<tr>
+<td><strong>total <br /> (incl. runner startup)</strong></td>
+<td>139</td>
+<td>54</td>
+<td>97</td>
+<td>70</td>
+<td>36</td>
+</tr>
+</tbody>
+</table>
+<p>Times taken from</p>
+<ul>
+<li><a href="https://github.com/paslandau/docker-php-tutorial/actions/runs/2108659089">&quot;CI build and test #83&quot; Github Action run</a></li>
+<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511355192">&quot;Pipeline #511355192&quot; Gitlab Pipeline run</a></li>
+<li>&quot;local without cache&quot; via <code>bash .local-ci.sh</code> with no local images at all</li>
+<li>&quot;local with cached images&quot; via <code>bash .local-ci.sh</code> with cached images for <code>mysql</code> and <code>redis</code></li>
+<li>&quot;local with cached images + layers&quot; via <code>bash .local-ci.sh</code> with cached images for <code>mysql</code> and
+<code>redis</code> and a <a href="#build-the-dependencies">&quot;warm&quot; layer cache for the <code>application</code> image</a></li>
+</ul>
+<p><strong>Optimizing the performance is out of scope for this tutorial</strong>, but I'll at least document my
+current findings.</p>
+<!-- generated -->
+<p><a id='the-caching-problem-on-ci'> </a></p>
+<!-- /generated -->
+<h5>The caching problem on CI</h5>
+<p>A good chunk of time is <strong>usually spent on building the docker images</strong>. We did our best to optimize
+the process by leveraging the layer cache and using cache mounts
+(see section <a href="#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>).
+But those steps are futile on CI systems, because the corresponding <strong>runners will start &quot;from
+scratch&quot; for every CI run</strong> - i.e. <strong>there is no local cache</strong> that they could use. In
+consequence, <strong>the full docker setup is also built &quot;from scratch&quot;</strong> on every run.</p>
+<p>There are ways to mitigate that e.g.</p>
+<ul>
+<li>pushing images to a container registry and pulling them before building the images to leverage
+the layer cache via the <a href="https://docs.docker.com/compose/compose-file/compose-file-v3/#cache_from"><code>cache_from</code> option</a>
+of <code>docker compose</code></li>
+<li>exporting and importing the images as <code>tar</code> archives via
+<a href="https://docs.docker.com/engine/reference/commandline/save/"><code>docker save</code></a> and<br />
+<a href="https://docs.docker.com/engine/reference/commandline/load/"><code>docker load</code></a>,
+storing them either in the built-in cache of
+<a href="https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows">Github</a>
+or <a href="https://docs.gitlab.com/ee/ci/caching/">Gitlab</a>
+<ul>
+<li>see also the <a href="https://github.com/marketplace/actions/docker-layer-caching">satackey/action-docker-layer-caching@v0.0.11 Github Action</a>
+and the official <a href="https://github.com/actions/cache">actions/cache@v3 Github Action</a></li>
+</ul></li>
+<li>using the <a href="https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-from"><code>--cache-from</code></a>
+and <a href="https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to"><code>--cache-to</code></a> options of
+<a href="https://docs.docker.com/buildx/working-with-buildx/"><code>buildx</code></a>
+<ul>
+<li>see also the <a href="https://github.com/docker/build-push-action/blob/master/docs/advanced/cache.md">&quot;cache&quot; docu of the docker/build-push-action@v2 Github Action</a></li>
+</ul></li>
+</ul>
+<p>But: None of that worked for me out-of-the-box :( We will take a closer look in an upcoming
+tutorial. Some reading material that I found valuable so far:</p>
+<ul>
+<li><a href="https://dev.to/dtinth/caching-docker-builds-in-github-actions-which-approach-is-the-fastest-a-research-18ei">Caching Docker builds in GitHub Actions: Which approach is the fastest? 🤔 A research.</a></li>
+<li><a href="https://seankhliao.com/blog/12021-01-23-docker-buildx-caching/">Caching strategies for CI systems</a></li>
+<li><a href="https://evilmartians.com/chronicles/build-images-on-github-actions-with-docker-layer-caching">Build images on GitHub Actions with Docker layer caching</a></li>
+<li><a href="https://testdriven.io/blog/faster-ci-builds-with-docker-cache/">Faster CI Builds with Docker Layer Caching and BuildKit</a></li>
+<li><a href="https://www.docker.com/blog/image-rebase-and-improved-remote-cache-support-in-new-buildkit/">Image rebase and improved remote cache support in new BuildKit</a></li>
+</ul>
+<!-- generated -->
+<p><a id='docker-changes'> </a></p>
+<!-- /generated -->
+<h2>Docker changes</h2>
+<p>As a first step we need to decide <strong>which containers are required</strong> and <strong>how to provide the
+codebase</strong>.</p>
+<p>Since our goal is running the qa tools and tests, we only need the <code>application</code> php container. The
+tests also need a database and a queue, i.e. the <code>mysql</code> and <code>redis</code> containers are required as
+well - whereas <code>nginx</code>, <code>php-fpm</code> and <code>php-worker</code> are not required. We'll handle that through
+dedicated <code>docker compose</code> configuration files that only contain the necessary services. This is
+explained in more detail in section <a href="#compose-file-updates">Compose file updates</a>.</p>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG" alt="Build images for CI" /></a></p>
+<p>In our local setup, we have <strong>shared the codebase between the host system and docker</strong> - mainly
+because we wanted our changes to be reflected immediately in docker. <strong>This isn't necessary for the
+CI</strong> use case. In fact we want our <strong>CI images as close as possible to our production images</strong> - and
+those should &quot;contain everything to run independently&quot;. I.e. <strong>the codebase should live in the
+image</strong> - not on the host system. This will be explained in section
+<a href="#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a>.</p>
+<!-- generated -->
+<p><a id='compose-file-updates'> </a></p>
+<!-- /generated -->
+<h3>Compose file updates</h3>
+<p>We will not only have some differences between the CI docker setup and the local docker setup
+(=different containers), but also in the configuration of the individual services. To accommodate
+for that, we will use the following <code>docker compose</code> config files in the
+<code>.docker/docker-compose/</code> directory: </p>
+<ul>
+<li><code>docker-compose.local.ci.yml</code>:
+<ul>
+<li>holds configuration that is valid for <code>local</code> and <code>ci</code>, trying to keep the config files
+<a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself">DRY</a></li>
+</ul></li>
+<li><code>docker-compose.ci.yml</code>:
+<ul>
+<li>holds configuration that is only valid for <code>ci</code></li>
+</ul></li>
+<li><code>docker-compose.local.yml</code>:
+<ul>
+<li>holds configuration that is only valid for <code>local</code></li>
+</ul></li>
+</ul>
+<p>When using <code>docker compose</code> we then need to make sure to include only the required files, e.g. for
+<code>ci</code>:</p>
+<pre><code class="language-bash">docker compose -f docker-compose.local.ci.yml -f docker-compose.ci.yml</code></pre>
+<p>I'll explain  the logic for that later in
+section <a href="#env-based-docker-compose-config">ENV based docker compose config</a>. In short:</p>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG" alt="Assemble docker-compose config files for CI" /></a></p>
+<p>When comparing <code>ci</code> with <code>local</code>, for <code>ci</code></p>
+<ul>
+<li>we <strong>don't need to share the codebase</strong> with the host system
+<pre><code class="language-yaml">application:
+  volumes:
+  - ${APP_CODE_PATH_HOST?}:${APP_CODE_PATH_CONTAINER?}</code></pre></li>
+<li>
+<p>we <strong>don't need persistent volumes</strong> for the redis and mysql data</p>
+<pre><code class="language-yaml">mysql:
+  volumes:
+    - mysql:/var/lib/mysql
+
+redis:
+  volumes:
+    - redis:/data</code></pre>
+</li>
+<li>
+<p>we <strong>don't need to share ports</strong> with the host system</p>
+<pre><code class="language-yaml">application:
+  ports:
+    - "${APPLICATION_SSH_HOST_PORT:-2222}:22"
+
+redis:
+  ports:
+    - "${REDIS_HOST_PORT:-6379}:6379"</code></pre>
+</li>
+<li>we <strong>don't need any settings for local dev tools</strong> like <code>xdebug</code> or <code>strace</code>
+<pre><code class="language-yaml">application:
+  environment:
+    - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
+  cap_add:
+    - "SYS_PTRACE"
+  security_opt:
+    - "seccomp=unconfined"
+  extra_hosts:
+    - host.docker.internal:host-gateway  </code></pre></li>
+</ul>
+<p>So all of those config values will only live in the <code>docker-compose.local.yml</code> file. In fact, there
+are only two things that <code>ci</code> needs that <code>local</code> doesn't:</p>
+<ul>
+<li>a volume mount to <strong>share only the secret gpg key from the host with the <code>application</code> container</strong>
+<pre><code class="language-yaml">application:
+  volumes:
+    - ${APP_CODE_PATH_HOST?}/secret.gpg:${APP_CODE_PATH_CONTAINER?}/secret.gpg:ro</code></pre>
+<p>This
+is <a href="/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">required to decrypt the secrets</a>:</p>
+<blockquote>
+<p>[...] the private key has to be named <code>secret.gpg</code> and put in the root of the codebase,
+so that the import can be be simplified with <code>make</code> targets</p>
+</blockquote></li>
+<li>a volume mount to <strong>share a <code>.build</code> folder for build artifacts with the <code>application</code> container</strong>
+<pre><code class="language-yaml">application:
+  volumes:
+    - ${APP_CODE_PATH_HOST?}/.build:${APP_CODE_PATH_CONTAINER?}/.build</code></pre>
+<p>This will be used to collect any files we want to retain from a build (e.g. code coverage
+information, log files, etc.)</p></li>
+</ul>
+<!-- generated -->
+<p><a id='adding-a-health-check-for-mysql'> </a></p>
+<!-- /generated -->
+<h4>Adding a health check for <code>mysql</code></h4>
+<p>When running the tests for the first time on a CI system, I noticed some weird errors related to the
+database:</p>
+<pre><code class="language-text">1) Tests\Feature\App\Http\Controllers\HomeControllerTest::test___invoke with data set "default" (array(), '    &lt;li&gt;&lt;a href="?dispatch=fo...&gt;&lt;/li&gt;')
+PDOException: SQLSTATE[HY000] [2002] Connection refused</code></pre>
+<p>As it turned out, the <code>mysql</code> container itself was up and running - but the <code>mysql</code> process
+<em>within</em> the container was not yet ready to accept connections. Locally, this hasn't been a problem,
+because we usually would not run the tests &quot;immediately&quot; after starting the containers - but on CI
+this is the case.</p>
+<p>Fortunately, <code>docker compose</code> has us covered here and provides a
+<a href="https://docs.docker.com/compose/compose-file/#healthcheck"><code>healtcheck</code> configuration option</a>:</p>
+<blockquote>
+<p><code>healthcheck</code> declares a check that’s run to determine whether or not containers for this service are &quot;healthy&quot;.</p>
+</blockquote>
+<p>Since this <code>healthcheck</code> is also &quot;valid&quot; for <code>local</code>, I defined it in the combined
+<code>docker-compose.local.ci.yml</code> file:</p>
+<pre><code class="language-yaml">  mysql:
+    healthcheck:
+      # Only mark the service as healthy if mysql is ready to accept connections
+      # Check every 2 seconds for 30 times, each check has a timeout of 1s
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      timeout: 1s
+      retries: 30
+      interval: 2s</code></pre>
+<p>The script in <code>test</code> was taken
+from <a href="https://stackoverflow.com/a/54854239/413531">SO: Docker-compose check if mysql connection is ready</a>.</p>
+<p>When starting the docker setup, <code>docker ps</code> will now add a health info to the <code>STATUS</code>:</p>
+<pre><code class="language-text">$ make docker-up
+
+$ docker ps
+CONTAINER ID   IMAGE                            STATUS                           NAMES
+b509eb2f99c0   dofroscra/application-ci:latest  Up 1 seconds                     dofroscra_ci-application-1
+503e52fd9e68   mysql:8.0.28                     Up 1 seconds (health: starting)  dofroscra_ci-mysql-1
+
+# a couple of seconds later
+
+$ docker ps
+CONTAINER ID   IMAGE                            STATUS                   NAMES
+b509eb2f99c0   dofroscra/application-ci:latest  Up 13 seconds            dofroscra_ci-application-1
+503e52fd9e68   mysql:8.0.28                     Up 13 seconds (healthy)  dofroscra_ci-mysql-1</code></pre>
+<p>Note the <code>(health: starting)</code> and <code>(healthy)</code> infos for the <code>mysql</code> service.</p>
+<p>We can also get this info from <code>docker inspect</code> (used by our
+<a href="#wait-for-service-sh">wait-for-service.sh script</a>) via:</p>
+<pre><code class="language-text">$ docker inspect --format "{{json .State.Health.Status }}" dofroscra_ci-mysql-1
+"healthy"</code></pre>
+<p>FYI: We could also use the
+<a href="https://docs.docker.com/compose/compose-file/#depends_on"><code>depends_on</code> property</a> with a
+<code>condition: service_healthy</code> on the <code>application</code> container so that <code>docker compose</code> would
+only start the container once the <code>mysql</code> service is healthy:</p>
+<pre><code class="language-yaml">application:
+  depends_on:
+    mysql: 
+      condition: service_healthy</code></pre>
+<p>However, this would &quot;block&quot; the <code>make docker-up</code> until <code>mysql</code> is actually up and running. In
+our case this is not desirable, because we can do &quot;other stuff&quot; in the meantime (namely: run the
+<code>qa</code> checks, because they don't require a database) and thus save a couple of seconds on each CI
+run.</p>
+<!-- generated -->
+<p><a id='build-target-ci'> </a></p>
+<!-- /generated -->
+<h3>Build target: <code>ci</code></h3>
+<p>We've already introduced build targets in
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#environments-and-build-targets">Environments and build targets</a>
+and how to &quot;choose&quot;
+them <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">through <code>make</code> with the <code>ENV</code> variable defined in a shared <code>.make/.env</code> file</a>.
+Short recap:</p>
+<ul>
+<li>create a <code>.make/.env</code> file via <code>make make-init</code> that contains the <code>ENV</code>, e.g. 
+<pre><code class="language-makefile">ENV=ci</code></pre></li>
+<li>the <code>.make/.env</code> file is included in the main <code>Makefile</code>, making the <code>ENV</code> variables available
+to <code>make</code></li>
+<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">configure a <code>$DOCKER_COMPOSE</code> variable</a>
+that passes the <code>ENV</code> as an environment variable, i.e. via
+<pre><code class="language-bash">ENV=$(ENV) docker-compose</code></pre></li>
+</ul>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG" alt="Initialize make to run docker commands with ENV=ci" /></a></p>
+<ul>
+<li>use the <code>ENV</code> variable in the <code>docker compose</code> configuration file to determine the
+<code>build.target</code> property. E.g. in <code>.docker/docker-compose/docker-compose-php-base.yml</code>
+<pre><code class="language-yaml">php-base:
+  build:
+    target: ${ENV?}</code></pre></li>
+</ul>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG" alt="Build images for CI" /></a></p>
+<ul>
+<li>in the <code>Dockerfile</code> of a service, define the <code>ENV</code> as a build stage. E.g. in
+<code>.docker/images/php/base/Dockerfile</code>
+<pre><code class="language-Dockerfile">FROM base as ci
+# ...</code></pre></li>
+</ul>
+<p>So to enable the new <code>ci</code> environment, we need to modify the Dockerfiles for the <code>php-base</code> and
+the <code>application</code> image.</p>
+<!-- generated -->
+<p><a id='build-stage-ci-in-the-php-base-image'> </a></p>
+<!-- /generated -->
+<h4>Build stage <code>ci</code> in the <code>php-base</code> image</h4>
+<!-- generated -->
+<p><a id='use-the-whole-codebase-as-build-context'> </a></p>
+<!-- /generated -->
+<h5>Use the whole codebase as build context</h5>
+<p>As mentioned in section <a href="#docker-changes">Docker changes</a> we want to &quot;bake&quot; the codebase into
+the <code>ci</code> image of the <code>php-base</code> container. Thus, we must change the <code>context</code> property in
+<code>.docker/docker-compose/docker-compose-php-base.yml</code> <strong>to not only use the <code>.docker/</code> directory
+but instead the whole codebase</strong>. I.e. &quot;dont use <code>../</code> but <code>../../</code>&quot;:</p>
+<pre><code class="language-yaml"># File: .docker/docker-compose/docker-compose-php-base.yml
+
+  php-base:
+    build:
+      # pass the full codebase to docker for building the image
+      context: ../../</code></pre>
+<!-- generated -->
+<p><a id='build-the-dependencies'> </a></p>
+<!-- /generated -->
+<h5>Build the dependencies</h5>
+<p>The composer dependencies must be set up in the image as well, so we introduce a new stage
+stage in <code>.docker/images/php/base/Dockerfile</code>. The most trivial solution would look like this:</p>
+<ul>
+<li>copy the whole codebase</li>
+<li>run <code>composer install</code></li>
+</ul>
+<pre><code class="language-Dockerfile">FROM base as ci
+
+COPY . /codebase
+
+RUN composer install --no-scripts --no-plugins --no-progress -o</code></pre>
+<p>However, this approach has some downsides:</p>
+<ul>
+<li>if <em>any</em> file in the codebase changes, the <code>COPY . /codebase</code> layer will be invalidated. I.e.
+docker could <em>not</em> use the <a href="https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#leverage-build-cache">layer cache</a>
+which also means <strong>that every layer afterwards cannot use the cache</strong> as well. In consequence the
+<code>composer install</code> would run every time - even when the <code>composer.json</code> file doesn't change.</li>
+<li><a href="https://getcomposer.org/doc/06-config.md#cache-dir"><code>composer</code> itself uses a cache</a> for
+storing dependencies locally so it doesn't have to download dependencies that haven't changed.
+But since we run <code>composer install</code> <em>in Docker</em>, this cache would be &quot;thrown away&quot; every time
+a build finishes. To mitigate that, we can use
+<a href="https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/syntax.md#run---mounttypecache"><code>--mount=type=cache</code></a>
+to define a directory that docker will re-use between builds:
+<blockquote>
+<p>Contents of the cache directories persists between builder invocations without invalidating
+the instruction cache.</p>
+</blockquote></li>
+</ul>
+<p>Keeping those points in mind, we end up with the following instructions:</p>
+<pre><code class="language-Dockerfile"># File: .docker/images/php/base/Dockerfile
+# ...
+
+FROM base as ci
+
+# By only copying the composer files required to run composer install
+# the layer will be cached and only invalidated when the composer dependencies are changed
+COPY ./composer.json /dependencies/
+COPY ./composer.lock /dependencies/
+
+# use a cache mount to cache the composer dependencies
+# this is essentially a cache that lives in Docker BuildKit (i.e. has nothing to do with the host system) 
+RUN --mount=type=cache,target=/tmp/.composer \
+    cd /dependencies &amp;&amp; \
+    # COMPOSER_HOME=/tmp/.composer sets the home directory of composer that
+    # also controls where composer looks for the cache 
+    # so we don't have to download dependencies again (if they are cached)
+    COMPOSER_HOME=/tmp/.composer composer install --no-scripts --no-plugins --no-progress -o 
+
+# copy the full codebase
+COPY . /codebase
+
+RUN mv /dependencies/vendor /codebase/vendor &amp;&amp; \
+    cd /codebase &amp;&amp; \
+    # remove files we don't require in the image to keep the image size small
+    rm -rf .docker/ &amp;&amp; \
+    # we need a git repository for git-secret to work (can be an empty one)
+    git init</code></pre>
+<p>FYI: The <code>COPY . /codebase</code> step doesn't actually copy &quot;everything in the repository&quot;, because we
+have also introduced a <code>.dockerignore</code> file to exclude some files from being included in the
+build context - see section <a href="#dockerignore"><code>.dockerignore</code></a>.</p>
+<p>Some notes on the final <code>RUN</code> step:</p>
+<ul>
+<li><code>rm -rf .docker/</code> doesn't really save &quot;that much&quot; in the current setup - please take it more
+as an example to remove any files that shouldn't end up in the final image (e.g. &quot;tests in a
+production image&quot;)</li>
+<li>the <code>git init</code> part is required because we need to decrypt the secrets later - and
+<code>git-secret</code> requires a <code>git</code> repository (which can be empty). We can't decrypt the secrets
+during the build, because we do not want decrypted secret files to end up in the image.</li>
+</ul>
+<p>When tested locally, the difference between the trivial solution and the one that makes use of
+layer caching is ~35 seconds, see the results in the <a href="#performance">Performance</a> section.</p>
+<!-- generated -->
+<p><a id='create-the-final-image'> </a></p>
+<!-- /generated -->
+<h5>Create the final image</h5>
+<p>As a final step, we will rename the current stage to <code>codebase</code> and copy the &quot;build
+artifact&quot; from that stage into our final <code>ci</code> build stage:</p>
+<pre><code class="language-Dockerfile">FROM base as codebase
+
+# build the composer dependencies and clean up the copied files
+# ...
+
+FROM base as ci
+
+COPY --from=codebase --chown=$APP_USER_NAME:$APP_GROUP_NAME /codebase $APP_CODE_PATH</code></pre>
+<p>Why are we not just using the previous stage directly as <code>ci</code>? </p>
+<p>Because using <a href="https://docs.docker.com/develop/develop-images/multistage-build/">multistage-builds</a>
+is a
+<a href="https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#use-multi-stage-builds">good practice to keep the final layers of an image to a minimum</a>:
+Everything that &quot;happened&quot; in the previous <code>codebase</code> stage will be &quot;forgotten&quot;, i.e. not
+exported as layers. </p>
+<p>That does not only save us some layers, but also allows us to get rid of
+files like the <code>.docker/</code> directory. We needed that directory in the build context because
+some files where required in other parts of the <code>Dockerfile</code> (e.g. the php ini files), so we
+can't exclude it via <code>.dockerignore</code>. But we can remove it in the <code>codebase</code> stage - so it will NOT
+be copied over and thus not end up in the final image. If we wouldn't have the <code>codebase</code> stage,
+the folder would be part of the layer created when <code>COPY</code>ing all the files from the build context
+and removing it via <code>rm -rf .docker/</code> would have no effect on the image size.</p>
+<p>Currently, that doesn't really matter, because the building step is super simple (just a
+<code>composer install</code>) - but in a growing and more complex codebase you can easily
+save a couple MB.</p>
+<p>To be concrete, the <strong>multistage build has 31 layers</strong> and the final layer containing the
+codebase has a size of <strong>65.1MB</strong>.</p>
+<pre><code class="language-text">$ docker image history -H dofroscra/application-ci
+IMAGE          CREATED          CREATED BY                                      SIZE      COMMENT
+d778c2ee8d5e   17 minutes ago   COPY /codebase /var/www/app # buildkit          65.1MB    buildkit.dockerfile.v0
+                                                                                ^^^^^^
+&lt;missing&gt;      17 minutes ago   WORKDIR /var/www/app                            0B        buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   COPY /usr/bin/composer /usr/local/bin/compos…   2.36MB    buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   COPY ./.docker/images/php/base/.bashrc /root…   395B      buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   COPY ./.docker/images/php/base/.bashrc /home…   395B      buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   COPY ./.docker/images/php/base/conf.d/zz-app…   196B      buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   COPY ./.docker/images/php/base/conf.d/zz-app…   378B      buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   1.28kB    buildkit.dockerfile.v0
+&lt;missing&gt;      17 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   41MB      buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ADD https://php.hernandev.com/key/php-alpine…   451B      buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   62.1MB    buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ADD https://gitsecret.jfrog.io/artifactory/a…   450B      buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   4.74kB    buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV ENV=ci                                      0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV ALPINE_VERSION=3.15                         0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV TARGET_PHP_VERSION=8.1                      0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV APP_CODE_PATH=/var/www/app                  0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV APP_GROUP_NAME=application                  0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV APP_USER_NAME=application                   0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV APP_GROUP_ID=10001                          0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ENV APP_USER_ID=10000                           0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG ENV                                         0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG ALPINE_VERSION                              0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG TARGET_PHP_VERSION                          0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG APP_CODE_PATH                               0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG APP_GROUP_NAME                              0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG APP_USER_NAME                               0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG APP_GROUP_ID                                0B        buildkit.dockerfile.v0
+&lt;missing&gt;      18 minutes ago   ARG APP_USER_ID                                 0B        buildkit.dockerfile.v0
+&lt;missing&gt;      2 days ago       /bin/sh -c #(nop)  CMD ["/bin/sh"]              0B
+&lt;missing&gt;      2 days ago       /bin/sh -c #(nop) ADD file:5d673d25da3a14ce1…   5.57MB</code></pre>
+<p>The <strong>non-multistage build has 32 layers</strong> and the final layer(s) containing the
+codebase have a combined size of <strong>65.15MB</strong> (60.3MB + 4.85MB).</p>
+<pre><code class="language-text">$ docker image history -H dofroscra/application-ci
+IMAGE          CREATED          CREATED BY                                      SIZE      COMMENT
+94ba50438c9a   2 minutes ago    RUN /bin/sh -c COMPOSER_HOME=/tmp/.composer …   60.3MB    buildkit.dockerfile.v0
+&lt;missing&gt;      2 minutes ago    COPY . /var/www/app # buildkit                  4.85MB    buildkit.dockerfile.v0
+                                                                                ^^^^^^
+&lt;missing&gt;      31 minutes ago   WORKDIR /var/www/app                            0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   COPY /usr/bin/composer /usr/local/bin/compos…   2.36MB    buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   COPY ./.docker/images/php/base/.bashrc /root…   395B      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   COPY ./.docker/images/php/base/.bashrc /home…   395B      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   COPY ./.docker/images/php/base/conf.d/zz-app…   196B      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   COPY ./.docker/images/php/base/conf.d/zz-app…   378B      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   1.28kB    buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   41MB      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ADD https://php.hernandev.com/key/php-alpine…   451B      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   62.1MB    buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ADD https://gitsecret.jfrog.io/artifactory/a…   450B      buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   RUN |8 APP_USER_ID=10000 APP_GROUP_ID=10001 …   4.74kB    buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV ENV=ci                                      0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV ALPINE_VERSION=3.15                         0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV TARGET_PHP_VERSION=8.1                      0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV APP_CODE_PATH=/var/www/app                  0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV APP_GROUP_NAME=application                  0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV APP_USER_NAME=application                   0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV APP_GROUP_ID=10001                          0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ENV APP_USER_ID=10000                           0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG ENV                                         0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG ALPINE_VERSION                              0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG TARGET_PHP_VERSION                          0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG APP_CODE_PATH                               0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG APP_GROUP_NAME                              0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG APP_USER_NAME                               0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG APP_GROUP_ID                                0B        buildkit.dockerfile.v0
+&lt;missing&gt;      31 minutes ago   ARG APP_USER_ID                                 0B        buildkit.dockerfile.v0
+&lt;missing&gt;      2 days ago       /bin/sh -c #(nop)  CMD ["/bin/sh"]              0B
+&lt;missing&gt;      2 days ago       /bin/sh -c #(nop) ADD file:5d673d25da3a14ce1…   5.57MB</code></pre>
+<p>Again: It is expected that the differences aren't big, because the only size savings come from
+the <code>.docker/</code> directory with a size of ~70kb.</p>
+<pre><code class="language-text">$ du -hd 0 .docker
+73K     .docker</code></pre>
+<p>Finally, we are also using the <a href="https://docs.docker.com/engine/reference/builder/#copy"><code>--chown</code> option of the <code>RUN</code> instruction</a>
+to ensure that the files have the correct permissions.</p>
+<!-- generated -->
+<p><a id='build-stage-ci-in-the-application-image'> </a></p>
+<!-- /generated -->
+<h4>Build stage <code>ci</code> in the <code>application</code> image</h4>
+<p>There is actually &quot;nothing&quot; to be done here. We don't need SSH any longer because it is only
+required for the <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#ssh-configuration">SSH Configuration of PhpStorm</a>.
+So the build stage is simply &quot;empty&quot;:</p>
+<pre><code class="language-Dockerfile">ARG BASE_IMAGE
+FROM ${BASE_IMAGE} as base
+
+FROM base as ci
+
+FROM base as local
+# ...</code></pre>
+<p>Though there is one thing to keep in mind: In the <code>local</code> image we used <code>sshd</code> as the entrypoint,
+i.e. we had a long running process that would keep the container running. To keep the
+<code>ci</code> application container running, we must</p>
+<ul>
+<li>start it via the <code>-d</code> flag of <code>docker compose</code> (already done in the <code>make docker-up</code> target)
+<pre><code class="language-makefile">.PHONY: docker-up
+docker-up: validate-docker-variables
+    $(DOCKER_COMPOSE) up -d $(DOCKER_SERVICE_NAME) </code></pre></li>
+<li><a href="https://stackoverflow.com/a/55953120">allocate a <code>tty</code> via <code>tty: true</code></a>
+in the <code>docker-compose.local.ci.yml</code> file
+<pre><code class="language-yaml">application:
+  tty: true</code></pre></li>
+</ul>
+<!-- generated -->
+<p><a id='dockerignore'> </a></p>
+<!-- /generated -->
+<h3>.dockerignore</h3>
+<p>The <a href="https://docs.docker.com/engine/reference/builder/#dockerignore-file"><code>.dockerignore</code> file</a>
+is located in the root of the repository and ensures that certain files are kept out of the
+Docker <code>build context</code>. This will </p>
+<ul>
+<li>speed up the build (because less files need to be transmitted to the docker daemon)</li>
+<li>keep images smaller (because irrelevant files are kept out of the image)</li>
+</ul>
+<p>The syntax is quite similar to the <code>.gitignore</code> file - in fact I've found it to be quite often
+the case that the contents of the <code>.gitignore</code> file are a subset of the <code>.dockerignore</code> file. This
+makes kinda sense, because you <strong>typically wouldn't want files that are excluded from the
+repository to end up in a docker image</strong> (e.g. unencrypted secret files). This has also been
+noticed by others, see e.g.</p>
+<ul>
+<li><a href="https://www.reddit.com/r/docker/comments/evrfgp/any_way_to_copy_gitignore_contents_to_dockerignore/">Reddit: Any way to copy .gitignore contents to .dockerignore</a></li>
+<li><a href="https://stackoverflow.com/q/58707272/413531">SO: Should .dockerignore typically be a superset of .gitignore?</a></li>
+</ul>
+<p>but to my knowledge there is currently (2022-04-24) no way to &quot;keep the two files in sync&quot;.</p>
+<p>In our case, the content of the <code>.dockerignore</code> file looks like this:</p>
+<pre><code class="language-.docker"># gitignore
+!.env.example
+.env
+.idea
+.phpunit.result.cache
+vendor/
+secret.gpg
+.gitsecret/keys/random_seed
+.gitsecret/keys/pubring.kbx~
+!*.secret
+passwords.txt
+.build
+
+# additionally ignored files
+.git</code></pre>
+<!-- generated -->
+<p><a id='makefile-changes'> </a></p>
+<!-- /generated -->
+<h2>Makefile changes</h2>
+<!-- generated -->
+<p><a id='initialize-the-shared-variables'> </a></p>
+<!-- /generated -->
+<h3>Initialize the shared variables</h3>
+<p>We have introduced the concept of <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">shared variables via <code>.make/.env</code></a>
+previously. It allows us to <strong>define variables in one place</strong> (=single source
+of truth) that are then used as &quot;defaults&quot; so we <strong>don't have to define them explicitly</strong> when
+invoking certain <code>make</code> targets (like <code>make docker-build</code>). We'll make use of this concept by
+setting the environment to <code>ci</code>via<code>ENV=ci</code> and thus making sure that all docker commands use
+<code>ci</code> &quot;automatically&quot; as well.</p>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG" alt="Initialize make to run docker commands with ENV=ci" /></a></p>
+<p>In addition, I made a small modification by <strong>introducing a second file at <code>.make/variables.env</code></strong>
+that is also included in the main <code>Makefile</code> and <strong>holds the &quot;default&quot; shared variables</strong>. Those
+are neither &quot;secret&quot; nor are they likely to be be changed for environment adjustments. The file
+is NOT ignored by <code>.gitignore</code> and is basically just the previous <code>.make/.env.example</code> file without
+the environment specific variables:</p>
+<pre><code class="language-text"># File .make/variables.env
+
+DOCKER_REGISTRY=docker.io
+DOCKER_NAMESPACE=dofroscra
+APP_USER_NAME=application
+APP_GROUP_NAME=application</code></pre>
+<p>The <code>.make/.env</code> file is still <code>.gitignore</code>d and can be initialized with the <code>make-init</code>
+target using the <code>ENVS</code> variable:</p>
+<pre><code class="language-bash">make make-init ENVS="ENV=ci SOME_OTHER_DEFAULT_VARIABLE=foo"</code></pre>
+<p>which would create a <code>.make/.env</code> file with the content</p>
+<pre><code>ENV=ci
+SOME_OTHER_DEFAULT_VARIABLE=foo</code></pre>
+<p>If necessary, we could also <strong>override variables defined in the <code>.make/variables.env</code> file</strong>,
+because the <code>.make/.env</code> is included last in the <code>Makefile</code>:</p>
+<pre><code class="language-makefile"># File: Makefile
+# ...
+
+# include the default variables
+include .make/variables.env
+# include the local variables
+-include .make/.env</code></pre>
+<p>The default value for <code>ENVS</code> is <code>ENV=local TAG=latest</code> to retain the same default behavior as
+before when <code>ENVS</code> is omitted. The corresponding <code>make-init</code> target is defined in the main
+<code>Makefile</code> and now looks like this:</p>
+<pre><code class="language-makefile">ENVS?=ENV=local TAG=latest
+.PHONY: make-init
+make-init: ## Initializes the local .makefile/.env file with ENV variables for make. Use via ENVS="KEY_1=value1 KEY_2=value2"
+    @$(if $(ENVS),,$(error ENVS is undefined))
+    @rm  -f .make/.env
+    for variable in $(ENVS); do \
+      echo $$variable | tee -a .make/.env &gt; /dev/null 2&gt;&amp;1; \
+    done
+    @echo  "Created a local .make/.env file" </code></pre>
+<!-- generated -->
+<p><a id='env-based-docker-compose-config'> </a></p>
+<!-- /generated -->
+<h3>ENV based docker compose config</h3>
+<p>As mentioned in section <a href="#compose-file-updates">Compose file updates</a> we need to select the
+&quot;correct&quot; <code>docker compose</code> configuration files based on the <code>ENV</code> value. This is done in
+<code>.make/02-00-docker.mk</code>:</p>
+<pre><code class="language-makefile"># File .make/02-00-docker.mk
+
+# ...
+
+DOCKER_COMPOSE_DIR:=...
+DOCKER_COMPOSE_COMMAND:=...
+
+DOCKER_COMPOSE_FILE_LOCAL_CI:=$(DOCKER_COMPOSE_DIR)/docker-compose.local.ci.yml
+DOCKER_COMPOSE_FILE_CI:=$(DOCKER_COMPOSE_DIR)/docker-compose.ci.yml
+DOCKER_COMPOSE_FILE_LOCAL:=$(DOCKER_COMPOSE_DIR)/docker-compose.local.yml
+
+# we need to "assemble" the correct combination of docker-compose.yml config files
+ifeq ($(ENV),ci)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI) -f $(DOCKER_COMPOSE_FILE_CI)
+else ifeq ($(ENV),local)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI) -f $(DOCKER_COMPOSE_FILE_LOCAL)
+endif
+
+DOCKER_COMPOSE:=$(DOCKER_COMPOSE_COMMAND) $(DOCKER_COMPOSE_FILES)</code></pre>
+<p>When we now take a look at a full recipe when using <code>ENV=ci</code> with a docker target (e.g.
+<code>docker-up</code>), we can see that the correct files are chosen, e.g. </p>
+<pre><code class="language-text">$ make docker-up ENV=ci -n
+ENV=ci TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker compose -p dofroscra_ci --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.local.ci.yml -f ./.docker/docker-compose/docker-compose.ci.yml up -d
+
+# =&gt;
+# -f ./.docker/docker-compose/docker-compose.local.ci.yml 
+# -f ./.docker/docker-compose/docker-compose.ci.yml</code></pre>
+<p><a href="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG" alt="Assemble docker-compose config files for CI" /></a></p>
+<!-- generated -->
+<p><a id='codebase-changes'> </a></p>
+<!-- /generated -->
+<h2>Codebase changes</h2>
+<p><a id='add-a-test-for-encrypted-files'> </a></p>
+<!-- /generated -->
+<!-- generated -->
+<p><a id='add-a-test-for-encrypted-files'> </a></p>
+<!-- /generated -->
+<h3>Add a test for encrypted files</h3>
+<p>We've introduced <code>git-secret</code> in the previous tutorial
+<a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+and used it to store the file <code>passwords.txt</code> encrypted in the codebase. To make sure that the
+decryption works as expected on the CI systems, I've added a test at
+<code>tests/Feature/EncryptionTest.php</code> to check if the file exists and if the content is correct.</p>
+<pre><code class="language-php">class EncryptionTest extends TestCase
+{
+    public function test_ensure_that_the_secret_passwords_file_was_decrypted()
+    {
+        $pathToSecretFile = __DIR__."/../../passwords.txt";
+
+        $this-&gt;assertFileExists($pathToSecretFile);
+
+        $expected = "my_secret_password\n";
+        $actual   = file_get_contents($pathToSecretFile);
+
+        $this-&gt;assertEquals($expected, $actual);
+    }
+}</code></pre>
+<p>Of course this doesn't make sense in a &quot;real world scenario&quot;, because the secret value would now
+be exposed in a test - but it suffices for now as proof of a working secret decryption.</p>
+<!-- generated -->
+<p><a id='add-a-password-protected-secret-gpg-key'> </a></p>
+<!-- /generated -->
+<h3>Add a password-protected secret <code>gpg</code> key</h3>
+<p>I've mentioned in
+<a href="/blog/git-secret-encrypt-repository-docker/#decrypt-files">Scenario: Decrypt file</a>
+that it is also possible <strong>to use a password-protected secret <code>gpg</code> key for
+an additional layer of security</strong>. I have created such a key and stored it in the repository at
+<code>secret-protected.gpg.example</code> (in a &quot;real world scenario&quot; I wouldn't do that - but since this
+is a public tutorial I want you to be able to follow along completely). The password for that
+key is <code>12345678</code>.</p>
+<p>The corresponding public key is located at <code>.dev/gpg-keys/alice-protected-public.gpg</code> and
+belongs to the email address <code>alice.protected@example.com</code>. I've
+<a href="/blog/git-secret-encrypt-repository-docker/#adding-new-team-members">added this address</a> and
+<a href="/blog/git-secret-encrypt-repository-docker/#adding-and-encrypting-files">re-encrypted the secrets</a> afterwards via</p>
+<pre><code class="language-bash">make gpg-init
+make secret-add-user EMAIL="alice.protected@example.com"
+make secret-encrypt</code></pre>
+<p>When I now import the <code>secret-protected.gpg.example</code> key, I can decrypt the secrets, though I
+cannot use the usual <code>secret-decrypt</code> target but must instead use <code>secret-decrypt-with-password</code></p>
+<pre><code class="language-bash">make secret-decrypt-with-password GPG_PASSWORD=12345678</code></pre>
+<p>or store the <code>GPG_PASSWORD</code> in the <code>.make/.env</code> file when it is initialized for CI</p>
+<pre><code class="language-bash">make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
+make secret-decrypt-with-password</code></pre>
+<!-- generated -->
+<p><a id='create-a-junit-report-from-phpunit'> </a></p>
+<!-- /generated -->
+<h3>Create a JUnit report from PhpUnit</h3>
+<p>I've added the
+<a href="https://phpunit.readthedocs.io/en/9.5/textui.html?highlight=junit#command-line-options"><code>--log-junit</code> option</a>
+to the <code>phpunit</code> configuration of the <code>test</code> make target in order to create an XML report in the
+<code>.build/</code> directory in the <code>.make/01-02-application-qa.mk</code> file:</p>
+<pre><code class="language-makefile"># File: .make/01-02-application-qa.mk
+# ...
+
+PHPUNIT_CMD=php vendor/bin/phpunit
+PHPUNIT_ARGS= -c phpunit.xml --log-junit .build/report.xml</code></pre>
+<p>I.e. each run of the tests will now create a
+<a href="https://stackoverflow.com/questions/442556/spec-for-junit-xml-output">Junit XML report</a> at
+<code>.build/report.xml</code>. The file is used as an example of a build artifact, i.e.
+&quot;something that we would like to keep&quot; from a CI run.</p>
+<!-- generated -->
+<p><a id='wrapping-up'> </a></p>
+<!-- /generated -->
+<h2>Wrapping up</h2>
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You should now have a working CI pipeline for Github (via Github Actions)
+and/or Gitlab (via Gitlab pipelines) that runs automatically on each push.</p>
+<p>In the next part of this tutorial, we will use terraform to create an infrastructure for
+production deployments on GCP and deploy the docker containers there.</p>
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/";
+                                                     this.page.identifier = "ci-pipeline-docker-php-gitlab-github";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://de.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/aca5d5e55e6f4a5dbc891b62c8ae8757" width="1" height="1" alt=""/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting -->
+<script>hljs.highlightAll();</script>
+</body>
+
+</html>
