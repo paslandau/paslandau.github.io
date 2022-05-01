@@ -5,13 +5,17 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 01 May 2022 15:53:38 +0000</pubDate>
-        <lastBuildDate>Sun, 01 May 2022 15:53:38 +0000</lastBuildDate>
+        <pubDate>Sun, 01 May 2022 16:25:10 +0000</pubDate>
+        <lastBuildDate>Sun, 01 May 2022 16:25:10 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
                 <title>CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</title>
-                <description><![CDATA[<p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/'>CI Pipelines for dockerized PHP Apps with Github & Gitlab [Tutorial Part 7]</a></p>
+<hr />
+
+<p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
 (Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
 Pipelines</strong>.</p>
 <div class="center-div">
@@ -26,27 +30,27 @@ You find the branch for this tutorial at
 <!-- /generated -->
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
 (2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 (2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 (2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+<li><a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 (2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<li><a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 (2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
 </ul>
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="https://www.pascallandau.com#newsletter">via email</a>
 to get automatic notifications when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
@@ -54,67 +58,67 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a>
+<li><a href="https://www.pascallandau.com#introduction">Introduction</a>
 <ul>
-<li><a href="#recommended-reading">Recommended reading</a></li>
-<li><a href="#approach">Approach</a></li>
-<li><a href="#try-it-yourself">Try it yourself</a></li>
+<li><a href="https://www.pascallandau.com#recommended-reading">Recommended reading</a></li>
+<li><a href="https://www.pascallandau.com#approach">Approach</a></li>
+<li><a href="https://www.pascallandau.com#try-it-yourself">Try it yourself</a></li>
 </ul></li>
-<li><a href="#ci-setup">CI setup</a>
+<li><a href="https://www.pascallandau.com#ci-setup">CI setup</a>
 <ul>
-<li><a href="#general-ci-notes">General CI notes</a>
+<li><a href="https://www.pascallandau.com#general-ci-notes">General CI notes</a>
 <ul>
-<li><a href="#initialize-make-for-ci">Initialize <code>make</code> for CI</a></li>
-<li><a href="#wait-for-service-sh">wait-for-service.sh</a></li>
+<li><a href="https://www.pascallandau.com#initialize-make-for-ci">Initialize <code>make</code> for CI</a></li>
+<li><a href="https://www.pascallandau.com#wait-for-service-sh">wait-for-service.sh</a></li>
 </ul></li>
-<li><a href="#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a>
+<li><a href="https://www.pascallandau.com#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a>
 <ul>
-<li><a href="#run-details">Run details</a></li>
-<li><a href="#execution-example">Execution example</a></li>
+<li><a href="https://www.pascallandau.com#run-details">Run details</a></li>
+<li><a href="https://www.pascallandau.com#execution-example">Execution example</a></li>
 </ul></li>
-<li><a href="#setup-for-github-actions">Setup for Github Actions</a>
+<li><a href="https://www.pascallandau.com#setup-for-github-actions">Setup for Github Actions</a>
 <ul>
-<li><a href="#the-workflow-file">The Workflow file</a></li>
+<li><a href="https://www.pascallandau.com#the-workflow-file">The Workflow file</a></li>
 </ul></li>
-<li><a href="#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a>
+<li><a href="https://www.pascallandau.com#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a>
 <ul>
-<li><a href="#the-gitlab-ci-yml-pipeline-file">The <code>.gitlab-ci.yml</code> pipeline file</a></li>
-<li><a href="#performance">Performance</a>
+<li><a href="https://www.pascallandau.com#the-gitlab-ci-yml-pipeline-file">The <code>.gitlab-ci.yml</code> pipeline file</a></li>
+<li><a href="https://www.pascallandau.com#performance">Performance</a>
 <ul>
-<li><a href="#the-caching-problem-on-ci">The caching problem on CI</a></li>
+<li><a href="https://www.pascallandau.com#the-caching-problem-on-ci">The caching problem on CI</a></li>
 </ul></li>
 </ul></li>
 </ul></li>
-<li><a href="#docker-changes">Docker changes</a>
+<li><a href="https://www.pascallandau.com#docker-changes">Docker changes</a>
 <ul>
-<li><a href="#compose-file-updates">Compose file updates</a>
+<li><a href="https://www.pascallandau.com#compose-file-updates">Compose file updates</a>
 <ul>
-<li><a href="#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a></li>
+<li><a href="https://www.pascallandau.com#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a></li>
 </ul></li>
-<li><a href="#build-target-ci">Build target: <code>ci</code></a>
+<li><a href="https://www.pascallandau.com#build-target-ci">Build target: <code>ci</code></a>
 <ul>
-<li><a href="#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>
+<li><a href="https://www.pascallandau.com#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>
 <ul>
-<li><a href="#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a></li>
-<li><a href="#build-the-dependencies">Build the dependencies</a></li>
-<li><a href="#create-the-final-image">Create the final image</a></li>
+<li><a href="https://www.pascallandau.com#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a></li>
+<li><a href="https://www.pascallandau.com#build-the-dependencies">Build the dependencies</a></li>
+<li><a href="https://www.pascallandau.com#create-the-final-image">Create the final image</a></li>
 </ul></li>
-<li><a href="#build-stage-ci-in-the-application-image">Build stage <code>ci</code> in the <code>application</code> image</a></li>
+<li><a href="https://www.pascallandau.com#build-stage-ci-in-the-application-image">Build stage <code>ci</code> in the <code>application</code> image</a></li>
 </ul></li>
-<li><a href="#dockerignore">.dockerignore</a></li>
+<li><a href="https://www.pascallandau.com#dockerignore">.dockerignore</a></li>
 </ul></li>
-<li><a href="#makefile-changes">Makefile changes</a>
+<li><a href="https://www.pascallandau.com#makefile-changes">Makefile changes</a>
 <ul>
-<li><a href="#initialize-the-shared-variables">Initialize the shared variables</a></li>
-<li><a href="#env-based-docker-compose-config">ENV based docker compose config</a></li>
+<li><a href="https://www.pascallandau.com#initialize-the-shared-variables">Initialize the shared variables</a></li>
+<li><a href="https://www.pascallandau.com#env-based-docker-compose-config">ENV based docker compose config</a></li>
 </ul></li>
-<li><a href="#codebase-changes">Codebase changes</a>
+<li><a href="https://www.pascallandau.com#codebase-changes">Codebase changes</a>
 <ul>
-<li><a href="#add-a-test-for-encrypted-files">Add a test for encrypted files</a></li>
-<li><a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a></li>
-<li><a href="#create-a-junit-report-from-phpunit">Create a JUnit report from PhpUnit</a></li>
+<li><a href="https://www.pascallandau.com#add-a-test-for-encrypted-files">Add a test for encrypted files</a></li>
+<li><a href="https://www.pascallandau.com#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a></li>
+<li><a href="https://www.pascallandau.com#create-a-junit-report-from-phpunit">Create a JUnit report from PhpUnit</a></li>
 </ul></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
+<li><a href="https://www.pascallandau.com#wrapping-up">Wrapping up</a></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -138,19 +142,19 @@ managed solution (though we use <a href="https://docs.gitlab.com/runner/">custom
 <p>This tutorial builds on top of the previous parts. I'll do my best to cross-reference the
 corresponding articles when necessary, but I would still recommend to do some upfront reading on:</p>
 <ul>
-<li>the <a href="/blog/structuring-the-docker-setup-for-php-projects/#structuring-the-repository">general folder structure</a>, the
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker">update of the <code>.docker/</code> directory</a> and the introduction of a
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-mk-includes"><code>.make/</code> directory</a></li>
-<li>the <a href="/blog/structuring-the-docker-setup-for-php-projects/#makefile-and-bashrc">general usage of <code>make</code></a>
-and <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#makefile">it's evolution</a> as well as
-the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">connection to <code>docker compose</code> commands</a></li>
-<li>the concepts of the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker">docker containers and the <code>docker compose</code> setup</a></li>
+<li>the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#structuring-the-repository">general folder structure</a>, the
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#docker">update of the <code>.docker/</code> directory</a> and the introduction of a
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#make-mk-includes"><code>.make/</code> directory</a></li>
+<li>the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#makefile-and-bashrc">general usage of <code>make</code></a>
+and <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#makefile">it's evolution</a> as well as
+the <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">connection to <code>docker compose</code> commands</a></li>
+<li>the concepts of the <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#docker">docker containers and the <code>docker compose</code> setup</a></li>
 </ul>
 <p>And as a nice-to-know:</p>
 <ul>
-<li>the setup of <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit">PhpUnit for the <code>test</code> make target</a> as well as the
-<a href="/blog/php-qa-tools-make-docker/#qa-make-targets"><code>qa</code> make target</a></li>
-<li>the <a href="/blog/git-secret-encrypt-repository-docker/">usage of <code>git-secret</code> to handle secret values</a></li>
+<li>the setup of <a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit">PhpUnit for the <code>test</code> make target</a> as well as the
+<a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#qa-make-targets"><code>qa</code> make target</a></li>
+<li>the <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">usage of <code>git-secret</code> to handle secret values</a></li>
 </ul>
 <!-- generated -->
 <p><a id='approach'> </a></p>
@@ -169,34 +173,34 @@ locally through <code>make</code></strong>. This has the additional benefit of k
 <li>run the qa tools</li>
 <li>run the tests</li>
 </ul>
-<p>You can see the final results in the <a href="#ci-setup">CI setup</a> section, including the concrete <code>yml</code>
+<p>You can see the final results in the <a href="https://www.pascallandau.com#ci-setup">CI setup</a> section, including the concrete <code>yml</code>
 files and links to the repositories, see</p>
 <ul>
-<li><a href="#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a></li>
-<li><a href="#setup-for-github-actions">Setup for Github Actions</a></li>
-<li><a href="#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a></li>
+<li><a href="https://www.pascallandau.com#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a></li>
+<li><a href="https://www.pascallandau.com#setup-for-github-actions">Setup for Github Actions</a></li>
+<li><a href="https://www.pascallandau.com#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a></li>
 </ul>
 <p>On a code level, we will <strong>treat CI as an environment</strong>, configured through the env variable <code>ENV</code>. So
 far we only used <code>ENV=local</code> and we will extend that to also use <code>ENV=ci</code>. The necessary changes
 are explained after the concrete CI setup instructions in the sections</p>
 <ul>
-<li><a href="#docker-changes">Docker changes</a></li>
-<li><a href="#makefile-changes">Makefile changes</a></li>
-<li><a href="#codebase-changes">Codebase changes</a></li>
+<li><a href="https://www.pascallandau.com#docker-changes">Docker changes</a></li>
+<li><a href="https://www.pascallandau.com#makefile-changes">Makefile changes</a></li>
+<li><a href="https://www.pascallandau.com#codebase-changes">Codebase changes</a></li>
 </ul>
 <!-- generated -->
 <p><a id='try-it-yourself'> </a></p>
 <!-- /generated -->
 <h3>Try it yourself</h3>
 <p>To get a feeling for what's going on, you can start by
-<a href="#setup-for-a-local-ci-run">executing the local CI run</a>: </p>
+<a href="https://www.pascallandau.com#setup-for-a-local-ci-run">executing the local CI run</a>: </p>
 <ul>
 <li>checkout branch
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a></li>
 <li>initialize <code>make</code></li>
 <li>run the <code>.local-ci.sh</code> script </li>
 </ul>
-<p>This should give you a similar output as presented in the <a href="#execution-example">Execution example</a>.</p>
+<p>This should give you a similar output as presented in the <a href="https://www.pascallandau.com#execution-example">Execution example</a>.</p>
 <pre><code class="language-bash">git checkout part-7-ci-pipeline-docker-php-gitlab-github
 
 # Initialize make
@@ -218,33 +222,33 @@ bash .local-ci.sh</code></pre>
 <h4>Initialize <code>make</code> for CI</h4>
 <p>As a very first step we need to &quot;configure&quot; the codebase to operate for the <code>ci</code> environment.
 This is done through the <code>make-init</code> target as explained later in more detail in the
-<a href="#makefile-changes">Makefile changes</a> section via</p>
+<a href="https://www.pascallandau.com#makefile-changes">Makefile changes</a> section via</p>
 <pre><code class="language-bash">make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</code></pre>
 <pre><code class="language-text">$ make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
 Created a local .make/.env file</code></pre>
 <p><code>ENV=ci</code> ensures that we</p>
 <ul>
-<li>use <a href="#env-based-docker-compose-config">the correct <code>docker compose</code> config files</a></li>
-<li>use <a href="#build-target-ci">the <code>ci</code> build target</a></li>
+<li>use <a href="https://www.pascallandau.com#env-based-docker-compose-config">the correct <code>docker compose</code> config files</a></li>
+<li>use <a href="https://www.pascallandau.com#build-target-ci">the <code>ci</code> build target</a></li>
 </ul>
 <p><code>TAG=latest</code> is just a simplification for now because we don't do anything with the images yet.
 In an upcoming tutorial we will push them to a container registry for later usage in production
 deployments and then set the <code>TAG</code> to something more meaningful (like the build number).</p>
 <p><code>EXECUTE_IN_CONTAINER=true</code> forces every <code>make</code> command that uses a
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers"><code>RUN_IN_*_CONTAINER</code> setup</a>
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers"><code>RUN_IN_*_CONTAINER</code> setup</a>
 to run in a container. This is important, because <strong>the Gitlab runner will actually run in a
 docker container itself</strong>. However, this would cause any affected target <strong>to omit the
 <code>$(DOCKER_COMPOSER) exec</code> prefix</strong>.</p>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG" alt="Execute all targets in the application docker container" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG" alt="Execute all targets in the application docker container" /></a></p>
 <p><code>GPG_PASSWORD=12345678</code> is the password for the secret <code>gpg</code> key as mentioned in
-<a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a>.</p>
+<a href="https://www.pascallandau.com#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a>.</p>
 <!-- generated -->
 <p><a id='wait-for-service-sh'> </a></p>
 <!-- /generated -->
 <h4>wait-for-service.sh</h4>
 <p>I'll explain the &quot;container is up and running but the underlying service is not&quot; problem
 for the <code>mysql</code> service and how we can solve it with a health check later in this article at
-<a href="#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a>.
+<a href="https://www.pascallandau.com#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a>.
 On purpose, we don't want <code>docker compose</code> to take care of the waiting because we can make
 &quot;better use of the waiting time&quot; and will instead implement it ourselves with a simple bash
 script located at <code>.docker/scripts/wait-for-service.sh</code>:</p>
@@ -320,7 +324,7 @@ but the <code>mysql</code> service in the container was not.</p>
 <p><a id='setup-for-a-local-ci-run'> </a></p>
 <!-- /generated -->
 <h3>Setup for a &quot;local&quot; CI run</h3>
-<p>As mentioned under <a href="#approach">Approach</a>, we want to be able to perform all necessary steps
+<p>As mentioned under <a href="https://www.pascallandau.com#approach">Approach</a>, we want to be able to perform all necessary steps
 locally and I created a corresponding script at <code>.local-ci.sh</code>:</p>
 <pre><code class="language-bash">#!/bin/bash
 # fail on any error 
@@ -400,7 +404,7 @@ only necessary locally, because runners on a remote CI system will start &quot;f
 <pre><code class="language-bash">start_total=$(date +%s)</code></pre>
 <p>to store the current timestamp</p></li>
 <li>we need the secret <code>gpg</code> key in order to decrypt the secrets and simply copy the
-<a href="#add-a-password-protected-secret-gpg-key">password-protected example key</a>
+<a href="https://www.pascallandau.com#add-a-password-protected-secret-gpg-key">password-protected example key</a>
 (in the actual CI systems the key will be configured as a secret value that is injected in
 the run)
 <pre><code class="language-bash"># STORE GPG KEY
@@ -413,25 +417,25 @@ docker version
 docker compose version
 cat /etc/*-release || true</code></pre></li>
 <li>for the docker setup, we start with
-<a href="#initialize-make-for-ci">initializing the environment for <code>ci</code></a>
+<a href="https://www.pascallandau.com#initialize-make-for-ci">initializing the environment for <code>ci</code></a>
 <pre><code class="language-bash"># SETUP DOCKER
 make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</code></pre>
 <p>then build the docker setup</p>
 <pre><code class="language-bash">make docker-build</code></pre>
 <p>and finally add a <code>.build/</code> directory to
-<a href="#create-a-junit-report-from-phpunit">collect the build artifacts</a></p>
+<a href="https://www.pascallandau.com#create-a-junit-report-from-phpunit">collect the build artifacts</a></p>
 <pre><code class="language-bash">mkdir -p .build &amp;&amp; chmod 777 .build</code></pre></li>
 <li>then, the docker setup is started
 <pre><code class="language-bash"># START DOCKER
 make docker-up</code></pre>
 <p>and <code>gpg</code> is initialized so that
-<a href="#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a></p>
+<a href="https://www.pascallandau.com#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a></p>
 <pre><code class="language-bash">make gpg-init
 make secret-decrypt-with-password</code></pre>
 <p>We don't need to pass a <code>GPG_PASSWORD</code> to <code>secret-decrypt-with-password</code> because we have set
 it up in the previous step as a default value via <code>make-init</code></p></li>
 <li>once the <code>application</code> container is running, the qa tools are run by invoking the
-<a href="/blog/php-qa-tools-make-docker/#the-qa-target"><code>qa</code> make target</a>
+<a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#the-qa-target"><code>qa</code> make target</a>
 <pre><code class="language-bash"># QA
 make qa || FAILED=true</code></pre>
 <p>The <code>|| FAILED=true</code> part makes sure that the script will not be terminated if the checks fail.
@@ -439,12 +443,12 @@ Instead, the fact that a failure happened is &quot;recorded&quot; in the <code>F
 can evaluate it at the end. We don't want the script to stop here because we want the
 following steps to be executed as well (e.g. the tests).</p></li>
 <li>to mitigate the
-<a href="#adding-a-health-check-for-mysql">&quot;<code>mysql</code> is not ready&quot; problem</a>, we will now apply the
-<a href="#wait-for-service-sh">wait-for-service.sh script</a>
+<a href="https://www.pascallandau.com#adding-a-health-check-for-mysql">&quot;<code>mysql</code> is not ready&quot; problem</a>, we will now apply the
+<a href="https://www.pascallandau.com#wait-for-service-sh">wait-for-service.sh script</a>
 <pre><code class="language-bash"># WAIT FOR CONTAINERS
 bash .docker/scripts/wait-for-service.sh mysql 30 1</code></pre></li>
 <li>once <code>mysql</code> is ready, we can execute the tests via the
-<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit"><code>test</code> make target</a> and
+<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit"><code>test</code> make target</a> and
 apply the same <code>|| FAILED=true</code> workaround as for the qa tools
 <pre><code class="language-bash"># TEST
 make test || FAILED=true</code></pre></li>
@@ -549,7 +553,7 @@ SUCCESS</code></pre>
 <li><a href="https://github.com/paslandau/docker-php-tutorial/runs/5866235820?check_suite_focus=true">Example of a successful job</a></li>
 <li><a href="https://github.com/paslandau/docker-php-tutorial/runs/5867485802?check_suite_focus=true">Example of a failed job</a></li>
 </ul>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG" alt="Github Action example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG" alt="Github Action example" /></a></p>
 <p>If you are completely new to Github Actions, I recommend to start with the
 <a href="https://docs.github.com/en/actions/quickstart">official Quickstart Guide for GitHub Actions</a>
 and the
@@ -668,7 +672,7 @@ jobs:
           name: build-artifacts
           path: ./.build</code></pre>
 <p>The steps are essentially the same as explained before at
-<a href="#run-details">Run details for the local run</a>. Some additional notes:</p>
+<a href="https://www.pascallandau.com#run-details">Run details for the local run</a>. Some additional notes:</p>
 <ul>
 <li>I want the Action to be triggered automatically only when I
 <a href="https://stackoverflow.com/a/58142412/413531">push to branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code></a>
@@ -692,7 +696,7 @@ without putting it up for review. <strong>CAUTION:</strong> There is a
     echo "START_TOTAL=$(date +%s)" &gt; $GITHUB_ENV </code></pre>
 <p>This will be the only timer we use, because the job uses multiple steps that are timed
 automatically - so we don't need to take timestamps manually:
-<a href="/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG" alt="Github Action step times" /></a></p></li>
+<a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG" alt="Github Action step times" /></a></p></li>
 <li>
 <p>the <code>gpg</code> key is configured as an
 <a href="https://docs.github.com/en/actions/security-guides/encrypted-secrets">encrypted secret</a> named
@@ -707,7 +711,7 @@ automatically - so we don't need to take timestamps manually:
 e.g.
 
 https://github.com/paslandau/docker-php-tutorial/settings/secrets/actions</code></pre>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG" alt="Github Action Secrets UI" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG" alt="Github Action Secrets UI" /></a></p>
 </li>
 <li>the <code>ubuntu-latest</code> image doesn't contain the <code>docker compose</code> plugin, thus we need to
 <a href="https://docs.docker.com/compose/cli-command/#install-on-linux">install it manually</a>
@@ -719,7 +723,7 @@ https://github.com/paslandau/docker-php-tutorial/settings/secrets/actions</code>
     chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose</code></pre></li>
 <li>for the <code>make</code> initialization we need the second secret named <code>GPG_PASSWORD</code> - which is
 configured as <code>12345678</code> in our case, see
-<a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret gpg key</a>
+<a href="https://www.pascallandau.com#add-a-password-protected-secret-gpg-key">Add a password-protected secret gpg key</a>
 <pre><code class="language-yaml">  - name: SETUP DOCKER
     run: |
       make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=${{ secrets.GPG_PASSWORD }}"</code></pre></li>
@@ -733,7 +737,7 @@ permanent location, using the
       path: ./.build</code></pre>
 <p>You can
 <a href="https://github.com/actions/upload-artifact#where-does-the-upload-go">download the artifacts in the Run overview UI</a>
-<a href="/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG" alt="Github Actions: Run overview UI shows build-artifacts" /></a></p></li>
+<a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG" alt="Github Actions: Run overview UI shows build-artifacts" /></a></p></li>
 </ul>
 <!-- generated -->
 <p><a id='setup-for-gitlab-pipelines'> </a></p>
@@ -745,7 +749,7 @@ permanent location, using the
 <li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511339886">Example of a successful job</a></li>
 <li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511341545">Example of a failed job</a></li>
 </ul>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG" alt="Gitlab Pipeline example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG" alt="Gitlab Pipeline example" /></a></p>
 <p>If you are completely new to Gitlab Pipelines, I recommend to start with the
 <a href="https://docs.gitlab.com/ee/ci/quick_start/">official Get started with GitLab CI/CD guide</a>. In
 short:</p>
@@ -863,7 +867,7 @@ QA and Tests:
       - ".build/*"
     expire_in: 1 week</code></pre>
 <p>The steps are essentially the same as explained before under
-<a href="#run-details">Run details for the local run</a>. Some additional notes:</p>
+<a href="https://www.pascallandau.com#run-details">Run details for the local run</a>. Some additional notes:</p>
 <ul>
 <li>we start by defining the stages of the pipeline - though that's currently just one (<code>build_test</code>)
 <pre><code class="language-yaml">stages:
@@ -898,7 +902,7 @@ and move it to <code>./secret.gpg</code> in order to decrypt the secrets later</
 e.g.
 
 https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/settings/ci_cd</code></pre>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/gitlab-ci-cd-variables-ui.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/gitlab-ci-cd-variables-ui.PNG" alt="Gitlab CI/CD Variables UI" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-ci-cd-variables-ui.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-ci-cd-variables-ui.PNG" alt="Gitlab CI/CD Variables UI" /></a></p>
 </li>
 <li>the docker base image doesn't come with all required tools, thus we need to install the
 missing ones (<code>make</code>, <code>bash</code>, <code>curl</code> and <code>docker compose</code>)
@@ -920,7 +924,7 @@ paths:
   - ".build/*"
 expire_in: 1 week </code></pre>
 <p>They can be accessed in the <a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines">Pipeline overview UI</a>
-<a href="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-build-artifacts.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-build-artifacts.PNG" alt="Gitlab Pipeline overview UI" /></a></p></li>
+<a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-build-artifacts.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-build-artifacts.PNG" alt="Gitlab Pipeline overview UI" /></a></p></li>
 </ul>
 <!-- generated -->
 <p><a id='performance'> </a></p>
@@ -1015,7 +1019,7 @@ used all 8 cores of my laptop. The time breakdown is roughly as follows:</p>
 <li>&quot;local without cache&quot; via <code>bash .local-ci.sh</code> with no local images at all</li>
 <li>&quot;local with cached images&quot; via <code>bash .local-ci.sh</code> with cached images for <code>mysql</code> and <code>redis</code></li>
 <li>&quot;local with cached images + layers&quot; via <code>bash .local-ci.sh</code> with cached images for <code>mysql</code> and
-<code>redis</code> and a <a href="#build-the-dependencies">&quot;warm&quot; layer cache for the <code>application</code> image</a></li>
+<code>redis</code> and a <a href="https://www.pascallandau.com#build-the-dependencies">&quot;warm&quot; layer cache for the <code>application</code> image</a></li>
 </ul>
 <p><strong>Optimizing the performance is out of scope for this tutorial</strong>, but I'll at least document my
 current findings.</p>
@@ -1025,7 +1029,7 @@ current findings.</p>
 <h5>The caching problem on CI</h5>
 <p>A good chunk of time is <strong>usually spent on building the docker images</strong>. We did our best to optimize
 the process by leveraging the layer cache and using cache mounts
-(see section <a href="#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>).
+(see section <a href="https://www.pascallandau.com#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>).
 But those steps are futile on CI systems, because the corresponding <strong>runners will start &quot;from
 scratch&quot; for every CI run</strong> - i.e. <strong>there is no local cache</strong> that they could use. In
 consequence, <strong>the full docker setup is also built &quot;from scratch&quot;</strong> on every run.</p>
@@ -1070,14 +1074,14 @@ codebase</strong>.</p>
 tests also need a database and a queue, i.e. the <code>mysql</code> and <code>redis</code> containers are required as
 well - whereas <code>nginx</code>, <code>php-fpm</code> and <code>php-worker</code> are not required. We'll handle that through
 dedicated <code>docker compose</code> configuration files that only contain the necessary services. This is
-explained in more detail in section <a href="#compose-file-updates">Compose file updates</a>.</p>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG" alt="Build images for CI" /></a></p>
+explained in more detail in section <a href="https://www.pascallandau.com#compose-file-updates">Compose file updates</a>.</p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG" alt="Build images for CI" /></a></p>
 <p>In our local setup, we have <strong>shared the codebase between the host system and docker</strong> - mainly
 because we wanted our changes to be reflected immediately in docker. <strong>This isn't necessary for the
 CI</strong> use case. In fact we want our <strong>CI images as close as possible to our production images</strong> - and
 those should &quot;contain everything to run independently&quot;. I.e. <strong>the codebase should live in the
 image</strong> - not on the host system. This will be explained in section
-<a href="#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a>.</p>
+<a href="https://www.pascallandau.com#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a>.</p>
 <!-- generated -->
 <p><a id='compose-file-updates'> </a></p>
 <!-- /generated -->
@@ -1105,8 +1109,8 @@ for that, we will use the following <code>docker compose</code> config files in 
 <code>ci</code>:</p>
 <pre><code class="language-bash">docker compose -f docker-compose.local.ci.yml -f docker-compose.ci.yml</code></pre>
 <p>I'll explain  the logic for that later in
-section <a href="#env-based-docker-compose-config">ENV based docker compose config</a>. In short:</p>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG" alt="Assemble docker-compose config files for CI" /></a></p>
+section <a href="https://www.pascallandau.com#env-based-docker-compose-config">ENV based docker compose config</a>. In short:</p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG" alt="Assemble docker-compose config files for CI" /></a></p>
 <p>When comparing <code>ci</code> with <code>local</code>, for <code>ci</code></p>
 <ul>
 <li>we <strong>don't need to share the codebase</strong> with the host system
@@ -1152,7 +1156,7 @@ are only two things that <code>ci</code> needs that <code>local</code> doesn't:<
   volumes:
     - ${APP_CODE_PATH_HOST?}/secret.gpg:${APP_CODE_PATH_CONTAINER?}/secret.gpg:ro</code></pre>
 <p>This
-is <a href="/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">required to decrypt the secrets</a>:</p>
+is <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">required to decrypt the secrets</a>:</p>
 <blockquote>
 <p>[...] the private key has to be named <code>secret.gpg</code> and put in the root of the codebase,
 so that the import can be be simplified with <code>make</code> targets</p>
@@ -1209,7 +1213,7 @@ b509eb2f99c0   dofroscra/application-ci:latest  Up 13 seconds            dofrosc
 503e52fd9e68   mysql:8.0.28                     Up 13 seconds (healthy)  dofroscra_ci-mysql-1</code></pre>
 <p>Note the <code>(health: starting)</code> and <code>(healthy)</code> infos for the <code>mysql</code> service.</p>
 <p>We can also get this info from <code>docker inspect</code> (used by our
-<a href="#wait-for-service-sh">wait-for-service.sh script</a>) via:</p>
+<a href="https://www.pascallandau.com#wait-for-service-sh">wait-for-service.sh script</a>) via:</p>
 <pre><code class="language-text">$ docker inspect --format "{{json .State.Health.Status }}" dofroscra_ci-mysql-1
 "healthy"</code></pre>
 <p>FYI: We could also use the
@@ -1229,20 +1233,20 @@ run.</p>
 <!-- /generated -->
 <h3>Build target: <code>ci</code></h3>
 <p>We've already introduced build targets in
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#environments-and-build-targets">Environments and build targets</a>
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#environments-and-build-targets">Environments and build targets</a>
 and how to &quot;choose&quot;
-them <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">through <code>make</code> with the <code>ENV</code> variable defined in a shared <code>.make/.env</code> file</a>.
+them <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">through <code>make</code> with the <code>ENV</code> variable defined in a shared <code>.make/.env</code> file</a>.
 Short recap:</p>
 <ul>
 <li>create a <code>.make/.env</code> file via <code>make make-init</code> that contains the <code>ENV</code>, e.g. 
 <pre><code class="language-makefile">ENV=ci</code></pre></li>
 <li>the <code>.make/.env</code> file is included in the main <code>Makefile</code>, making the <code>ENV</code> variables available
 to <code>make</code></li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">configure a <code>$DOCKER_COMPOSE</code> variable</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">configure a <code>$DOCKER_COMPOSE</code> variable</a>
 that passes the <code>ENV</code> as an environment variable, i.e. via
 <pre><code class="language-bash">ENV=$(ENV) docker-compose</code></pre></li>
 </ul>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG" alt="Initialize make to run docker commands with ENV=ci" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG" alt="Initialize make to run docker commands with ENV=ci" /></a></p>
 <ul>
 <li>use the <code>ENV</code> variable in the <code>docker compose</code> configuration file to determine the
 <code>build.target</code> property. E.g. in <code>.docker/docker-compose/docker-compose-php-base.yml</code>
@@ -1250,7 +1254,7 @@ that passes the <code>ENV</code> as an environment variable, i.e. via
   build:
     target: ${ENV?}</code></pre></li>
 </ul>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG" alt="Build images for CI" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/build-ci-images.PNG" alt="Build images for CI" /></a></p>
 <ul>
 <li>in the <code>Dockerfile</code> of a service, define the <code>ENV</code> as a build stage. E.g. in
 <code>.docker/images/php/base/Dockerfile</code>
@@ -1267,7 +1271,7 @@ the <code>application</code> image.</p>
 <p><a id='use-the-whole-codebase-as-build-context'> </a></p>
 <!-- /generated -->
 <h5>Use the whole codebase as build context</h5>
-<p>As mentioned in section <a href="#docker-changes">Docker changes</a> we want to &quot;bake&quot; the codebase into
+<p>As mentioned in section <a href="https://www.pascallandau.com#docker-changes">Docker changes</a> we want to &quot;bake&quot; the codebase into
 the <code>ci</code> image of the <code>php-base</code> container. Thus, we must change the <code>context</code> property in
 <code>.docker/docker-compose/docker-compose-php-base.yml</code> <strong>to not only use the <code>.docker/</code> directory
 but instead the whole codebase</strong>. I.e. &quot;dont use <code>../</code> but <code>../../</code>&quot;:</p>
@@ -1340,7 +1344,7 @@ RUN mv /dependencies/vendor /codebase/vendor &amp;&amp; \
     git init</code></pre>
 <p>FYI: The <code>COPY . /codebase</code> step doesn't actually copy &quot;everything in the repository&quot;, because we
 have also introduced a <code>.dockerignore</code> file to exclude some files from being included in the
-build context - see section <a href="#dockerignore"><code>.dockerignore</code></a>.</p>
+build context - see section <a href="https://www.pascallandau.com#dockerignore"><code>.dockerignore</code></a>.</p>
 <p>Some notes on the final <code>RUN</code> step:</p>
 <ul>
 <li><code>rm -rf .docker/</code> doesn't really save &quot;that much&quot; in the current setup - please take it more
@@ -1351,7 +1355,7 @@ production image&quot;)</li>
 during the build, because we do not want decrypted secret files to end up in the image.</li>
 </ul>
 <p>When tested locally, the difference between the trivial solution and the one that makes use of
-layer caching is ~35 seconds, see the results in the <a href="#performance">Performance</a> section.</p>
+layer caching is ~35 seconds, see the results in the <a href="https://www.pascallandau.com#performance">Performance</a> section.</p>
 <!-- generated -->
 <p><a id='create-the-final-image'> </a></p>
 <!-- /generated -->
@@ -1466,7 +1470,7 @@ to ensure that the files have the correct permissions.</p>
 <!-- /generated -->
 <h4>Build stage <code>ci</code> in the <code>application</code> image</h4>
 <p>There is actually &quot;nothing&quot; to be done here. We don't need SSH any longer because it is only
-required for the <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#ssh-configuration">SSH Configuration of PhpStorm</a>.
+required for the <a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#ssh-configuration">SSH Configuration of PhpStorm</a>.
 So the build stage is simply &quot;empty&quot;:</p>
 <pre><code class="language-Dockerfile">ARG BASE_IMAGE
 FROM ${BASE_IMAGE} as base
@@ -1533,13 +1537,13 @@ passwords.txt
 <p><a id='initialize-the-shared-variables'> </a></p>
 <!-- /generated -->
 <h3>Initialize the shared variables</h3>
-<p>We have introduced the concept of <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">shared variables via <code>.make/.env</code></a>
+<p>We have introduced the concept of <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">shared variables via <code>.make/.env</code></a>
 previously. It allows us to <strong>define variables in one place</strong> (=single source
 of truth) that are then used as &quot;defaults&quot; so we <strong>don't have to define them explicitly</strong> when
 invoking certain <code>make</code> targets (like <code>make docker-build</code>). We'll make use of this concept by
 setting the environment to <code>ci</code>via<code>ENV=ci</code> and thus making sure that all docker commands use
 <code>ci</code> &quot;automatically&quot; as well.</p>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG" alt="Initialize make to run docker commands with ENV=ci" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/make-init-ci-docker-commands.PNG" alt="Initialize make to run docker commands with ENV=ci" /></a></p>
 <p>In addition, I made a small modification by <strong>introducing a second file at <code>.make/variables.env</code></strong>
 that is also included in the main <code>Makefile</code> and <strong>holds the &quot;default&quot; shared variables</strong>. Those
 are neither &quot;secret&quot; nor are they likely to be be changed for environment adjustments. The file
@@ -1582,7 +1586,7 @@ make-init: ## Initializes the local .makefile/.env file with ENV variables for m
 <p><a id='env-based-docker-compose-config'> </a></p>
 <!-- /generated -->
 <h3>ENV based docker compose config</h3>
-<p>As mentioned in section <a href="#compose-file-updates">Compose file updates</a> we need to select the
+<p>As mentioned in section <a href="https://www.pascallandau.com#compose-file-updates">Compose file updates</a> we need to select the
 &quot;correct&quot; <code>docker compose</code> configuration files based on the <code>ENV</code> value. This is done in
 <code>.make/02-00-docker.mk</code>:</p>
 <pre><code class="language-makefile"># File .make/02-00-docker.mk
@@ -1612,7 +1616,7 @@ ENV=ci TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_
 # =&gt;
 # -f ./.docker/docker-compose/docker-compose.local.ci.yml 
 # -f ./.docker/docker-compose/docker-compose.ci.yml</code></pre>
-<p><a href="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG" alt="Assemble docker-compose config files for CI" /></a></p>
+<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/assemble-docker-compose-files.PNG" alt="Assemble docker-compose config files for CI" /></a></p>
 <!-- generated -->
 <p><a id='codebase-changes'> </a></p>
 <!-- /generated -->
@@ -1624,7 +1628,7 @@ ENV=ci TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_
 <!-- /generated -->
 <h3>Add a test for encrypted files</h3>
 <p>We've introduced <code>git-secret</code> in the previous tutorial
-<a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 and used it to store the file <code>passwords.txt</code> encrypted in the codebase. To make sure that the
 decryption works as expected on the CI systems, I've added a test at
 <code>tests/Feature/EncryptionTest.php</code> to check if the file exists and if the content is correct.</p>
@@ -1649,7 +1653,7 @@ be exposed in a test - but it suffices for now as proof of a working secret decr
 <!-- /generated -->
 <h3>Add a password-protected secret <code>gpg</code> key</h3>
 <p>I've mentioned in
-<a href="/blog/git-secret-encrypt-repository-docker/#decrypt-files">Scenario: Decrypt file</a>
+<a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/#decrypt-files">Scenario: Decrypt file</a>
 that it is also possible <strong>to use a password-protected secret <code>gpg</code> key for
 an additional layer of security</strong>. I have created such a key and stored it in the repository at
 <code>secret-protected.gpg.example</code> (in a &quot;real world scenario&quot; I wouldn't do that - but since this
@@ -1657,8 +1661,8 @@ is a public tutorial I want you to be able to follow along completely). The pass
 key is <code>12345678</code>.</p>
 <p>The corresponding public key is located at <code>.dev/gpg-keys/alice-protected-public.gpg</code> and
 belongs to the email address <code>alice.protected@example.com</code>. I've
-<a href="/blog/git-secret-encrypt-repository-docker/#adding-new-team-members">added this address</a> and
-<a href="/blog/git-secret-encrypt-repository-docker/#adding-and-encrypting-files">re-encrypted the secrets</a> afterwards via</p>
+<a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/#adding-new-team-members">added this address</a> and
+<a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/#adding-and-encrypting-files">re-encrypted the secrets</a> afterwards via</p>
 <pre><code class="language-bash">make gpg-init
 make secret-add-user EMAIL="alice.protected@example.com"
 make secret-encrypt</code></pre>
@@ -1694,22 +1698,26 @@ leave a comment. You should now have a working CI pipeline for Github (via Githu
 and/or Gitlab (via Gitlab pipelines) that runs automatically on each push.</p>
 <p>In the next part of this tutorial, we will use terraform to create an infrastructure for
 production deployments on GCP and deploy the docker containers there.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+<p>Please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a> or <a href="https://www.pascallandau.com#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 07:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/</guid>
             </item>
                     <item>
                 <title>Use git-secret to encrypt secrets in the repository [Tutorial Part 6]</title>
-                <description><![CDATA[<p>In the sixth part of this tutorial series on developing PHP on Docker we will <strong>setup <code>git-secret</code>
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/'>Use git-secret to encrypt secrets in the repository [Tutorial Part 6]</a></p>
+<hr />
+
+<p>In the sixth part of this tutorial series on developing PHP on Docker we will <strong>setup <code>git-secret</code>
 to store secrets directly in the repository</strong>. Everything will be handled through Docker and
 added as make targets for a convenient workflow.</p>
-<p><a href="/img/git-secret-encrypt-repository-docker/git-secret-example.gif"><img src="/img/git-secret-encrypt-repository-docker/git-secret-example.gif" alt="git-secret example" title="git-secret example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/git-secret-encrypt-repository-docker/git-secret-example.gif"><img src="https://www.pascallandau.com/img/git-secret-encrypt-repository-docker/git-secret-example.gif" alt="git-secret example" title="git-secret example" /></a></p>
 <p><small>
 FYI:
 This tutorial is a precursor to the next a part
-<a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 because dealing with secrets is an important aspect when setting up a CI system (and later when
 deploying to production) - but I feel it's complex enough to warrant its own article.
 </small></p>
@@ -1722,27 +1730,27 @@ You find the branch with the final result of this tutorial at
 <!-- /generated -->
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
 (2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 (2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 (2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+<li><a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 (2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<li><a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 (2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
 </ul>
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="https://www.pascallandau.com#newsletter">via email</a>
 to get automatic notifications when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
@@ -1750,66 +1758,66 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#tooling">Tooling</a>
+<li><a href="https://www.pascallandau.com#introduction">Introduction</a></li>
+<li><a href="https://www.pascallandau.com#tooling">Tooling</a>
 <ul>
-<li><a href="#gpg">gpg</a>
+<li><a href="https://www.pascallandau.com#gpg">gpg</a>
 <ul>
-<li><a href="#gpg-installation">gpg installation</a></li>
-<li><a href="#gpg-usage">gpg usage</a>
+<li><a href="https://www.pascallandau.com#gpg-installation">gpg installation</a></li>
+<li><a href="https://www.pascallandau.com#gpg-usage">gpg usage</a>
 <ul>
-<li><a href="#create-gpg-key-pair">Create GPG key pair</a></li>
-<li><a href="#export-list-and-import-private-gpg-keys">Export, list and import private GPG keys</a></li>
-<li><a href="#export-list-and-import-public-gpg-keys">Export, list and import public GPG keys</a></li>
+<li><a href="https://www.pascallandau.com#create-gpg-key-pair">Create GPG key pair</a></li>
+<li><a href="https://www.pascallandau.com#export-list-and-import-private-gpg-keys">Export, list and import private GPG keys</a></li>
+<li><a href="https://www.pascallandau.com#export-list-and-import-public-gpg-keys">Export, list and import public GPG keys</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#git-secret">git-secret</a>
+<li><a href="https://www.pascallandau.com#git-secret">git-secret</a>
 <ul>
-<li><a href="#git-secret-installation">git-secret installation</a></li>
-<li><a href="#git-secret-usage">git-secret usage</a>
+<li><a href="https://www.pascallandau.com#git-secret-installation">git-secret installation</a></li>
+<li><a href="https://www.pascallandau.com#git-secret-usage">git-secret usage</a>
 <ul>
-<li><a href="#initialize-git-secret">Initialize git-secret</a>
+<li><a href="https://www.pascallandau.com#initialize-git-secret">Initialize git-secret</a>
 <ul>
-<li><a href="#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a></li>
+<li><a href="https://www.pascallandau.com#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a></li>
 </ul></li>
-<li><a href="#adding-listing-and-removing-users">Adding, listing and removing users</a>
+<li><a href="https://www.pascallandau.com#adding-listing-and-removing-users">Adding, listing and removing users</a>
 <ul>
-<li><a href="#reminder-rotate-the-encrypted-secrets">Reminder: Rotate the encrypted secrets</a></li>
+<li><a href="https://www.pascallandau.com#reminder-rotate-the-encrypted-secrets">Reminder: Rotate the encrypted secrets</a></li>
 </ul></li>
-<li><a href="#adding-listing-and-removing-files-for-encryption">Adding, listing and removing files for encryption</a></li>
-<li><a href="#encrypt-files">Encrypt files</a></li>
-<li><a href="#decrypting-files">Decrypting files</a></li>
-<li><a href="#show-changes-between-encrypted-and-decrypted-files">Show changes between encrypted and decrypted files</a></li>
+<li><a href="https://www.pascallandau.com#adding-listing-and-removing-files-for-encryption">Adding, listing and removing files for encryption</a></li>
+<li><a href="https://www.pascallandau.com#encrypt-files">Encrypt files</a></li>
+<li><a href="https://www.pascallandau.com#decrypting-files">Decrypting files</a></li>
+<li><a href="https://www.pascallandau.com#show-changes-between-encrypted-and-decrypted-files">Show changes between encrypted and decrypted files</a></li>
 </ul></li>
 </ul></li>
 </ul></li>
-<li><a href="#makefile-adjustments">Makefile adjustments</a></li>
-<li><a href="#workflow">Workflow</a>
+<li><a href="https://www.pascallandau.com#makefile-adjustments">Makefile adjustments</a></li>
+<li><a href="https://www.pascallandau.com#workflow">Workflow</a>
 <ul>
-<li><a href="#process-challenges">Process challenges</a>
+<li><a href="https://www.pascallandau.com#process-challenges">Process challenges</a>
 <ul>
-<li><a href="#updating-secrets">Updating secrets</a></li>
-<li><a href="#code-reviews-and-merge-conflicts">Code reviews and merge conflicts</a></li>
-<li><a href="#local-git-secret-and-gpg-setup">Local <code>git-secret</code> and <code>gpg</code> setup</a></li>
+<li><a href="https://www.pascallandau.com#updating-secrets">Updating secrets</a></li>
+<li><a href="https://www.pascallandau.com#code-reviews-and-merge-conflicts">Code reviews and merge conflicts</a></li>
+<li><a href="https://www.pascallandau.com#local-git-secret-and-gpg-setup">Local <code>git-secret</code> and <code>gpg</code> setup</a></li>
 </ul></li>
-<li><a href="#scenarios">Scenarios</a>
+<li><a href="https://www.pascallandau.com#scenarios">Scenarios</a>
 <ul>
-<li><a href="#initial-setup-of-gpg-keys">Initial setup of <code>gpg</code> keys</a></li>
-<li><a href="#initial-setup-of-git-secret">Initial setup of <code>git-secret</code></a></li>
-<li><a href="#initialize-gpg-after-container-startup">Initialize <code>gpg</code> after container startup</a></li>
-<li><a href="#adding-new-team-members">Adding (new) team members</a></li>
-<li><a href="#adding-and-encrypting-files">Adding and encrypting files</a></li>
-<li><a href="#decrypt-files">Decrypt files</a></li>
-<li><a href="#removing-files">Removing files</a></li>
-<li><a href="#removing-team-members">Removing team members</a></li>
+<li><a href="https://www.pascallandau.com#initial-setup-of-gpg-keys">Initial setup of <code>gpg</code> keys</a></li>
+<li><a href="https://www.pascallandau.com#initial-setup-of-git-secret">Initial setup of <code>git-secret</code></a></li>
+<li><a href="https://www.pascallandau.com#initialize-gpg-after-container-startup">Initialize <code>gpg</code> after container startup</a></li>
+<li><a href="https://www.pascallandau.com#adding-new-team-members">Adding (new) team members</a></li>
+<li><a href="https://www.pascallandau.com#adding-and-encrypting-files">Adding and encrypting files</a></li>
+<li><a href="https://www.pascallandau.com#decrypt-files">Decrypt files</a></li>
+<li><a href="https://www.pascallandau.com#removing-files">Removing files</a></li>
+<li><a href="https://www.pascallandau.com#removing-team-members">Removing team members</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#pros-and-cons">Pros and cons</a>
+<li><a href="https://www.pascallandau.com#pros-and-cons">Pros and cons</a>
 <ul>
-<li><a href="#pro">Pro</a></li>
-<li><a href="#cons">Cons</a></li>
+<li><a href="https://www.pascallandau.com#pro">Pro</a></li>
+<li><a href="https://www.pascallandau.com#cons">Cons</a></li>
 </ul></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
+<li><a href="https://www.pascallandau.com#wrapping-up">Wrapping up</a></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -1841,7 +1849,7 @@ different on &quot;your machine&quot; than on &quot;production&quot;</li>
 with a certain overhead as it's yet another service that needs to be integrated and<br />
 maintained. Maybe it is the exactly right decision for your use-case - maybe it's overkill.
 By the end of this article you'll at least be aware of an alternative with a lower barrier to entry.
-See also the <a href="#pros-and-cons">Pros and cons</a> section in the end for an overview.</p>
+See also the <a href="https://www.pascallandau.com#pros-and-cons">Pros and cons</a> section in the end for an overview.</p>
 <p>Even though it's
 <a href="https://withblue.ink/2021/05/07/storing-secrets-and-passwords-in-git-is-bad.html">generally not advised to store secrets in a repository</a>,
 I'll propose exactly that in this tutorial:</p>
@@ -1887,7 +1895,7 @@ cat passwords.txt</code></pre>
 <h2>Tooling</h2>
 <p>We will set up <code>gpg</code> and <code>git-secret</code> in the php <code>base</code> image, so that the tools become available in
 all other containers. Please refer to
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 for an in-depth explanation of the docker images.</p>
 <div class="panel panel-default">
   <div class="panel-heading">
@@ -1900,14 +1908,14 @@ for an in-depth explanation of the docker images.</p>
     <br>
     <strong>Tip:</strong>
     <br>
-    See <a href="/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via%20-din-bashrc-helper">Easy container access via din .bashrc helper</a>
+    See <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via%20-din-bashrc-helper">Easy container access via din .bashrc helper</a>
     for a convenient shortcut to log into docker containers.
   </div>
 </div>
 <p>Please note, that there is a caveat when using <code>git-secret</code> in a folder that is shared between
 the host system and a docker container. I'll explain that in more detail (including a workaround)
 in section
-<a href="#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a>.</p>
+<a href="https://www.pascallandau.com#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a>.</p>
 <!-- generated -->
 <p><a id='gpg'> </a></p>
 <!-- /generated -->
@@ -2022,7 +2030,7 @@ circumvent the prompt by using <code>--batch --yes --pinentry-mode loopback</cod
 gpg --import --batch --yes --pinentry-mode loopback "$path"</code></pre>
 <p>See also <a href="https://betakuang.medium.com/using-command-line-passphrase-input-for-gpg-with-git-for-windows-f78ae2c7cd2e">Using Command-Line Passphrase Input for GPG</a>.
 In doing so, we don't need to provide the password just yet - but we must pass it later when we
-attempt to <a href="#decrypting-files">decrypt files</a>.</p>
+attempt to <a href="https://www.pascallandau.com#decrypting-files">decrypt files</a>.</p>
 <!-- generated -->
 <p><a id='export-list-and-import-public-gpg-keys'> </a></p>
 <!-- /generated -->
@@ -2171,7 +2179,7 @@ browser-socket /tmp/S.gpg-agent.browser</code></pre>
 <p><a id='adding-listing-and-removing-users'> </a></p>
 <!-- /generated -->
 <h5>Adding, listing and removing users</h5>
-<p>To <strong>add a new user</strong>, you must first <a href="#export-list-and-import-public-gpg-keys">import its public gpg key</a>. Then
+<p>To <strong>add a new user</strong>, you must first <a href="https://www.pascallandau.com#export-list-and-import-public-gpg-keys">import its public gpg key</a>. Then
 run:</p>
 <pre><code class="language-bash">email="pascal.landau@example.com"
 git secret tell "$email"</code></pre>
@@ -2426,8 +2434,8 @@ secret-diff: ## Show the diff between the content of encrypted and decrypted fil
 <li>=&gt; make the changes to the decrypted files and then re-encrypt them again</li>
 </ul></li>
 </ul>
-<p>But: The devil is in the details. The <a href="#process-challenges">Process challenges</a> section explains
-some of the pitfalls that we have encountered and the <a href="#scenarios">Scenarios</a> section gives some
+<p>But: The devil is in the details. The <a href="https://www.pascallandau.com#process-challenges">Process challenges</a> section explains
+some of the pitfalls that we have encountered and the <a href="https://www.pascallandau.com#scenarios">Scenarios</a> section gives some
 concrete examples for common scenarios.</p>
 <!-- generated -->
 <p><a id='process-challenges'> </a></p>
@@ -2562,7 +2570,7 @@ horribly complicated with <code>make</code> and docker. Thus, you need to log in
 container and run the commands in there directly. Not great - but this needs to be done only
 once when a new developer is onboarded anyways.</p>
 <p>FYI: I usually log into containers via
-<a href="/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via-din-bashrc-helper">Easy container access via din .bashrc helper</a>.</p>
+<a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via-din-bashrc-helper">Easy container access via din .bashrc helper</a>.</p>
 <p>The secret key is exported to <code>secret.gpg</code> and the public key to <code>.dev/gpg-keys/alice-public.gpg</code>.</p>
 <pre><code class="language-bash"># start the docker setup
 make docker-up
@@ -2670,7 +2678,7 @@ the following commands:</p>
 "C:/Program Files/Git/mingw64/bin/make" -s git-secret ARGS="init";
 git-secret: init created: '/var/www/app/.gitsecret/'</code></pre>
 <p><strong>Apply the <code>gpg</code> fix for shared directories</strong></p>
-<p>See <a href="#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a>.</p>
+<p>See <a href="https://www.pascallandau.com#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a>.</p>
 <pre><code class="language-bash">$ make secret-init-gpg-socket-config</code></pre>
 <pre><code class="language-text">$ make secret-init-gpg-socket-config
 echo "%Assuan%" &gt; .gitsecret/keys/S.gpg-agent
@@ -2759,7 +2767,7 @@ my_new_secret_password</code></pre>
 <p><strong>Caution:</strong> If the secret <code>gpg</code> key is password protected (e.g. <code>123456</code>), run</p>
 <pre><code class="language-bash">make secret-decrypt-with-password GPG_PASSWORD=123456</code></pre>
 <p>You could also add the <code>GPG_PASSWORD</code> variable to the
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a>
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a>
 file as a local default value so that you wouldn't have to specify the value every time and
 could then simply run</p>
 <pre><code class="language-bash">make secret-decrypt-with-password</code></pre>
@@ -2804,7 +2812,7 @@ git-secret: abort: no public keys for users found. run 'git secret tell email@ad
 make[1]: *** [.make/01-00-application-setup.mk:57: git-secret] Error 1
 make: *** [.make/01-00-application-setup.mk:69: secret-decrypt] Error 2</code></pre>
 <p><strong>Caution</strong>: Please keep in mind to
-<a href="#reminder-rotate-the-encrypted-secrets">rotate the secrets themselves as well</a>!</p>
+<a href="https://www.pascallandau.com#reminder-rotate-the-encrypted-secrets">rotate the secrets themselves as well</a>!</p>
 <!-- generated -->
 <p><a id='pros-and-cons'> </a></p>
 <!-- /generated -->
@@ -2854,7 +2862,7 @@ could probably implement additional measures like multi factor authentication</l
 some point, he can still decrypt a previous version of the encrypted secrets
 <ul>
 <li>=&gt; must be mitigated by
-<a href="#reminder-rotate-the-encrypted-secrets">rotating the secrets themselves as well</a></li>
+<a href="https://www.pascallandau.com#reminder-rotate-the-encrypted-secrets">rotating the secrets themselves as well</a></li>
 </ul></li>
 </ul>
 <!-- generated -->
@@ -2865,23 +2873,27 @@ some point, he can still decrypt a previous version of the encrypted secrets
 leave a comment. You are now able to encrypt and decrypt secret files so that they can be stored
 directly in the git repository.</p>
 <p>In the next part of this tutorial, we will
-<a href="/blog/ci-pipeline-docker-php-gitlab-github/">set up a CI pipeline for dockerized PHP Apps on Github and Gitlab</a>
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">set up a CI pipeline for dockerized PHP Apps on Github and Gitlab</a>
 that decrypts all necessary secrets and then runs our tests and qa tools.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+<p>Please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a> or <a href="https://www.pascallandau.com#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 06:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/</guid>
             </item>
                     <item>
                 <title>Set up PHP QA tools and control them via make [Tutorial Part 5]</title>
-                <description><![CDATA[<p>In the fifth part of this tutorial series on developing PHP on Docker we will <strong>setup some PHP code
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/blog/php-qa-tools-make-docker/'>Set up PHP QA tools and control them via make [Tutorial Part 5]</a></p>
+<hr />
+
+<p>In the fifth part of this tutorial series on developing PHP on Docker we will <strong>setup some PHP code
 quality tools</strong> and provide a convenient way to control them via GNU make.</p>
-<p><a href="/img/php-qa-tools-make-docker/run-qa-tools.gif"><img src="/img/php-qa-tools-make-docker/run-qa-tools.gif" alt="Run QA tools" /></a></p>
+<p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/run-qa-tools.gif"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/run-qa-tools.gif" alt="Run QA tools" /></a></p>
 <p><small>
 FYI: Originally I wanted
 this tutorial to be a part of
-<a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 because QA checks are imho vital part of a CI setup - but it kinda grew &quot;too big&quot; and took a way
 too much space from, well, actually setting up the CI pipelines :)
 </small></p>
@@ -2894,27 +2906,27 @@ You find the branch with the final result of this tutorial at
 <!-- /generated -->
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
 (2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 (2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 (2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+<li><a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 (2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<li><a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 (2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
 </ul>
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="https://www.pascallandau.com#newsletter">via email</a>
 to get automatic notifications when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
@@ -2922,24 +2934,24 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#the-qa-tools">The QA tools</a>
+<li><a href="https://www.pascallandau.com#introduction">Introduction</a></li>
+<li><a href="https://www.pascallandau.com#the-qa-tools">The QA tools</a>
 <ul>
-<li><a href="#phpcs-and-phpcbf">phpcs and phpcbf</a></li>
-<li><a href="#phpstan">phpstan</a></li>
-<li><a href="#php-parallel-lint">php-parallel-lint</a></li>
-<li><a href="#composer-require-checker">composer-require-checker</a></li>
-<li><a href="#additional-tools-out-of-scope">Additional tools (out of scope)</a></li>
+<li><a href="https://www.pascallandau.com#phpcs-and-phpcbf">phpcs and phpcbf</a></li>
+<li><a href="https://www.pascallandau.com#phpstan">phpstan</a></li>
+<li><a href="https://www.pascallandau.com#php-parallel-lint">php-parallel-lint</a></li>
+<li><a href="https://www.pascallandau.com#composer-require-checker">composer-require-checker</a></li>
+<li><a href="https://www.pascallandau.com#additional-tools-out-of-scope">Additional tools (out of scope)</a></li>
 </ul></li>
-<li><a href="#qa-make-targets">QA make targets</a>
+<li><a href="https://www.pascallandau.com#qa-make-targets">QA make targets</a>
 <ul>
-<li><a href="#the-qa-target">The <code>qa</code> target</a></li>
-<li><a href="#the-execute-function">The <code>execute</code> &quot;function&quot;</a></li>
-<li><a href="#parallel-execution-and-a-helper-target">Parallel execution and a helper target</a></li>
-<li><a href="#sprinkle-some-color-on-top">Sprinkle some color on top</a></li>
+<li><a href="https://www.pascallandau.com#the-qa-target">The <code>qa</code> target</a></li>
+<li><a href="https://www.pascallandau.com#the-execute-function">The <code>execute</code> &quot;function&quot;</a></li>
+<li><a href="https://www.pascallandau.com#parallel-execution-and-a-helper-target">Parallel execution and a helper target</a></li>
+<li><a href="https://www.pascallandau.com#sprinkle-some-color-on-top">Sprinkle some color on top</a></li>
 </ul></li>
-<li><a href="#further-updates-in-the-codebase">Further updates in the codebase</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
+<li><a href="https://www.pascallandau.com#further-updates-in-the-codebase">Further updates in the codebase</a></li>
+<li><a href="https://www.pascallandau.com#wrapping-up">Wrapping up</a></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -2951,21 +2963,21 @@ e.g. <strong>code style definitions</strong>, proper <strong>usage of types</str
 etc. When run regularly they are a great way to enforce better code and are thus a
 <strong>perfect fit for a CI pipeline</strong>. For this tutorial, I'm going to setup the following tools:</p>
 <ul>
-<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a></li>
-<li><a href="#phpstan">Static Analyzer: phpstan</a></li>
-<li><a href="#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
-<li><a href="#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
+<li><a href="https://www.pascallandau.com#phpcs-and-phpcbf">Style Checker: phpcs</a></li>
+<li><a href="https://www.pascallandau.com#phpstan">Static Analyzer: phpstan</a></li>
+<li><a href="https://www.pascallandau.com#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
+<li><a href="https://www.pascallandau.com#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
 </ul>
-<p>and provide convenient access through a <a href="#the-qa-target"><code>qa</code> make target</a>. The end result will look
+<p>and provide convenient access through a <a href="https://www.pascallandau.com#the-qa-target"><code>qa</code> make target</a>. The end result will look
 like this:</p>
-<p><a href="/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
+<p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
 <p>FYI: When we started out with using code quality tools in general, we have used
 <a href="https://github.com/phpro/grumphp">GrumPHP</a> - and I would still recommend it. We have only
 transitioned away from it because <code>make</code> gives us a little more flexibility and control.</p>
 <p>You can find the &quot;final&quot; makefile
 at <a href="https://github.com/paslandau/docker-php-tutorial/blob/part-5-php-qa-tools-make-docker/.make/01-02-application-qa.mk"><code>.make/01-02-application-qa.mk</code></a>.</p>
 <p><strong>CAUTION</strong>: The <code>Makefile</code> is build on top of the setup that I introduced in
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>,
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>,
 so please refer to that tutorial if anything is not clear.</p>
 <pre><code class="language-Makefile">##@ [Application: QA]
 
@@ -3344,7 +3356,7 @@ The easiest way to do so would be to &quot;hard-code&quot; the exact commands th
 phpstan:  ## Run static analyzer on all application and test files 
     @$(EXECUTE_IN_APPLICATION_CONTAINER) vendor/bin/phpstan analyse app tests --level=9</code></pre>
 <p>(Please refer to the
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers">Run commands in the docker containers</a>
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers">Run commands in the docker containers</a>
 section in the previous tutorial for an explanation of the <code>EXECUTE_IN_APPLICATION_CONTAINER</code>
 variable).</p>
 <p>However, this implementation is quite inflexible: What if we want to check a single file or try out
@@ -3530,15 +3542,15 @@ qa-exec: phpstan \
 <code>sysctl -n hw.ncpu</code> (works on Mac) to determine the number of available cores. If you dedicate
 less resources to docker you might want to hard-code this setting to a lower value (e.g. by
 adding a <code>CORES</code> variable in
-the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a>
+the <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a>
 file).</p>
 <!-- generated -->
 <p><a id='sprinkle-some-color-on-top'> </a></p>
 <!-- /generated -->
 <h3>Sprinkle some color on top</h3>
-<p>The final piece for getting to the output mentioned in the <a href="#introduction">Introduction</a> is the
+<p>The final piece for getting to the output mentioned in the <a href="https://www.pascallandau.com#introduction">Introduction</a> is the
 bash-coloring:</p>
-<p><a href="/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
+<p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
 <p>To make this work, we need to understand first how colors work in bash:</p>
 <blockquote>
 <p>This  [coloring] can be accomplished by adding a <code>\e</code> [or <code>\033</code>] at the beginning to form an
@@ -3549,7 +3561,7 @@ escape sequence. The escape sequence for specifying color codes is <code>\e[COLO
 <p>E.g. the following script will print a green text:</p>
 <pre><code class="language-shell">printf "\033[0;32mThis text is green\033[0m"</code></pre>
 <p>So we define the required colors as variables and use them in the corresponding places in the
-<a href="#the-execute-function"><code>execute</code> function</a>:</p>
+<a href="https://www.pascallandau.com#the-execute-function"><code>execute</code> function</a>:</p>
 <pre><code class="language-makefile"> ## bash colors
 RED:=\033[0;31m
 GREEN:=\033[0;32m
@@ -3625,7 +3637,7 @@ unnoticed:</p>
       "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
   }
 }</code></pre>
-<p><a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></p></li>
+<p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></p></li>
 <li>replace <code>docker-compose</code> with <code>docker compose</code> to use <a href="https://docs.docker.com/compose/cli-command/">compose v2</a></li>
 </ul>
 <p>For some reason, the last point caused some trouble because Linux and Docker Desktop for Windows
@@ -3664,16 +3676,20 @@ endif</code></pre>
 leave a comment. You should now have a blueprint for adding code quality tools for your dockerized
 application and way to conveniently control them through a Makefile.</p>
 <p>In the next part of this tutorial, we will
-<a href="/blog/git-secret-encrypt-repository-docker/">set up git secret to encrypt secret values and store them directly in the git repository</a>.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+<a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">set up git secret to encrypt secret values and store them directly in the git repository</a>.</p>
+<p>Please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a> or <a href="https://www.pascallandau.com#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 05:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/php-qa-tools-make-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/blog/php-qa-tools-make-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php-qa-tools-make-docker/</guid>
             </item>
                     <item>
                 <title>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</title>
-                <description><![CDATA[<p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</a></p>
+<hr />
+
+<p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
 install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
 for the front end requests.</p>
 <div class="center-div">
@@ -3688,27 +3704,27 @@ You find the branch for this tutorial at
 <!-- /generated -->
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
 (2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 (2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 (2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+<li><a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 (2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<li><a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 (2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
 </ul>
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="https://www.pascallandau.com#newsletter">via email</a>
 to get automatic notifications when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
@@ -3716,27 +3732,27 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#install-extensions">Install extensions</a></li>
-<li><a href="#install-laravel">Install Laravel</a></li>
-<li><a href="#update-the-php-poc">Update the PHP POC</a>
+<li><a href="https://www.pascallandau.com#introduction">Introduction</a></li>
+<li><a href="https://www.pascallandau.com#install-extensions">Install extensions</a></li>
+<li><a href="https://www.pascallandau.com#install-laravel">Install Laravel</a></li>
+<li><a href="https://www.pascallandau.com#update-the-php-poc">Update the PHP POC</a>
 <ul>
-<li><a href="#config">config</a>
+<li><a href="https://www.pascallandau.com#config">config</a>
 <ul>
-<li><a href="#database-connection">database connection</a></li>
-<li><a href="#queue-connection">queue connection</a></li>
+<li><a href="https://www.pascallandau.com#database-connection">database connection</a></li>
+<li><a href="https://www.pascallandau.com#queue-connection">queue connection</a></li>
 </ul></li>
-<li><a href="#controllers">Controllers</a></li>
-<li><a href="#commands">Commands</a></li>
-<li><a href="#jobs-and-workers">Jobs and workers</a></li>
-<li><a href="#tests">Tests</a></li>
+<li><a href="https://www.pascallandau.com#controllers">Controllers</a></li>
+<li><a href="https://www.pascallandau.com#commands">Commands</a></li>
+<li><a href="https://www.pascallandau.com#jobs-and-workers">Jobs and workers</a></li>
+<li><a href="https://www.pascallandau.com#tests">Tests</a></li>
 </ul></li>
-<li><a href="#makefile-updates">Makefile updates</a>
+<li><a href="https://www.pascallandau.com#makefile-updates">Makefile updates</a>
 <ul>
-<li><a href="#clearing-the-queue">Clearing the queue</a></li>
+<li><a href="https://www.pascallandau.com#clearing-the-queue">Clearing the queue</a></li>
 </ul></li>
-<li><a href="#running-the-poc">Running the POC</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
+<li><a href="https://www.pascallandau.com#running-the-poc">Running the POC</a></li>
+<li><a href="https://www.pascallandau.com#wrapping-up">Wrapping up</a></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -3744,7 +3760,7 @@ to get automatic notifications when the next part comes out :)</p>
 <!-- /generated -->
 <h2>Introduction</h2>
 <p>The goal of this tutorial is to run the
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#php-poc">PHP POC from part 4.1</a>
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#php-poc">PHP POC from part 4.1</a>
 using Laravel as a framework instead of &quot;plain PHP&quot;.
 We'll use the newest version of Laravel (Laravel 9) that was
 <a href="https://laravel-news.com/laravel-9-released">released at the beginning of February 2022</a>.</p>
@@ -4421,15 +4437,19 @@ leave a comment. Laravel 9 should now be up and running on the previously set up
 infrastructure.</p>
 <p>In the next part of this tutorial, we will add some code quality tools and configure CI/CD
 pipelines on Github and Gitlab.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+<p>Please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a> or <a href="https://www.pascallandau.com#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/</guid>
             </item>
                     <item>
                 <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</title>
-                <description><![CDATA[<p>In this part of the tutorial series on developing PHP on Docker we
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</a></p>
+<hr />
+
+<p>In this part of the tutorial series on developing PHP on Docker we
 will <strong>setup our local development environment to be used by PhpStorm and Xdebug</strong>. We will also
 ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw
 the tool <code>strace</code> into the mix for debugging long running processes.</p>
@@ -4445,27 +4465,27 @@ You find the branch for this tutorial at
 <!-- /generated -->
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
 (2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 (2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 (2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+<li><a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 (2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<li><a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 (2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
 </ul>
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="https://www.pascallandau.com#newsletter">via email</a>
 to get automatic notifications when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
@@ -4473,32 +4493,32 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#install-tools">Install Tools</a>
+<li><a href="https://www.pascallandau.com#introduction">Introduction</a></li>
+<li><a href="https://www.pascallandau.com#install-tools">Install Tools</a>
 <ul>
-<li><a href="#install-composer">Install composer</a></li>
-<li><a href="#install-xdebug">Install Xdebug</a></li>
-<li><a href="#install-phpunit">Install PHPUnit</a></li>
-<li><a href="#install-ssh">Install SSH</a></li>
+<li><a href="https://www.pascallandau.com#install-composer">Install composer</a></li>
+<li><a href="https://www.pascallandau.com#install-xdebug">Install Xdebug</a></li>
+<li><a href="https://www.pascallandau.com#install-phpunit">Install PHPUnit</a></li>
+<li><a href="https://www.pascallandau.com#install-ssh">Install SSH</a></li>
 </ul></li>
-<li><a href="#setup-phpstorm">Setup PhpStorm</a>
+<li><a href="https://www.pascallandau.com#setup-phpstorm">Setup PhpStorm</a>
 <ul>
-<li><a href="#ssh-configuration">SSH Configuration</a></li>
-<li><a href="#php-interpreter">PHP Interpreter</a></li>
-<li><a href="#phpunit">PHPUnit</a></li>
-<li><a href="#debugging">Debugging</a>
+<li><a href="https://www.pascallandau.com#ssh-configuration">SSH Configuration</a></li>
+<li><a href="https://www.pascallandau.com#php-interpreter">PHP Interpreter</a></li>
+<li><a href="https://www.pascallandau.com#phpunit">PHPUnit</a></li>
+<li><a href="https://www.pascallandau.com#debugging">Debugging</a>
 <ul>
-<li><a href="#debug-code-executed-via-phpstorm">Debug code executed via PhpStorm</a></li>
-<li><a href="#debug-code-executed-via-php-fpm-cli-or-from-a-worker">Debug code executed via php-fpm, cli or from a worker</a>
+<li><a href="https://www.pascallandau.com#debug-code-executed-via-phpstorm">Debug code executed via PhpStorm</a></li>
+<li><a href="https://www.pascallandau.com#debug-code-executed-via-php-fpm-cli-or-from-a-worker">Debug code executed via php-fpm, cli or from a worker</a>
 <ul>
-<li><a href="#php-fpm">php-fpm</a></li>
-<li><a href="#cli">cli</a></li>
-<li><a href="#php-workers">php-workers</a></li>
+<li><a href="https://www.pascallandau.com#php-fpm">php-fpm</a></li>
+<li><a href="https://www.pascallandau.com#cli">cli</a></li>
+<li><a href="https://www.pascallandau.com#php-workers">php-workers</a></li>
 </ul></li>
 </ul></li>
 </ul></li>
-<li><a href="#strace">strace</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
+<li><a href="https://www.pascallandau.com#strace">strace</a></li>
+<li><a href="https://www.pascallandau.com#wrapping-up">Wrapping up</a></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -4506,11 +4526,11 @@ to get automatic notifications when the next part comes out :)</p>
 <!-- /generated -->
 <h2>Introduction</h2>
 <p>This article is mostly an update of
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 but will also cover the &quot;remaining cases&quot; of <strong>debugging php-fpm</strong> and <strong>php worker processes</strong>. </p>
 <p>We will still rely on an <strong>always-running docker setup</strong> that we connect to via an SSH Configuration
 instead of using the
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#run-debug-a-php-script-on-docker-server">built-in docker-compose capabilities</a>
+<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#run-debug-a-php-script-on-docker-server">built-in docker-compose capabilities</a>
 as I feel it's closer to what we do in CI / production. However, we will <strong>not use SSH keys</strong>
 any longer but simply authenticate via password. This reduces complexity and removes any
 pesky warnings regarding &quot;SSH keys being exposed in a repository&quot;.</p>
@@ -4575,7 +4595,7 @@ disable the extension in the application <code>.ini</code> file</p>
 xdebug.client_host=host.docker.internal
 xdebug.start_with_request=yes
 xdebug.mode=debug</code></pre>
-<p>See <a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker">Fix Xdebug on PhpStorm when run from a Docker container</a>
+<p>See <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker">Fix Xdebug on PhpStorm when run from a Docker container</a>
 for an explanation of the <code>xdebug.client_host=host.docker.internal</code> setting (previously called
 <code>xdebug.remote_host</code> in xdebug &lt; 3). This will still work out of the box for Docker Desktop, but
 for Linux users we need to add the
@@ -4708,7 +4728,7 @@ CMD ["/usr/sbin/sshd", "-D"]</code></pre>
 <h2>Setup PhpStorm</h2>
 <p>We will configure a remote PHP interpreter that uses an SSH connection to run commands in the
 <code>application</code> container. Before,
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#configure-the-deployment-configuration">we have been using an <code>SFTP Deployment configuration</code></a>
+<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#configure-the-deployment-configuration">we have been using an <code>SFTP Deployment configuration</code></a>
 , which was kinda confusing (&quot;What is SFTP doing here?&quot;), so we will use an
 <a href="https://www.jetbrains.com/help/phpstorm/create-ssh-configurations.html">SSH Configuration</a>
 instead and configure the path mappings in the <strong>Cli Interpreter</strong> interface</p>
@@ -4725,13 +4745,13 @@ instead and configure the path mappings in the <strong>Cli Interpreter</strong> 
 <li>Authentication type: Password</li>
 <li>Password: see <code>APP_SSH_PASSWORD</code> in <code>.docker/.env</code></li>
 </ul>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG" alt="PhpStorm SSH Configuration" title="PhpStorm SSH Configuration" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG" alt="PhpStorm SSH Configuration" title="PhpStorm SSH Configuration" /></a></p>
 <!-- generated -->
 <p><a id='php-interpreter'> </a></p>
 <!-- /generated -->
 <h3>PHP Interpreter</h3>
 <p>At <code>File | Settings | PHP</code> add a new PHP CLI interpreter that uses the new SSH Configuration</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG" alt="PhpStorm new CLI interpreter" title="PhpStorm new CLI interpreter" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG" alt="PhpStorm new CLI interpreter" title="PhpStorm new CLI interpreter" /></a></p>
 <p>In addition, we define the <strong>path to the xdebug extension</strong> because it is disabled by default but
 PhpStorm can enable it automatically if required. You can find the path in the <code>application</code>
 container via</p>
@@ -4740,16 +4760,16 @@ extension_dir =&gt; /usr/lib/php8/modules =&gt; /usr/lib/php8/modules
 root:/var/www/app# ll /usr/lib/php8/modules | grep xdebug
 -rwxr-xr-x    1 root     root        303936 Jan  9 00:21 xdebug.so</code></pre>
 <p>We still need to
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
+<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
 by adding a custom PHP option for <code>xdebug.client_host=host.docker.internal</code>. That's the same value
 we use in <code>.docker/images/php/base/conf.d/zz-app-local.ini</code>.</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG" alt="PhpStorm Xdebug settings for the CLI interpreter" title="PhpStorm Xdebug settings for the CLI interpreter" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG" alt="PhpStorm Xdebug settings for the CLI interpreter" title="PhpStorm Xdebug settings for the CLI interpreter" /></a></p>
 <p>In the interpreter overview we must now configure the <strong>path mappings</strong> so that PhpStorm knows
 &quot;which local file belongs to which remote one&quot;. The remote folder is defined in <code>.docker/.env</code> via</p>
 <pre><code class="language-dotenv">APP_CODE_PATH_CONTAINER=/var/www/app</code></pre>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG" alt="PhpStorm path mappings for the CLI interpreter" title="PhpStorm path mappings for the CLI interpreter" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG" alt="PhpStorm path mappings for the CLI interpreter" title="PhpStorm path mappings for the CLI interpreter" /></a></p>
 <p>Afterwards we can set a breakpoint e.g. in <code>setup.php</code> and start debugging:</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
 <p>The screenshot shows that PhpStorm adds the Xdebug extension that we defined previously.</p>
 <!-- generated -->
 <p><a id='phpunit'> </a></p>
@@ -4757,11 +4777,11 @@ we use in <code>.docker/images/php/base/conf.d/zz-app-local.ini</code>.</p>
 <h3>PHPUnit</h3>
 <p><code>phpunit</code> is configured via <code>File | Settings | PHP | Test Frameworks</code>. First, we select the
 interpreter that we just added</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG" alt="Set up phpunit in PhpStorm" title="Set up phpunit in PhpStorm" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG" alt="Set up phpunit in PhpStorm" title="Set up phpunit in PhpStorm" /></a></p>
 <p>Then, we add the paths to the composer autoload script and the <code>phpunit.xml</code> configuration file.</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG" alt="phpunit settings in PhpStorm" title="phpunit settings in PhpStorm" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG" alt="phpunit settings in PhpStorm" title="phpunit settings in PhpStorm" /></a></p>
 <p>PhpStorm will now execute tests using the PHP interpreter in the <code>application</code> container</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG" alt="Run a phpunit test in PhpStorm" title="Run a phpunit test in PhpStorm" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG" alt="Run a phpunit test in PhpStorm" title="Run a phpunit test in PhpStorm" /></a></p>
 <!-- generated -->
 <p><a id='debugging'> </a></p>
 <!-- /generated -->
@@ -4776,7 +4796,7 @@ at explaining xdebug in detail including some helpful videos like
 <h4>Debug code executed via PhpStorm</h4>
 <p>This should already work out of the box. Simply set a break point, right-click on a file and choose
 &quot;Debug '...'&quot;</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
 <!-- generated -->
 <p><a id='debug-code-executed-via-php-fpm-cli-or-from-a-worker'> </a></p>
 <!-- /generated -->
@@ -4804,12 +4824,12 @@ disable-xdebug: ## Disable xdebug in the given container specified by "DOCKER_SE
     "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/;zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"</code></pre>
 <p>To capture incoming requests, we need to make PhpStorm listen for PHP Debug connections via
 <code>Run | Start Listening for PHP Debug Connections</code>. </p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG" alt="PhpStorm: Start Listening for PHP Debug Connections" title="PhpStorm: Start Listening for PHP Debug Connections" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG" alt="PhpStorm: Start Listening for PHP Debug Connections" title="PhpStorm: Start Listening for PHP Debug Connections" /></a></p>
 <p>The corresponding ports are configured at <code>File | Settings | PHP | Debug</code>. In Xdebug &lt; 3 the
 default port was <code>9000</code> and in <a href="https://xdebug.org/docs/all_settings#client_port">Xdebug 3 it is <code>9003</code></a> </p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG" alt="PhpStorm: configure xdebug ports" title="PhpStorm: configure xdebug ports" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG" alt="PhpStorm: configure xdebug ports" title="PhpStorm: configure xdebug ports" /></a></p>
 <p>Finally, we need to add a server via <code>File | Settings | PHP | Servers</code></p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG" alt="PhpStorm: configure a server" title="PhpStorm: configure a server" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG" alt="PhpStorm: configure a server" title="PhpStorm: configure a server" /></a></p>
 <p>The name of the server must match the value of the <code>serverName</code> key in the environment variable
 <code>PHP_IDE_CONFIG</code> that we configured previously as <code>serverName=dofroscra</code>.</p>
 <!-- generated -->
@@ -4830,7 +4850,7 @@ restart-php-fpm: ## Restart the php-fpm service
 make restart-php-fpm</code></pre>
 <p>Setting a breakpoint in <code>public/index.php</code> and opening <a href="http://127.0.0.1/">http://127.0.0.1/</a> in
 a browser or via <code>curl http://127.0.0.1/</code> will halt the execution as expected.</p>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG" alt="PhpStorm debugging breakpoint for php-fpm" title="PhpStorm debugging breakpoint for php-fpm" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG" alt="PhpStorm debugging breakpoint for php-fpm" title="PhpStorm debugging breakpoint for php-fpm" /></a></p>
 <!-- generated -->
 <p><a id='cli'> </a></p>
 <!-- /generated -->
@@ -4845,7 +4865,7 @@ as before:</p>
 <p>Running the following make targets will trigger a breakpoint in <code>setup.php</code>:</p>
 <pre><code>make enable-xdebug DOCKER_SERVICE_NAME=application
 make setup-db</code></pre>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG" alt="PhpStorm debugging breakpoint for cli" title="PhpStorm debugging breakpoint for cli" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG" alt="PhpStorm debugging breakpoint for cli" title="PhpStorm debugging breakpoint for cli" /></a></p>
 <!-- generated -->
 <p><a id='php-workers'> </a></p>
 <!-- /generated -->
@@ -4859,7 +4879,7 @@ make setup-db</code></pre>
 <p>Running the following make targets will trigger a breakpoint in <code>worker.php</code>:</p>
 <pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-worker
 make restart-workers</code></pre>
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG" alt="PhpStorm debugging breakpoint for php-workers" title="PhpStorm debugging breakpoint for php-workers" /></a></p>
+<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG" alt="PhpStorm debugging breakpoint for php-workers" title="PhpStorm debugging breakpoint for php-workers" /></a></p>
 <!-- generated -->
 <p><a id='strace'> </a></p>
 <!-- /generated -->
@@ -4907,16 +4927,20 @@ recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1</code></pre>
 leave a comment. Apart from that, you should now have a fully configured development setup that
 works with PhpStorm as your IDE.</p>
 <p>In the next part of this tutorial, we will
-<a href="/blog/run-laravel-9-docker-in-2022/">use a fresh installation of Laravel on top of our setup</a>.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+<a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">use a fresh installation of Laravel on top of our setup</a>.</p>
+<p>Please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a> or <a href="https://www.pascallandau.com#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Tue, 22 Mar 2022 11:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/</guid>
             </item>
                     <item>
                 <title>Docker from scratch for PHP 8.1 Applications in 2022 [Tutorial Part 4.1]</title>
-                <description><![CDATA[<p>In the fourth part of this tutorial series on developing PHP on Docker we will revisit the previous
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/'>Docker from scratch for PHP 8.1 Applications in 2022 [Tutorial Part 4.1]</a></p>
+<hr />
+
+<p>In the fourth part of this tutorial series on developing PHP on Docker we will revisit the previous
 tutorials and update some things to be up-to-date in 2022. The article will be split in 3
 subparts:</p>
 <ul>
@@ -4926,14 +4950,14 @@ subparts:</p>
 of concept to tie all containers together</li>
 </ul></li>
 <li>Part 4.2: Add the tools for local development (
-<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>,
+<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>,
 <strong>available at 2022-03-22</strong>)
 <ul>
 <li>make the setup work with PhpStorm, including the ability to execute phpunit tests and run
 xdebug for all php containers (application, fpm and php workers)</li>
 </ul></li>
 <li>Part4.3: Include Laravel (
-<a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>,
+<a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>,
 <strong>available at 2022-03-23</strong>)
 <ul>
 <li>refactor the code to use Commands, Controllers, Queues, etc.</li>
@@ -4951,27 +4975,27 @@ You find the branch for this tutorial at
 <!-- /generated -->
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
 (2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
+<li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 (2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 (2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 (2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+<li><a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 (2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+<li><a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 (2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+<li><a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
 (2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
+<li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
 </ul>
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="https://www.pascallandau.com#newsletter">via email</a>
 to get automatic notifications when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
@@ -4979,37 +5003,37 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#local-docker-setup">Local docker setup</a></li>
-<li><a href="#docker">Docker</a>
+<li><a href="https://www.pascallandau.com#introduction">Introduction</a></li>
+<li><a href="https://www.pascallandau.com#local-docker-setup">Local docker setup</a></li>
+<li><a href="https://www.pascallandau.com#docker">Docker</a>
 <ul>
-<li><a href="#docker-compose">docker-compose</a>
+<li><a href="https://www.pascallandau.com#docker-compose">docker-compose</a>
 <ul>
-<li><a href="#docker-env-file-and-required-env-variables"><code>.docker/.env</code> file and required ENV variables</a></li>
+<li><a href="https://www.pascallandau.com#docker-env-file-and-required-env-variables"><code>.docker/.env</code> file and required ENV variables</a></li>
 </ul></li>
-<li><a href="#images">Images</a>
+<li><a href="https://www.pascallandau.com#images">Images</a>
 <ul>
-<li><a href="#php-images">PHP images</a>
+<li><a href="https://www.pascallandau.com#php-images">PHP images</a>
 <ul>
-<li><a href="#env-vs-arg">ENV vs ARG</a></li>
+<li><a href="https://www.pascallandau.com#env-vs-arg">ENV vs ARG</a></li>
 </ul></li>
-<li><a href="#image-naming-convention">Image naming convention</a></li>
-<li><a href="#environments-and-build-targets">Environments and build targets</a></li>
+<li><a href="https://www.pascallandau.com#image-naming-convention">Image naming convention</a></li>
+<li><a href="https://www.pascallandau.com#environments-and-build-targets">Environments and build targets</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#makefile">Makefile</a>
+<li><a href="https://www.pascallandau.com#makefile">Makefile</a>
 <ul>
-<li><a href="#make-mk-includes"><code>.make/*.mk</code> includes</a></li>
-<li><a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></li>
-<li><a href="#enforce-required-parameters">Enforce required parameters</a></li>
+<li><a href="https://www.pascallandau.com#make-mk-includes"><code>.make/*.mk</code> includes</a></li>
+<li><a href="https://www.pascallandau.com#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></li>
+<li><a href="https://www.pascallandau.com#enforce-required-parameters">Enforce required parameters</a></li>
 </ul></li>
-<li><a href="#make-docker-3">Make + Docker = &lt;3</a>
+<li><a href="https://www.pascallandau.com#make-docker-3">Make + Docker = &lt;3</a>
 <ul>
-<li><a href="#ensuring-the-build-order">Ensuring the build order</a></li>
-<li><a href="#run-commands-in-the-docker-containers">Run commands in the docker containers</a></li>
+<li><a href="https://www.pascallandau.com#ensuring-the-build-order">Ensuring the build order</a></li>
+<li><a href="https://www.pascallandau.com#run-commands-in-the-docker-containers">Run commands in the docker containers</a></li>
 </ul></li>
-<li><a href="#php-poc">PHP POC</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
+<li><a href="https://www.pascallandau.com#php-poc">PHP POC</a></li>
+<li><a href="https://www.pascallandau.com#wrapping-up">Wrapping up</a></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -5017,44 +5041,44 @@ to get automatic notifications when the next part comes out :)</p>
 <!-- /generated -->
 <h2>Introduction</h2>
 <p>If you have read the previous
-tutorial <a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+tutorial <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
 you might encounter some significant changes. The tutorial was published over 2 years ago,
 Docker has evolved and I have learned more about it. Plus, I gathered practical
 experience (good and bad) with the previous setup. I would now consider most of the points under
-<a href="/blog/structuring-the-docker-setup-for-php-projects/#fundamentals-on-building-the-containers">Fundamentals on building the containers</a>
+<a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#fundamentals-on-building-the-containers">Fundamentals on building the containers</a>
 as either &quot;not required&quot; or simply &quot;overengineered / too complex&quot;. To be concrete:</p>
 <ul>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#setting-the-timezone">Setting the timezone</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#setting-the-timezone">Setting the timezone</a>
 <ul>
 <li>not required if the default is already UTC (which is almost always the case)</li>
 </ul></li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#synchronizing-file-and-folder-ownership-on-shared-volumes">Synchronizing file and folder ownership on shared volumes</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#synchronizing-file-and-folder-ownership-on-shared-volumes">Synchronizing file and folder ownership on shared volumes</a>
 <ul>
 <li>this is only an issue if files need to be <strong>modified</strong> by containers and the host system - which
 is only really relevant for the PHP containers</li>
 <li>in addition, I would recommend adding a completely new user (e.g. <code>application</code>) instead of
 re-using an existing one like <code>www-data</code> - this simplifies the whole user setup <em>a lot</em></li>
 </ul></li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#modifying-configuration-files">Modifying configuration files</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#modifying-configuration-files">Modifying configuration files</a>
 <ul>
 <li>just use <code>sed</code> - no need for a dedicated script</li>
 </ul></li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#installing-php-extensions">Installing php extensions</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#installing-php-extensions">Installing php extensions</a>
 <ul>
-<li>see <a href="#php-images">PHP images</a> - will now be done via <code>apk add</code></li>
+<li>see <a href="https://www.pascallandau.com#php-images">PHP images</a> - will now be done via <code>apk add</code></li>
 </ul></li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#installing-common-software">Installing common software</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#installing-common-software">Installing common software</a>
 <ul>
-<li>see <a href="#php-images">PHP images</a> - since there is only one base image there is no need for a
+<li>see <a href="https://www.pascallandau.com#php-images">PHP images</a> - since there is only one base image there is no need for a
 dedicated script</li>
 </ul></li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#cleaning-up">Cleaning up</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#cleaning-up">Cleaning up</a>
 <ul>
 <li>didn't really make sense because the &quot;cleaned up files&quot; were already part of a previous layer</li>
 <li>we might &quot;bring it back&quot; later when we optimize the image size to speed up the pushing/pulling
 of the images to/from the registry</li>
 </ul></li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#providing-host-docker-internal-for-linux-host-systems">Providing host.docker.internal for linux host systems</a>
+<li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#providing-host-docker-internal-for-linux-host-systems">Providing host.docker.internal for linux host systems</a>
 <ul>
 <li>can now be done via
 the <a href="https://github.com/docker/for-linux/issues/264#issuecomment-965465879"><code>host-gateway</code> magic reference</a>
@@ -5086,8 +5110,8 @@ make docker-build</code></pre>
 <pre><code>make docker-up</code></pre>
 <p>Now you can access the web interface via <a href="http://127.0.0.1">http://127.0.0.1</a>. The following
 diagram shows how the containers are connected</p>
-<p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
-<p>See also the <a href="#php-poc">PHP POC</a> for a full test of the setup.</p>
+<p><a href="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
+<p>See also the <a href="https://www.pascallandau.com#php-poc">PHP POC</a> for a full test of the setup.</p>
 <!-- generated -->
 <p><a id='docker'> </a></p>
 <!-- /generated -->
@@ -5104,8 +5128,8 @@ diagram shows how the containers are connected</p>
 <li>an application container that we use to run commands</li>
 </ul></li>
 </ul>
-<p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG" alt="Docker images" title="Docker images" /></a></p>
-<p>We keep the <a href="/blog/structuring-the-docker-setup-for-php-projects/#the-docker-folder"><code>.docker/</code> directory from the previous tutorial</a>
+<p><a href="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG"><img src="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG" alt="Docker images" title="Docker images" /></a></p>
+<p>We keep the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#the-docker-folder"><code>.docker/</code> directory from the previous tutorial</a>
 , though it will be split into <code>docker-compose/</code> and <code>images/</code> like so:</p>
 <pre><code>.
 └── .docker/
@@ -5141,11 +5165,11 @@ same file yields a certain amount of noise. But: It is what it is.</p>
 <li>docker-compose.local.yml
 <ul>
 <li>contains information specific to the <code>local</code> environment,
-see <a href="#environments-and-build-targets">Environments and build targets</a></li>
+see <a href="https://www.pascallandau.com#environments-and-build-targets">Environments and build targets</a></li>
 </ul></li>
 <li>docker-compose-php-base.yml
 <ul>
-<li>contains information for building the php base image, see <a href="#php-images">PHP images</a></li>
+<li>contains information for building the php base image, see <a href="https://www.pascallandau.com#php-images">PHP images</a></li>
 </ul></li>
 </ul>
 <!-- generated -->
@@ -5172,7 +5196,7 @@ the <a href="https://docs.docker.com/compose/environment-variables/#substitute-e
 so that <code>docker-compose</code> <strong>fails immediately if the variable is missing</strong>.</p>
 <p>Note: Some variables are expected to be passed via environment variables when <code>docker-compose</code>
 is invoked (i.e. they are required but not defined in the <code>.env</code> file; see also
-<a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></p>
+<a href="https://www.pascallandau.com#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></p>
 <!-- generated -->
 <p><a id='images'> </a></p>
 <!-- /generated -->
@@ -5196,7 +5220,7 @@ directory, e.g. the image for the <code>nginx</code> container is build via the 
 <h4>PHP images</h4>
 <p>We need 3 different PHP images (fpm, workers, application) and use a slightly different approach
 than
-in <a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>:</p>
+in <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>:</p>
 <p>Instead of using the <a href="https://hub.docker.com/_/php">official PHP base images</a> (i.e. cli or fpm), we
 use a &quot;plain&quot; alpine base image and install PHP and the required extensions manually in it. This
 allows us to build a common base image for all PHP images. Benefits:</p>
@@ -5219,7 +5243,7 @@ the latest PHP versions for alpine</li>
 <li>we use a dedicated <code>make</code> target to build the images instead of invoking <code>docker-compose</code>
 directly - this enables us to define a &quot;build order&quot; (base first, rest after) while still having
 to run only a single command as a developer
-(see <a href="#ensuring-the-build-order">Ensuring the build order</a>)</li>
+(see <a href="https://www.pascallandau.com#ensuring-the-build-order">Ensuring the build order</a>)</li>
 </ul>
 <!-- generated -->
 <p><a id='env-vs-arg'> </a></p>
@@ -5289,7 +5313,7 @@ dependencies)</strong></li>
 <p>This is reflected through the <code>ENV</code> environment variable. We use it in two places:</p>
 <ol>
 <li>as part of the image name as a suffix of the service name
-(see <a href="#image-naming-convention">Image naming convention</a>)</li>
+(see <a href="https://www.pascallandau.com#image-naming-convention">Image naming convention</a>)</li>
 <li>to specify
 the <a href="https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target">target build stage</a></li>
 </ol>
@@ -5333,7 +5357,7 @@ look up the exact options and arguments. I would usually create a helper functio
 local .bashrc file in a situation like that - but that wouldn't be available to other members of
 the team then and it would be very specific to this one project.</p>
 <p>Instead we'll use a self-documenting Makefile that
-<a href="/blog/structuring-the-docker-setup-for-php-projects/#using-make-as-central-entry-point">acts as the central entrypoint in the application</a>.
+<a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#using-make-as-central-entry-point">acts as the central entrypoint in the application</a>.
 Since Makefiles tend to grow over time, I've adopted some strategies to keep them
 &quot;sane&quot; via includes, shared variables and better error handling.</p>
 <!-- generated -->
@@ -5361,7 +5385,7 @@ some-target: ## Run some target
 <p>This will make the <code>ENV_FOO</code> available as environment variable to <code>some_command</code>.</p>
 <p>Shared variables are used by different components, and we always try to maintain only a <strong>single
 source of truth</strong>. An example would be the <code>DOCKER_REGISTRY</code> variable that we need to define the
-<a href="#image-naming-convention">image names of our docker images</a> in the <code>docker-compose.yml</code> files but
+<a href="https://www.pascallandau.com#image-naming-convention">image names of our docker images</a> in the <code>docker-compose.yml</code> files but
 also when pushing/pulling/deploying images via make targets later. In this case, the variable is
 required by <code>make</code> as well as <code>docker-compose</code>.</p>
 <p>To have a clear separation between variables and &quot;code&quot;, we use a <code>.env</code> file located
@@ -5443,7 +5467,7 @@ DOCKER_COMPOSE_PHP_BASE:=$(DOCKER_COMPOSE_COMMAND) -f $(DOCKER_COMPOSE_FILE_PHP_
 <p><a id='ensuring-the-build-order'> </a></p>
 <!-- /generated -->
 <h3>Ensuring the build order</h3>
-<p>As mentioned under <a href="#php-images">PHP images</a>, we need to build images in a certain order and use
+<p>As mentioned under <a href="https://www.pascallandau.com#php-images">PHP images</a>, we need to build images in a certain order and use
 the following make targets:</p>
 <pre><code class="language-makefile">.PHONY: docker-build-image
 docker-build-image: ## Build all docker images OR a specific image by providing the service name via: make docker-build DOCKER_SERVICE_NAME=&lt;service&gt;
@@ -5526,8 +5550,8 @@ By default, port 80 from the host ist forwarded to port 80 of the <code>nginx</c
 <p>so that we can access the application via <a href="http://app.local">http://app.local</a> instead
 of <a href="http://127.0.0.1">http://127.0.0.1</a>.</p>
 <p>The files of the POC essentially ensure that the container connections outlined in
-<a href="#local-docker-setup">Local docker setup</a> work as expected:</p>
-<p><a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
+<a href="https://www.pascallandau.com#local-docker-setup">Local docker setup</a> work as expected:</p>
+<p><a href="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG"><img src="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-containers.PNG" alt="Docker container connections" title="Docker container connections" /></a></p>
 <ul>
 <li><code>dependencies.php</code>
 <ul>
@@ -5654,16 +5678,20 @@ array(1) {
 leave a comment. Apart from that, you should now have a running docker setup and the means to
 &quot;control&quot; it conveniently via <code>make</code>.</p>
 <p>In the next part of this tutorial, we will
-<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">configure PhpStorm as our IDE to use the docker setup</a>.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">configure PhpStorm as our IDE to use the docker setup</a>.</p>
+<p>Please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a> or <a href="https://www.pascallandau.com#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 21 Mar 2022 10:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/</guid>
             </item>
                     <item>
                 <title>BigQuery: Monitor Query Costs via INFORMATION_SCHEMA</title>
-                <description><![CDATA[<p>Cost monitoring in Google BigQuery can be a difficult task, especially within a growing organization and
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/'>BigQuery: Monitor Query Costs via INFORMATION_SCHEMA</a></p>
+<hr />
+
+<p>Cost monitoring in Google BigQuery can be a difficult task, especially within a growing organization and
 lots of (independent) stakeholders that have access to the data. If your organization is not using
 reserved slots (<a href="https://cloud.google.com/bigquery/pricing#flat_rate_pricing">flat-rate pricing</a>)
 but is billed by the number of bytes processed
@@ -5712,7 +5740,7 @@ on the partition column <code>creation_time</code></li>
 </ul>
 <h2>Run on BigQuery</h2>
 <p><a href="https://console.cloud.google.com/bigquery?sq=580364496687:b0c09fa64661413eb91f5e7e0fcedebd">Open in BigQuery UI</a></p>
-<p><a href="/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png"><img src="/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png" alt="BigQuery UI: Monitor query costs in BigQuery example" title="BigQuery UI: Monitor query costs in BigQuery example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png"><img src="https://www.pascallandau.com/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png" alt="BigQuery UI: Monitor query costs in BigQuery example" title="BigQuery UI: Monitor query costs in BigQuery example" /></a></p>
 <h2>Notes</h2>
 <p>While playing around with the <code>INFORMATION_SCHEMA</code> views I've hit a couple of gotchas:</p>
 <ul>
@@ -5741,14 +5769,18 @@ that is then used as a data source for <a href="https://datastudio.google.com/">
 This allows me to get a quick high level overview
 over all query costs and further enables me to drill down deeper if I need to. I can even find the exact
 queries via their <code>job_id</code>.</p>
-<p><a href="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png"><img src="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png" alt="BigQuery cost monitoring dashboard" title="BigQuery cost monitoring dashboard" /></a></p>]]></description>
+<p><a href="https://www.pascallandau.com/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png"><img src="https://www.pascallandau.com/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png" alt="BigQuery cost monitoring dashboard" title="BigQuery cost monitoring dashboard" /></a></p>]]></description>
                 <pubDate>Mon, 22 Jun 2020 10:40:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/</guid>
             </item>
                     <item>
                 <title>BigQuery: Calculate the MEDIAN in BigQuery</title>
-                <description><![CDATA[<p>There is no <code>MEDIAN()</code> function in Google BigQuery, but we can still calculate the MEDIAN
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/bigquery-snippets/calculate-median/'>BigQuery: Calculate the MEDIAN in BigQuery</a></p>
+<hr />
+
+<p>There is no <code>MEDIAN()</code> function in Google BigQuery, but we can still calculate the MEDIAN
 with the
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_cont"><code>PERCENTILE_CONT(x, 0.5)</code></a> or
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_disc"><code>PERCENTILE_DISC(x, 0.5)</code></a>
@@ -5804,7 +5836,7 @@ and resolve a single median value via <a href="https://cloud.google.com/bigquery
 <script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"><script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"></script></script>
 <h2>Run on BigQuery</h2>
 <p><a href="https://console.cloud.google.com/bigquery?sq=580364496687:0c40a54f0d044cbebdc2745860a75490">Open in BigQuery UI</a></p>
-<p><a href="/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png"><img src="/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png" alt="BigQuery UI: MEDIAN in BigQuery example" title="BigQuery UI: MEDIAN in BigQuery example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png"><img src="https://www.pascallandau.com/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png" alt="BigQuery UI: MEDIAN in BigQuery example" title="BigQuery UI: MEDIAN in BigQuery example" /></a></p>
 <h2>Links</h2>
 <ul>
 <li><a href="https://stackoverflow.com/a/29095240/413531">Answer to &quot;How to calculate median of a numeric sequence in Google BigQuery efficiently?&quot; on Stackoverflow</a></li>
@@ -5820,12 +5852,16 @@ this for the sake of completeness. Example:</p>
 GROUP BY
   product_id</code></pre>]]></description>
                 <pubDate>Sat, 20 Jun 2020 12:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/calculate-median/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/calculate-median/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/calculate-median/</guid>
             </item>
                     <item>
                 <title>BigQuery: Use expression subqueries for querying nested and repeated fields</title>
-                <description><![CDATA[<p>BigQuery allows to define <a href="https://cloud.google.com/bigquery/docs/nested-repeated">nested and repeated fields</a>
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/'>BigQuery: Use expression subqueries for querying nested and repeated fields</a></p>
+<hr />
+
+<p>BigQuery allows to define <a href="https://cloud.google.com/bigquery/docs/nested-repeated">nested and repeated fields</a>
 in a table. Although this is very powerful, it makes it much more complex to retrieve the
 data if one is not used to such structures. Especially beginners tend to use an
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"><code>UNNEST</code> statement</a>
@@ -5849,7 +5885,7 @@ get the error message</p>
 <script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"><script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"></script></script>
 <h2>Run on BigQuery</h2>
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:a3ca0564513344a2981ac658365112c1">Open in BigQuery Console</a></p>
-<p><a href="/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png"><img src="/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png" alt="BigQuery Console: How to use expression subqueries for nested and repeated fields example" title="BigQuery Console: How to use expression subqueries for nested and repeated fields example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png"><img src="https://www.pascallandau.com/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png" alt="BigQuery Console: How to use expression subqueries for nested and repeated fields example" title="BigQuery Console: How to use expression subqueries for nested and repeated fields example" /></a></p>
 <h2>Links</h2>
 <ul>
 <li><a href="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125">Gist on Github</a></li>
@@ -5892,12 +5928,16 @@ FROM
 ORDER BY
   visitStartTime asc</code></pre>]]></description>
                 <pubDate>Fri, 29 May 2020 14:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/</guid>
             </item>
                     <item>
                 <title>BigQuery: Use &quot;temporary tables&quot; via WITH (named subqueries)</title>
-                <description><![CDATA[<p>In Google BigQuery we can define named subqueries via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax?hl=en#with_clause"><code>WITH</code> clauses</a>.
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a></p>
+<p><a href='https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/'>BigQuery: Use "temporary tables" via WITH (named subqueries)</a></p>
+<hr />
+
+<p>In Google BigQuery we can define named subqueries via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax?hl=en#with_clause"><code>WITH</code> clauses</a>.
 Those <code>WITH</code> clauses are a very comfortable way to structure complex queries as it allows to reference those queries like actual tables later on.</p>
 <p><strong>Note</strong>: BigQuery also supports <em>actcual</em> temporary tables via <code>CREATE TEMPORARY TABLE</code>. See the official documention on
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-definition-language#temporary_tables">temporary tables</a> for further infos.
@@ -5919,7 +5959,7 @@ FROM
 <script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"><script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"></script></script>
 <h2>Run on BigQuery</h2>
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Open in BigQuery Console</a></p>
-<p><a href="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png"><img src="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png" alt="BigQuery Console: How to use temporay tables via WITH named subqueries example" title="BigQuery Console: How to use temporay tables via WITH named subqueries example" /></a></p>
+<p><a href="https://www.pascallandau.com/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png"><img src="https://www.pascallandau.com/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png" alt="BigQuery Console: How to use temporay tables via WITH named subqueries example" title="BigQuery Console: How to use temporay tables via WITH named subqueries example" /></a></p>
 <h2>Links</h2>
 <ul>
 <li><a href="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99">Gist on Github</a></li>
@@ -5948,7 +5988,7 @@ SELECT
 FROM
   huge_table_partition</code></pre>]]></description>
                 <pubDate>Fri, 29 May 2020 13:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/</guid>
             </item>
             </channel>
