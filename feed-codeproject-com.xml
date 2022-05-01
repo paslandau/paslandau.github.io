@@ -1,13 +1,14 @@
 <?xml version = "1.0" encoding = "UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>pascallandau.com</title>
-        <description>Personal website of Pascal Landau</description>
+        <title>pascallandau.com [codeproject]</title>
+        <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
-        <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
+        <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
         <pubDate>Sun, 01 May 2022 15:53:38 +0000</pubDate>
         <lastBuildDate>Sun, 01 May 2022 15:53:38 +0000</lastBuildDate>
         <language>en</language>
+        <category>CodeProject</category>
                     <item>
                 <title>CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</title>
                 <description><![CDATA[<p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
@@ -1696,7 +1697,7 @@ production deployments on GCP and deploy the docker containers there.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 07:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/</guid>
             </item>
                     <item>
@@ -2869,7 +2870,7 @@ that decrypts all necessary secrets and then runs our tests and qa tools.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 06:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/</guid>
             </item>
                     <item>
@@ -3667,7 +3668,7 @@ application and way to conveniently control them through a Makefile.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 05:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/php-qa-tools-make-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/blog/php-qa-tools-make-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php-qa-tools-make-docker/</guid>
             </item>
                     <item>
@@ -4423,7 +4424,7 @@ pipelines on Github and Gitlab.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/</guid>
             </item>
                     <item>
@@ -4910,7 +4911,7 @@ works with PhpStorm as your IDE.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Tue, 22 Mar 2022 11:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/</guid>
             </item>
                     <item>
@@ -5657,7 +5658,7 @@ leave a comment. Apart from that, you should now have a running docker setup and
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 21 Mar 2022 10:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/</guid>
             </item>
                     <item>
@@ -5742,7 +5743,7 @@ over all query costs and further enables me to drill down deeper if I need to. I
 queries via their <code>job_id</code>.</p>
 <p><a href="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png"><img src="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png" alt="BigQuery cost monitoring dashboard" title="BigQuery cost monitoring dashboard" /></a></p>]]></description>
                 <pubDate>Mon, 22 Jun 2020 10:40:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/</guid>
             </item>
                     <item>
@@ -5819,7 +5820,7 @@ this for the sake of completeness. Example:</p>
 GROUP BY
   product_id</code></pre>]]></description>
                 <pubDate>Sat, 20 Jun 2020 12:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/calculate-median/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/calculate-median/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/calculate-median/</guid>
             </item>
                     <item>
@@ -5891,7 +5892,7 @@ FROM
 ORDER BY
   visitStartTime asc</code></pre>]]></description>
                 <pubDate>Fri, 29 May 2020 14:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/</guid>
             </item>
                     <item>
@@ -5947,7 +5948,7 @@ SELECT
 FROM
   huge_table_partition</code></pre>]]></description>
                 <pubDate>Fri, 29 May 2020 13:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <link>https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/use-temporary-tables-with-named-subquery/</guid>
             </item>
             </channel>
