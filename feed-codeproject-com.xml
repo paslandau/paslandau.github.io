@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sun, 01 May 2022 18:59:09 +0000</pubDate>
-        <lastBuildDate>Sun, 01 May 2022 18:59:09 +0000</lastBuildDate>
+        <pubDate>Mon, 02 May 2022 19:44:03 +0000</pubDate>
+        <lastBuildDate>Mon, 02 May 2022 19:44:03 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -511,194 +511,7 @@ repository</li>
 <!-- generated -->
 <p><a id='the-workflow-file'> </a></p>
 <!-- /generated -->
-<h4>The Workflow file</h4>
-<p>Github Actions are triggered automatically based on the files in the <code>.github/workflows</code> directory.
-I have added the file <code>.github/workflows/ci.yml</code> with the following content:</p>
-<pre>name: CI build and test
-
-on:
-  # automatically run for pull request and for pushes to branch "part-7-ci-pipeline-docker-php-gitlab-github"
-  # @see https://stackoverflow.com/a/58142412/413531
-  push:
-    branches:
-      - part-7-ci-pipeline-docker-php-gitlab-github
-  pull_request: {}
-  # enable to trigger the action manually
-  # @see https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
-  # CAUTION: there is a known bug that makes the "button to trigger the run" not show up
-  # @see https://github.community/t/workflow-dispatch-workflow-not-showing-in-actions-tab/130088/29
-  workflow_dispatch: {}
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: start timer
-        run: |
-          echo "START_TOTAL=$(date +%s)" &gt; $GITHUB_ENV
-
-      - name: STORE GPG KEY
-        run: |
-          # Note: make sure to wrap the secret in double quotes (")
-          echo "${{ secrets.GPG_KEY }}" &gt; ./secret.gpg
-
-      - name: SETUP TOOLS
-        run : |
-          DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-          # install docker compose
-          # @see https://docs.docker.com/compose/cli-command/#install-on-linux
-          # @see https://github.com/docker/compose/issues/8630#issuecomment-1073166114
-          mkdir -p $DOCKER_CONFIG/cli-plugins 
-          curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-$(uname -m) -o $DOCKER_CONFIG/cli-plugins/docker-compose
-          chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
-
-      - name: DEBUG
-        run: |
-          docker compose version
-          docker --version
-          cat /etc/*-release
-
-      - name: SETUP DOCKER
-        run: |
-          make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=${{ secrets.GPG_PASSWORD }}"
-          make docker-build
-          mkdir .build &amp;&amp; chmod 777 .build
-
-      - name: START DOCKER
-        run: |
-          make docker-up
-          make gpg-init
-          make secret-decrypt-with-password
-
-      - name: QA
-        run: |
-          # Run the tests and qa tools but only store the error instead of failing immediately
-          # @see https://stackoverflow.com/a/59200738/413531
-          make qa || echo "FAILED=qa" &gt;&gt; $GITHUB_ENV
-
-      - name: WAIT FOR CONTAINERS
-        run: |
-          # We need to wait until mysql is available.
-          bash .docker/scripts/wait-for-service.sh mysql 30 1 
-
-      - name: TEST
-        run: |
-          make test || echo "FAILED=test $FAILED" &gt;&gt; $GITHUB_ENV
-
-      - name: RUNTIMES
-        run: |
-          echo `expr $(date +%s) - $START_TOTAL`
-
-      - name: EVALUATE
-        run: |
-          # Check if $FAILED is NOT empty
-          if [ ! -z "$FAILED" ]; then echo "Failed at $FAILED" &amp;&amp; exit 1; fi
-
-      - name: upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: ./.build</pre>
-<p>The steps are essentially the same as explained before at
-<a href="#run-details">Run details for the local run</a>. Some additional notes:</p>
-<ul>
-<li>I want the Action to be triggered automatically only when I
-<a href="https://stackoverflow.com/a/58142412/413531">push to branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code></a>
-OR when a pull request is created (via <code>pull_request</code>). In addition, I want to be able to
-<a href="https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/">trigger the Action manually on any branch</a>
-(via <code>workflow_dispatch</code>).
-<pre>on:
-push:
-  branches:
-    - part-7-ci-pipeline-docker-php-gitlab-github
-pull_request: {}
-workflow_dispatch: {}</pre>
-<p>For a real project, I would let the action only run automatically on long-living branches like
-<code>main</code> or <code>develop</code>. The manual trigger is helpful if you just want to test your current work
-without putting it up for review. <strong>CAUTION:</strong> There is a
-<a href="https://github.community/t/workflow-dispatch-workflow-not-showing-in-actions-tab/130088/29">known issue that &quot;hides&quot; the &quot;Trigger workflow&quot; button to trigger the action manually</a>.</p></li>
-<li>a new shell is started for each <code>run:</code> instruction, thus we must store our timer in the &quot;global&quot;
-<a href="https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable">environment variable <code>$GITHUB_ENV</code></a>
-<pre>  - name: start timer
-  run: |
-    echo "START_TOTAL=$(date +%s)" &gt; $GITHUB_ENV </pre>
-<p>This will be the only timer we use, because the job uses multiple steps that are timed
-automatically - so we don't need to take timestamps manually:
-<a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-step-times.PNG" alt="Github Action step times" /></a></p></li>
-<li>
-<p>the <code>gpg</code> key is configured as an
-<a href="https://docs.github.com/en/actions/security-guides/encrypted-secrets">encrypted secret</a> named
-<code>GPG_KEY</code> and is stored in <code>./secret.gpg</code>. The value is the content of the
-<code>secret-protected.gpg.example</code> file</p>
-<pre>  - name: STORE GPG KEY
-    run: |
-      echo "${{ secrets.GPG_KEY }}" &gt; ./secret.gpg</pre>
-<p>Secrets are configured in the Github repository under <code>Settings &gt; Secrets &gt; Actions</code> at</p>
-<pre>https://github.com/$user/$repository/settings/secrets/actions
-
-e.g.
-
-https://github.com/paslandau/docker-php-tutorial/settings/secrets/actions</pre>
-<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-secrets-ui.PNG" alt="Github Action Secrets UI" /></a></p>
-</li>
-<li>the <code>ubuntu-latest</code> image doesn't contain the <code>docker compose</code> plugin, thus we need to
-<a href="https://docs.docker.com/compose/cli-command/#install-on-linux">install it manually</a>
-<pre>  - name: SETUP TOOLS
-  run : |
-    DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
-    mkdir -p $DOCKER_CONFIG/cli-plugins 
-    curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-$(uname -m) -o $DOCKER_CONFIG/cli-plugins/docker-compose
-    chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose</pre></li>
-<li>for the <code>make</code> initialization we need the second secret named <code>GPG_PASSWORD</code> - which is
-configured as <code>12345678</code> in our case, see
-<a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret gpg key</a>
-<pre>  - name: SETUP DOCKER
-    run: |
-      make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=${{ secrets.GPG_PASSWORD }}"</pre></li>
-<li>because the runner will be shutdown after the run, we need to move the build artifacts to a
-permanent location, using the
-<a href="https://github.com/actions/upload-artifact#upload-an-entire-directory">actions/upload-artifact@v3 action</a>
-<pre>  - name: upload build artifacts
-    uses: actions/upload-artifact@v3
-    with:
-      name: build-artifacts
-      path: ./.build</pre>
-<p>You can
-<a href="https://github.com/actions/upload-artifact#where-does-the-upload-go">download the artifacts in the Run overview UI</a>
-<a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-run-overview-build-artifacts.PNG" alt="Github Actions: Run overview UI shows build-artifacts" /></a></p></li>
-</ul>
-<!-- generated -->
-<p><a id='setup-for-gitlab-pipelines'> </a></p>
-<!-- /generated -->
-<h3>Setup for Gitlab Pipelines</h3>
-<ul>
-<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/tree/part-7-ci-pipeline-docker-php-gitlab-github">Repository (branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code>)</a></li>
-<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines">CI/CD overview (Pipelines)</a></li>
-<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511339886">Example of a successful job</a></li>
-<li><a href="https://gitlab.com/docker-php-tutorial/docker-php-tutorial/-/pipelines/511341545">Example of a failed job</a></li>
-</ul>
-<p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/gitlab-pipeline-example.PNG" alt="Gitlab Pipeline example" /></a></p>
-<p>If you are completely new to Gitlab Pipelines, I recommend to start with the
-<a href="https://docs.gitlab.com/ee/ci/quick_start/">official Get started with GitLab CI/CD guide</a>. In
-short:</p>
-<ul>
-<li>the core concept of Gitlab Pipelines is the <strong>Pipeline</strong>
-<ul>
-<li>it is defined in the <code>yaml</code> file <code>.gitlab-ci.yml</code> that lives in the root of the repository</li>
-</ul></li>
-<li>a Pipeline can contain multiple <strong>Stages</strong></li>
-<li>each Stage consists of a series of <strong>Jobs</strong></li>
-<li>each Job contains a <a href="https://docs.gitlab.com/ee/ci/yaml/index.html#script"><strong><code>script</code></strong> section</a></li>
-<li>the <code>script</code> section consists of a series of shell commands</li>
-</ul>
-<!-- generated -->
-<p><a id='the-gitlab-ci-yml-pipeline-file'> </a></p>
-<!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 40000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/'>CI Pipelines for dockerized PHP Apps with Github & Gitlab [Tutorial Part 7]</a></b></p>
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/'>CI Pipelines for dockerized PHP Apps with Github & Gitlab [Tutorial Part 7]</a></b></p>
 ]]></description>
                 <pubDate>Mon, 25 Apr 2022 07:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
@@ -1235,268 +1048,7 @@ git-secret: changes in /var/www/app/.env:
 <!-- generated -->
 <p><a id='makefile-adjustments'> </a></p>
 <!-- /generated -->
-<h2>Makefile adjustments</h2>
-<p>Since I won't be able to remember all the commands for <code>git-secret</code> and <code>gpg</code>, I've added them to
-the Makefile at <code>.make/01-00-application-setup.mk</code>:</p>
-<pre># File: .make/01-00-application-setup.mk
-
-#...
-
-# gpg
-
-DEFAULT_SECRET_GPG_KEY?=secret.gpg
-DEFAULT_PUBLIC_GPG_KEYS?=.dev/gpg-keys/*
-
-.PHONY: gpg
-gpg: ## Run gpg commands. Specify the command e.g. via ARGS="--list-keys"
-    $(EXECUTE_IN_APPLICATION_CONTAINER) gpg $(ARGS)
-
-.PHONY: gpg-export-public-key
-gpg-export-public-key: ## Export a gpg public key e.g. via EMAIL="john.doe@example.com" PATH=".dev/gpg-keys/john-public.gpg"
-    @$(if $(PATH),,$(error PATH is undefined))
-    @$(if $(EMAIL),,$(error EMAIL is undefined))
-    "$(MAKE)" -s gpg ARGS="gpg --armor --export $(EMAIL) &gt; $(PATH)"
-
-.PHONY: gpg-export-private-key
-gpg-export-private-key: ## Export a gpg private key e.g. via EMAIL="john.doe@example.com" PATH="secret.gpg"
-    @$(if $(PATH),,$(error PATH is undefined))
-    @$(if $(EMAIL),,$(error EMAIL is undefined))
-    "$(MAKE)" -s gpg ARGS="--output $(PATH) --armor --export-secret-key $(EMAIL)"
-
-.PHONY: gpg-import
-gpg-import: ## Import a gpg key file e.g. via GPG_KEY_FILES="/path/to/file /path/to/file2"
-    @$(if $(GPG_KEY_FILES),,$(error GPG_KEY_FILES is undefined))
-    "$(MAKE)" -s gpg ARGS="--import --batch --yes --pinentry-mode loopback $(GPG_KEY_FILES)"
-
-.PHONY: gpg-import-default-secret-key
-gpg-import-default-secret-key: ## Import the default secret key
-    "$(MAKE)" -s gpg-import GPG_KEY_FILES="$(DEFAULT_SECRET_GPG_KEY)"
-
-.PHONY: gpg-import-default-public-keys
-gpg-import-default-public-keys: ## Import the default public keys
-    "$(MAKE)" -s gpg-import GPG_KEY_FILES="$(DEFAULT_PUBLIC_GPG_KEYS)" 
-
-.PHONY: gpg-init
-gpg-init: gpg-import-default-secret-key gpg-import-default-public-keys ## Initialize gpg in the container, i.e. import all public and private keys
-
-# git-secret
-
-.PHONY: git-secret
-git-secret: ## Run git-secret commands. Specify the command e.g. via ARGS="hide"
-    $(EXECUTE_IN_APPLICATION_CONTAINER) git-secret $(ARGS)
-
-.PHONY: secret-init
-secret-init: ## Initialize git-secret in the repository via `git-secret init`
-    "$(MAKE)" -s git-secret ARGS="init"
-
-.PHONY: secret-init-gpg-socket-config
-secret-init-gpg-socket-config: ## Initialize the config files to change the gpg socket locations
-    echo "%Assuan%" &gt; .gitsecret/keys/S.gpg-agent
-    echo "socket=/tmp/S.gpg-agent" &gt;&gt; .gitsecret/keys/S.gpg-agent
-    echo "%Assuan%" &gt; .gitsecret/keys/S.gpg-agent.ssh
-    echo "socket=/tmp/S.gpg-agent.ssh" &gt;&gt; .gitsecret/keys/S.gpg-agent.ssh
-    echo "extra-socket /tmp/S.gpg-agent.extra" &gt; .gitsecret/keys/gpg-agent.conf
-    echo "browser-socket /tmp/S.gpg-agent.browser" &gt;&gt; .gitsecret/keys/gpg-agent.conf
-
-.PHONY: secret-encrypt
-secret-encrypt: ## Decrypt secret files via `git-secret hide`
-    "$(MAKE)" -s git-secret ARGS="hide"
-
-.PHONY: secret-decrypt
-secret-decrypt: ## Decrypt secret files via `git-secret reveal -f`
-    "$(MAKE)" -s git-secret ARGS="reveal -f" 
-
-.PHONY: secret-decrypt-with-password
-secret-decrypt-with-password: ## Decrypt secret files using a password for gpg via `git-secret reveal -f -p $(GPG_PASSWORD)`
-    @$(if $(GPG_PASSWORD),,$(error GPG_PASSWORD is undefined))
-    "$(MAKE)" -s git-secret ARGS="reveal -f -p $(GPG_PASSWORD)" 
-
-.PHONY: secret-add
-secret-add: ## Add a file to git secret via `git-secret add $FILE`
-    @$(if $(FILE),,$(error FILE is undefined))
-    "$(MAKE)" -s git-secret ARGS="add $(FILE)"
-
-.PHONY: secret-cat
-secret-cat: ## Show the contents of file to git secret via `git-secret cat $FILE`
-    @$(if $(FILE),,$(error FILE is undefined))
-    "$(MAKE)" -s git-secret ARGS="cat $(FILE)"
-
-.PHONY: secret-list
-secret-list: ## List all files added to git secret `git-secret list`
-    "$(MAKE)" -s git-secret ARGS="list"
-
-.PHONY: secret-remove
-secret-remove: ## Remove a file from git secret via `git-secret remove $FILE`
-    @$(if $(FILE),,$(error FILE is undefined))
-    "$(MAKE)" -s git-secret ARGS="remove $(FILE)"
-
-.PHONY: secret-add-user
-secret-add-user: ## Remove a user from git secret via `git-secret tell $EMAIL`
-    @$(if $(EMAIL),,$(error EMAIL is undefined))
-    "$(MAKE)" -s git-secret ARGS="tell $(EMAIL)"
-
-.PHONY: secret-show-users
-secret-show-users: ## Show all users that have access to git secret via `git-secret whoknows`
-    "$(MAKE)" -s git-secret ARGS="whoknows"
-
-.PHONY: secret-remove-user
-secret-remove-user: ## Remove a user from git secret via `git-secret killperson $EMAIL`
-    @$(if $(EMAIL),,$(error EMAIL is undefined))
-    "$(MAKE)" -s git-secret ARGS="killperson $(EMAIL)"
-
-.PHONY: secret-diff
-secret-diff: ## Show the diff between the content of encrypted and decrypted files via `git-secret changes`
-    "$(MAKE)" -s git-secret ARGS="changes"</pre>
-<!-- generated -->
-<p><a id='workflow'> </a></p>
-<!-- /generated -->
-<h2>Workflow</h2>
-<p>Working with <code>git-secret</code> is pretty straight forward:</p>
-<ul>
-<li>initialize <code>git-secret</code></li>
-<li>add all users</li>
-<li>add all secret files and make sure they are ignored via <code>.gitignore</code></li>
-<li>encrypt the files</li>
-<li>commit the encrypted files like &quot;any other file&quot;</li>
-<li>if any changes were made by other team members to the files:
-<ul>
-<li>=&gt; decrypt to get the most up-to-date ones</li>
-</ul></li>
-<li>if any modifications are required from your side:
-<ul>
-<li>=&gt; make the changes to the decrypted files and then re-encrypt them again</li>
-</ul></li>
-</ul>
-<p>But: The devil is in the details. The <a href="#process-challenges">Process challenges</a> section explains
-some of the pitfalls that we have encountered and the <a href="#scenarios">Scenarios</a> section gives some
-concrete examples for common scenarios.</p>
-<!-- generated -->
-<p><a id='process-challenges'> </a></p>
-<!-- /generated -->
-<h3>Process challenges</h3>
-<p>From a process perspective we've encountered some challenges that I'd like to mention - including
-how we deal with them.</p>
-<!-- generated -->
-<p><a id='updating-secrets'> </a></p>
-<!-- /generated -->
-<h4>Updating secrets</h4>
-<p>When updating secrets you must ensure to always <strong>decrypt the files first</strong> in order to avoid
-using &quot;stale&quot; files that you might still have locally. I usually check out the latest <code>main</code>
-branch and run <code>git secret reveal</code> to have the most up-to-date versions of the secret files. You
-could also use a <a href="https://stackoverflow.com/a/4185449/413531"><code>post-merge</code> git hook</a> to do
-this automatically, but I personally don't want to risk overwriting my local secret files by
-accident.</p>
-<!-- generated -->
-<p><a id='code-reviews-and-merge-conflicts'> </a></p>
-<!-- /generated -->
-<h4>Code reviews and merge conflicts</h4>
-<p>Since the <strong>encrypted files cannot be diffed meaningfully</strong>, the code reviews become more difficult
-when secrets are involved. We use Gitlab for reviews and I usually first check the diff of
-the <code>.gitsecret/paths/mapping.cfg</code> file to see &quot;which files have changed&quot; directly in the UI.</p>
-<p>In addition, I will</p>
-<ul>
-<li>checkout the <code>main</code> branch</li>
-<li>decrypt the secrets via <code>git secret reveal -f</code></li>
-<li>checkout the <code>feature-branch</code></li>
-<li>run <code>git secret changes</code> to see the differences between the decrypted files from <code>main</code> and the
-encrypted files from <code>feature-branch</code></li>
-</ul>
-<p>Things get even more complicated when multiple team members need to modify secret files at the same
-time on different branches, as <strong>the encrypted files cannot be compared - i.e. git cannot be smart
-about delta updates</strong>.
-The only way around this is coordinating the pull requests, i.e. merge the first, update the
-secrets of the second and then merge the second.</p>
-<p>Fortunately, this has only happened very rarely so far.</p>
-<!-- generated -->
-<p><a id='local-git-secret-and-gpg-setup'> </a></p>
-<!-- /generated -->
-<h4>Local <code>git-secret</code> and <code>gpg</code> setup</h4>
-<p>Currently, all developers in our team have <code>git-secret</code> installed locally (instead of using it
-through docker) and use their own <code>gpg</code> keys.</p>
-<p>This means more onboarding overhead, because</p>
-<ul>
-<li>a new dev must
-<ul>
-<li>install <code>git-secret</code> locally (*)</li>
-<li>install and setup <code>gpg</code> locally (*)</li>
-<li>create a <code>gpg</code> key pair</li>
-</ul></li>
-<li>the public key must be added by every other team member (*)</li>
-<li>the user of the key must be added via <code>git secret tell</code></li>
-<li>the secrets must be re-encrypted</li>
-</ul>
-<p>And for offboarding</p>
-<ul>
-<li>the public key must be removed by every other team member (*)</li>
-<li>the user of the key must be removed via <code>git secret killperson</code></li>
-<li>the secrets must be re-encrypted</li>
-</ul>
-<p>Plus, we need to ensure that the <code>git-secret</code> and <code>gpg</code> versions are kept up-to-date for everyone to
-not run into any compatibility issues.</p>
-<p>As an alternative, I'm currently leaning more towards <strong>handling everything through docker</strong> (as
-presented in this tutorial). All steps marked with (*) are then obsolete, i.e. there is no need
-to setup <code>git-secret</code> and <code>gpg</code> locally. </p>
-<p>But the approach also comes with some downsides, because</p>
-<ul>
-<li>the <strong>secret key and all public keys have to be imported every time the container is started</strong></li>
-<li><strong>each dev needs to put his private <code>gpg</code> key &quot;in the codebase&quot;</strong> (ignored by <code>.gitignore</code>) so it
-can be shared with docker and imported by <code>gpg</code> (in docker). The alternative would be using
-a single secret key that is   shared within the team - which feels very wrong :P</li>
-</ul>
-<p>To make this a little more convenient, <strong>we put the public gpg keys of every dev in the
-repository</strong> under <code>.dev/gpg-keys/</code> and <strong>the private key has to be named <code>secret.gpg</code> and put
-in the root of the codebase</strong>. </p>
-<p>In this setup, <code>secret.gpg</code> must also be added to the<code>.gitignore</code> file. </p>
-<pre># File: .gitignore
-#...
-vendor/
-secret.gpg</pre>
-<p>The import can now be be simplified with <code>make</code> targets:</p>
-<pre># gpg
-
-DEFAULT_SECRET_GPG_KEY?=secret.gpg
-DEFAULT_PUBLIC_GPG_KEYS?=.dev/gpg-keys/*
-
-.PHONY: gpg
-gpg: ## Run gpg commands. Specify the command e.g. via ARGS="--list-keys"
-    $(EXECUTE_IN_APPLICATION_CONTAINER) gpg $(ARGS)
-
-.PHONY: gpg-import
-gpg-import: ## Import a gpg key file e.g. via GPG_KEY_FILES="/path/to/file /path/to/file2"
-    @$(if $(GPG_KEY_FILES),,$(error GPG_KEY_FILES is undefined))
-    "$(MAKE)" -s gpg ARGS="--import --batch --yes --pinentry-mode loopback $(GPG_KEY_FILES)"
-
-.PHONY: gpg-import-default-secret-key
-gpg-import-default-secret-key: ## Import the default secret key
-    "$(MAKE)" -s gpg-import GPG_KEY_FILES="$(DEFAULT_SECRET_GPG_KEY)"
-
-.PHONY: gpg-import-default-public-keys
-gpg-import-default-public-keys: ## Import the default public keys
-    "$(MAKE)" -s gpg-import GPG_KEY_FILES="$(DEFAULT_PUBLIC_GPG_KEYS)" 
-
-.PHONY: gpg-init
-gpg-init: gpg-import-default-secret-key gpg-import-default-public-keys ## Initialize gpg in the container, i.e. import all public and private keys</pre>
-<p>&quot;Everything&quot; can now be handled via </p>
-<pre>make gpg-init</pre>
-<p>that needs to be run one single time after a container has been started. </p>
-<!-- generated -->
-<p><a id='scenarios'> </a></p>
-<!-- /generated -->
-<h3>Scenarios</h3>
-<p>The scenarios assume the following preconditions:</p>
-<ul>
-<li>You have checked out branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>
-<pre>git checkout part-6-git-secret-encrypt-repository-docker</pre>
-<p>and no running docker containers </p>
-<pre>make docker-down</pre></li>
-<li>You have deleted the existing <code>git-secret</code> folder, the keys in <code>.dev/gpg-keys</code>, the
-<code>secret.gpg</code> key and the <code>passwords.*</code> files 
-<pre>rm -rf .gitsecret/ .dev/gpg-keys/* secret.gpg passwords.*</pre></li>
-</ul>
-<!-- generated -->
-<p><a id='initial-setup-of-gpg-keys'> </a></p>
-<!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 40000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/'>Use git-secret to encrypt secrets in the repository [Tutorial Part 6]</a></b></p>
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/'>Use git-secret to encrypt secrets in the repository [Tutorial Part 6]</a></b></p>
 ]]></description>
                 <pubDate>Mon, 25 Apr 2022 06:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
@@ -1527,7 +1079,8 @@ You find the branch with the final result of this tutorial at
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
 <li><a href="https://www.pascallandau.com/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
+(2018-07-08)
+<ul>
 <li><a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
 <li><a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
@@ -1544,6 +1097,7 @@ You find the branch with the final result of this tutorial at
 (2022-04-25)</li>
 <li><a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
+</ul></li>
 </ul>
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
@@ -1559,10 +1113,12 @@ e.g. <strong>code style definitions</strong>, proper <strong>usage of types</str
 etc. When run regularly they are a great way to enforce better code and are thus a
 <strong>perfect fit for a CI pipeline</strong>. For this tutorial, I'm going to setup the following tools:</p>
 <ul>
-<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a></li>
+<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a>
+<ul>
 <li><a href="#phpstan">Static Analyzer: phpstan</a></li>
 <li><a href="#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
 <li><a href="#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
+</ul></li>
 </ul>
 <p>and provide convenient access through a <a href="#the-qa-target"><code>qa</code> make target</a>. The end result will look
 like this:</p>
@@ -1921,22 +1477,14 @@ gonna leave a list for inspiration:</p>
 <li><a href="https://packagist.org/packages/brianium/paratest">brianium/paratest</a>
 <ul>
 <li>Running PhpUnit tests in parallel</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a>
-<ul>
+<li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a></li>
 <li>Update the versions in the <code>composer.json</code> file after an update</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a>
-<ul>
+<li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a></li>
 <li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>:
 A tool to define dependency layers based on e.g. namespaces</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a>
-<ul>
+<li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a></li>
 <li>Show dependencies in the <code>composer.json</code> that are not used in the codebase</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a>
-<ul>
+<li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a></li>
 <li>Gives a warning when packages with known vulnerabilities are used </li>
 <li>Alternative: <a href="https://github.com/fabpot/local-php-security-checker/">local-php-security-checker</a></li>
 </ul></li>
@@ -2034,185 +1582,7 @@ composer-require-checker            done   took 6s</pre>
 <!-- generated -->
 <p><a id='the-execute-function'> </a></p>
 <!-- /generated -->
-<h3>The <code>execute</code> &quot;function&quot;</h3>
-<p>We'll make this work by <strong>suppressing the tool output</strong> and <strong>using a user-defined <code>execute</code> make
-function</strong> to format all targets nicely. </p>
-<p><small>Though &quot;function&quot; isn't quite correct here, because it's rather a
-<a href="https://www.gnu.org/software/make/manual/html_node/Multi_002dLine.html#Multi_002dLine">multiline variable</a>
-defined via <code>define ... endef</code> that is then &quot;invoked&quot; via
-the <a href="https://www.gnu.org/software/make/manual/html_node/Call-Function.html">call function</a>.
-</small></p>
-<pre># File: 01-02-application-qa.mk
-
-# call with NO_PROGRESS=true to hide tool progress (makes sense when invoking multiple tools together)
-NO_PROGRESS?=false
-ifeq ($(NO_PROGRESS),true)
-    PHPSTAN_ARGS+= --no-progress
-endif
-
-# Use NO_PROGRESS=false when running individual tools.
-# On  NO_PROGRESS=true  the corresponding tool has no output on success
-#                       apart from its runtime but it will still print 
-#                       any errors that occured. 
-define execute
-    if [ "$(NO_PROGRESS)" = "false" ]; then \
-        eval "$(EXECUTE_IN_APPLICATION_CONTAINER) $(1) $(2) $(3) $(4)"; \
-    else \
-        START=$$(date +%s); \
-        printf "%-35s" "$@"; \
-        if OUTPUT=$$(eval "$(EXECUTE_IN_APPLICATION_CONTAINER) $(1) $(2) $(3) $(4)" 2&gt;&amp;1); then \
-            printf " %-6s" "done"; \
-            END=$$(date +%s); \
-            RUNTIME=$$((END-START)) ;\
-            printf " took $${RUNTIME}s\n"; \
-        else \
-            printf " %-6s" "fail"; \
-            END=$$(date +%s); \
-            RUNTIME=$$((END-START)) ;\
-            printf " took $${RUNTIME}s\n"; \
-            echo "$$OUTPUT"; \
-            printf "\n"; \
-            exit 1; \
-        fi; \
-    fi
-endef</pre>
-<ul>
-<li>the <code>NO_PROGRESS</code> variable is set to <code>false</code> by default and will cause a target to be invoked
-as before, showing all its output immediately</li>
-<li>if the variable is set to <code>true</code>, the target is instead invoked via <code>eval</code> and the output is
-captured in the <code>OUTPUT</code> bash variable that will only be printed if the result of the
-invocation is faulty</li>
-</ul>
-<p>The tool targets are then adjusted to use the new function.</p>
-<pre>.PHONY: phpstan
-phpstan: ## Run static analyzer on all application and test files
-    @$(call execute,$(PHPSTAN_CMD),$(PHPSTAN_ARGS),$(PHPSTAN_FILES),$(ARGS))</pre>
-<p>We can now call the <code>phpstan</code> target with <code>NO_PROGRESS=true</code> like so:</p>
-<pre>$ make phpstan NO_PROGRESS=true
-phpstan                             done   took 4s</pre>
-<p>An &quot;error&quot; would look likes this:</p>
-<pre>$ make phpstan NO_PROGRESS=true
-phpstan                             fail   took 9s
- ------ ----------------------------------------
-  Line   app/Providers/RouteServiceProvider.php
- ------ ----------------------------------------
-  49     Cannot access property $id on mixed.
- ------ ----------------------------------------</pre>
-<!-- generated -->
-<p><a id='parallel-execution-and-a-helper-target'> </a></p>
-<!-- /generated -->
-<h3>Parallel execution and a helper target</h3>
-<p>Technically, this also already works with the <code>qa</code> target and we can even speed up the process by
-<strong>running the tools in parallel</strong> with
-the <a href="https://www.gnu.org/software/make/manual/html_node/Parallel.html">-j flag for &quot;Parallel Execution&quot;</a></p>
-<pre>$ make -j 4 qa NO_PROGRESS=true
-phpstan                            phplint                            composer-require-checker           phpcs                               done   took 5s
-done   took 5s
-done   took 7s
-done   took 10s</pre>
-<p>Well... not quite what we wanted. We also need to use
-<a href="https://www.gnu.org/software/make/manual/html_node/Parallel-Output.html"><code>--output-sync=target</code> to controll the &quot;Output During Parallel Execution&quot;</a></p>
-<pre>$ make -j 4 --output-sync=target qa NO_PROGRESS=true
-phpstan                             done   took 3s
-phplint                             done   took 1s
-composer-require-checker            done   took 5s
-phpcs                               done   took 1s</pre>
-<p>Since this is quite a mouthful to type, we'll use a helper target <code>qa-exec</code> for running the tools
-and put all the inconvenient-to-type options in the final <code>qa</code> target.</p>
-<pre># File: 01-02-application-qa.mk
-#...
-
-# variables
-CORES?=$(shell (nproc  || sysctl -n hw.ncpu) 2&gt; /dev/null)
-
-.PHONY: qa
-qa: ## Run code quality tools on all files
-    @"$(MAKE)" -j $(CORES) -k --no-print-directory --output-sync=target qa-exec NO_PROGRESS=true
-
-.PHONY: qa-exec
-qa-exec: phpstan \
-    phplint \
-    composer-require-checker \
-    phpcs</pre>
-<p>For the number of parallel processes I use <code>nproc</code> (works on Linux and Windows) resp.
-<code>sysctl -n hw.ncpu</code> (works on Mac) to determine the number of available cores. If you dedicate
-less resources to docker you might want to hard-code this setting to a lower value (e.g. by
-adding a <code>CORES</code> variable in
-the <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a>
-file).</p>
-<!-- generated -->
-<p><a id='sprinkle-some-color-on-top'> </a></p>
-<!-- /generated -->
-<h3>Sprinkle some color on top</h3>
-<p>The final piece for getting to the output mentioned in the <a href="#introduction">Introduction</a> is the
-bash-coloring:</p>
-<p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
-<p>To make this work, we need to understand first how colors work in bash:</p>
-<blockquote>
-<p>This  [coloring] can be accomplished by adding a <code>\e</code> [or <code>\033</code>] at the beginning to form an
-escape sequence. The escape sequence for specifying color codes is <code>\e[COLORm</code>
-(<code>COLOR</code> represents our (numeric) color code in this case).</p>
-</blockquote>
-<p>(via <a href="https://dev.to/ifenna__/adding-colors-to-bash-scripts-48g4">Adding colors to Bash scripts</a>)</p>
-<p>E.g. the following script will print a green text:</p>
-<pre>printf "\033[0;32mThis text is green\033[0m"</pre>
-<p>So we define the required colors as variables and use them in the corresponding places in the
-<a href="#the-execute-function"><code>execute</code> function</a>:</p>
-<pre> ## bash colors
-RED:=\033[0;31m
-GREEN:=\033[0;32m
-YELLOW:=\033[0;33m
-NO_COLOR:=\033[0m
-
-# ...
-
-# Use NO_PROGRESS=false when running individual tools.
-# On  NO_PROGRESS=true  the corresponding tool has no output on success
-#                       apart from its runtime but it will still print 
-#                       any errors that occured. 
-define execute
-    if [ "$(NO_PROGRESS)" = "false" ]; then \
-        eval "$(EXECUTE_IN_APPLICATION_CONTAINER) $(1) $(2) $(3) $(4)"; \
-    else \
-        START=$$(date +%s); \
-        printf "%-35s" "$@"; \
-        if OUTPUT=$$(eval "$(EXECUTE_IN_APPLICATION_CONTAINER) $(1) $(2) $(3) $(4)" 2&gt;&amp;1); then \
-            printf " $(GREEN)%-6s$(NO_COLOR)" "done"; \
-            END=$$(date +%s); \
-            RUNTIME=$$((END-START)) ;\
-            printf " took $(YELLOW)$${RUNTIME}s$(NO_COLOR)\n"; \
-        else \
-            printf " $(RED)%-6s$(NO_COLOR)" "fail"; \
-            END=$$(date +%s); \
-            RUNTIME=$$((END-START)) ;\
-            printf " took $(YELLOW)$${RUNTIME}s$(NO_COLOR)\n"; \
-            echo "$$OUTPUT"; \
-            printf "\n"; \
-            exit 1; \
-        fi; \
-    fi
-endef</pre>
-<p>Please note, that i did <strong>not include the tests in the <code>qa</code> target</strong>. I like to run those
-separately, because our tests usually take a lot longer to execute. So in my day-to-day work I
-would run <code>make qa</code> and <code>make test</code> to ensure that code quality and tests are passing:</p>
-<pre>$ make qa
-phplint                             done   took 1s
-phpcs                               done   took 1s
-composer-require-checker            done   took 14s
-phpstan                             done   took 16s
-
-$ make test
-PHPUnit 9.5.19 #StandWithUkraine
-
-.......                                                             7 / 7 (100%)
-
-Time: 00:03.772, Memory: 28.00 MB
-
-OK (7 tests, 13 assertions)</pre>
-<!-- generated -->
-<p><a id='further-updates-in-the-codebase'> </a></p>
-<!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 40000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/php-qa-tools-make-docker/'>Set up PHP QA tools and control them via make [Tutorial Part 5]</a></b></p>
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/php-qa-tools-make-docker/'>Set up PHP QA tools and control them via make [Tutorial Part 5]</a></b></p>
 ]]></description>
                 <pubDate>Mon, 25 Apr 2022 05:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/php-qa-tools-make-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
@@ -2938,7 +2308,7 @@ array (
 <!-- generated -->
 <p><a id='wrapping-up'> </a></p>
 <!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 40000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</a></b></p>
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</a></b></p>
 ]]></description>
                 <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
@@ -3390,7 +2760,7 @@ recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1</code></pre>
 <!-- generated -->
 <p><a id='wrapping-up'> </a></p>
 <!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 40000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</a></b></p>
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</a></b></p>
 ]]></description>
                 <pubDate>Tue, 22 Mar 2022 11:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>

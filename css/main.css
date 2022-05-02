@@ -25,3 +25,18 @@ table th {
   white-space: pre;
   overflow-x: auto;
 }
+
+.meta {
+  background-image: url('/img/pascal-landau-100x100.jpg');
+  background-repeat: no-repeat;
+  background-size: 100px 100px;
+  /*border: solid 1px red;*/ 
+  padding-left:115px; 
+  padding-top:5px; 
+  height:100px;
+  margin-top: 50px;
+}
+
+.meta a {
+  text-decoration: none;
+}

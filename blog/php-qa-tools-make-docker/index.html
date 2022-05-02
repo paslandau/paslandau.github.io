@@ -84,6 +84,9 @@
                     <a href="/blog/">Blog</a>
                 </li>
                 <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
                     <a href="/bigquery-snippets/">BigQuery Snippets</a>
                 </li>
                 <li>
@@ -109,7 +112,31 @@
                 <div class="post-heading">
                     <h1>Set up PHP QA tools</h1>
                                             <h2 class="subheading">and control them with a Makefile</h2>
-                                                                <span class="meta">Posted by <a href="#">Pascal Landau</a> on 2022-04-25 05:00:00</span>
+                                                                <span class="meta">
+                            Posted by <a href="#">Pascal Landau</a> on 2022-04-25 05:00:00
+                            <br />
+                            <br />
+                            <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-twitter fa-stack-1x"></i>
+                                </span>
+                            </a>
+                            <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-linkedin fa-stack-1x"></i>
+                                </span>
+                            </a>
+                            <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-github fa-stack-1x"></i>
+                                </span>
+                            </a>
+                            <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-youtube fa-stack-1x"></i>
+                                </span>
+                            </a>
+                        </span>
                                     </div>
             </div>
         </div>
@@ -140,7 +167,8 @@ You find the branch with the final result of this tutorial at
 <h2>Published parts of the Docker PHP Tutorial</h2>
 <ul>
 <li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
+(2018-07-08)
+<ul>
 <li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 (2018-08-06)</li>
 <li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
@@ -157,6 +185,7 @@ You find the branch with the final result of this tutorial at
 (2022-04-25)</li>
 <li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
 (2022-04-25)</li>
+</ul></li>
 </ul>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
@@ -167,7 +196,8 @@ to get automatic notifications when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <!-- toc -->
 <ul>
-<li><a href="#introduction">Introduction</a></li>
+<li><a href="#introduction">Introduction</a>
+<ul>
 <li><a href="#the-qa-tools">The QA tools</a>
 <ul>
 <li><a href="#phpcs-and-phpcbf">phpcs and phpcbf</a></li>
@@ -185,6 +215,7 @@ to get automatic notifications when the next part comes out :)</p>
 </ul></li>
 <li><a href="#further-updates-in-the-codebase">Further updates in the codebase</a></li>
 <li><a href="#wrapping-up">Wrapping up</a></li>
+</ul></li>
 </ul>
 <!-- /toc -->
 <!-- generated -->
@@ -196,10 +227,12 @@ e.g. <strong>code style definitions</strong>, proper <strong>usage of types</str
 etc. When run regularly they are a great way to enforce better code and are thus a
 <strong>perfect fit for a CI pipeline</strong>. For this tutorial, I'm going to setup the following tools:</p>
 <ul>
-<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a></li>
+<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a>
+<ul>
 <li><a href="#phpstan">Static Analyzer: phpstan</a></li>
 <li><a href="#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
 <li><a href="#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
+</ul></li>
 </ul>
 <p>and provide convenient access through a <a href="#the-qa-target"><code>qa</code> make target</a>. The end result will look
 like this:</p>
@@ -558,22 +591,14 @@ gonna leave a list for inspiration:</p>
 <li><a href="https://packagist.org/packages/brianium/paratest">brianium/paratest</a>
 <ul>
 <li>Running PhpUnit tests in parallel</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a>
-<ul>
+<li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a></li>
 <li>Update the versions in the <code>composer.json</code> file after an update</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a>
-<ul>
+<li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a></li>
 <li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>:
 A tool to define dependency layers based on e.g. namespaces</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a>
-<ul>
+<li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a></li>
 <li>Show dependencies in the <code>composer.json</code> that are not used in the codebase</li>
-</ul></li>
-<li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a>
-<ul>
+<li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a></li>
 <li>Gives a warning when packages with known vulnerabilities are used </li>
 <li>Alternative: <a href="https://github.com/fabpot/local-php-security-checker/">local-php-security-checker</a></li>
 </ul></li>
@@ -715,10 +740,12 @@ define execute
 endef</code></pre>
 <ul>
 <li>the <code>NO_PROGRESS</code> variable is set to <code>false</code> by default and will cause a target to be invoked
-as before, showing all its output immediately</li>
+as before, showing all its output immediately
+<ul>
 <li>if the variable is set to <code>true</code>, the target is instead invoked via <code>eval</code> and the output is
 captured in the <code>OUTPUT</code> bash variable that will only be printed if the result of the
 invocation is faulty</li>
+</ul></li>
 </ul>
 <p>The tool targets are then adjusted to use the new function.</p>
 <pre><code class="language-makefile">.PHONY: phpstan
@@ -855,23 +882,25 @@ OK (7 tests, 13 assertions)</code></pre>
 and even though those changes have nothing to todo with &quot;QA tools&quot; I didn't want to leave them
 unnoticed:</p>
 <ul>
-<li>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)</li>
+<li>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)
+<ul>
 <li>removing unused values from the <code>.env.example</code> file</li>
 <li>run a <code>composer update</code> to get the latest Laravel version</li>
 <li>add a <code>show-help</code> script to the <code>scripts</code> section of the <code>composer.json</code> file that references the
 <code>Makefile</code> (see also <a href="https://twitter.com/PascalLandau/status/1518227256648343552">this discussion on Twitter</a>)
 <pre><code class="language-json">{
-  "scripts": {
-      "show-help": [
-          "make"
-      ]
-  },
-  "scripts-descriptions": {
-      "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
-  }
+"scripts": {
+    "show-help": [
+        "make"
+    ]
+},
+"scripts-descriptions": {
+    "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
+}
 }</code></pre>
 <p><a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></p></li>
 <li>replace <code>docker-compose</code> with <code>docker compose</code> to use <a href="https://docs.docker.com/compose/cli-command/">compose v2</a></li>
+</ul></li>
 </ul>
 <p>For some reason, the last point caused some trouble because Linux and Docker Desktop for Windows
 require a <code>-T</code> flag for the <code>exec</code> command to disable a TTY allocation in some cases. Whereas on
@@ -918,7 +947,7 @@ notifications when this next part comes out :)</p>                <hr />
                 </p><p>
                 So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
                 connect with me on
-                <a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
                 <a href="https://twitter.com/PascalLandau">Twitter</a>
                 or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
                 or go the crazy route and subscribe via mail
@@ -1008,7 +1037,7 @@ notifications when this next part comes out :)</p>                <hr />
                         </a>
                     </li>
                     <li>
-                        <a href="https://de.linkedin.com/in/pascallandau">
+                        <a href="https://www.linkedin.com/in/pascallandau">
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
@@ -1020,6 +1049,14 @@ notifications when this next part comes out :)</p>                <hr />
                                 <span class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
                                     <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
                                 </span>
                         </a>
                     </li>
