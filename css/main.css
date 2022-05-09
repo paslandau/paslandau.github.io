@@ -1,42 +1,72 @@
 table {
-  width: 100%; }
+    width: 100%;
+}
 
 table td {
-  padding: 5px;
-  border: 1px solid black; }
+    padding: 5px;
+    border: 1px solid black;
+}
 
 table th {
-  padding: 5px;
-  border: 1px solid black;
-  border-width: 0 0 2px 0; }
+    padding: 5px;
+    border: 1px solid black;
+    border-width: 0 0 2px 0;
+}
 
 .container a {
-  text-decoration: underline; }
+    text-decoration: underline;
+}
 
 .container img {
-  width: 100%; }
+    width: 100%;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
 
 .container .center-div {
-  padding: auto; 
-  text-align: center; 
+    padding: auto;
+    text-align: center;
 }
 
 .hljs {
-  white-space: pre;
-  overflow-x: auto;
+    white-space: pre;
+    overflow-x: auto;
 }
 
 .meta {
-  background-image: url('/img/pascal-landau-100x100.jpg');
-  background-repeat: no-repeat;
-  background-size: 100px 100px;
-  /*border: solid 1px red;*/ 
-  padding-left:115px; 
-  padding-top:5px; 
-  height:100px;
-  margin-top: 50px;
+    background-image: url('/img/pascal-landau-100x100.jpg');
+    background-repeat: no-repeat;
+    background-size: 100px 100px;
+    /*border: solid 1px red;*/
+    padding-left: 115px;
+    padding-top: 5px;
+    height: 100px;
+    margin-top: 50px;
 }
 
 .meta a {
-  text-decoration: none;
+    text-decoration: none;
+}
+
+
+/** Styling external links: @see https://christianoliff.com/blog/styling-external-links-with-an-icon-in-css/ */
+
+.container a[href^="http"]::after,
+.container a[href^="https://"]::after {
+    content: "";
+    width: 11px;
+    height: 11px;
+    margin-left: 4px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z'/%3E%3Cpath fill-rule='evenodd' d='M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z'/%3E%3C/svg%3E");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    display: inline-block;
+}
+
+.container a[href^="https://www.pascallandau.com"]::after,
+.container a[href^="http://localhost"]::after,
+.container a[href^="http://127.0.0.1"]::after {
+    display: none !important;
 }

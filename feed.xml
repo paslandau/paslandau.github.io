@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Fri, 06 May 2022 07:30:29 +0000</pubDate>
-        <lastBuildDate>Fri, 06 May 2022 07:30:29 +0000</lastBuildDate>
+        <pubDate>Mon, 09 May 2022 08:08:13 +0000</pubDate>
+        <lastBuildDate>Mon, 09 May 2022 08:08:13 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</title>
@@ -16,37 +16,18 @@ Pipelines</strong>.</p>
 <div class="center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
-<p>All code samples are publicly available in my
+<p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a>.</p>
-<!-- generated -->
-<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
-<!-- /generated -->
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
+and the next one will be
+<strong>Deploy dockerized PHP Apps on a GCP VM</strong>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
-to get automatic notifications when the next part comes out :)</p>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -1712,37 +1693,18 @@ This tutorial is a precursor to the next a part
 because dealing with secrets is an important aspect when setting up a CI system (and later when
 deploying to production) - but I feel it's complex enough to warrant its own article.
 </small></p>
-<p>All code samples are publicly available in my
+<p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>.</p>
-<!-- generated -->
-<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
-<!-- /generated -->
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
+and the following one is
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
-to get automatic notifications when the next part comes out :)</p>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -2884,39 +2846,18 @@ this tutorial to be a part of
 because QA checks are imho vital part of a CI setup - but it kinda grew &quot;too big&quot; and took a way
 too much space from, well, actually setting up the CI pipelines :)
 </small></p>
-<p>All code samples are publicly available in my
+<p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-5-php-qa-tools-make-docker">part-5-php-qa-tools-make-docker</a>.</p>
-<!-- generated -->
-<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
-<!-- /generated -->
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)
-<ul>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul></li>
-</ul>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
+and the following one is
+<a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
-to get automatic notifications when the next part comes out :)</p>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -3680,37 +3621,18 @@ for the front end requests.</p>
 <div class="center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/BpsBzpMD87c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
-<p>All code samples are publicly available in my
+<p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
 You find the branch for this tutorial at
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a></p>
-<!-- generated -->
-<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
-<!-- /generated -->
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a>.</p>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
+and the following one is
+<a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
-to get automatic notifications when the next part comes out :)</p>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -4441,33 +4363,14 @@ the tool <code>strace</code> into the mix for debugging long running processes.<
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
-<!-- generated -->
-<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
-<!-- /generated -->
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
+and the following one is
+<a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
-to get automatic notifications when the next part comes out :)</p>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -4641,8 +4544,11 @@ Using version ^9.5 for phpunit/phpunit
 Running composer update phpunit/phpunit
 Loading composer repositories with package information
 Updating dependencies
-...
-</code></pre>
+...</code></pre>
+<p><strong>CAUTION</strong>: If you <strong>run into a permission error</strong> at this step, you are likely using Linux and
+haven't set the <code>APP_USER_ID</code> and <code>APP_GROUP_ID</code> variables as described in the previous article
+under
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#solving-permission-issues">Solving permission issues</a>.</p>
 <p>I have also added </p>
 <ul>
 <li>a minimal <code>phpunit.xml</code> config file</li>
@@ -4943,37 +4849,18 @@ xdebug for all php containers (application, fpm and php workers)</li>
 <div class="center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NuSWKx9FSso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
-<p>All code samples are publicly available in my
+<p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-1-docker-from-scratch-for-php-applications-in-2022">part-4-1-docker-from-scratch-for-php-applications-in-2022</a></p>
-<!-- generated -->
-<p><a id='published-parts-of-the-docker-php-tutorial'> </a></p>
-<!-- /generated -->
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
+and the following one is
+<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
-to get automatic notifications when the next part comes out :)</p>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -5001,13 +4888,19 @@ to get automatic notifications when the next part comes out :)</p>
 <li><a href="#makefile">Makefile</a>
 <ul>
 <li><a href="#make-mk-includes"><code>.make/*.mk</code> includes</a></li>
-<li><a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a></li>
+<li><a href="#shared-variables-make-env">Shared variables: <code>.make/.env</code></a>
+<ul>
+<li><a href="#manual-modifications">Manual modifications</a></li>
+</ul></li>
 <li><a href="#enforce-required-parameters">Enforce required parameters</a></li>
 </ul></li>
 <li><a href="#make-docker-3">Make + Docker = &lt;3</a>
 <ul>
 <li><a href="#ensuring-the-build-order">Ensuring the build order</a></li>
-<li><a href="#run-commands-in-the-docker-containers">Run commands in the docker containers</a></li>
+<li><a href="#run-commands-in-the-docker-containers">Run commands in the docker containers</a>
+<ul>
+<li><a href="#solving-permission-issues">Solving permission issues</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#php-poc">PHP POC</a></li>
 <li><a href="#wrapping-up">Wrapping up</a></li>
@@ -5035,6 +4928,9 @@ as either &quot;not required&quot; or simply &quot;overengineered / too complex&
 is only really relevant for the PHP containers</li>
 <li>in addition, I would recommend adding a completely new user (e.g. <code>application</code>) instead of
 re-using an existing one like <code>www-data</code> - this simplifies the whole user setup <em>a lot</em></li>
+<li>from now on we will be using <code>application</code> as the user name (<code>APP_USER_NAME</code>) and <code>10000</code> the
+user id (<code>APP_USER_ID</code>; following the best practice to
+<a href="https://github.com/hexops/dockerfile#do-not-use-a-uid-below-10000">not use a UID below 10,000</a>)</li>
 </ul></li>
 <li><a href="/blog/structuring-the-docker-setup-for-php-projects/#modifying-configuration-files">Modifying configuration files</a>
 <ul>
@@ -5328,12 +5224,12 @@ the <code>local</code> build stage as target build stage.</p>
 <p><a id='makefile'> </a></p>
 <!-- /generated -->
 <h2>Makefile</h2>
-<p>In the following section I will introduce a couple of commands, e.g. for building and running
+<p>In the following section I will <strong>introduce a couple of commands</strong>, e.g. for building and running
 containers. And to be honest, I find it kinda challenging to keep them in mind without having to
-look up the exact options and arguments. I would usually create a helper function or an alias in my
-local .bashrc file in a situation like that - but that wouldn't be available to other members of
+look up the exact options and arguments. I would <strong>usually create a helper function</strong> or an alias in my
+local <code>.bashrc</code> file in a situation like that - but that wouldn't be available to other members of
 the team then and it would be very specific to this one project.</p>
-<p>Instead we'll use a self-documenting Makefile that
+<p>Instead we'll use a <strong>self-documenting Makefile</strong> that
 <a href="/blog/structuring-the-docker-setup-for-php-projects/#using-make-as-central-entry-point">acts as the central entrypoint in the application</a>.
 Since Makefiles tend to grow over time, I've adopted some strategies to keep them
 &quot;sane&quot; via includes, shared variables and better error handling.</p>
@@ -5376,7 +5272,18 @@ at <code>. make/.env</code>. It can be initialized via</p>
 <p>The file is included in the main <code>Makefile</code> via</p>
 <pre><code>-include .make/.env</code></pre>
 <p>The <code>-</code> prefix ensures that make doesn't fail if the file does not exist (yet), see
-<a href="https://www.gnu.org/software/make/manual/html_node/Include.html">GNU make: Including Other Makefiles</a></p>
+<a href="https://www.gnu.org/software/make/manual/html_node/Include.html">GNU make: Including Other Makefiles</a>.</p>
+<!-- generated -->
+<p><a id='manual-modifications'> </a></p>
+<!-- /generated -->
+<h4>Manual modifications</h4>
+<p>You can always <strong>modify the <code>.make/.env</code> file manually if required</strong>. This might be the
+case when you run <code>docker</code> on Linux and need to match the <code>user id</code> of your host system with the
+<code>user id</code> of the docker container. It is common that your local user and group have the id
+<code>1000</code>. In this case you would add the entries manually to the <code>.make/.env</code> file.</p>
+<pre><code class="language-dotenv">APP_USER_ID=1000
+APP_GROUP_ID=1000</code></pre>
+<p>See also section <a href="#solving-permission-issues">Solving permission issues</a>.</p>
 <!-- generated -->
 <p><a id='enforce-required-parameters'> </a></p>
 <!-- /generated -->
@@ -5444,7 +5351,7 @@ DOCKER_COMPOSE_PHP_BASE:=$(DOCKER_COMPOSE_COMMAND) -f $(DOCKER_COMPOSE_FILE_PHP_
 <p><a id='ensuring-the-build-order'> </a></p>
 <!-- /generated -->
 <h3>Ensuring the build order</h3>
-<p>As mentioned under <a href="#php-images">PHP images</a>, we need to build images in a certain order and use
+<p>As mentioned under <a href="#php-images">PHP images</a>, we <strong>need to build images in a certain order</strong> and use
 the following make targets:</p>
 <pre><code class="language-makefile">.PHONY: docker-build-image
 docker-build-image: ## Build all docker images OR a specific image by providing the service name via: make docker-build DOCKER_SERVICE_NAME=&lt;service&gt;
@@ -5460,7 +5367,7 @@ docker-build: docker-build-php docker-build-image ## Build the php image and the
 image via <code>docker-build-php</code> and then build all the remaining images via <code>docker-build-image</code>
 (by not specifying the <code>DOCKER_SERVICE_NAME</code> variable, <code>docker-compose</code> will build <strong>all</strong> services
 listed in the <code>docker-compose.yml</code> files).</p>
-<p>I would argue that the make recipes themselves are quite readable and easy to understand but when
+<p>I would argue that the <strong>make recipes themselves are quite readable</strong> and easy to understand but when
 we run
 them with the <a href="https://www.gnu.org/software/make/manual/html_node/Options-Summary.html"><code>-n</code> option</a>
 to only &quot;Print the recipe that would be executed, but not execute it&quot;, we get a feeling for the
@@ -5515,6 +5422,25 @@ ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_US
 <p>Within a container it looks like this:</p>
 <pre><code>root:/var/www/app# make setup-db ARGS=--drop -n
 php setup.php --drop;</code></pre>
+<!-- generated -->
+<p><a id='solving-permission-issues'> </a></p>
+<!-- /generated -->
+<h4>Solving permission issues</h4>
+<p>If you are using Linux, you <strong>might run into permission issues when modifying files</strong> that are
+shared between the host system and the docker containers <strong>when the user id is not the same</strong> as
+explained in section
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#synchronizing-file-and-folder-ownership-on-shared-volumes">Synchronizing file and folder ownership on shared volumes</a>
+of the previous tutorial.</p>
+<p>In this case, you need to <a href="#manual-modifications">modify the <code>.make/.env</code> manually</a> and add the
+<code>APP_USER_ID</code> and <code>APP_GROUP_ID</code> variables according to your local setup. This <strong>must be done
+<em>before</em> building the images</strong> to ensure that the correct <code>user id</code> is used in the images.</p>
+<p>In very rare cases it can lead to problems, because <strong>your local ids will <em>already exist</em> in
+the docker containers</strong>. I've personally never run into this problem, but you can read about it
+in more detail at
+<a href="https://www.joyfulbikeshedding.com/blog/2021-03-15-docker-and-the-host-filesystem-owner-matching-problem.html">Docker and the host filesystem owner matching problem</a>.
+The author <a href="https://twitter.com/honglilai/status/1509781424345432064">even proposes a general solution</a>
+via
+<a href="https://github.com/FooBarWidget/matchhostfsowner">the Github project &quot;FooBarWidget/matchhostfsowner&quot;</a>.</p>
 <!-- generated -->
 <p><a id='php-poc'> </a></p>
 <!-- /generated -->

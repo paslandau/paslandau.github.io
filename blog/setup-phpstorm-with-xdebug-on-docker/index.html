@@ -166,31 +166,18 @@ at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Doc
 <div style="text-align:center">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/27KBaI24jKI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 </div>
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
-<p>All code samples are publicly available in my
+<p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
 The branch for this tutorial is
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker">part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</a>.</p>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
+and the following one is
+<a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>.</p>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <p><strong>Note</strong>: The setup that I am going to use is for demonstration purposes only! I do <strong>not</strong> recommend that you use it
 &quot;as is&quot; as your development setup. Some problems that I won't solve here include:</p>
 <ul>
@@ -198,9 +185,6 @@ The branch for this tutorial is
 <li>SSH login credentials are hard-coded in the container (inherently insecure)</li>
 <li><code>host.docker.internal</code> will only exist for Windows and Mac users, NOT for unix users</li>
 </ul>
-<p>There will be a another part of this series that will deal with all of those (and some more common) problems and
-aims at providing a consistent development environment for all developers in a team (regardless of the OS they are using).
-Please subscribe to the <a href="http:///feed.xml">RSS feed</a> to get automatic notifications when that part comes out :)</p>
 <h2>Table of contents</h2>
 <ul>
 <li><a href="#setup-the-docker-containers">Setup: The docker containers</a></li>

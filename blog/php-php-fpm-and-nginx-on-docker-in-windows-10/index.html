@@ -166,29 +166,16 @@ some things that are not completely related to docker (e.g. how to find out wher
 files for php-fpm are located), but that are imho important to understand, because they enable you to
 solve problems later on your own. </p>
 <p>But if you are short on time, you might also jump directly to <a href="#tl-dr">the tl;dr</a>.</p>
-<h2>Published parts of the Docker PHP Tutorial</h2>
-<ul>
-<li><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a>
-(2018-07-08)</li>
-<li><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-(2018-08-06)</li>
-<li><a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a>
-(2019-05-20)</li>
-<li><a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-(2022-03-21)</li>
-<li><a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-(2022-03-22)</li>
-<li><a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
-(2022-03-23)</li>
-<li><a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
-(2022-04-25)</li>
-<li><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-(2022-04-25)</li>
-<li><a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-(2022-04-25)</li>
-</ul>
-<p>This is the first part of a (probably) multi-part series on Docker. The second part explains how
-to <a href="/blog/setup-phpstorm-with-xdebug-on-docker">set up PHP in Docker containers in order to work nicely with PHPStorm when using Xdebug</a>.</p>
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
+The branch for this tutorial is
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker">part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker</a>.</p>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The the following part is
+<a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a> .</p>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a>
+to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <h2>Table of contents</h2>
 <ul>
 <li><a id="introduction">Introduction</a>
@@ -1253,7 +1240,15 @@ So in this section we'll boil it down to only the necessary steps without in dep
 </ul>
 <p>Your application code lives in the <code>app\</code> folder and changes are automatically available to the containers.
 This setup denotes the end of the first tutorial. In the next part we will learn how to set up Docker in PHPStorm,
-especially in combination with xdebug.</p>                <hr />
+especially in combination with xdebug.</p>
+<h2>Wrapping up</h2>
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. Apart from that, you should now have a first idea on what docker is and how you
+can use it.</p>
+<p>If you want to go deeper, please check out the remaining articles of the
+<a href="/docker-php-tutorial/">Docker PHP Tutorial series</a>.</p>
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
