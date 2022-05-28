@@ -13,25 +13,22 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/docker-php-tutorial/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
-    <link rel="stylesheet"
-          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
-          type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    
-    <!-- Highlight sourcecode -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <![endif]-->
+    
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
             w[l] = w[l] || [];
@@ -240,42 +237,6 @@ executed on any CI provider. Concrete examples for Gitlab Pipelines and Github a
 </footer>
     <img src="https://ssl-vg03.met.vgwort.de/na/703d954d2423424da94966a184fc5f52" width="1" height="1" alt=""/>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
@@ -284,7 +245,11 @@ executed on any CI provider. Concrete examples for Gitlab Pipelines and Github a
 <script src="/js/clean-blog.min.js"></script>
 <!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
-<!-- Code highlighting -->
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 </body>
 

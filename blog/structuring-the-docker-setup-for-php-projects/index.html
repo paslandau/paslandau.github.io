@@ -13,25 +13,22 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
-    <link rel="stylesheet"
-          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
-          type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    
-    <!-- Highlight sourcecode -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <![endif]-->
+    
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
             w[l] = w[l] || [];
@@ -116,29 +113,31 @@
                     <h1>Structuring the Docker setup for PHP Projects</h1>
                                             <h2 class="subheading">... folder structure, Dockerfile templates and general fundamentals</h2>
                                                                 <span class="meta">
-                            Posted by <a href="#">Pascal Landau</a> on 2019-05-20 10:00:00
-                            <br />
-                            <br />
-                            <a href="https://twitter.com/PascalLandau">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-twitter fa-stack-1x"></i>
-                                </span>
-                            </a>
-                            <a href="https://www.linkedin.com/in/pascallandau">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-linkedin fa-stack-1x"></i>
-                                </span>
-                            </a>
-                            <a href="https://github.com/paslandau/">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-github fa-stack-1x"></i>
-                                </span>
-                            </a>
-                            <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-youtube fa-stack-1x"></i>
-                                </span>
-                            </a>
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2019-05-20 10:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
                         </span>
                                     </div>
             </div>
@@ -988,7 +987,7 @@ ARG APP_GROUP=$(APP_USER)
 ARG APP_GROUP_ID=$(APP_USER_ID)
 
 RUN /tmp/scripts/create_user.sh ${APP_USER} ${APP_GROUP} ${APP_USER_ID} ${APP_GROUP_ID}</code></pre>
-<p>The default values can be overriden by passing in the corresponding
+<p>The default values can be overridden by passing in the corresponding
 <a href="https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg">build args</a>. </p>
 <p>Linux users should use the user id of the user on their host system - for Docker Desktop users the defaults are fine.</p>
 <h3><a id="modifying-configuration-files"></a>Modifying configuration files</h3>
@@ -1052,7 +1051,7 @@ RUN /tmp/scripts/modify_config.sh \
     "__MEMORY_LIMIT" \
     "${PHP_FPM_MEMORY_LIMIT}" \
 ;</code></pre>
-<p>where <code>PHP_FPM_MEMORY_LIMIT</code> has a default value of <code>1024M</code> but can be overriden when the actual build is initiated.</p>
+<p>where <code>PHP_FPM_MEMORY_LIMIT</code> has a default value of <code>1024M</code> but can be overridden when the actual build is initiated.</p>
 <h3><a id="installing-php-extensions"></a>Installing php extensions</h3>
 <p><strong>Script: <code>install_php_extensions.sh</code></strong></p>
 <p>When php extensions are missing, googling will often point to answers for normal linux systems using <code>apt-get</code> or <code>yum</code>,
@@ -1406,42 +1405,6 @@ to make use of them.</p>
 </footer>
     <img src="https://ssl-vg03.met.vgwort.de/na/380e34fac15043f5b80fecf412d4d831" width="1" height="1" alt=""/>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
@@ -1450,7 +1413,11 @@ to make use of them.</p>
 <script src="/js/clean-blog.min.js"></script>
 <!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
-<!-- Code highlighting -->
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 </body>
 

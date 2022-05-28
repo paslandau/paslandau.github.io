@@ -12,25 +12,22 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/blog/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
-    <link rel="stylesheet"
-          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
-          type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    
-    <!-- Highlight sourcecode -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <![endif]-->
+    
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
             w[l] = w[l] || [];
@@ -124,7 +121,10 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                            <h2><a href="/blog/ci-pipeline-docker-php-gitlab-github/">CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</a></h2>
+                            <h2><a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps on a GCP VM [Tutorial Part 8]</a></h2>
+        <small>Published at 2022-05-18 10:00:00 by Pascal Landau </small>
+        <p>Create a VM on Google Cloud Platform deploy and run dockerized PHP applications via docker compose.</p>
+            <h2><a href="/blog/ci-pipeline-docker-php-gitlab-github/">CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</a></h2>
         <small>Published at 2022-04-25 07:00:00 by Pascal Landau </small>
         <p>How to setup CI (Continuous Integration) pipelines for dockerized PHP applications with Github Actions and Gitlab Pipelines</p>
             <h2><a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository [Tutorial Part 6]</a></h2>
@@ -151,9 +151,6 @@
             <h2><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">How to setup PHP, PHP-FPM and NGINX on Docker in Windows 10 [Tutorial Part 1]</a></h2>
         <small>Published at 2018-07-08 22:00:00 by Pascal Landau </small>
         <p>Step-by-Step tutorial for setting up PHP Docker containers (cli and fpm)  for local development on Windows 10.</p>
-            <h2><a href="/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">How to setup Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial Part 3]</a></h2>
-        <small>Published at 2016-08-07 16:00:00 by Pascal Landau </small>
-        <p>Step-by-Step tutorial for setting up a fresh Laravel installation running on a Homestead Vagrant box.</p>
                     <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
@@ -289,42 +286,6 @@
     </div>
 </footer>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
@@ -333,7 +294,11 @@
 <script src="/js/clean-blog.min.js"></script>
 <!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
-<!-- Code highlighting -->
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 </body>
 

@@ -13,25 +13,22 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
-    <link rel="stylesheet"
-          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
-          type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    
-    <!-- Highlight sourcecode -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <![endif]-->
+    
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
             w[l] = w[l] || [];
@@ -116,29 +113,31 @@
                     <h1>Use git-secret to encrypt secrets</h1>
                                             <h2 class="subheading">and store them in the repository</h2>
                                                                 <span class="meta">
-                            Posted by <a href="#">Pascal Landau</a> on 2022-04-25 06:00:00
-                            <br />
-                            <br />
-                            <a href="https://twitter.com/PascalLandau">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-twitter fa-stack-1x"></i>
-                                </span>
-                            </a>
-                            <a href="https://www.linkedin.com/in/pascallandau">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-linkedin fa-stack-1x"></i>
-                                </span>
-                            </a>
-                            <a href="https://github.com/paslandau/">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-github fa-stack-1x"></i>
-                                </span>
-                            </a>
-                            <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-youtube fa-stack-1x"></i>
-                                </span>
-                            </a>
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-04-25 06:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
                         </span>
                                     </div>
             </div>
@@ -194,7 +193,10 @@ to get <strong>automatic notifications</strong> when the next part comes out :)<
 </ul></li>
 <li><a href="#git-secret">git-secret</a>
 <ul>
-<li><a href="#git-secret-installation">git-secret installation</a></li>
+<li><a href="#git-secret-installation">git-secret installation</a>
+<ul>
+<li><a href="#the-git-permission-issue">The <code>git</code> permission issue</a></li>
+</ul></li>
 <li><a href="#git-secret-usage">git-secret usage</a>
 <ul>
 <li><a href="#initialize-git-secret">Initialize git-secret</a>
@@ -384,7 +386,11 @@ Expire-Date: 0
 %no-protection
 EOF</code></pre>
 <p>The <code>%no-protection</code> will create a key without password, see
-also <a href="https://gist.github.com/woods/8970150">this gist to &quot;Creating gpg keys non-interactively&quot;</a>.</p>
+also <a href="https://gist.github.com/woods/8970150">this gist to &quot;Creating gpg keys non-interactively&quot;</a>.
+To use a password (e.g. <code>12345678</code>, we could have replace the <code>%no-protection</code> line with</p>
+<pre><code class="language-text">Passphrase: 12345678</code></pre>
+<p>All options for the unattended creation are defined in the
+<a href="https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html">official docs at &quot;Unattended key generation&quot;</a>.</p>
 <p>Output:</p>
 <pre><code class="language-text">$ name="Pascal Landau"
 $ email="pascal.landau@example.com"
@@ -509,6 +515,9 @@ follows:</p>
 <pre><code class="language-bash">sh -c "echo 'https://gitsecret.jfrog.io/artifactory/git-secret-apk/all/main'" &gt;&gt; /etc/apk/repositories
 wget -O /etc/apk/keys/git-secret-apk.rsa.pub 'https://gitsecret.jfrog.io/artifactory/api/security/keypair/public/repositories/git-secret-apk'
 apk add --update --no-cache git-secret</code></pre>
+<p>Plus, we need to account for a recent change in <code>git</code> that requires that the parent directory is
+owned by the user executing the <code>git</code> command. See also the more detailed explanation in section
+<a href="#the-git-permission-issue">The <code>git</code> permission issue</a>.</p>
 <p>We update the <code>.docker/images/php/base/Dockerfile</code> accordingly:</p>
 <pre><code class="language-Dockerfile"># File: .docker/images/php/base/Dockerfile
 
@@ -520,9 +529,44 @@ RUN echo "https://gitsecret.jfrog.io/artifactory/git-secret-apk/all/main" &gt;&g
     apk add --update --no-cache \
         bash \
         git-secret \
+        gawk \
         gnupg \
         make \
-#...</code></pre>
+#...
+
+# Fix the git permission issue
+RUN git config --system --add safe.directory "$APP_CODE_PATH"</code></pre>
+<!-- generated -->
+<p><a id='the-git-permission-issue'> </a></p>
+<!-- /generated -->
+<h5>The <code>git</code> permission issue</h5>
+<p>In April 2022,
+<a href="https://github.blog/2022-04-12-git-security-vulnerability-announced/">Github accounced the security vulnerability <code>CVE-2022-24765</code></a>,
+that was fixed in <code>git v2.35.2</code></p>
+<blockquote>
+<p>This version changes Git’s behavior when looking for a top-level <code>.git</code> directory to stop when
+its directory traversal changes ownership from the current user. </p>
+</blockquote>
+<p>In practice, the following error occurs if the parent directory is not owned by the user that
+executes the <code>git</code> command</p>
+<pre><code class="language-text">Error: fatal: unsafe repository ('/parent/dir/of/.git-folder' is owned by someone else)
+To add an exception for this directory, call:
+
+    git config --global --add safe.directory /parent/dir/of/.git-folder</code></pre>
+<p>When using <code>git secret</code>, we would get the slightly misleading error message</p>
+<pre><code class="language-text">git-secret: abort: not in dir with git repo. Use 'git init' or 'git clone', then in repo use 'git secret init'</code></pre>
+<p>We can &quot;fix&quot; the issue by using the new multi-valued
+<a href="https://git-scm.com/docs/git-config/2.36.0#Documentation/git-config.txt-safedirectory">safe.directory</a>
+configuration via</p>
+<pre><code>git config --system --add safe.directory /parent/dir/of/.git-folder</code></pre>
+<p>Note, that we didn't use the suggested <code>--global</code> option but <code>--system</code> instead, so that the
+configuration is set for <em>any</em> user.</p>
+<p>Wait - why not just ensure <strong>that the parent directory of the <code>.git</code> folder has the correct
+permissions</strong>?</p>
+<p>Well... there's currently (2022-05-28) a <strong>bug in Docker Desktop that makes the permissions of bind
+mounts kinda unpredictable</strong>, see
+<a href="https://github.com/docker/for-win/issues/12742">Ownership of files set via bind mount is set to user who accesses the file first</a>
+and by applying the fix directly in the <code>Dockerfile</code> we can solve the issue reliably.</p>
 <!-- generated -->
 <p><a id='git-secret-usage'> </a></p>
 <!-- /generated -->
@@ -719,7 +763,7 @@ git-secret: changes in /var/www/app/.env:
  MAIL_FROM_NAME="${APP_NAME}"
 +foo</code></pre>
 <p>Note the <code>+foo</code> at the bottom of the output. It was added in the first line via
-<code>echo "foo"&gt; &gt;&gt; .env</code>. </p>
+<code>echo "foo"&gt; &gt;&gt; .env</code>.</p>
 <!-- generated -->
 <p><a id='makefile-adjustments'> </a></p>
 <!-- /generated -->
@@ -939,7 +983,7 @@ in the root of the codebase</strong>. </p>
 #...
 vendor/
 secret.gpg</code></pre>
-<p>The import can now be be simplified with <code>make</code> targets:</p>
+<p>The import can now be simplified with <code>make</code> targets:</p>
 <pre><code class="language-makefile"># gpg
 
 DEFAULT_SECRET_GPG_KEY?=secret.gpg
@@ -966,7 +1010,7 @@ gpg-import-default-public-keys: ## Import the default public keys
 gpg-init: gpg-import-default-secret-key gpg-import-default-public-keys ## Initialize gpg in the container, i.e. import all public and private keys</code></pre>
 <p>&quot;Everything&quot; can now be handled via </p>
 <pre><code class="language-bash">make gpg-init</code></pre>
-<p>that needs to be run one single time after a container has been started. </p>
+<p>that needs to be run one single time after a container has been started.</p>
 <!-- generated -->
 <p><a id='scenarios'> </a></p>
 <!-- /generated -->
@@ -1433,42 +1477,6 @@ notifications when this next part comes out :)</p>                <hr />
 </footer>
     <img src="https://ssl-vg03.met.vgwort.de/na/0c1fa9af88ba4967bae18c26bd3d7c2b" width="1" height="1" alt=""/>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
@@ -1477,7 +1485,11 @@ notifications when this next part comes out :)</p>                <hr />
 <script src="/js/clean-blog.min.js"></script>
 <!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
-<!-- Code highlighting -->
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 </body>
 

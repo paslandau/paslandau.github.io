@@ -12,25 +12,22 @@
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link href="/css/clean-blog.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
-    <link rel="stylesheet"
-          href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <!-- Custom Fonts -->
-    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet"
-          type="text/css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
     <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    
-    <!-- Highlight sourcecode -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <![endif]-->
+    
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
             w[l] = w[l] || [];
@@ -130,10 +127,10 @@
     <p>
         To shorten your waiting time, you might enjoy a little reading over at the <a href="/blog">blog</a> or 
         the <a href="/bigquery-snippets">BigQuery snippets</a>. The latest article was published on
-        2022-04-25
+        2022-05-18
     </p>
     <p>
-        👉 <a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</a>
+        👉 <a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps on a GCP VM [Tutorial Part 8]</a>
     </p>
     <p>
         You can connect with me on
@@ -211,42 +208,6 @@
     </div>
 </footer>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- jQuery -->
 <script src="/js/jquery.min.js"></script>
 <!-- Bootstrap Core JavaScript -->
@@ -255,7 +216,11 @@
 <script src="/js/clean-blog.min.js"></script>
 <!-- Custom JavaScript -->
 <script src="/js/main.js"></script>
-<!-- Code highlighting -->
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
 <script>hljs.highlightAll();</script>
 </body>
 
