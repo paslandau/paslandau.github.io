@@ -5,19 +5,1903 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sat, 28 May 2022 15:25:25 +0000</pubDate>
-        <lastBuildDate>Sat, 28 May 2022 15:25:25 +0000</lastBuildDate>
+        <pubDate>Mon, 20 Jun 2022 07:00:58 +0000</pubDate>
+        <lastBuildDate>Mon, 20 Jun 2022 07:00:58 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</title>
+                <description><![CDATA[<p>In the eighth part of this tutorial series on developing PHP on Docker we will <strong>take a look on
+the Google Cloud Platform (GCP)</strong> and <strong>create a Compute Instance VM</strong> to <strong>run dockerized
+applications</strong>. This includes:</p>
+<ul>
+<li>creating VMs</li>
+<li>using a container registry</li>
+<li>using a secret manager</li>
+</ul>
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/RScVUaNHNxs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uPx9AZPOMrA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-8-gcp-compute-instance-vm-docker">part-8-gcp-compute-instance-vm-docker</a>.</p>
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.
+and the following one is
+<a href="#">Deploy dockerized PHP Apps to production on GCP via docker compose (available at 2022-06-27)</a>.</p>
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+<!-- generated -->
+<p><a id='table-of-contents'> </a></p>
+<!-- /generated -->
+<h2>Table of contents</h2>
+<!-- toc -->
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#set-up-a-gcp-project">Set up a GCP project</a></li>
+<li><a href="#create-a-service-account">Create a service account</a>
+<ul>
+<li><a href="#create-service-account-key-file">Create service account key file</a></li>
+<li><a href="#configure-iam-permissions">Configure IAM permissions</a></li>
+</ul></li>
+<li><a href="#set-up-the-gcloud-cli-tool">Set up the <code>gcloud</code> CLI tool</a></li>
+<li><a href="#set-up-the-container-registry">Set up the Container Registry</a>
+<ul>
+<li><a href="#authenticate-docker">Authenticate docker</a></li>
+<li><a href="#pushing-images-to-the-registry">Pushing images to the registry</a></li>
+<li><a href="#images-are-stored-in-google-cloud-storage-buckets">Images are stored in Google Cloud Storage buckets</a></li>
+<li><a href="#pulling-images-from-the-registry">Pulling images from the registry</a></li>
+</ul></li>
+<li><a href="#set-up-the-secret-manager">Set up the Secret Manager</a>
+<ul>
+<li><a href="#create-a-secret-via-the-ui">Create a secret via the UI</a></li>
+<li><a href="#view-a-secret-via-the-ui">View a secret via the UI</a></li>
+<li><a href="#retrieve-a-secret-via-the-gcloud-cli">Retrieve a secret via the <code>gcloud</code> cli</a></li>
+<li><a href="#add-the-secret-gpg-key-and-password">Add the secret <code>gpg</code> key and password</a></li>
+</ul></li>
+<li><a href="#compute-instances-the-gcp-vms">Compute Instances: The GCP VMs </a>
+<ul>
+<li><a href="#create-a-vm">Create a VM</a>
+<ul>
+<li><a href="#general-vm-settings">General VM settings</a></li>
+<li><a href="#firewall-and-networks-tags">Firewall and networks tags</a></li>
+<li><a href="#the-role-of-the-service-account">The role of the service account</a></li>
+<li><a href="#adding-a-public-ssh-key">Adding a public SSH key</a></li>
+<li><a href="#define-availability-policies">Define Availability Policies</a></li>
+<li><a href="#the-actual-vm-creation">The actual VM creation</a></li>
+</ul></li>
+<li><a href="#log-into-a-vm">Log into a VM</a>
+<ul>
+<li><a href="#login-via-ssh-from-the-gcp-ui">Login via SSH from the GCP UI</a></li>
+<li><a href="#login-via-ssh-with-your-own-key-from-your-host-machine">Login via SSH with your own key from your host machine</a></li>
+<li><a href="#login-using-the-identity-aware-proxy-iap-concept">Login using the Identity-Aware Proxy (IAP) concept</a>
+<ul>
+<li><a href="#additional-notes-on-iap">Additional notes on IAP</a></li>
+</ul></li>
+<li><a href="#get-root-permissions">Get <code>root</code> permissions</a></li>
+</ul></li>
+<li><a href="#ssh-and-scp-commands"><code>ssh</code> and <code>scp</code> commands</a>
+<ul>
+<li><a href="#gcloud-ssh-command"><code>gcloud ssh --command=""</code></a></li>
+<li><a href="#gcloud-scp"><code>gcloud scp</code></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#provision-the-vm">Provision the VM</a>
+<ul>
+<li><a href="#get-the-secret-gpg-key-and-password-from-the-secret-manager">Get the secret <code>gpg</code> key and password from the Secret Manager</a></li>
+<li><a href="#installing-docker-and-docker-compose">Installing <code>docker</code> and <code>docker compose</code></a></li>
+<li><a href="#authenticate-docker-via-gcloud">Authenticate docker via <code>gcloud</code></a></li>
+<li><a href="#pulling-the-nginx-image">Pulling the <code>nginx</code> image</a></li>
+<li><a href="#start-the-nginx-container">Start the <code>nginx</code> container</a></li>
+</ul></li>
+<li><a href="#automate-via-gcloud-commands">Automate via <code>gcloud</code> commands</a>
+<ul>
+<li><a href="#preconditions-project-and-owner-service-account">Preconditions: Project and <code>Owner</code> service account</a></li>
+<li><a href="#configure-gcloud-to-use-the-master-service-account">Configure <code>gcloud</code> to use the master service account</a></li>
+<li><a href="#enable-apis">Enable APIs</a></li>
+<li><a href="#create-and-configure-a-deployment-service-account">Create and configure a &quot;deployment&quot; service account</a></li>
+<li><a href="#create-secrets">Create secrets</a></li>
+<li><a href="#create-firewall-rule-for-http-traffic">Create firewall rule for HTTP traffic</a></li>
+<li><a href="#create-a-compute-instance-vm">Create a Compute Instance VM</a></li>
+<li><a href="#provisioning">Provisioning</a></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul></li>
+<li><a href="#putting-it-all-together">Putting it all together </a></li>
+<li><a href="#cleanup">Cleanup</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- /toc -->
+<!-- generated -->
+<p><a id='introduction'> </a></p>
+<!-- /generated -->
+<h2>Introduction</h2>
+<p>In the next tutorial we will
+<a href="#">deploy our dockerized PHP Apps to &quot;production&quot; via docker compose  (available at 2022-06-27)</a>
+and will create this &quot;production&quot; environment on <strong>GCP (Google Cloud Platform)</strong>.
+This tutorial serves as a primer on GCP to build up some fundamental knowledge, because we will
+use the platform to provide all the <strong>infrastructure required to run our dockerized PHP
+application</strong>.</p>
+<p>In the process, we'll learn about <a href="#set-up-a-gcp-project">GCP projects</a> as our own &quot;space&quot;
+in GCP and <a href="#create-a-service-account">service accounts</a> as a way to communicate
+programmatically. We'll start by doing everything manually via the UI, but will also
+<a href="#automate-via-gcloud-commands">explain how to do it programmatically via the <code>gcloud</code> cli</a> and
+end with a <a href="#putting-it-all-together">fully automated script</a>.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-services.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-services.PNG" alt="GCP Services" /></a></p>
+<p>The following video shows the overall flow</p>
+<video controls>
+  <source src="/img/gcp-compute-instance-vm-docker/gcp-run-docker-images.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</source></video>
+<p>The API keys (see <a href="#create-service-account-key-file">service account key files</a>) that I use are
+<strong>not</strong> in the repository, because I would be billed for any usage. I.e. <strong>you must create you own
+project and keys</strong> to follow along. </p>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    Following the steps outlined in this tutorial <strong>will incur costs</strong>, because we will 
+    create "real" infrastructure. It won't be much (couple of cents), and it will very likely be 
+    covered by the free 300$ grant that you get when trying out GCP (or the general unlimited 
+    <a href="https://cloud.google.com/free/docs/gcp-free-tier">GCP Free Tier</a>
+    ).<br> 
+    <br>
+    But you should still know about that upfront and <strong>make sure to shut everything down / 
+    delete everything</strong> in case you're trying it out yourself. The "safest" way to do so is
+    <a href="#cleanup">Shutting down (deleting) the whole project</a>
+  </div>
+</div>
+<!-- generated -->
+<p><a id='set-up-a-gcp-project'> </a></p>
+<!-- /generated -->
+<h2>Set up a GCP project</h2>
+<p>On GCP, resources are organized under so-called
+<a href="https://cloud.google.com/resource-manager/docs/creating-managing-projects">projects</a>. We can
+create a project via the <a href="https://console.cloud.google.com/projectcreate">Create Project UI</a>:</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-create-new-project.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-create-new-project.PNG" alt="Create a new GCP project" /></a></p>
+<p>The <strong>project ID</strong> must be a globally unique string, and I have chosen <code>pl-dofroscra-p</code> for this
+tutorial (<code>pl</code> =&gt; Pascal Landau; <code>dofroscra</code> =&gt; Docker From Scratch; <code>p</code> =&gt; production).</p>
+<!-- generated -->
+<p><a id='create-a-service-account'> </a></p>
+<!-- /generated -->
+<h2>Create a service account</h2>
+<p>As a next step, we need a <a href="https://cloud.google.com/iam/docs/service-accounts">service account</a>
+that we can <strong>use to make API requests</strong>, because we don't want to use our &quot;personal GCP account&quot;.
+Service accounts are created via the
+<a href="https://console.cloud.google.com/iam-admin/serviceaccounts/create">IAM &amp; Admin &gt; Service Accounts UI</a>:</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-create-new-service-account.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-create-new-service-account.PNG" alt="Create a new GCP service account" /></a></p>
+<!-- generated -->
+<p><a id='create-service-account-key-file'> </a></p>
+<!-- /generated -->
+<h3>Create service account key file</h3>
+<p>In order to <strong>use the account programmatically</strong>, we also need to
+<a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating">create a key file</a>
+by choosing the &quot;Manage Keys&quot; option of the corresponding service account. </p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.PNG" alt="Create a new key file for a GCP service account UI" /></a></p>
+<p>This will open up a UI at</p>
+<pre><code class="language-text">https://console.cloud.google.com/iam-admin/serviceaccounts/details/$serviceAccountId/keys</code></pre>
+<p>where <code>$serviceAccountId</code> is the numeric id of the service account, e.g. <code>109548647107864470967</code>.
+To create a key:</p>
+<ul>
+<li>click <code>"ADD KEY"</code> and select <code>"Create new key"</code> from the drop down menu
+<ul>
+<li>This will bring up a modal window to choose the key type. </li>
+</ul></li>
+<li>select the recommended JSON type and click <code>"Create"</code>. 
+<ul>
+<li>GCP will then <strong>generate a new key pair</strong>, store the public key and offer the private key file as
+download. </li>
+</ul></li>
+<li>download the file and make sure to treat it like any other private key (ssh, gpg, ...)
+i.e. <strong>never share it publicly</strong>!</li>
+</ul>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.gif"><img src="/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.gif" alt="Create a new key file for a GCP service account" /></a></p>
+<p>We will <strong>store this file in the root of the codebase</strong> at <code>gcp-service-account-key.json</code> and add it
+to the <code>.gitignore</code> file. </p>
+<p>Each service account has also a <strong>unique email address</strong> that consists of its (non-numeric) <code>id</code>
+and the <code>project id</code>. You can also find it directly in the key file:</p>
+<pre><code class="language-text">$ grep "email" ./gcp-service-account-key.json
+  "client_email": "docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com",</code></pre>
+<p>This email address is usually used to reference the service account, e.g. when assigning IAM
+permissions.</p>
+<!-- generated -->
+<p><a id='configure-iam-permissions'> </a></p>
+<!-- /generated -->
+<h3>Configure IAM permissions</h3>
+<p><strong>IAM</strong> stands for <a href="https://cloud.google.com/iam/docs#docs">Identity and Access Management (IAM)</a>
+and is used for <strong>managing permissions on GCP</strong>. The
+<a href="https://cloud.google.com/iam/docs/understanding-roles">two core concepts are &quot;permissions&quot; and &quot;roles&quot;</a>:</p>
+<ul>
+<li><strong>permissions</strong> are fine-grained for particular actions, e.g. <code>storage.buckets.create</code> to &quot;Create
+Cloud Storage buckets&quot;</li>
+<li><strong>roles</strong> combine a selection of permissions, e.g. the <code>Cloud Storage Admin</code> role has
+permissions like
+<ul>
+<li><code>storage.buckets.create</code></li>
+<li><code>storage.buckets.get</code></li>
+<li>etc.</li>
+</ul></li>
+<li>roles are assigned to <strong>users</strong> (or service accounts)</li>
+</ul>
+<p>You can find a full overview of all permissions in the
+<a href="https://cloud.google.com/iam/docs/permissions-reference">Permissions Reference</a> and all roles
+under
+<a href="https://cloud.google.com/iam/docs/understanding-roles#predefined">Understanding roles &gt; Predefined roles</a>.</p>
+<p>For this tutorial, we'll assign the following roles to the service account &quot;user&quot;
+<code>docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com</code>:</p>
+<ul>
+<li><code>Storage Admin</code> 
+<ul>
+<li>required to <a href="#pushing-images-to-the-registry">create the GCP bucket for the registry</a> and to
+<a href="#pulling-images-from-the-registry">pull the images on the VM</a> </li>
+</ul></li>
+<li><code>Secret Manager Admin</code>
+<ul>
+<li>required to <a href="#get-the-secret-gpg-key-and-password-from-the-secret-manager">retrieve secrets from the Secret Manager</a></li>
+</ul></li>
+<li><code>Compute Admin</code>, <code>Service Account User</code> and <code>IAP-secured Tunnel User</code>
+<ul>
+<li>are necessary for <a href="#additional-notes-on-iap">logging into a VM via IAP</a>.</li>
+</ul></li>
+</ul>
+<p>Roles can be assigned through the
+<a href="https://console.cloud.google.com/iam-admin/iam">Cloud Console IAM UI</a> by editing the
+corresponding user.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-iam-permissions.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-iam-permissions.PNG" alt="Managing IAM permissions" /></a></p>
+<p><strong>Caution:</strong> It might take some time (usually a couple of seconds) until changes in IAM
+permissions take effect.</p>
+<!-- generated -->
+<p><a id='set-up-the-gcloud-cli-tool'> </a></p>
+<!-- /generated -->
+<h2>Set up the <code>gcloud</code> CLI tool</h2>
+<p>The <a href="https://cloud.google.com/sdk/gcloud">CLI tool for GCP is called <code>gcloud</code></a> and is
+<a href="https://cloud.google.com/sdk/docs/install">available for all operating systems</a>.</p>
+<p>In this tutorial we are using version <code>380.0.0</code> <strong>installed natively on Windows</strong> via the
+<a href="https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe">GoogleCloudSDKInstaller.exe</a>
+using the &quot;Bundled Python&quot; option.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcloud-installation-options.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcloud-installation-options.PNG" alt="Install `gcloud` on Windows" /></a></p>
+<p>FYI: As described under
+<a href="https://cloud.google.com/sdk/docs/uninstall-cloud-sdk">Uninstalling the Google Cloud CLI</a>
+you can find the installation and config directories via</p>
+<pre><code class="language-text"># installation directory
+$ gcloud info --format='value(installation.sdk_root)'
+C:\Users\Pascal\AppData\Local\Google\Cloud SDK\google-cloud-sdk
+
+# config directory
+$ gcloud info --format='value(config.paths.global_config_dir)'
+C:\Users\Pascal\AppData\Roaming\gcloud</code></pre>
+<p>I will <em>not</em> use my personal Google account to run <code>gcloud</code> commands, thus I'm <em>not</em> using the
+&quot;usual&quot; initialization process
+<a href="https://cloud.google.com/sdk/docs/initializing">by running <code>gcloud init</code></a>. Instead, I will use
+the <a href="#create-a-service-account">service account that we created previously</a> and activate it as
+described under
+<a href="https://cloud.google.com/sdk/gcloud/reference/auth/activate-service-account">gcloud auth activate-service-account</a>
+via</p>
+<pre><code class="language-bash">gcloud auth activate-service-account docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com --key-file=./gcp-service-account-key.json --project=pl-dofroscra-p</code></pre>
+<p>Output</p>
+<pre><code class="language-text">$ gcloud auth activate-service-account docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com --key-file=./gcp-service-account-key.json --project=pl-dofroscra-p
+Activated service account credentials for: [docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com]</code></pre>
+<p>FYI: Because we are using a <code>json</code> key file that includes the service account ID, we can also
+omit the id in the command, i.e.</p>
+<pre><code class="language-text">$ gcloud auth activate-service-account --key-file=./gcp-service-account-key.json --project=pl-dofroscra-p
+Activated service account credentials for: [docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com]</code></pre>
+<!-- generated -->
+<p><a id='set-up-the-container-registry'> </a></p>
+<!-- /generated -->
+<h2>Set up the Container Registry</h2>
+<p><a href="#">We will use <code>docker compose</code> to run our PHP application in the next tutorial part (available at 2022-06-27)</a>
+and need to <strong>make our docker images available</strong> in a
+<a href="https://www.redhat.com/en/topics/cloud-native-apps/what-is-a-container-registry">container registry</a>.
+Luckily, <a href="https://cloud.google.com/container-registry">GCP offers a Container Registry product</a>
+that gives us a <strong>ready-to-use private registry as part of a GCP project</strong>. Before we can use it,
+the corresponding
+<a href="https://console.cloud.google.com/marketplace/product/google/containerregistry.googleapis.com">Google Container Registry API must be enabled</a>:</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-enable-container-registry-api.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-enable-container-registry-api.PNG" alt="Enable the GCP Container Registry API" /></a></p>
+<p>You find the <strong>Container Registry</strong> in the Cloud Console UI under
+<a href="https://console.cloud.google.com/gcr">Container Registry</a>.</p>
+<!-- generated -->
+<p><a id='authenticate-docker'> </a></p>
+<!-- /generated -->
+<h3>Authenticate docker</h3>
+<p>Since the Container Registry is private, we <strong>need to authenticate before we can push our
+docker images</strong>. The available authentication methods are described in the
+<a href="https://cloud.google.com/container-registry/docs/advanced-authentication">GCP docu &quot;Container Registry Authentication methods&quot;</a>.
+For pushing images from our local host system, we will use <strong>the service account key file</strong> that we
+<a href="#create-service-account-key-file">created previously</a> and run the command shown in the
+<a href="https://cloud.google.com/container-registry/docs/advanced-authentication#json-key">&quot;JSON key file&quot; section</a>
+of the the docu.</p>
+<pre><code class="language-bash">key=./gcp-service-account-key.json
+cat "$key" | docker login -u _json_key --password-stdin https://gcr.io</code></pre>
+<p>A successful authentication looks as follows:</p>
+<pre><code class="language-text">$ cat "$key" | docker login -u _json_key --password-stdin https://gcr.io
+Login Succeeded
+
+Logging in with your password grants your terminal complete access to your account.
+For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/</code></pre>
+<p>So what exactly &quot;happens&quot; when we run this command? According to the
+<a href="https://docs.docker.com/engine/reference/commandline/login/"><code>docker login</code>documentation</a></p>
+<blockquote>
+<p>When you log in, the command stores credentials in <code>$HOME/.docker/config.json</code>
+on Linux or <code>%USERPROFILE%/.docker/config.json</code> on Windows
+[...]</p>
+<p>The Docker Engine can keep user credentials in an external credentials store,
+such as the native keychain of the operating system.
+[...]</p>
+<p>You need to specify the credentials store in
+<code>$HOME/.docker/config.json</code> to tell the docker engine to use it.
+[...]</p>
+<p>By default, Docker looks for the native binary on each of the platforms,
+i.e. “osxkeychain” on macOS, “wincred” on windows, and “pass” on Linux.</p>
+</blockquote>
+<p>In other words: I <strong>won't be able to see the content of the service account key file in &quot;plain
+text&quot;</strong> anywhere but docker will utilize the OS specific tools to store them securely. After I ran
+the <code>docker login</code> command on Windows, I found the following content in <code>~/.docker/config.json</code>:</p>
+<pre><code class="language-text">$ cat ~/.docker/config.json
+{
+        "auths": {
+                "gcr.io": {}
+        },
+        "credsStore": "desktop"
+}</code></pre>
+<p>FYI: <code>"desktop"</code> seems to be a
+<a href="https://forums.docker.com/t/docker-windows-desktop-credentials-location/107251">wrapper for the Wincred executable</a>.</p>
+<!-- generated -->
+<p><a id='pushing-images-to-the-registry'> </a></p>
+<!-- /generated -->
+<h3>Pushing images to the registry</h3>
+<p>For this tutorial, we will create a super simple <code>nginx</code> alpine image that provides a &quot;Hello
+world&quot; <code>hello.html</code> file via</p>
+<pre><code class="language-bash">docker build -t my-nginx -f - . &lt;&lt;EOF
+FROM nginx:1.21.5-alpine
+
+RUN echo "Hello world" &gt;&gt; /usr/share/nginx/html/hello.html
+
+EOF</code></pre>
+<p>The name of the image is <code>my-nginx</code></p>
+<pre><code class="language-text">$ docker image ls | grep my-nginx
+my-nginx         latest             42dd1608d126   50 seconds ago    23.5MB</code></pre>
+<p>In order to
+<a href="https://docs.docker.com/engine/reference/commandline/push/">push an image to a registry</a>,
+<strong>the image name must be prefixed with the corresponding registry</strong>. This was quite confusing to
+me, because I would have expected to be able to run something like this:</p>
+<pre><code class="language-bash">$ docker push my-nginx --registry=gcr.io
+
+unknown flag: --registry
+See 'docker push --help'.</code></pre>
+<p>But nope, there is no such <code>--registry</code> option. Even worse: <strong>Omitting it would cause a push to
+<code>docker.io</code></strong>, the &quot;default&quot; registry:</p>
+<pre><code class="language-text">$ docker push my-nginx
+Using default tag: latest
+The push refers to repository [docker.io/my-nginx]</code></pre>
+<p>According to
+<a href="https://cloud.google.com/container-registry/docs/pushing-and-pulling">the GCP docs on Pushing and pulling images</a>,
+the following steps are necessary to push an image to a GCP registry:</p>
+<blockquote>
+<ul>
+<li><strong>Tag</strong> the image with its target path in Container Registry, including the gcr.io registry
+host and the project ID my-project</li>
+<li><strong>Push</strong> the image to the registry</li>
+</ul>
+</blockquote>
+<p>In our case <strong>the target path to our Container Registry</strong> is</p>
+<pre><code class="language-text">gcr.io/pl-dofroscra-p</code></pre>
+<p>because <code>pl-dofroscra-p</code> is the <a href="#set-up-a-gcp-project">id of the GCP project we created previously</a>.</p>
+<p>The <strong>full image name</strong> becomes</p>
+<pre><code class="language-text">gcr.io/pl-dofroscra-p/my-nginx</code></pre>
+<p>To push the <code>my-nginx</code> image, we must first <strong>&quot;add another name&quot;</strong> to it via
+<a href="https://docs.docker.com/engine/reference/commandline/tag/"><code>docker tag</code></a> </p>
+<pre><code class="language-text">$ docker tag my-nginx gcr.io/pl-dofroscra-p/my-nginx
+
+$ docker image ls
+REPOSITORY                       TAG                IMAGE ID       CREATED          SIZE
+my-nginx                         latest             ba7a2c5faf0d   15 minutes ago   23.5MB
+gcr.io/pl-dofroscra-p/my-nginx   latest             ba7a2c5faf0d   15 minutes ago   23.5MB</code></pre>
+<p>and <strong>push that name afterwards</strong></p>
+<pre><code class="language-text">$ docker push gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+The push refers to repository [gcr.io/pl-dofroscra-p/my-nginx]
+134174afa9ad: Preparing
+cb7b4430c52d: Preparing
+419df8b60032: Preparing
+0e835d02c1b5: Preparing
+5ee3266a70bd: Preparing
+3f87f0a06073: Preparing
+1c9c1e42aafa: Preparing
+8d3ac3489996: Preparing
+8d3ac3489996: Waiting
+3f87f0a06073: Waiting
+1c9c1e42aafa: Waiting
+cb7b4430c52d: Pushed
+134174afa9ad: Pushed
+419df8b60032: Pushed
+5ee3266a70bd: Pushed
+0e835d02c1b5: Pushed
+8d3ac3489996: Layer already exists
+3f87f0a06073: Pushed
+1c9c1e42aafa: Pushed
+latest: digest: sha256:0740591fb686227d8cdf4e42b784f634cbaf9f5caa6ee478e3bcc24aeef75d7f size: 1982</code></pre>
+<p>You can then find the image in the
+<a href="https://console.cloud.google.com/gcr">UI of the Container Registry</a>:</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-container-registry-image-example.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-container-registry-image-example.PNG" alt="Example of a pushed image in the Container Registry" /></a></p>
+<p>Don't worry: We won't have to do the tagging every time before a push, because we will
+set up <code>make</code> to use the correct name automatically
+when building the images in the <a href="#">next part (available at 2022-06-27)</a>.</p>
+<!-- generated -->
+<p><a id='images-are-stored-in-google-cloud-storage-buckets'> </a></p>
+<!-- /generated -->
+<h3>Images are stored in Google Cloud Storage buckets</h3>
+<p>We <a href="#configure-iam-permissions">assigned the <code>Storage Admin</code> role to the service account previously</a>
+that contains the <code>storage.buckets.create</code> permission. If we wouldn't have done that, the
+following error would have occurred:</p>
+<pre><code class="language-text">denied: Token exchange failed for project 'pl-dofroscra-p'. Caller does not have permission 'storage.buckets.create'. To configure permissions, follow instructions at: https://cloud.google.com/container-registry/docs/access-control</code></pre>
+<p>The Container Registry tries to <strong>store the docker images in a Google Cloud Storage bucket</strong> that
+is created on the fly when the <strong>very first image is pushed</strong>, see
+<a href="https://cloud.google.com/container-registry/docs/pushing-and-pulling#add-registry">the GCP docs on &quot;Adding a registry&quot;</a>:</p>
+<blockquote>
+<p>The first image push to a hostname triggers creation of the registry in a project
+and the corresponding Cloud Storage storage bucket.
+This initial push requires project-wide permissions to create storage buckets.</p>
+</blockquote>
+<p>You can find the bucket, that in my case is named <code>artifacts.pl-dofroscra-p.appspot.com</code>
+in the <a href="https://console.cloud.google.com/storage">Cloud Storage UI</a>:</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-cloud-storage-registry-images.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-cloud-storage-registry-images.PNG" alt="GCP Container Registry image location on Cloud Storage" /></a></p>
+<p><strong>CAUTION</strong>: Make sure to <strong>delete this bucket once you are done with the tutorial</strong> - otherwise
+<a href="https://cloud.google.com/storage/pricing">storage costs</a> will incur.</p>
+<!-- generated -->
+<p><a id='pulling-images-from-the-registry'> </a></p>
+<!-- /generated -->
+<h3>Pulling images from the registry</h3>
+<p>According to the
+<a href="https://cloud.google.com/container-registry/docs/pushing-and-pulling#pulling_images_from_a_registry">GCP docs to pull an image from the Container Registry</a>
+we <a href="#authenticate-docker">need to be authenticated</a> with a user that
+has the permissions of the
+<a href="https://cloud.google.com/storage/docs/access-control/iam-roles#standard-roles"><code>Storage Object Viewer</code></a>
+role to access the &quot;raw&quot; images. FYI: The <code>Storage Admin</code> role that we assigned previously has all
+the permissions of the <code>Storage Object Viewer</code> role.</p>
+<p>Then use the <strong>fully qualified image name</strong> as before:</p>
+<pre><code class="language-bash">docker pull gcr.io/pl-dofroscra-p/my-nginx</code></pre>
+<p>Output if the image is cached</p>
+<pre><code class="language-text">$ docker pull gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+latest: Pulling from pl-dofroscra-p/my-nginx
+Digest: sha256:0740591fb686227d8cdf4e42b784f634cbaf9f5caa6ee478e3bcc24aeef75d7f
+Status: Image is up to date for gcr.io/pl-dofroscra-p/my-nginx:latest
+gcr.io/pl-dofroscra-p/my-nginx:latest</code></pre>
+<p>or if doesn't exist</p>
+<pre><code class="language-text">docker pull gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+latest: Pulling from pl-dofroscra-p/my-nginx
+59bf1c3509f3: Pull complete 
+f3322597df46: Pull complete 
+d09cf91cabdc: Pull complete 
+3a97535ac2ef: Pull complete 
+919ade35f869: Pull complete 
+40e5d2fe5bcd: Pull complete 
+c72acb0c83a5: Pull complete 
+d6baa2bee4a5: Pull complete 
+Digest: sha256:0740591fb686227d8cdf4e42b784f634cbaf9f5caa6ee478e3bcc24aeef75d7f
+Status: Downloaded newer image for gcr.io/pl-dofroscra-p/my-nginx:latest
+gcr.io/pl-dofroscra-p/my-nginx:latest</code></pre>
+<!-- generated -->
+<p><a id='set-up-the-secret-manager'> </a></p>
+<!-- /generated -->
+<h2>Set up the Secret Manager</h2>
+<p>Even though
+<a href="/blog/git-secret-encrypt-repository-docker/">we use <code>git secret</code> to manage our secrets</a>, <strong>we
+still need the <code>gpg</code> secret key</strong> for decryption. This key is &quot;a secret in itself&quot; and we will use
+the <a href="https://cloud.google.com/secret-manager/docs">GCP Secret Manager</a> to store it and
+<a href="#get-the-secret-gpg-key-and-password-from-the-secret-manager">retrieve it later from a VM</a>.</p>
+<p>It can be managed from the <a href="https://console.cloud.google.com/security/secret-manager">Security &gt; Secret Manager UI</a>
+once we have
+<a href="https://console.cloud.google.com/marketplace/product/google/secretmanager.googleapis.com">enabled the Secret Manager API</a></p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-enable-secret-manager-api.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-enable-secret-manager-api.PNG" alt="Enable the GCP Secret Manager API" /></a></p>
+<!-- generated -->
+<p><a id='create-a-secret-via-the-ui'> </a></p>
+<!-- /generated -->
+<h3>Create a secret via the UI</h3>
+<p>To create a secret:</p>
+<ul>
+<li>navigate to the <a href="https://console.cloud.google.com/security/secret-manager">Secret Manager UI</a>
+and click the <code>"+ CREATE SECRET"</code> button</li>
+<li>enter the <strong>secret name</strong> and <strong>secret value</strong> in the form (we can ignore the other advanced
+settings like &quot;Replication policy&quot; and &quot;Encryption&quot; for now)
+<ul>
+<li>FYI: the secret name can only contain English letters (A-Z), numbers (0-9), dashes (-), and
+underscores (_)</li>
+</ul></li>
+<li>click the <code>"CREATE SECRET"</code> button</li>
+</ul>
+<p>The following gif shows the creation of a secret named <code>my_secret_key</code> with the value
+<code>my_secret_value</code>.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-create-and-view-secret.gif"><img src="/img/gcp-compute-instance-vm-docker/gcp-create-and-view-secret.gif" alt="Create and view a secret" /></a></p>
+<!-- generated -->
+<p><a id='view-a-secret-via-the-ui'> </a></p>
+<!-- /generated -->
+<h3>View a secret via the UI</h3>
+<p>The <a href="https://console.cloud.google.com/security/secret-manager">Security &gt; Secret Manager UI</a>
+lists all existing secrets. Clicking on a secret will lead you to the <strong>Secret Detail UI</strong> at the URL</p>
+<pre><code class="language-text">https://console.cloud.google.com/security/secret-manager/secret/$secretName/versions</code></pre>
+<p>e.g. for secret name <code>my_secret_key</code>:</p>
+<pre><code class="language-text">https://console.cloud.google.com/security/secret-manager/secret/my_secret_key/versions</code></pre>
+<p>The UI shows all <a href="https://cloud.google.com/secret-manager/docs/managing-secret-versions">versions of the secret</a>,
+though we currently only have one. To view the actual secret value, click on the three dots in
+the &quot;Actions&quot; column and select &quot;View secret value&quot; (see gif in the
+<a href="#create-a-secret-via-the-ui">previous section</a>).</p>
+<!-- generated -->
+<p><a id='retrieve-a-secret-via-the-gcloud-cli'> </a></p>
+<!-- /generated -->
+<h3>Retrieve a secret via the <code>gcloud</code> cli</h3>
+<p>To retrieve a secret with a service account via the <code>gcloud</code> cli, it needs the permission
+<code>secretmanager.versions.access</code>, that is part of the
+<a href="https://cloud.google.com/iam/docs/understanding-roles#secret-manager-roles"><code>Secret Manager Secret Accessor</code></a>
+role (as well as the <code>Secret Manager Admin</code> role). Let's first show all available secrets via</p>
+<pre><code class="language-bash">gcloud secrets list</code></pre>
+<pre><code class="language-text">$ gcloud secrets list
+NAME           CREATED              REPLICATION_POLICY  LOCATIONS
+my_secret_key  2022-05-15T05:38:11  automatic           -</code></pre>
+<p>To &quot;see&quot; the value of <code>my_secret_key</code>, we must also define the corresponding version. All
+versions can be listed via</p>
+<pre><code class="language-bash">gcloud secrets versions list my_secret_key</code></pre>
+<pre><code class="language-text">$ gcloud secrets versions list my_secret_key
+NAME  STATE    CREATED              DESTROYED
+1     enabled  2022-05-15T05:38:13  -</code></pre>
+<p>The actual secret value for version <code>1</code> of <code>my_secret_key</code> is accessed via</p>
+<pre><code class="language-bash">gcloud secrets versions access 1 --secret=my_secret_key</code></pre>
+<pre><code class="language-text">$ gcloud secrets versions access 1 --secret=my_secret_key
+my_secret_value</code></pre>
+<p>You can also use
+<a href="https://cloud.google.com/sdk/gcloud/reference/secrets/versions/access">the string <code>latest</code> as version to retrieve the latest enabled version</a></p>
+<blockquote>
+<p>Version resource - Numeric secret version to access or a configured alias
+(including 'latest' to use the latest version).</p>
+</blockquote>
+<pre><code class="language-bash">gcloud secrets versions access latest --secret=my_secret_key</code></pre>
+<pre><code class="language-text">$ gcloud secrets versions access latest --secret=my_secret_key
+my_secret_value</code></pre>
+<!-- generated -->
+<p><a id='add-the-secret-gpg-key-and-password'> </a></p>
+<!-- /generated -->
+<h3>Add the secret <code>gpg</code> key and password</h3>
+<p>We already know how to
+<a href="/blog/git-secret-encrypt-repository-docker/#create-gpg-key-pair">create another <code>gpg</code> key pair</a>
+and
+<a href="/blog/git-secret-encrypt-repository-docker/#adding-listing-and-removing-users">add the corresponding email to <code>git secret</code></a>
+from when we have set up the CI pipelines (see section
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#add-a-password-protected-secret-gpg-key">Add a password-protected secret gpg key</a>)
+. We will do the same once more for the production environment via</p>
+<pre><code class="language-bash">name="Production Deployment"
+email="production@example.com"
+passphrase=87654321
+secret=secret-production-protected.gpg.example
+public=.dev/gpg-keys/production-public.gpg
+# export key pair
+gpg --batch --gen-key &lt;&lt;EOF
+Key-Type: 1
+Key-Length: 2048
+Subkey-Type: 1
+Subkey-Length: 2048
+Name-Real: $name
+Name-Email: $email
+Expire-Date: 0
+Passphrase: $passphrase
+EOF
+
+# export the private key
+gpg --output $secret --pinentry-mode=loopback --passphrase  "$passphrase" --armor --export-secret-key $email
+
+# export the public key
+gpg --armor --export $email &gt; $public</code></pre>
+<p>You can find the secret key in the codebase at <code>secret-production-protected.gpg.example</code>
+and the public key at <code>.dev/gpg-keys/production-public.gpg</code>.</p>
+<p>I have also added the secret <code>gpg</code> key and password as secrets to the secret manager</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-gpg-secret-password.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-gpg-secret-password.PNG" alt="GPG secret key and password stored as secrets" /></a></p>
+<!-- generated -->
+<p><a id='compute-instances-the-gcp-vms'> </a></p>
+<!-- /generated -->
+<h2>Compute Instances: The GCP VMs</h2>
+<p>Compute Instances are the equivalent of <a href="https://aws.amazon.com/de/ec2/">AWS EC2 instances</a>.</p>
+<p>To run our application, <strong>we need a VM with a public IP address</strong> so that it can be reached from the
+internet. VMs on GCP are called <a href="https://cloud.google.com/compute">Compute Instances</a> and can be
+managed from the <a href="https://console.cloud.google.com/compute">Compute Instance UI</a> - though we
+must first
+<a href="https://console.cloud.google.com/marketplace/product/google/compute.googleapis.com">activate the Compute Instance API</a>.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-enable-compute-instance-api.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-enable-compute-instance-api.PNG" alt="Enable the GCP Compute Instance API" /></a></p>
+<!-- generated -->
+<p><a id='create-a-vm'> </a></p>
+<!-- /generated -->
+<h3>Create a VM</h3>
+<p>We can simply create a new instance from the
+<a href="https://console.cloud.google.com/compute/instancesAdd">Create an instance UI</a>.</p>
+<!-- generated -->
+<p><a id='general-vm-settings'> </a></p>
+<!-- /generated -->
+<h4>General VM settings</h4>
+<p>We'll use the following settings:</p>
+<ul>
+<li>Name: <code>dofroscra-test</code> </li>
+<li>Region <code>us-central1 (Iowa)</code> and Zone <code>us-central1-a</code></li>
+<li>Machine family: <code>General Purpose &gt; E2 &gt; e2-micro (2 vCPU, 1 GB memory)</code> </li>
+<li>Boot Disk: Debian GNU/Linux 11 (bullseye); 10 GB</li>
+<li>Identity and API access: Choose the &quot;Docker PHP Tutorial deployment account&quot; service account
+<a href="#create-a-service-account">that we created previously</a> </li>
+<li>Firewall: Allow HTTP traffic</li>
+</ul>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-instance-settings.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-instance-settings.PNG" alt="GCP instance settings" /></a></p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-service-account-firewall.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-service-account-firewall.PNG" alt="Additional GCP instance settings" /></a></p>
+<!-- generated -->
+<p><a id='firewall-and-networks-tags'> </a></p>
+<!-- /generated -->
+<h4>Firewall and networks tags</h4>
+<p>Ticking the <code>Allow HTTP traffic</code> checkbox will cause two things when the instance is created:</p>
+<ul>
+<li>a new <strong>firewall rule</strong> named <code>default-allow-http</code> is created that allows incoming traffic from
+port <code>80</code> and is only applied to instances with the
+<a href="https://cloud.google.com/vpc/docs/add-remove-network-tags">network tag</a> <code>http-server</code>. You
+can see the new rule in the
+<a href="https://console.cloud.google.com/networking/firewalls/list">Firewall UI</a>
+<a href="/img/gcp-compute-instance-vm-docker/gcp-firewall-rule-default-allow-http.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-firewall-rule-default-allow-http.PNG" alt="Firewall rule: default-allow-http" /></a></li>
+<li>the <strong>network tag</strong> <code>http-server</code> is added to the instance, effectively enabling the
+aforementioned firewall rule for the instance</li>
+</ul>
+<!-- generated -->
+<p><a id='the-role-of-the-service-account'> </a></p>
+<!-- /generated -->
+<h4>The role of the service account</h4>
+<p>The <strong>service account</strong> that we have chosen in the previous step <strong>will be attached to the
+Compute Instance</strong>. I.e. it will be available on the instance and <strong>we will have access to the
+account when we log into the instance</strong>. Conveniently,
+<a href="https://cloud.google.com/sdk/docs/install-sdk#installing_the_latest_version">the<code>gcloud</code> cli is pre-installed on every Compute Instance</a>:</p>
+<blockquote>
+<p>If you're using an instance on Compute Engine, the gcloud CLI is installed by default.</p>
+</blockquote>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcloud-cli-preinstalled-compute-instance.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcloud-cli-preinstalled-compute-instance.PNG" alt="The`gcloud` cli is pre-installed on every Compute Instance" /></a></p>
+<p>The exact rules for <strong>what the service account can do</strong> are described in the
+<a href="https://cloud.google.com/compute/docs/access/service-accounts">Compute Engine docs for &quot;Service accounts&quot;</a>.
+In short: The possible actions will be constrained by the
+<a href="https://cloud.google.com/compute/docs/access/service-accounts#usingroles">IAM permissions of the service account</a> and the
+<a href="https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam">Access scopes of the Compute Instance</a>
+which are set as outlined in the
+<a href="https://cloud.google.com/compute/docs/access/service-accounts#default_scopes">&quot;Default scopes&quot; section</a>.
+Just take this as an aside, we won't have to modify anything here.</p>
+<p>We will use the service account later,
+<a href="#pulling-the-nginx-image">when we log into the Compute Instance and run <code>docker pull</code> from there</a>
+to pull images from the registry.</p>
+<!-- generated -->
+<p><a id='adding-a-public-ssh-key'> </a></p>
+<!-- /generated -->
+<h4>Adding a public SSH key</h4>
+<p>In addition, I <strong>added my own public <code>ssh</code> key</strong></p>
+<pre><code class="language-text">ssh-rsa AAAAB3NzaC1yc2....6row== pascal.landau@MY_LAPTOP</code></pre>
+<p><strong>CAUTION</strong>: The <strong>username</strong> for this key will be defined <strong>at the end of the key</strong>! E.g. in the
+example above, the username would be <code>pascal.landau</code>. This is important for
+<a href="#login-via-ssh-with-your-own-key-from-your-host-machine">logging in later via SSH from your local machine</a>.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-ssh-key.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-ssh-key.PNG" alt="Add SSH key to GCP instance settings" /></a></p>
+<!-- generated -->
+<p><a id='define-availability-policies'> </a></p>
+<!-- /generated -->
+<h4>Define Availability Policies</h4>
+<p>We will make the instance <a href="https://cloud.google.com/compute/docs/instances/preemptible">preemptible</a>,
+by choosing the <strong>VM provisioning model</strong> <code>Spot</code>.
+This makes it <strong>much cheaper</strong> but GCP &quot;might&quot; <strong>terminate the instance randomly</strong> if the
+capacity is needed somewhere else (and definitely after 24 hours). This is completely fine for our
+test use case. The final costs are ~2$ per month for this instance.</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-availability-policies.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-availability-policies.PNG" alt="Define Availability Policies" /></a></p>
+<!-- generated -->
+<p><a id='the-actual-vm-creation'> </a></p>
+<!-- /generated -->
+<h4>The actual VM creation</h4>
+<p>Finally, click the <code>"Create"</code> button at the bottom of the page</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-create.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-instance-settings-create.PNG" alt="Create the GCP instance" /></a></p>
+<p>Once the instance is created, you can see it in the
+<a href="https://console.cloud.google.com/compute/instances">Compute Instances &gt; VM instances UI</a></p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-instance-overview.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-instance-overview.PNG" alt="Compute Instance overview" /></a></p>
+<p>Next to the instance name <code>dofroscra-test</code> we can see the external IP address <code>35.192.212.130</code>
+Opening it in a browser via <code>http://35.192.212.130/</code> won't show anything though, because we
+didn't deploy the application yet.</p>
+<p><strong>CAUTION</strong>: Make sure to <strong>shutdown and remove this instance by the end of the tutorial</strong> - otherwise
+<a href="https://cloud.google.com/compute/all-pricing">compute costs</a> will incur.</p>
+<!-- generated -->
+<p><a id='log-into-a-vm'> </a></p>
+<!-- /generated -->
+<h3>Log into a VM</h3>
+<p>There are multiple ways <strong>to log into the VM / Compute Instance</strong> outlined in
+<a href="https://cloud.google.com/compute/docs/instances/connecting-advanced">Connecting to Linux VMs using advanced methods</a>.</p>
+<p>I'm going to describe three of them:</p>
+<ul>
+<li><a href="#login-via-ssh-from-the-gcp-ui">Login via SSH from the GCP UI</a></li>
+<li><a href="#login-via-ssh-with-your-own-key-from-your-host-machine">Login via SSH with your own key from your host machine</a></li>
+<li><a href="#login-using-the-identity-aware-proxy-iap-concept">Login using the Identity-Aware Proxy (IAP) concept</a></li>
+</ul>
+<p>PS: It's worth keeping
+<a href="https://cloud.google.com/compute/docs/troubleshooting/troubleshooting-ssh">the Troubleshooting SSH guide</a>
+as a bookmark.</p>
+<!-- generated -->
+<p><a id='login-via-ssh-from-the-gcp-ui'> </a></p>
+<!-- /generated -->
+<h4>Login via SSH from the GCP UI</h4>
+<p>Probably the easiest way to log in: Simply <strong>click the <code>"SSH"</code> button</strong> in the
+<a href="https://console.cloud.google.com/compute/instances">Compute Instances &gt; VM instances UI</a> <strong>next
+to the instance you want to log in</strong>. This will <strong>create a web shell</strong> that uses an ephemeral SSH key
+according to the <a href="https://cloud.google.com/compute/docs/instances/connecting-to-instance#connect_to_vms">GCP documentation: Connect to Linux VMs &gt; Connect to VMs</a></p>
+<blockquote>
+<p>When you connect to VMs using the Cloud Console, Compute Engine creates an ephemeral SSH key for you.</p>
+</blockquote>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-ssh-login-web-shell.gif"><img src="/img/gcp-compute-instance-vm-docker/gcp-ssh-login-web-shell.gif" alt="Connect via Cloud Console UI" /></a></p>
+<!-- generated -->
+<p><a id='login-via-ssh-with-your-own-key-from-your-host-machine'> </a></p>
+<!-- /generated -->
+<h4>Login via SSH with your own key from your host machine</h4>
+<p>This method is probably closest to what you are used to from working with &quot;other&quot; VMs. In this
+case, <strong>the instance has to be publicly available</strong> (i.e. reachable &quot;from the internet&quot;) and
+<strong>expose a port for SSH connections</strong> (usually <code>22</code>). In addition, your public SSH key needs to be
+deployed.</p>
+<p>All of those requirements are true
+<a href="#create-a-vm">for the Compute Instance that we just created</a>:</p>
+<ul>
+<li>the public ip address is <code>35.192.212.130</code></li>
+<li>port <code>22</code> is open by default via the <code>default-allow-ssh</code> firewall rule, see
+<a href="https://geekflare.com/gcp-firewall-configuration/">How to Configure Firewall Rules in Google Cloud Platform</a>
+and the <a href="https://cloud.google.com/compute/docs/troubleshooting/troubleshooting-ssh">official documentation on Troubleshooting SSH</a>
+<blockquote>
+<p>By default, Compute Engine VMs allow SSH access on port 22.</p>
+</blockquote></li>
+<li>we <a href="#adding-a-public-ssh-key">added our public SSH key</a> using <code>pascal.landau</code> as the username</li>
+</ul>
+<p>So we can now simply login via </p>
+<pre><code class="language-bash">ssh pascal.landau@35.192.212.130</code></pre>
+<p>or if you need to specify the location of the private key via the <code>-i</code> option</p>
+<pre><code class="language-bash">ssh -i ~/.ssh/id_rsa pascal.landau@35.192.212.130</code></pre>
+<pre><code class="language-text">$ ssh pascal.landau@35.192.212.130
+Linux dofroscra-test 4.19.0-20-cloud-amd64 #1 SMP Debian 4.19.235-1 (2022-03-17) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Sun Apr 10 16:21:00 2022 from 54.74.228.207
+pascal.landau@dofroscra-test:~$</code></pre>
+<!-- generated -->
+<p><a id='login-using-the-identity-aware-proxy-iap-concept'> </a></p>
+<!-- /generated -->
+<h4>Login using the Identity-Aware Proxy (IAP) concept</h4>
+<p><strong>Note: This is the preferred way of logging into a GCP VM</strong></p>
+<p>To <strong>login via IAP</strong> we need the <a href="#set-up-the-gcloud-cli-tool"><code>gcloud</code> CLI</a> that will <strong>use API
+requests (via HTTPS) under the hood to authenticate the Google user</strong> (or in our case: the
+service account) and then proxy the requests to the VM via
+<a href="https://cloud.google.com/iap/docs/concepts-overview">GCP's Identity-Aware Proxy (IAP)</a>
+as described in
+<a href="https://cloud.google.com/compute/docs/instances/connecting-advanced#cloud_iap">Connecting through Identity-Aware Proxy (IAP) for TCP</a>
+and in more detail under
+<a href="https://cloud.google.com/iap/docs/using-tcp-forwarding#tunneling_ssh_connections">Using IAP for TCP forwarding &gt; Tunneling SSH connections</a>.</p>
+<p>The corresponding command is
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh"><code>gcloud compute ssh</code></a>, e.g.:</p>
+<pre><code class="language-bash">gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p</code></pre>
+<p>Note the
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh#--tunnel-through-iap">--tunnel-through-iap</a>
+flag: Without it, <code>gcloud</code> would instead attempt to use a &quot;normal&quot; <code>ssh</code> connection if the VM is
+publicly reachable
+<a href="https://cloud.google.com/iap/docs/using-tcp-forwarding#tunneling_ssh_connections">as per docu</a>:</p>
+<blockquote>
+<p>If the instance doesn't have an external IP address, the connection automatically uses
+IAP TCP tunneling. If the instance does have an external IP address, the connection uses the
+external IP address instead of IAP TCP tunneling.</p>
+</blockquote>
+<p>Output</p>
+<pre><code class="language-text">$ gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p
+WARNING: The private SSH key file for gcloud does not exist.
+WARNING: The public SSH key file for gcloud does not exist.
+WARNING: The PuTTY PPK SSH key file for gcloud does not exist.
+WARNING: You do not have an SSH key for gcloud.
+WARNING: SSH keygen will be executed to generate a key.
+Updating project ssh metadata...
+..............................................Updated [https://www.googleapis.com/compute/v1/projects/pl-dofroscra-p].
+.done.
+Waiting for SSH key to propagate.</code></pre>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-ssh-login-iap.gif"><img src="/img/gcp-compute-instance-vm-docker/gcp-ssh-login-iap.gif" alt="Connect via IAP" /></a></p>
+<p>Under the hood, this command will <strong>automatically create an SSH key pair</strong> on your local machine under
+<code>~/.ssh/</code> named <code>google_compute_engine</code> (unless they already exist) and upload the public key
+to the instance.</p>
+<pre><code class="language-text">$ ls -l ~/.ssh/ | grep google_compute_engine
+-rw-r--r-- 1 Pascal 197121 1675 Apr 11 09:25 google_compute_engine
+-rw-r--r-- 1 Pascal 197121 1456 Apr 11 09:25 google_compute_engine.ppk
+-rw-r--r-- 1 Pascal 197121  420 Apr 11 09:25 google_compute_engine.pub</code></pre>
+<p>It also opens a <a href="https://www.putty.org/"><code>Putty</code> session</a> and logs you into in the instance:</p>
+<pre><code class="language-text">Using username "Pascal".
+Authenticating with public key "LAPTOP-0DNL2Q02\Pascal@LAPTOP-0DNL2Q02"
+Linux dofroscra-test 4.19.0-20-cloud-amd64 #1 SMP Debian 4.19.235-1 (2022-03-17) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Mon Apr 11 07:22:32 2022 from 54.74.228.207
+Pascal@dofroscra-test:~$</code></pre>
+<p><strong>Caution</strong>: The <code>Putty</code> session will be closed automatically when you abort the original
+<code>gcloud compute ssh</code> command!</p>
+<!-- generated -->
+<p><a id='additional-notes-on-iap'> </a></p>
+<!-- /generated -->
+<h5>Additional notes on IAP</h5>
+<p>In order to <strong>enable SSH connections via IAP</strong>, our service account needs the following
+<a href="#configure-iam-permissions">IAM roles</a>:</p>
+<ul>
+<li><a href="https://cloud.google.com/compute/docs/access/iam#compute.instanceAdmin.v1"><code>roles/compute.instanceAdmin.v1</code></a>, role: <code>Compute Admin</code></li>
+<li><a href="https://cloud.google.com/compute/docs/access/iam#the_serviceaccountuser_role"><code>roles/iam.serviceAccountUser</code></a>, role: <code>Service Account User</code></li>
+<li><a href="https://cloud.google.com/iam/docs/understanding-roles#cloud-iap-roles"><code>roles/iap.tunnelResourceAccessor</code></a>, role: <code>IAP-secured Tunnel User</code></li>
+</ul>
+<p>Otherwise, you might run into a couple of errors like:</p>
+<pre><code class="language-text">ERROR: (gcloud.compute.ssh) Could not fetch resource:
+ - Required 'compute.instances.get' permission for 'projects/pl-dofroscra-p/zones/us-central1-a/instances/dofroscra-test'</code></pre>
+<p>(<code>roles/compute.instanceAdmin.v1</code> missing)</p>
+<pre><code class="language-text">ERROR: (gcloud.compute.ssh) Could not add SSH key to instance metadata:
+ - The user does not have access to service account 'docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com'.  User: 'docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com'.  Ask a project owner to grant you the iam.serviceAccountUser role on the service account</code></pre>
+<p>(<a href="https://cloud.google.com/compute/docs/access/iam#the_serviceaccountuser_role"><code>roles/iam.serviceAccountUser</code> missing</a>)</p>
+<pre><code class="language-text">Remote side unexpectedly closed connection</code></pre>
+<p>(<code>roles/iap.tunnelResourceAccessor</code> missing)</p>
+<p>Note: This error can also occur if you <strong>try to use IAP directly after starting a VM</strong>. In this
+case wait a couple of seconds and try again.</p>
+<p>The general &quot;flow&quot; looks like this</p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-iap-concept.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-iap-concept.PNG" alt="Connection flow when using Identity-Aware Proxy (IAP)" /></a></p>
+<p>Using IAP might look overly complicated at first, but it offers <strong>a number of benefits</strong>:</p>
+<ul>
+<li>we can leverage <strong>Google's authentication system</strong> and the powerful
+<a href="#configure-iam-permissions">IAM permission management</a> to manage permissions - no more need
+to deploy custom SSH keys to the VMs</li>
+<li>
+<p>we <strong>don't need a public IP address</strong> any longer, see
+<a href="https://cloud.google.com/iap/docs/tcp-forwarding-overview#how-tcp-forwarding-works">Overview of TCP forwarding &gt; How IAP's TCP forwarding works</a></p>
+<blockquote>
+<p>A special case, establishing an SSH connection using <code>gcloud compute ssh</code> wraps the SSH
+connection inside HTTPS and forwards it to the remote instance without the need of a
+listening port on local host.</p>
+<p>[...]</p>
+<p>TCP forwarding with IAP doesn't require a public, routable IP address assigned to your
+resource. Instead, it uses internal IPs.</p>
+</blockquote>
+<p>This is nice, because in our final PHP application only the <code>nginx</code> container should be
+accessible publicly - <code>php-fpm</code> and the <code>php-workers</code> shouldn't. Usually we would use a<br />
+so-called <a href="https://en.wikipedia.org/wiki/Bastion_host">Bastion Host or Jump Box</a> to deal with
+this problem, but thanks to IAP we don't have to</p>
+</li>
+</ul>
+<p><strong>Additional resources</strong></p>
+<ul>
+<li><a href="https://gochronicles.com/secure-tunnel-with-iap-gcp/">Accessing Secure Servers Using IAP</a></li>
+<li><a href="https://medium.com/google-cloud/connecting-securely-to-google-compute-engine-vms-without-a-public-ip-or-vpn-720e53d1978e">Connecting Securely to Google Compute Engine VMs without a Public IP or VPN</a></li>
+</ul>
+<!-- generated -->
+<p><a id='get-root-permissions'> </a></p>
+<!-- /generated -->
+<h4>Get <code>root</code> permissions</h4>
+<p>The group
+<a href="https://superuser.com/a/1400281/434918"><code>google-sudoers</code> exists on each GCP Compute Instance</a>.
+It is configured for <strong>passwordless sudo</strong> via <code>/etc/sudoers.d/google_sudoers</code> </p>
+<pre><code class="language-text">$ sudo cat /etc/sudoers.d/google_sudoers 
+%google-sudoers ALL=(ALL:ALL) NOPASSWD:ALL</code></pre>
+<p>I.e. each user added to this group can use <code>sudo</code> without password or simply run <code>sudo -i</code> to
+become <code>root</code>. <strong>Your user should be added automatically to that group</strong>. This can be verified with
+the <code>id</code> command (run on the VM)</p>
+<pre><code class="language-text">Pascal@dofroscra-test:~$ id
+uid=1002(Pascal) gid=1003(Pascal) groups=1003(Pascal),4(adm),30(dip),44(video),46(plugdev),1000(google-sudoers)
+
+# =&gt; 1000(google-sudoers)</code></pre>
+<!-- generated -->
+<p><a id='ssh-and-scp-commands'> </a></p>
+<!-- /generated -->
+<h3><code>ssh</code> and <code>scp</code> commands</h3>
+<p>It is quite common <strong>to copy files</strong> from / to a VM and to <strong>run commands</strong> on it. This is
+usually done via <code>ssh</code> and <code>scp</code>. The <code>gcloud</code> cli offers equivalent commands that can also make
+use of
+<a href="#login-using-the-identity-aware-proxy-iap-concept">the Identity-Aware Proxy (IAP) concept</a>:</p>
+<!-- generated -->
+<p><a id='gcloud-ssh-command'> </a></p>
+<!-- /generated -->
+<h4><code>gcloud ssh --command=""</code></h4>
+<p>Documentation: <a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh#--command"><code>gcloud ssh --command</code></a></p>
+<p>Example: </p>
+<pre><code class="language-bash">gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="whoami"</code></pre>
+<p>Output:</p>
+<pre><code class="language-bash">$ gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="whoami"
+Pascal</code></pre>
+<!-- generated -->
+<p><a id='gcloud-scp'> </a></p>
+<!-- /generated -->
+<h4><code>gcloud scp</code></h4>
+<p>Documentation: <a href="https://cloud.google.com/sdk/gcloud/reference/compute/scp"><code>gcloud scp</code></a></p>
+<p>Example:</p>
+<pre><code class="language-bash">gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./local-file1.txt ./local-file2.txt dofroscra-test:tmp/
+
+# ---
+echo "1" &gt;&gt; ./local-file1.txt
+echo "2" &gt;&gt; ./local-file2.txt
+gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="rm -rf ~/test; mkdir -p ~/test"
+gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="ls -l ~/test"
+gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./local-file1.txt ./local-file2.txt dofroscra-test:test/
+gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="ls -l ~/test"</code></pre>
+<p>Output:</p>
+<pre><code class="language-bash">$ echo "1" &gt;&gt; ./local-file1.txt
+$ echo "2" &gt;&gt; ./local-file2.txt
+$ gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="ls -l ~/test"
+total 0
+
+$ gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./local-file1.txt ./local-file2.txt dofroscra-test:test/
+local-file1.txt           | 0 kB |   0.0 kB/s | ETA: 00:00:00 | 100%
+local-file2.txt           | 0 kB |   0.0 kB/s | ETA: 00:00:00 | 100%
+
+$ gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="ls -l ~/test"
+total 8
+-rw-r--r-- 1 Pascal Pascal 4 Jun  2 13:06 local-file1.txt
+-rw-r--r-- 1 Pascal Pascal 4 Jun  2 13:06 local-file2.txt</code></pre>
+<p><strong>Note</strong>: According to the examples in the documentation, it should also be possible to use the
+<code>~</code> to define that the destination on the remote VM is relative to the home directory. However,
+this did not work for me, as I kept getting the error</p>
+<pre><code class="language-text">$ gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./local-file1.txt dofroscra-test:~/test
+pscp: remote filespec ~/test: not a directory</code></pre>
+<p>even though the diretory existed. But removing the <code>~/</code> part worked</p>
+<pre><code class="language-text">$ gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./local-file1.txt  dofroscra-test:test/
+local-file1.txt           | 0 kB |   0.0 kB/s | ETA: 00:00:00 | 100%</code></pre>
+<!-- generated -->
+<p><a id='provision-the-vm'> </a></p>
+<!-- /generated -->
+<h2>Provision the VM</h2>
+<!-- generated -->
+<p><a id='get-the-secret-gpg-key-and-password-from-the-secret-manager'> </a></p>
+<!-- /generated -->
+<h3>Get the secret <code>gpg</code> key and password from the Secret Manager</h3>
+<p>Before we shift our attention to docker, let's quickly deal with the secrets. We won't need them
+for this part of the tutorial. but will need the secret <code>gpg</code> key and its password to
+<a href="#">decrypt the secrets in the <code>php</code> containers in the next part (available at 2022-06-27)</a>.
+To recap: We have <a href="#add-the-secret-gpg-key-and-password">added the them previously</a> and can now
+retrieve them as explained under section
+<a href="#retrieve-a-secret-via-the-gcloud-cli">Retrieve a secret via the <code>gcloud</code> cli</a> via</p>
+<pre><code class="language-bash">gcloud secrets versions access 1 --secret=GPG_KEY &gt; secret.gpg
+
+GPG_PASSWORD=$(gcloud secrets versions access 1 --secret=GPG_PASSWORD)</code></pre>
+<pre><code class="language-text">$ gcloud secrets versions access 1 --secret=GPG_KEY &gt; secret.gpg
+$ head secret.gpg
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+lQPGBGKA1psBCACq5zYDT587CVZEIWXbUplfAGQZOQJALmzErYpTp0jt+rp4vJhR
+U5xahy3pqCq81Cnny5YME50ybB3pW/WcHxWLBDo+he8PKeLbp6wFFjJns+3u4opH
+9gFMElyHpzTGiDQYfx/CgY2hKz7GSqpjmnOaKxYvGv0EsbZczyHY1WIN/YFzb0tI
+tY7J4zTSH05I+aazRdHyn28QcCRcIT9+4q+5Vk8gz8mmgoqVpyeNgQcqJjcd03iP
+WUZd1vZCumOvdG5PZNlc/wPFhqLDmYyLmJ7pt5bWIgty9BjYK8Z2NOdUaekqVEJ+
+r29HbzwgFLLE2gd52f07h2y2YgMdWdz4FDxVABEBAAH+BwMC9veBYT2oigXxExLl
+7fZKVjw02lEr1NpYd5X1ge9WPU/1qumATJWounzciiETpsYGsbPd9zFRJP4E3JZl
+sFSh4p0/kXYTuenYD8wgGkeYyN4lm53IHfqSn2z9JMW5Kz9XEODtKJl8fjcn9Zeb
+
+$ GPG_PASSWORD=$(gcloud secrets versions access 1 --secret=GPG_PASSWORD)
+$ echo $GPG_PASSWORD
+87654321</code></pre>
+<!-- generated -->
+<p><a id='installing-docker-and-docker-compose'> </a></p>
+<!-- /generated -->
+<h3>Installing <code>docker</code> and <code>docker compose</code></h3>
+<p>Since we <a href="#general-vm-settings">created the VM with a Debian OS</a>, we'll follow the
+<a href="https://docs.docker.com/engine/install/debian/">official Debian installation instructions for Docker Engine</a>
+and run the following commands while we are logged into the VM:</p>
+<pre><code class="language-bash"># install required tools
+sudo apt-get update -yq &amp;&amp; apt-get install -yq \
+     ca-certificates \
+     curl \
+     gnupg \
+     lsb-release
+
+# add Docker’s official GPG key
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# set up the stable repository
+echo \
+ "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+ $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+
+# install Docker Engine
+sudo apt-get update -yq &amp;&amp; sudo apt-get install -yq \
+     docker-ce \
+     docker-ce-cli \
+     containerd.io \
+     docker-compose-plugin</code></pre>
+<p>I have also added these instructions to the script <code>.infrastructure/scripts/provision.sh</code>.</p>
+<p>Afterwards we check via </p>
+<pre><code class="language-bash">docker --version
+docker compose version</code></pre>
+<p>if <code>docker</code> and <code>docker compose</code> are available</p>
+<pre><code class="language-text">$ docker --version
+Docker version 20.10.15, build fd82621
+
+$ docker compose version
+Docker Compose version v2.5.0</code></pre>
+<!-- generated -->
+<p><a id='authenticate-docker-via-gcloud'> </a></p>
+<!-- /generated -->
+<h3>Authenticate docker via <code>gcloud</code></h3>
+<p>I recommend <a href="#get-root-permissions">running the commands as <code>root</code></a> via</p>
+<pre><code class="language-bash">sudo -i</code></pre>
+<pre><code class="language-text">pascal_landau@dofroscra-test:~$ sudo -i
+root@dofroscra-test:~# </code></pre>
+<p>Otherwise, we might run into docker permission errors like</p>
+<pre><code class="language-text">Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/images/create?fromImage=...": dial unix /var/run/docker.sock: connect: permission denied</code></pre>
+<p>FYI: As an alternative we could also add the non-root user to the <code>docker</code> group via</p>
+<pre><code class="language-bash">user=$(whoami)
+sudo usermod -a -G docker $user</code></pre>
+<pre><code class="language-text">$ user=$(whoami)
+$ sudo usermod -a -G docker $user
+$ id
+uid=1001(pascal_landau) gid=1002(pascal_landau) groups=1002(pascal_landau),4(adm),30(dip),44(video),46(plugdev),997(docker),1000(google-sudoers)</code></pre>
+<p>Locally, we could
+<a href="#authenticate-docker">use the <code>JSON</code> key file of the service account for authentication</a>, but we
+don't have access to that key file on the VM. Instead, we will authenticate <code>docker</code> via the
+<a href="#the-role-of-the-service-account">pre-installed <code>gcloud</code> cli and the attached service account</a>
+as described in the
+<a href="https://cloud.google.com/container-registry/docs/advanced-authentication#gcloud-helper">GCP docs for the Container Registry Authentication methods under section &quot;gcloud credential helper&quot;</a>
+via</p>
+<pre><code class="language-bash">gcloud auth configure-docker --quiet</code></pre>
+<pre><code class="language-text">Adding credentials for all GCR repositories.
+WARNING: A long list of credential helpers may cause delays running 'docker build'. We recommend passing the registry name to configure only the registry you are using.
+Docker configuration file updated.</code></pre>
+<p>This creates the file <code>/root/.docker/config.json</code> that we already encountered when we
+<a href="#authenticate-docker">authenticated docker locally to push images</a>.
+In this case it has the following content</p>
+<pre><code class="language-text">$ cat /root/.docker/config.json
+{
+  "credHelpers": {
+    "gcr.io": "gcloud",
+    "us.gcr.io": "gcloud",
+    "eu.gcr.io": "gcloud",
+    "asia.gcr.io": "gcloud",
+    "staging-k8s.gcr.io": "gcloud",
+    "marketplace.gcr.io": "gcloud"
+  }
+}</code></pre>
+<p>The <a href="https://docs.docker.com/engine/reference/commandline/login/#credential-helpers"><code>creadHelpers</code> are described in the <code>docker login</code> docs</a></p>
+<blockquote>
+<p>Credential helpers are similar to the credential store above, but act as the <strong>designated
+programs to handle credentials</strong> for specific registries. The <strong>default credential store</strong>
+(credsStore or the config file itself) <strong>will not be used</strong> for operations concerning
+credentials of the specified registries.</p>
+</blockquote>
+<p>In other words: </p>
+<ul>
+<li>we are using <code>gcr.io</code> as registry</li>
+<li>this registry is defined to use the credential helper <code>gcloud</code></li>
+<li>i.e. it will use the pre-initialized <code>gcloud</code> cli for authentication</li>
+</ul>
+<!-- generated -->
+<p><a id='pulling-the-nginx-image'> </a></p>
+<!-- /generated -->
+<h3>Pulling the <code>nginx</code> image</h3>
+<p>Once we are authenticated, we can simply run <code>docker pull</code> with the full image name to retrieve the
+<code>nginx</code> image that we <a href="#pushing-images-to-the-registry">pushed previously</a></p>
+<pre><code class="language-bash">docker pull gcr.io/pl-dofroscra-p/my-nginx</code></pre>
+<pre><code class="language-text">$ docker pull gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+latest: Pulling from pl-dofroscra-p/my-nginx
+59bf1c3509f3: Pull complete 
+f3322597df46: Pull complete 
+d09cf91cabdc: Pull complete 
+3a97535ac2ef: Pull complete 
+919ade35f869: Pull complete 
+40e5d2fe5bcd: Pull complete 
+c72acb0c83a5: Pull complete 
+d6baa2bee4a5: Pull complete 
+Digest: sha256:0740591fb686227d8cdf4e42b784f634cbaf9f5caa6ee478e3bcc24aeef75d7f
+Status: Downloaded newer image for gcr.io/pl-dofroscra-p/my-nginx:latest
+gcr.io/pl-dofroscra-p/my-nginx:latest</code></pre>
+<p>If we wouldn't be authenticated, we would run into the following error</p>
+<pre><code class="language-text">$ docker pull gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+Error response from daemon: unauthorized: You don't have the needed permissions to perform this operation, and you may have invalid credentials. To authenticate your request, follow the steps in: https://cloud.google.com/container-registry/docs/advanced-authentication</code></pre>
+<!-- generated -->
+<p><a id='start-the-nginx-container'> </a></p>
+<!-- /generated -->
+<h3>Start the <code>nginx</code> container</h3>
+<p>For now, we will simply run the <code>nginx</code> container with <code>docker run</code> via</p>
+<pre><code class="language-bash">docker run --name nginx -p 80:80 --rm -d gcr.io/pl-dofroscra-p/my-nginx:latest</code></pre>
+<p>We</p>
+<ul>
+<li><strong>give it the name <code>nginx</code></strong> so we can easily reference it later via <code>--name nginx</code></li>
+<li><strong>map port <code>80</code> from the host to port <code>80</code> of the container</strong> so that HTTP requests to the
+VM are handled via the container via <code>-p 80:80</code>,
+see <a href="https://docs.docker.com/engine/reference/commandline/run/#publish-or-expose-port--p---expose">Docker docs on &quot;Publish or expose port (-p, --expose)&quot;</a></li>
+<li>make it <strong>run in the background</strong> via <code>-d</code> (<code>--detach</code>) and <strong>remove it after shutdown</strong>
+automatically via <code>-rm</code> (<code>--remove</code>)</li>
+</ul>
+<p>Output</p>
+<pre><code class="language-text">root@dofroscra-test:~# docker run -p 80:80 -d --name nginx gcr.io/pl-dofroscra-p/my-nginx:latest
+dd49bedad97c06f698d06a140c5091c04ad81b2f75632e222927e7f71cf28c18
+
+root@dofroscra-test:~# docker logs nginx
+/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2022/05/08 12:01:43 [notice] 1#1: using the "epoll" event method
+2022/05/08 12:01:43 [notice] 1#1: nginx/1.21.5
+2022/05/08 12:01:43 [notice] 1#1: built by gcc 10.3.1 20211027 (Alpine 10.3.1_git20211027) 
+2022/05/08 12:01:43 [notice] 1#1: OS: Linux 4.19.0-20-cloud-amd64
+2022/05/08 12:01:43 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2022/05/08 12:01:43 [notice] 1#1: start worker processes
+2022/05/08 12:01:43 [notice] 1#1: start worker process 30
+2022/05/08 12:01:43 [notice] 1#1: start worker process 31</code></pre>
+<p>We're <strong>all set to serve HTTP requests</strong>: The requests will be passed to the <code>nginx</code> container
+due to the mapped port <code>80</code>, i.e. we can simply use the public IP address <code>35.192.212.130</code> in a
+<code>curl</code> request and check
+<a href="#pushing-images-to-the-registry">the &quot;Hello world&quot; file we've added to the image</a>:</p>
+<pre><code class="language-text">$ curl -s http://35.192.212.130/hello.html
+Hello world</code></pre>
+<!-- generated -->
+<p><a id='automate-via-gcloud-commands'> </a></p>
+<!-- /generated -->
+<h2>Automate via <code>gcloud</code> commands</h2>
+<p>So far we <strong>have mostly used the UI to configure everything</strong>. This is great for understanding
+how
+things work, but it's not so great for maintainability:</p>
+<ul>
+<li>UIs change</li>
+<li>&quot;Clicking&quot; stuff takes quite some time</li>
+<li>we can't automate anything</li>
+</ul>
+<p>Fortunately, we can also <strong>use <a href="#set-up-the-gcloud-cli-tool">the <code>gcloud</code> cli</a> for most of the
+tasks</strong>.</p>
+<!-- generated -->
+<p><a id='preconditions-project-and-owner-service-account'> </a></p>
+<!-- /generated -->
+<h3>Preconditions: Project and <code>Owner</code> service account</h3>
+<p>I'll assume that </p>
+<ul>
+<li><a href="#set-up-the-gcloud-cli-tool"><code>gcloud</code> is installed</a></li>
+<li>a <a href="#set-up-a-gcp-project">GCP project</a> exists</li>
+</ul>
+<p>In addition, I'll manually <a href="#create-a-service-account">create a new &quot;master&quot; service account</a>
+and assign it
+<a href="https://cloud.google.com/iam/docs/understanding-roles#basic-definitions">the role <code>Owner</code></a>.
+We'll use that service account in the <code>gcloud</code> cli to enable all the APIs and manage the
+resources. </p>
+<p>FYI: We could also do this with our personal GCP user, but I plan to use <code>terraform</code> in a later
+tutorial which will require a service account anyway.</p>
+<p>We will use <code>docker-php-tutorial-master</code> as service account ID and store the key file of the
+account at the root of the codebase under <code>gcp-master-service-account-key.json</code>
+(which is also added to the <code>.gitignore</code> file).</p>
+<!-- generated -->
+<p><a id='configure-gcloud-to-use-the-master-service-account'> </a></p>
+<!-- /generated -->
+<h3>Configure <code>gcloud</code> to use the master service account</h3>
+<p>Run </p>
+<pre><code class="language-bash">gcloud auth activate-service-account --key-file=./gcp-master-service-account-key.json --project=pl-dofroscra-p</code></pre>
+<pre><code class="language-text">$ gcloud auth activate-service-account --key-file=./gcp-master-service-account-key.json --project=pl-dofroscra-p
+Activated service account credentials for: [docker-php-tutorial-master@pl-dofroscra-p.iam.gserviceaccount.com]</code></pre>
+<!-- generated -->
+<p><a id='enable-apis'> </a></p>
+<!-- /generated -->
+<h3>Enable APIs</h3>
+<p>APIs can be enabled via <a href="https://cloud.google.com/sdk/gcloud/reference/services/enable"><code>gcloud services enable $serviceName</code></a>,
+(see also the <a href="https://cloud.google.com/endpoints/docs/openapi/enable-api">Docu on &quot;Enabling an API in your Google Cloud project&quot;</a>).</p>
+<p>The <code>$serviceName</code> is shown on the API overview page of a service, see the following example for
+the <a href="https://console.cloud.google.com/marketplace/product/google/containerregistry.googleapis.com">Container Registry</a></p>
+<p><a href="/img/gcp-compute-instance-vm-docker/gcp-api-service-name.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-api-service-name.PNG" alt="Find the service name of an API" /></a></p>
+<p>We need the APIs for</p>
+<ul>
+<li>Container Registry: <code>containerregistry.googleapis.com</code></li>
+<li>Secret Manager: <code>secretmanager.googleapis.com</code></li>
+<li>Compute Engine: <code>compute.googleapis.com</code></li>
+<li>IAM: <code>iam.googleapis.com</code></li>
+<li>Cloud Storage: <code>storage.googleapis.com</code></li>
+<li>Cloud Resource Manager: <code>cloudresourcemanager.googleapis.com</code></li>
+</ul>
+<pre><code class="language-bash">gcloud services enable containerregistry.googleapis.com secretmanager.googleapis.com compute.googleapis.com iam.googleapis.com storage.googleapis.com cloudresourcemanager.googleapis.com</code></pre>
+<pre><code class="language-text">$ gcloud services enable containerregistry.googleapis.com secretmanager.googleapis.com compute.googleapis.com iam.googleapis.com storage.googleapis.com cloudresourcemanager.googleapis.com
+Operation "operations/acat.p2-386551299607-87333b29-c7eb-40b8-b951-8c86185bbf49" finished successfully.</code></pre>
+<!-- generated -->
+<p><a id='create-and-configure-a-deployment-service-account'> </a></p>
+<!-- /generated -->
+<h3>Create and configure a &quot;deployment&quot; service account</h3>
+<p>We won't use the master <code>Owner</code> service account for the deployment but create a custom one with
+only the necessary permissions.</p>
+<p>Service accounts are created via
+<a href="https://cloud.google.com/sdk/gcloud/reference/service-accounts/create"><code>gcloud iam service-accounts create $serviceAccountId</code></a>,
+(see also the <a href="https://cloud.google.com/iam/docs/creating-managing-service-accounts">Docu on &quot;Creating and managing service accounts&quot;</a>).</p>
+<p>The <code>$serviceAccountId</code> is the <strong>id of the service account</strong>, e.g.
+<a href="#create-a-service-account"><code>docker-php-tutorial-deployment</code> in our previous example</a>. In
+addition, we can define a <code>--description</code> and a <code>--display-name</code>.</p>
+<pre><code class="language-bash">gcloud iam service-accounts create docker-php-tutorial-deployment \
+  --description="Used for the deployment of the Docker PHP Tutorial application" \
+  --display-name="Docker PHP Tutorial Deployment Account"</code></pre>
+<pre><code class="language-text">$ gcloud iam service-accounts create docker-php-tutorial-deployment \
+&gt;   --description="Used for the deployment of the Docker PHP Tutorial application" \
+&gt;   --display-name="Docker PHP Tutorial Deployment Account"
+Created service account [docker-php-tutorial-deployment].</code></pre>
+<p>Then, we need a <strong>key file</strong> for authentication. It can be created via
+<a href="https://cloud.google.com/sdk/gcloud/reference/service-accounts/keys/create"><code>gcloud iam service-accounts keys create $localPathToKeyFile --iam-account=$serviceAccountEmail</code></a>
+(see also the <a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys">Docu on &quot;Create and manage service account keys&quot;</a>).</p>
+<p>The <code>$localPathToKeyFile</code> is used to <strong>store the key file locally</strong>, e.g.
+<a href="#create-service-account-key-file"><code>gcp-service-account-key.json</code> in our previous example</a> and
+<code>$serviceAccountEmail</code> is the email address of the service account. It has the form</p>
+<pre><code class="language-text">$serviceAccountId@$projectId.iam.gserviceaccount.com
+
+e.g.
+
+docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-bash">gcloud iam service-accounts keys create ./gcp-service-account-key.json \
+  --iam-account=docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com</code></pre>
+<pre><code class="language-text">$ gcloud iam service-accounts keys create ./gcp-service-account-key.json \
+&gt;   --iam-account=docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+created key [810df0c6df21de44dc5e431d2b569d74555ba3f9] of type [json] as [./gcp-service-account-key.json] for [docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com]</code></pre>
+<p>Finally, we must <a href="#configure-iam-permissions">assign the required IAM roles</a> via
+<a href="https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/add-iam-policy-binding"><code>gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=$roleId</code></a>,
+(see also the <a href="https://cloud.google.com/iam/docs/granting-changing-revoking-access#grant-single-role">Docu on &quot;Manage access to projects, folders, and organizations&quot;</a>).</p>
+<p>The <code>$projectName</code> is the <strong>name of the GCP project</strong>, <code>$serviceAccountEmail</code> the email address
+from before and the <code>$roleId</code> the <strong>name of the role</strong> as listed under
+<a href="https://cloud.google.com/iam/docs/understanding-roles">Understanding roles</a>. In our case that's:</p>
+<ul>
+<li>Storage Admin: <code>roles/storage.admin</code></li>
+<li>Secret Manager Admin: <code>roles/secretmanager.admin</code></li>
+<li>Compute Admin: <code>roles/compute.admin</code></li>
+<li>Service Account User: <code>roles/iam.serviceAccountUser</code></li>
+<li>IAP-secured Tunnel User: <code>roles/iap.tunnelResourceAccessor</code></li>
+</ul>
+<pre><code class="language-text">projectName="pl-dofroscra-p"
+serviceAccountEmail="docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com"
+
+gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=roles/storage.admin
+gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=roles/secretmanager.admin
+gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=roles/compute.admin
+gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=roles/iam.serviceAccountUser
+gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=roles/iap.tunnelResourceAccessor</code></pre>
+<pre><code class="language-text">$ projectName="pl-dofroscra-p"
+$ serviceAccountEmail="docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com"
+$ gcloud projects add-iam-policy-binding $projectName --member=serviceAccount:$serviceAccountEmail --role=roles/storage.admin
+Updated IAM policy for project [pl-dofroscra-p].
+bindings:
+- members:
+  - serviceAccount:service-386551299607@compute-system.iam.gserviceaccount.com
+  role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-386551299607@containerregistry.iam.gserviceaccount.com
+  role: roles/containerregistry.ServiceAgent
+- members:
+  - serviceAccount:386551299607-compute@developer.gserviceaccount.com
+  - serviceAccount:386551299607@cloudservices.gserviceaccount.com
+  role: roles/editor
+- members:
+  - serviceAccount:docker-php-tutorial-master@pl-dofroscra-p.iam.gserviceaccount.com
+  - user:pascal.landau@gmail.com
+  role: roles/owner
+- members:
+  - serviceAccount:service-386551299607@gcp-sa-pubsub.iam.gserviceaccount.com
+  role: roles/pubsub.serviceAgent
+- members:
+  - serviceAccount:docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/storage.admin
+etag: BwXgKxHg7gA=
+version: 1
+
+# ...
+
+Updated IAM policy for project [pl-dofroscra-p].
+bindings:
+- members:
+  - serviceAccount:docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/compute.admin
+- members:
+  - serviceAccount:service-386551299607@compute-system.iam.gserviceaccount.com
+  role: roles/compute.serviceAgent
+- members:
+  - serviceAccount:service-386551299607@containerregistry.iam.gserviceaccount.com
+  role: roles/containerregistry.ServiceAgent
+- members:
+  - serviceAccount:386551299607-compute@developer.gserviceaccount.com
+  - serviceAccount:386551299607@cloudservices.gserviceaccount.com
+  role: roles/editor
+- members:
+  - serviceAccount:docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/iam.serviceAccountUser
+- members:
+  - serviceAccount:docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/iap.tunnelResourceAccessor
+- members:
+  - serviceAccount:docker-php-tutorial-master@pl-dofroscra-p.iam.gserviceaccount.com
+  - user:pascal.landau@gmail.com
+  role: roles/owner
+- members:
+  - serviceAccount:service-386551299607@gcp-sa-pubsub.iam.gserviceaccount.com
+  role: roles/pubsub.serviceAgent
+- members:
+  - serviceAccount:docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/secretmanager.admin
+- members:
+  - serviceAccount:docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/storage.admin
+etag: BwXgKxm0Vtk=
+version: 1</code></pre>
+<!-- generated -->
+<p><a id='create-secrets'> </a></p>
+<!-- /generated -->
+<h3>Create secrets</h3>
+<p>Secrets are created via <a href="https://cloud.google.com/sdk/gcloud/reference/secrets/create"><code>gcloud secrets create $secretId"</code></a>,
+(see also the <a href="https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets">Docu on &quot;Creating and accessing secrets&quot;</a>).</p>
+<p>The <code>$secretId</code> is the <strong>name of the secret</strong>, e.g.
+<a href="#create-a-secret-via-the-ui"><code>my_secret_key</code> in our previous example</a>, and we must also add a
+new version with the <strong>value of the secret</strong> via
+<a href="https://cloud.google.com/sdk/gcloud/reference/secrets/versions/add"><code>gcloud secrets versions add $secretId --data-file="/path/to/file.txt"</code></a>.</p>
+<pre><code class="language-bash">gcloud secrets create my_secret_key
+
+echo -n "my_secret_value" | gcloud secrets versions add my_secret_key --data-file=-</code></pre>
+<pre><code class="language-text">$ gcloud secrets create my_secret_key
+Created secret [my_secret_key].
+
+$ echo -n "my_secret_value" | gcloud secrets versions add my_secret_key --data-file=-
+Created version [1] of the secret [my_secret_key].</code></pre>
+<p>We also need to
+<a href="#add-the-secret-gpg-key-and-password">do the same for the <code>gpg</code> secret key and its password</a>:</p>
+<pre><code class="language-bash">gcloud secrets create GPG_KEY
+echo gcloud secrets versions add GPG_KEY --data-file=secret-production-protected.gpg.example
+
+gcloud secrets create GPG_PASSWORD
+echo -n "87654321" | gcloud secrets versions add GPG_PASSWORD --data-file=-</code></pre>
+<pre><code class="language-text">$ gcloud secrets create GPG_KEY
+Created secret [GPG_KEY].
+$ gcloud secrets versions add GPG_KEY --data-file=secret-production-protected.gpg.example
+Created version [1] of the secret [GPG_KEY].
+
+$ gcloud secrets create GPG_PASSWORD
+Created secret [GPG_PASSWORD].
+$ echo -n "87654321" | gcloud secrets versions add GPG_PASSWORD --data-file=-
+Created version [1] of the secret [GPG_PASSWORD].</code></pre>
+<!-- generated -->
+<p><a id='create-firewall-rule-for-http-traffic'> </a></p>
+<!-- /generated -->
+<h3>Create firewall rule for HTTP traffic</h3>
+<p>Firewall rules can be created via
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/firewall-rules/create"><code>gcloud compute firewall-rules create $ruleName</code></a>
+(see also the <a href="https://cloud.google.com/vpc/docs/using-firewalls#creating_firewall_rules">Docu on &quot;Using firewall rules&quot;</a>).</p>
+<p>We'll stick to
+<a href="#firewall-and-networks-tags">the same conventions that have been used when creating the VM via the UI</a>
+by using <code>default-allow-http</code> as the <code>$ruleName</code> and <code>http-server</code> as the network tag (via the
+<code>--target-tags</code> option)</p>
+<pre><code class="language-bash"> gcloud compute firewall-rules create default-allow-http --allow tcp:80 --target-tags=http-server</code></pre>
+<pre><code class="language-text">$ gcloud compute firewall-rules create default-allow-http --allow tcp:80 --target-tags=http-server
+Creating firewall...
+..Created [https://www.googleapis.com/compute/v1/projects/pl-dofroscra-p/global/firewalls/default-allow-http].
+done.
+NAME                NETWORK  DIRECTION  PRIORITY  ALLOW   DENY  DISABLED
+default-allow-http  default  INGRESS    1000      tcp:80        False
+</code></pre>
+<!-- generated -->
+<p><a id='create-a-compute-instance-vm'> </a></p>
+<!-- /generated -->
+<h3>Create a Compute Instance VM</h3>
+<p>Compute Instances can be created via
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/instances/create"><code>gcloud compute instances create $vmName</code></a>
+(see also the <a href="https://cloud.google.com/compute/docs/instances/create-start-instance#publicimage">Docu on &quot;Creating and starting a VM instance&quot;</a>).</p>
+<p>The <code>$vmName</code> defines the <strong>name of the VM</strong>, e.g.
+<a href="#create-a-vm"><code>dofroscra-test</code> in the previous example</a>. In addition, there are a lot of
+options to customize the VM, e.g.</p>
+<ul>
+<li><code>--image-family</code> and <code>--image-project</code>
+<ul>
+<li>define the <strong>operating system</strong>, e.g. <code>--image-family="debian-11"</code> and
+<code>--image-project=debian-cloud</code></li>
+<li>See <a href="https://cloud.google.com/compute/docs/images/os-details">Docu on &quot;Operating system details&quot;</a>
+for a list of available values</li>
+</ul></li>
+<li><code>--machine-type</code>
+<ul>
+<li>defines <strong>the machine type</strong> (i.e. the &quot;specs&quot; like CPUs and memory), e.g.
+<code>--machine-type=e2-micro</code></li>
+<li>See <a href="https://cloud.google.com/compute/docs/machine-types">Docu on &quot;About machine families&quot;</a>
+that contains links to the machine type categories with the concrete values, e.g. the
+<a href="https://cloud.google.com/compute/docs/general-purpose-machines">General-purpose machine family</a></li>
+</ul></li>
+<li>etc.</li>
+</ul>
+<p>The <a href="https://cloud.google.com/sdk/gcloud/reference/compute/instances/create">docu</a> is doing
+a great job at describing all available configuration options. Luckily, we can make our lives a
+little easier, <strong>configure the VM via UI</strong> and then click the <code>"EQUIVALENT COMMAND LINE"</code> button
+at the end of the page to get a <strong>copy-paste-ready <code>gcloud compute instances create</code> command</strong>.</p>
+<video controls>
+  <source src="/img/gcp-compute-instance-vm-docker/gcp-create-vm-from-cli.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</source></video>
+<p>Note that we are using <code>dofroscra-test</code> as the <strong>instance name</strong> and  <code>us-central1-a</code> as the
+<strong>zone</strong>.</p>
+<pre><code class="language-bash">gcloud compute instances create dofroscra-test \
+    --project=pl-dofroscra-p \
+    --zone=us-central1-a \
+    --machine-type=e2-micro \
+    --network-interface=network-tier=PREMIUM,subnet=default \
+    --no-restart-on-failure \
+    --maintenance-policy=TERMINATE \
+    --provisioning-model=SPOT \
+    --instance-termination-action=STOP \
+    --service-account=docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com \
+    --scopes=https://www.googleapis.com/auth/cloud-platform \
+    --tags=http-server \
+    --create-disk=auto-delete=yes,boot=yes,device-name=dofroscra-test,image=projects/debian-cloud/global/images/debian-11-bullseye-v20220519,mode=rw,size=10,type=projects/pl-dofroscra-p/zones/us-central1-a/diskTypes/pd-balanced \
+    --no-shielded-secure-boot \
+    --shielded-vtpm \
+    --shielded-integrity-monitoring \
+    --reservation-affinity=any</code></pre>
+<pre><code class="language-text">Created [https://www.googleapis.com/compute/v1/projects/pl-dofroscra-p/zones/us-central1-a/instances/dofroscra-test-1].
+
+NAME            ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP     STATUS
+dofroscra-test  us-central1-a  e2-small      true         10.128.0.2   34.122.227.169  RUNNING</code></pre>
+<!-- generated -->
+<p><a id='provisioning'> </a></p>
+<!-- /generated -->
+<h3>Provisioning</h3>
+<p>For provisioning, we need to <a href="#installing-docker-and-docker-compose">install <code>docker</code></a> and
+<a href="#authenticate-docker-via-gcloud">authenticate the <code>root</code> user to pull images from our registry</a>.
+We've already created an installation script at <code>.infrastructure/scripts/provision.sh</code> and the
+easiest way to run it on the VM is to <a href="#gcloud-scp">transmit it via <code>scp</code></a></p>
+<pre><code class="language-bash">gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./.infrastructure/scripts/provision.sh dofroscra-test:provision.sh</code></pre>
+<pre><code class="language-text">$ gcloud compute scp --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p ./.infrastructure/scripts/provision.sh dofroscra-test:provision.sh
+provision.sh              | 0 kB |   0.7 kB/s | ETA: 00:00:00 | 100%</code></pre>
+<p>The previous command transmitted the script in the home directory of the user, and we can now
+execute it via</p>
+<pre><code class="language-bash">gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="bash provision.sh"</code></pre>
+<pre><code class="language-text">$ gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="bash provision.sh"
+Hit:1 https://download.docker.com/linux/debian bullseye InRelease
+Hit:2 http://packages.cloud.google.com/apt cloud-sdk-bullseye InRelease
+# ...
+The following additional packages will be installed:
+  dbus-user-session docker-ce-rootless-extras docker-scan-plugin git git-man
+  libcurl3-gnutls liberror-perl libgdbm-compat4 libltdl7 libperl5.32 libslirp0
+  patch perl perl-modules-5.32 pigz slirp4netns
+Suggested packages:
+  aufs-tools cgroupfs-mount | cgroup-lite git-daemon-run | git-daemon-sysvinit
+  git-doc git-el git-email git-gui gitk gitweb git-cvs git-mediawiki git-svn
+  ed diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl make libtap-harness-archive-perl
+The following NEW packages will be installed:
+  containerd.io dbus-user-session docker-ce docker-ce-cli
+  docker-ce-rootless-extras docker-compose-plugin docker-scan-plugin git
+  git-man libcurl3-gnutls liberror-perl libgdbm-compat4 libltdl7 libperl5.32
+  libslirp0 patch perl perl-modules-5.32 pigz slirp4netns
+0 upgraded, 20 newly installed, 0 to remove and 6 not upgraded.
+Need to get 124 MB of archives.
+After this operation, 535 MB of additional disk space will be used.
+# ...
+Setting up docker-ce (5:20.10.16~3-0~debian-bullseye) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /lib/systemd/system/docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /lib/systemd/system/docker.socket.
+Setting up liberror-perl (0.17029-1) ...
+Setting up git (1:2.30.2-1) ...
+Processing triggers for man-db (2.9.4-2) ...
+Processing triggers for libc-bin (2.31-13+deb11u3) ...</code></pre>
+<p>Once <code>docker</code> is installed, we can run the authentication of the <code>root</code> user using
+<a href="https://unix.stackexchange.com/a/87861"><code>sudo su root -c</code></a> via</p>
+<pre><code class="language-bash">gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="sudo su root -c 'gcloud auth configure-docker --quiet'"</code></pre>
+<pre><code class="language-text">$ gcloud compute ssh dofroscra-test --zone us-central1-a --tunnel-through-iap --project=pl-dofroscra-p --command="sudo su root -c 'gcloud auth configure-docker --quiet'"
+Adding credentials for all GCR repositories.
+WARNING: A long list of credential helpers may cause delays running 'docker build'. We recommend passing the registry name to configure only the registry you are using.
+gcloud credential helpers already registered correctly.</code></pre>
+<!-- generated -->
+<p><a id='deployment'> </a></p>
+<!-- /generated -->
+<h3>Deployment</h3>
+<p>We're almost done - the last step in the process consists of </p>
+<ul>
+<li>
+<p>building the docker image locally using the correct tag <code>gcr.io/pl-dofroscra-p/my-nginx</code></p>
+<pre><code class="language-bash">docker build -t "gcr.io/pl-dofroscra-p/my-nginx" -f - . &lt;&lt;EOF
+FROM nginx:1.21.5-alpine
+
+RUN echo "Hello world" &gt;&gt; /usr/share/nginx/html/hello.html
+
+EOF</code></pre>
+<pre><code class="language-text">$ docker build -t "gcr.io/pl-dofroscra-p/my-nginx" --no-cache -f - . &lt;&lt;EOF
+FROM nginx:1.21.5-alpine
+RUN echo "Hello world" &gt;&gt; /usr/share/nginx/html/hello.html
+EOF
+
+#1 [internal] load build definition from Dockerfile
+#1 sha256:21ee68236cc00e4d1638480de32fd6304d796e6a72306082d3164e9164073843
+
+#...
+
+#5 [2/2] RUN echo "Hello world" &gt;&gt; /usr/share/nginx/html/hello.html
+#5 sha256:72dee3f3637a6b78ff7e50591e3e9108e2b93eee09443e19890f9cb36b35bdc6
+#5 DONE 0.5s
+
+#6 exporting to image
+#6 sha256:e8c613e07b0b7ff33893b694f7759a10d42e180f2b4dc349fb57dc6b71dcab00
+#6 exporting layers 0.1s done
+#6 writing image sha256:d0b23a80ebd7311953eeff3818b58007e8747e531e0128eef820f39105f9f1fe done
+#6 naming to gcr.io/pl-dofroscra-p/my-nginx done
+#6 DONE 0.1s</code></pre>
+</li>
+<li>
+<p>local authentication</p>
+<pre><code class="language-bash">cat ./gcp-service-account-key.json | docker login -u _json_key --password-stdin https://gcr.io</code></pre>
+<pre><code class="language-text">$ cat ./gcp-service-account-key.json | docker login -u _json_key --password-stdin https://gcr.io
+Login Succeeded
+
+Logging in with your password grants your terminal complete access to your account.
+For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/</code></pre>
+</li>
+<li><a href="#pushing-images-to-the-registry">pushing it to the registry</a>
+<pre><code class="language-bash">docker push gcr.io/pl-dofroscra-p/my-nginx</code></pre>
+<pre><code class="language-text">$ docker push gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+The push refers to repository [gcr.io/pl-dofroscra-1/my-nginx]
+ad4683501621: Preparing
+# ...
+ad4683501621: Pushed
+latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775</code></pre></li>
+<li>and &quot;deploying it on the VM&quot;</li>
+</ul>
+<p>For the last step we will once again use a script that we transmit to the VM:
+<code>.infrastructure/scripts/deploy.sh</code></p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+usage="Usage: deploy.sh image_name"
+[ -z "$1" ] &amp;&amp;  echo "No image_name given! $usage" &amp;&amp; exit 1
+
+image_name=$1
+container_name=nginx
+
+echo "Pulling '${image_name}' from registry"
+sudo docker pull "${image_name}"
+
+echo "Starting container"
+sudo docker kill "${container_name}"; sudo docker run --name "${container_name}" -p 80:80 --rm -d "${image_name}"
+
+echo "Getting secret GPG_KEY"
+gcloud secrets versions access latest --secret=GPG_KEY &gt;&gt; ./secret.gpg
+head ./secret.gpg
+
+echo "Getting secret GPG_PASSWORD"
+GPG_PASSWORD=$(gcloud secrets versions access latest --secret=GPG_PASSWORD)
+echo $GPG_PASSWORD</code></pre>
+<p>The script will <a href="#pulling-the-nginx-image">pull the image <em>on the VM</em></a> from the registry</p>
+<pre><code class="language-text">$ sudo docker pull 'gcr.io/pl-dofroscra-p/my-nginx'
+Using default tag: latest
+latest: Pulling from pl-dofroscra-p/my-nginx
+# ...
+Digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4
+Status: Downloaded newer image for gcr.io/pl-dofroscra-p/my-nginx:latest
+gcr.io/pl-dofroscra-p/my-nginx:latest</code></pre>
+<p><a href="#start-the-nginx-container">start a container</a> with the image </p>
+<pre><code class="language-text">$ docker kill "${container_name}"; sudo docker run --name "${container_name}" -p 80:80 --rm -d "${image_name}"
+Error response from daemon: Cannot kill container: nginx: No such container: nginx
+8ac0cc055041e18d3ce244ded49c82be985e580c2c9f316c6d6ef7c7bf3bc0b5</code></pre>
+<p>and finally <a href="#get-the-secret-gpg-key-and-password-from-the-secret-manager">retrieve the secrets</a>
+(just to demonstrate that it works)</p>
+<pre><code class="language-text">$ gcloud secrets versions access latest --secret=GPG_KEY &gt;&gt; ./secret.gpg
+$ head ./secret.gpg
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+lQPGBGKA1psBCACq5zYDT587CVZEIWXbUplfAGQZOQJALmzErYpTp0jt+rp4vJhR
+U5xahy3pqCq81Cnny5YME50ybB3pW/WcHxWLBDo+he8PKeLbp6wFFjJns+3u4opH
+9gFMElyHpzTGiDQYfx/CgY2hKz7GSqpjmnOaKxYvGv0EsbZczyHY1WIN/YFzb0tI
+tY7J4zTSH05I+aazRdHyn28QcCRcIT9+4q+5Vk8gz8mmgoqVpyeNgQcqJjcd03iP
+WUZd1vZCumOvdG5PZNlc/wPFhqLDmYyLmJ7pt5bWIgty9BjYK8Z2NOdUaekqVEJ+
+r29HbzwgFLLE2gd52f07h2y2YgMdWdz4FDxVABEBAAH+BwMC9veBYT2oigXxExLl
+7fZKVjw02lEr1NpYd5X1ge9WPU/1qumATJWounzciiETpsYGsbPd9zFRJP4E3JZl
+sFSh4p0/kXYTuenYD8wgGkeYyN4lm53IHfqSn2z9JMW5Kz9XEODtKJl8fjcn9Zeb
+
+$ GPG_PASSWORD=$(gcloud secrets versions access latest --secret=GPG_PASSWORD)
+$ echo $GPG_PASSWORD
+87654321</code></pre>
+<p>Bonus: For
+<a href="https://cloud.google.com/compute/docs/instances/view-ip-address">retrieving the puplic IP address of the Compute Instance VM</a>
+we can use the <a href="https://cloud.google.com/sdk/gcloud/reference/compute/instances/describe"><code>gcloud compute instances describe $instanceName</code></a> command:</p>
+<pre><code class="language-bash">gcloud compute instances describe dofroscra-test --zone us-central1-a --project=pl-dofroscra-p --format='get(networkInterfaces[0].accessConfigs[0].natIP)'</code></pre>
+<pre><code class="language-text">$ ip=$(gcloud compute instances describe dofroscra-test --zone us-central1-a --project=pl-dofroscra-p --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+$ echo $ip
+35.224.250.208
+$ curl -s "http://${ip}/hello.html"
+Hello world</code></pre>
+<!-- generated -->
+<p><a id='putting-it-all-together'> </a></p>
+<!-- /generated -->
+<h2>Putting it all together</h2>
+<p>Since none of the previous steps requires manual intervention any longer, I have created a
+script at <code>.infrastructure/setup-gcp.sh</code> to run everything from
+<a href="#configure-gcloud-to-use-the-master-service-account">Configure <code>gcloud</code> to use the master service account</a>
+to <a href="#provisioning">Provisioning</a>:</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+usage="Usage: deploy.sh project_id vm_name"
+[ -z "$1" ] &amp;&amp;  echo "No project_id given! $usage" &amp;&amp; exit 1
+[ -z "$2" ] &amp;&amp;  echo "No vm_name given! $usage" &amp;&amp; exit 1
+
+GREEN="\033[0;32m"
+NO_COLOR="\033[0m"
+
+project_id=$1
+vm_name=$2
+vm_zone=us-central1-a
+master_service_account_key_location=./gcp-master-service-account-key.json
+deployment_service_account_id=deployment
+deployment_service_account_key_location=./gcp-service-account-key.json
+deployment_service_account_mail="${deployment_service_account_id}@${project_id}.iam.gserviceaccount.com"
+gpg_secret_key_location=secret-production-protected.gpg.example
+gpg_secret_key_password=87654321
+
+printf "${GREEN}Setting up GCP project for${NO_COLOR}\n"
+echo "==="
+echo "project_id: ${project_id}"
+echo "vm_name:    ${vm_name}"
+
+printf "${GREEN}Activating master service account${NO_COLOR}\n"
+gcloud auth activate-service-account --key-file="${master_service_account_key_location}" --project="${project_id}"
+
+printf "${GREEN}Enabling APIs${NO_COLOR}\n"
+gcloud services enable \
+  containerregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  compute.googleapis.com \
+  iam.googleapis.com \
+  storage.googleapis.com \
+  cloudresourcemanager.googleapis.com
+
+printf "${GREEN}Creating deployment service account with id '${deployment_service_account_id}'${NO_COLOR}\n"
+gcloud iam service-accounts create "${deployment_service_account_id}" \
+  --description="Used for the deployment application" \
+  --display-name="Deployment Account"
+
+printf "${GREEN}Creating JSON key file for deployment service account at ${deployment_service_account_key_location}${NO_COLOR}\n"
+gcloud iam service-accounts keys create "${deployment_service_account_key_location}" \
+  --iam-account="${deployment_service_account_mail}"
+
+printf "${GREEN}Adding roles for service account${NO_COLOR}\n"  
+roles="storage.admin secretmanager.admin compute.admin iam.serviceAccountUser iap.tunnelResourceAccessor"
+
+for role in $roles; do
+  gcloud projects add-iam-policy-binding "${project_id}" --member=serviceAccount:"${deployment_service_account_mail}" "--role=roles/${role}"
+done;
+
+printf "${GREEN}Creating secrets${NO_COLOR}\n"
+gcloud secrets create GPG_KEY
+echo gcloud secrets versions add GPG_KEY --data-file="${gpg_secret_key_location}"
+
+gcloud secrets create GPG_PASSWORD
+echo -n "${gpg_secret_key_password}" | gcloud secrets versions add GPG_PASSWORD --data-file=-
+
+printf "${GREEN}Creating firewall rule to allow HTTP traffic${NO_COLOR}\n"
+gcloud compute firewall-rules create default-allow-http --allow tcp:80 --target-tags=http-server
+
+printf "${GREEN}Creating a Compute Instance VM${NO_COLOR}\n"
+gcloud compute instances create "${vm_name}" \
+    --project="${project_id}" \
+    --zone="${vm_zone}" \
+    --machine-type=e2-micro \
+    --network-interface=network-tier=PREMIUM,subnet=default \
+    --no-restart-on-failure \
+    --maintenance-policy=TERMINATE \
+    --provisioning-model=SPOT \
+    --instance-termination-action=STOP \
+    --service-account="${deployment_service_account_mail}" \
+    --scopes=https://www.googleapis.com/auth/cloud-platform \
+    --tags=http-server \
+    --create-disk=auto-delete=yes,boot=yes,device-name="${vm_name}",image=projects/debian-cloud/global/images/debian-11-bullseye-v20220519,mode=rw,size=10,type=projects/"${project_id}"/zones/"${vm_zone}"/diskTypes/pd-balanced \
+    --no-shielded-secure-boot \
+    --shielded-vtpm \
+    --shielded-integrity-monitoring \
+    --reservation-affinity=any
+
+printf "${GREEN}Activating deployment service account${NO_COLOR}\n"
+gcloud auth activate-service-account --key-file="${deployment_service_account_key_location}" --project="${project_id}"
+
+printf "${GREEN}Transferring provisioning script${NO_COLOR}\n"
+echo "Waiting 60s for the instance to be fully ready to receive IAP connections"
+sleep 60
+gcloud compute scp --zone ${vm_zone} --tunnel-through-iap --project=${project_id} ./.infrastructure/scripts/provision.sh ${vm_name}:provision.sh
+
+printf "${GREEN}Executing provisioning script${NO_COLOR}\n"
+gcloud compute ssh ${vm_name} --zone ${vm_zone} --tunnel-through-iap --project=${project_id} --command="bash provision.sh"
+
+printf "${GREEN}Authenticating docker via gcloud in the VM${NO_COLOR}\n"
+gcloud compute ssh ${vm_name} --zone ${vm_zone} --tunnel-through-iap --project=${project_id} --command="sudo su root -c 'gcloud auth configure-docker --quiet'"
+
+printf "\n\n${GREEN}Provisioning done!${NO_COLOR}\n"</code></pre>
+<pre><code class="language-text">$ bash .infrastructure/setup-gcp.sh pl-dofroscra-p dofroscra-test
+Setting up GCP project for
+===
+project_id: pl-dofroscra-p
+vm_name:    dofroscra-test
+Activating master service account
+Activated service account credentials for: [master@pl-dofroscra-p.iam.gserviceaccount.com]
+Enabling APIs
+Operation "operations/acf.p2-305055072470-625a52a9-96a7-4e2f-831e-a76491c8882c" finished successfully.
+Creating deployment service account with id 'deployment'
+Created service account [deployment].
+Creating JSON key file for deployment service account at ./gcp-service-account-key.json
+created key [fa74d605f5891a6f875a2663b6beeea425730b5b] of type [json] as [./gcp-service-account-key.json] for [deployment@pl-dofroscra-p.iam.gserviceaccount.com]
+Adding roles for service account
+Updated IAM policy for project [pl-dofroscra-p].
+bindings:
+# ...
+- members:
+  - serviceAccount:deployment@pl-dofroscra-p.iam.gserviceaccount.com
+  role: roles/storage.admin
+etag: BwXgw51MPTM=
+version: 1
+Creating secrets
+Created secret [GPG_KEY].
+Created version [1] of the secret [GPG_KEY].
+Created secret [GPG_PASSWORD].
+Created version [1] of the secret [GPG_PASSWORD].
+Creating firewall rule to allow HTTP traffic
+Creating firewall...
+..Created [https://www.googleapis.com/compute/v1/projects/pl-dofroscra-p/global/firewalls/default-allow-http].
+done.
+Creating a Compute Instance VM
+Created [https://www.googleapis.com/compute/v1/projects/pl-dofroscra-p/zones/us-central1-a/instances/dofroscra-test].
+NAME        ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+dofroscra-test  us-central1-a  e2-micro      true         10.128.0.2   34.70.213.101  RUNNING
+Activating deployment service account
+Activated service account credentials for: [deployment@pl-dofroscra-p.iam.gserviceaccount.com]
+Transferring provisioning script
+Updating project ssh metadata...
+..........................................................................Updated [https://www.googleapis.com/compute/v1/projects/pl-dofroscra-p].
+.done.
+Waiting for SSH key to propagate.
+# ...
+provision.sh              | 0 kB |   0.7 kB/s | ETA: 00:00:00 | 100%)
+Executing provisioning script
+Get:1 http://security.debian.org/debian-security bullseye-security InRelease [44.1 kB]
+# ...
+Processing triggers for man-db (2.9.4-2) ...
+Processing triggers for libc-bin (2.31-13+deb11u3) ...
+Authenticating docker via gcloud in the VM
+# ...
+Adding credentials for all GCR repositories.
+WARNING: A long list of credential helpers may cause delays running 'docker build'. We recommend passing the registry name to configure only the registry you are using.
+Docker configuration file updated.
+
+Provisioning done!</code></pre>
+<p>In addition, I also created a script for the <a href="#deployment">Deployment</a> at
+<code>.infrastructure/deploy.sh</code>:</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+usage="Usage: deploy.sh project_id vm_name"
+[ -z "$1" ] &amp;&amp;  echo "No project_id given! $usage" &amp;&amp; exit 1
+[ -z "$2" ] &amp;&amp;  echo "No vm_name given! $usage" &amp;&amp; exit 1
+
+GREEN="\033[0;32m"
+NO_COLOR="\033[0m"
+
+project_id=$1
+vm_name=$2
+vm_zone=us-central1-a
+image_name="gcr.io/${project_id}/nginx:latest"  
+container_name=nginx
+deployment_service_account_key_location=./gcp-service-account-key.json
+
+printf "${GREEN}Building nginx docker image with name '${image_name}'${NO_COLOR}\n"
+docker build -t "${image_name}" -f - . &lt;&lt;EOF
+FROM nginx:1.21.5-alpine
+
+RUN echo "Hello world" &gt;&gt; /usr/share/nginx/html/hello.html
+
+EOF
+
+printf "${GREEN}Authenticating docker${NO_COLOR}\n"
+cat "${deployment_service_account_key_location}" | docker login -u _json_key --password-stdin https://gcr.io
+
+printf "${GREEN}Pushing '${image_name}' to registry${NO_COLOR}\n"
+docker push "${image_name}"
+
+printf "${GREEN}Transferring deployment script${NO_COLOR}\n"
+gcloud compute scp --zone ${vm_zone} --tunnel-through-iap --project=${project_id} ./.infrastructure/scripts/deploy.sh ${vm_name}:deploy.sh
+
+printf "${GREEN}Executing deployment script${NO_COLOR}\n"
+gcloud compute ssh ${vm_name} --zone ${vm_zone} --tunnel-through-iap --project=${project_id} --command="bash deploy.sh '${image_name}'"
+
+printf "${GREEN}Retrieving external IP of the VM${NO_COLOR}\n"
+ip_address=$(gcloud compute instances describe ${vm_name} --zone ${vm_zone} --project=${project_id} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+printf "http://${ip_address}/hello.html\n"
+
+printf "\n\n${GREEN}Deployment done!${NO_COLOR}\n"</code></pre>
+<pre><code class="language-text">$ bash .infrastructure/deploy.sh pl-dofroscra-p dofroscra-test
+Building nginx docker image with name 'gcr.io/pl-dofroscra-p/nginx:latest'
+#...
+#7 writing image sha256:65ff457111599e3f4dd439138b052cff74f10e3332c593178d8288aebb88bb1c done
+#7 naming to gcr.io/pl-dofroscra-p/nginx:latest done
+#7 DONE 0.0s
+
+Use 'docker scan' to run Snyk tests against images to find vulnerabilities and learn how to fix them
+Authenticating docker
+Login Succeeded
+
+Logging in with your password grants your terminal complete access to your account.
+For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/
+Pushing 'gcr.io/pl-dofroscra-p/nginx:latest' to registry
+The push refers to repository [gcr.io/pl-dofroscra-p/nginx]
+ad4683501621: Preparing
+# ...
+1c9c1e42aafa: Pushed
+latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775
+Transferring deployment script
+deploy.sh                 | 0 kB |   0.6 kB/s | ETA: 00:00:00 | 100%
+Executing deployment script
+Pulling 'gcr.io/pl-dofroscra-p/nginx:latest' from registry
+latest: Pulling from pl-dofroscra-p/nginx
+Digest: sha256:f17a9092051c389abf76d254e4d564dbd7a814eb21e3cc47b667db301aa9b497
+# ...
+gcr.io/pl-dofroscra-p/nginx:latest
+Starting container
+nginx
+58c0a34ca44c9bec97c991bdc69d2353ed75f4214f221e444da36e195a215c75
+Getting secret GPG_KEY
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+lQPGBGKA1psBCACq5zYDT587CVZEIWXbUplfAGQZOQJALmzErYpTp0jt+rp4vJhR
+U5xahy3pqCq81Cnny5YME50ybB3pW/WcHxWLBDo+he8PKeLbp6wFFjJns+3u4opH
+9gFMElyHpzTGiDQYfx/CgY2hKz7GSqpjmnOaKxYvGv0EsbZczyHY1WIN/YFzb0tI
+tY7J4zTSH05I+aazRdHyn28QcCRcIT9+4q+5Vk8gz8mmgoqVpyeNgQcqJjcd03iP
+WUZd1vZCumOvdG5PZNlc/wPFhqLDmYyLmJ7pt5bWIgty9BjYK8Z2NOdUaekqVEJ+
+r29HbzwgFLLE2gd52f07h2y2YgMdWdz4FDxVABEBAAH+BwMC9veBYT2oigXxExLl
+7fZKVjw02lEr1NpYd5X1ge9WPU/1qumATJWounzciiETpsYGsbPd9zFRJP4E3JZl
+sFSh4p0/kXYTuenYD8wgGkeYyN4lm53IHfqSn2z9JMW5Kz9XEODtKJl8fjcn9Zeb
+Getting secret GPG_PASSWORD
+87654321
+Retrieving external IP of the VM
+http://34.70.213.101/hello.html
+
+Deployment done!</code></pre>
+<!-- generated -->
+<p><a id='cleanup'> </a></p>
+<!-- /generated -->
+<h2>Cleanup</h2>
+<p>The easiest way to &quot;cleanup everything&quot; that might create any costs, e.g.</p>
+<ul>
+<li>the docker images stored on Cloud Storage</li>
+<li>the secrets in the Secret Manager</li>
+<li>the VM itself</li>
+</ul>
+<p>is to
+<a href="https://cloud.google.com/resource-manager/docs/creating-managing-projects#shutting_down_projects">delete the whole project</a>,
+e.g. via the <a href="https://console.cloud.google.com/iam-admin/settings">Settings UI</a></p>
+<video controls>
+  <source src="/img/gcp-compute-instance-vm-docker/gcp-shutdown-project.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</source></video>
+<p>FYI: GCP projects have 30-day-grace-period during that you can &quot;revert&quot; the deletion.</p>
+<!-- generated -->
+<p><a id='wrapping-up'> </a></p>
+<!-- /generated -->
+<h2>Wrapping up</h2>
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You should now be familiar enough with GCP to create a Compute Instance VM and
+configure it to run dockerized applications on it.</p>
+<p>In the next part of this tutorial, we will
+<a href="#">deploy our dockerized PHP application &quot;to production&quot; on GCP via <code>docker compose</code> (available at 2022-06-27)</a>.</p>
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>]]></description>
+                <pubDate>Mon, 20 Jun 2022 06:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/</guid>
+            </item>
                     <item>
                 <title>CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</title>
                 <description><![CDATA[<p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
 (Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
 Pipelines</strong>.</p>
-<div class="center-div">
+<div class="youtube center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+<div class="youtube center-div" style="display:none">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VsNvvt0CMm8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -1704,9 +3588,7 @@ PHPUNIT_ARGS= -c phpunit.xml --log-junit .build/report.xml</code></pre>
 leave a comment. You should now have a working CI pipeline for Github (via Github Actions)
 and/or Gitlab (via Gitlab pipelines) that runs automatically on each push.</p>
 <p>In the next part of this tutorial, we will
-<a href="/blog/deploy-docker-compose-php-gcp-poc">create a VM on GCP, deploy the docker setup there and run it via <code>docker compose</code> as a proof of concept</a>.</p>
-<p>use terraform to create an infrastructure for
-production deployments on GCP and deploy the docker containers there.</p>
+<a href="/blog/gcp-compute-instance-vm-docker/">create a VM on GCP and provision it to run dockerized applications</a>.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>]]></description>
                 <pubDate>Mon, 25 Apr 2022 07:00:00 +0000</pubDate>
@@ -1726,18 +3608,20 @@ This tutorial is a precursor to the next a part
 because dealing with secrets is an important aspect when setting up a CI system (and later when
 deploying to production) - but I feel it's complex enough to warrant its own article.
 </small></p>
+<div class="youtube" style="display:none">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pZ-vFMfKcLY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>.</p>
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-6-git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 and the following one is
 <a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
-to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 <p><a id='table-of-contents'> </a></p>
 <!-- /generated -->
@@ -2924,8 +4808,11 @@ this tutorial to be a part of
 because QA checks are imho vital part of a CI setup - but it kinda grew &quot;too big&quot; and took a way
 too much space from, well, actually setting up the CI pipelines :)
 </small></p>
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ocM4ktjqwIg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-5-php-qa-tools-make-docker">part-5-php-qa-tools-make-docker</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -3696,11 +5583,11 @@ notifications when this next part comes out :)</p>]]></description>
                 <description><![CDATA[<p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
 install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
 for the front end requests.</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/BpsBzpMD87c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -4434,11 +6321,11 @@ notifications when this next part comes out :)</p>]]></description>
 will <strong>setup our local development environment to be used by PhpStorm and Xdebug</strong>. We will also
 ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw
 the tool <code>strace</code> into the mix for debugging long running processes.</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/bZ1MiynqT98" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p>All code samples are publicly available in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -4928,11 +6815,11 @@ xdebug for all php containers (application, fpm and php workers)</li>
 <li>refactor the code to use Commands, Controllers, Queues, etc.</li>
 </ul></li>
 </ul>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NuSWKx9FSso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-1-docker-from-scratch-for-php-applications-in-2022">part-4-1-docker-from-scratch-for-php-applications-in-2022</a></p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -6064,11 +7951,11 @@ of a PHP project. Structure as in </p>
 </ul>
 <p>We will also create a minimal container setup consisting of php-fpm, nginx and a workspace container that we
 refactor from the previous parts of this tutorial.</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.
 The branch for this tutorial is
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_3_structuring-the-docker-setup-for-php-projects">part_3_structuring-the-docker-setup-for-php-projects</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -6476,7 +8363,7 @@ WORKSPACE_HOST_SSH_PORT=2222</code></pre>
 <h3><a id="building-and-running-the-containers"></a>Building and running the containers</h3>
 <p>By now, we should have everything we need set up to get our dockerized PHP development up and running. If
 you haven't done it already, now would be a great time to clone
-<a href="https://github.com/paslandau/docker-php-tutorial">the repository</a>
+<a href="https://github.com/paslandau/docker-php-tutorial/">the repository</a>
 and checkout the
 <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects"><code>part_3_structuring-the-docker-setup-for-php-projects</code> branch</a>:</p>
 <pre><code>git clone https://github.com/paslandau/docker-php-tutorial.git
@@ -6615,14 +8502,14 @@ make docker-test</code></pre>
 (click here <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#git-and-git-bash">to learn how to setup MinGW</a>)
 Setting is up is straight forward but as with &quot;everything UI&quot; it's easier if you can
 actually &quot;see what I'm doing&quot; - so here's a video:</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p>The steps are as follows:</p>
 <ul>
 <li>Set up <code>mingw-get</code>
 <ul>
-<li>Instructions: <a href="http://www.mingw.org/wiki/getting_started#toc5">http://www.mingw.org/wiki/getting_started#toc5</a></li>
+<li>Instructions: <a href="https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5">https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5</a></li>
 <li>Download: <a href="https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download">https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download</a></li>
 <li>Install and <a href="/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/#the-path-variable">add the <code>bin/</code> directory to <code>PATH</code> (shortcut <code>systempropertiesadvanced</code>)</a>.
 Notes: 
@@ -7187,7 +9074,7 @@ at PhpStorm, Xdebug and how to run and debug scripts from within PhpStorm on Doc
 <iframe width="560" height="315" src="https://www.youtube.com/embed/27KBaI24jKI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 </div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.
 The branch for this tutorial is
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker">part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -7225,7 +9112,7 @@ to get <strong>automatic notifications</strong> when the next part comes out :)<
 <p>We will only need the php-cli container for this part.
 Luckily, we already have a good understanding on how to create the container, although we'll need to make some
 adjustments to make everything work smoothly with PhpStorm. I'm gonna walk you through all the necessary changes,
-but I'd still recommend to clone the corresponding git repository <a href="https://github.com/paslandau/docker-php-tutorial">docker-php-tutorial</a>
+but I'd still recommend to clone the corresponding git repository <a href="https://github.com/paslandau/docker-php-tutorial/">docker-php-tutorial</a>
 (unless you've already done that in part 1), checkout branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker"><code>part_2_setting-up-phpstorm-with-xdebug-for-local-development-on-docker</code></a> and
 build the containers now.</p>
 <p>As in part 1, I'm assuming your codebase lives at <code>/c/codesbase</code>:</p>
@@ -7499,7 +9386,7 @@ files for php-fpm are located), but that are imho important to understand, becau
 solve problems later on your own. </p>
 <p>But if you are short on time, you might also jump directly to <a href="#tl-dr">the tl;dr</a>.</p>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.
 The branch for this tutorial is
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker">part_1_setting-up-php-php-fpm-and-nginx-for-local-development-on-docker</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at

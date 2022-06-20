@@ -152,11 +152,14 @@
                 <p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
 (Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
 Pipelines</strong>.</p>
-<div class="center-div">
+<div class="youtube center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+<div class="youtube center-div" style="display:none">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VsNvvt0CMm8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -1843,9 +1846,7 @@ PHPUNIT_ARGS= -c phpunit.xml --log-junit .build/report.xml</code></pre>
 leave a comment. You should now have a working CI pipeline for Github (via Github Actions)
 and/or Gitlab (via Gitlab pipelines) that runs automatically on each push.</p>
 <p>In the next part of this tutorial, we will
-<a href="/blog/deploy-docker-compose-php-gcp-poc">create a VM on GCP, deploy the docker setup there and run it via <code>docker compose</code> as a proof of concept</a>.</p>
-<p>use terraform to create an infrastructure for
-production deployments on GCP and deploy the docker containers there.</p>
+<a href="/blog/gcp-compute-instance-vm-docker/">create a VM on GCP and provision it to run dockerized applications</a>.</p>
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>                <hr />
                 <h3>Wanna stay in touch?</h3>

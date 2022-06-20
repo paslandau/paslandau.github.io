@@ -170,11 +170,11 @@ of a PHP project. Structure as in </p>
 </ul>
 <p>We will also create a minimal container setup consisting of php-fpm, nginx and a workspace container that we
 refactor from the previous parts of this tutorial.</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.
 The branch for this tutorial is
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_3_structuring-the-docker-setup-for-php-projects">part_3_structuring-the-docker-setup-for-php-projects</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -582,7 +582,7 @@ WORKSPACE_HOST_SSH_PORT=2222</code></pre>
 <h3><a id="building-and-running-the-containers"></a>Building and running the containers</h3>
 <p>By now, we should have everything we need set up to get our dockerized PHP development up and running. If
 you haven't done it already, now would be a great time to clone
-<a href="https://github.com/paslandau/docker-php-tutorial">the repository</a>
+<a href="https://github.com/paslandau/docker-php-tutorial/">the repository</a>
 and checkout the
 <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects"><code>part_3_structuring-the-docker-setup-for-php-projects</code> branch</a>:</p>
 <pre><code>git clone https://github.com/paslandau/docker-php-tutorial.git
@@ -721,14 +721,14 @@ make docker-test</code></pre>
 (click here <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#git-and-git-bash">to learn how to setup MinGW</a>)
 Setting is up is straight forward but as with &quot;everything UI&quot; it's easier if you can
 actually &quot;see what I'm doing&quot; - so here's a video:</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p>The steps are as follows:</p>
 <ul>
 <li>Set up <code>mingw-get</code>
 <ul>
-<li>Instructions: <a href="http://www.mingw.org/wiki/getting_started#toc5">http://www.mingw.org/wiki/getting_started#toc5</a></li>
+<li>Instructions: <a href="https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5">https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5</a></li>
 <li>Download: <a href="https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download">https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download</a></li>
 <li>Install and <a href="/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/#the-path-variable">add the <code>bin/</code> directory to <code>PATH</code> (shortcut <code>systempropertiesadvanced</code>)</a>.
 Notes: 

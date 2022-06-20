@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Sat, 28 May 2022 15:25:25 +0000</pubDate>
-        <lastBuildDate>Sat, 28 May 2022 15:25:25 +0000</lastBuildDate>
+        <pubDate>Mon, 20 Jun 2022 07:00:58 +0000</pubDate>
+        <lastBuildDate>Mon, 20 Jun 2022 07:00:58 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -17,11 +17,14 @@
 <p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
 (Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
 Pipelines</strong>.</p>
-<div class="center-div">
+<div class="youtube center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+<div class="youtube center-div" style="display:none">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VsNvvt0CMm8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -514,18 +517,20 @@ This tutorial is a precursor to the next a part
 because dealing with secrets is an important aspect when setting up a CI system (and later when
 deploying to production) - but I feel it's complex enough to warrant its own article.
 </small></p>
+<div class="youtube" style="display:none">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pZ-vFMfKcLY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>.</p>
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-6-git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 and the following one is
 <a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.</p>
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
-to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
 <!-- generated -->
 
 <!-- generated -->
@@ -1073,8 +1078,11 @@ this tutorial to be a part of
 because QA checks are imho vital part of a CI setup - but it kinda grew &quot;too big&quot; and took a way
 too much space from, well, actually setting up the CI pipelines :)
 </small></p>
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ocM4ktjqwIg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-5-php-qa-tools-make-docker">part-5-php-qa-tools-make-docker</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -1579,11 +1587,11 @@ composer-require-checker            done   took 6s</pre>
 <p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
 install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
 for the front end requests.</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/BpsBzpMD87c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a>.</p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
@@ -2287,11 +2295,11 @@ array (
 will <strong>setup our local development environment to be used by PhpStorm and Xdebug</strong>. We will also
 ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw
 the tool <code>strace</code> into the mix for debugging long running processes.</p>
-<div class="center-div">
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/bZ1MiynqT98" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <p>All code samples are publicly available in my
-<a href="https://github.com/paslandau/docker-php-tutorial">Docker PHP Tutorial repository on github</a>.<br />
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at

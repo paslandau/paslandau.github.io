@@ -4,6 +4,7 @@ https://www.pascallandau.com/blog/
 https://www.pascallandau.com/bigquery-snippets/
 https://www.pascallandau.com/personal-finance/
 https://www.pascallandau.com/docker-php-tutorial/
+https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/
 https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/
 https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/
 https://www.pascallandau.com/blog/php-qa-tools-make-docker/

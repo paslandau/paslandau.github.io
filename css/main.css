@@ -33,7 +33,12 @@ article img {
     border-radius: 4px;
 }
 
-article.center-div {
+article video {
+    width: 100%;
+}
+
+.youtube,
+.center-div {
     padding: auto;
     text-align: center;
 }
