@@ -7,7 +7,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="Dockerfiles, folder structures, etc. - In this article I&#039;ll got through the fundamentals for a PHP development environment on Docker.">
             <meta name="author" content="Pascal Landau">
-        <title>How to build a Docker development setup for PHP Projects [Tutorial Part 3] | pascallandau.com</title>
+        <title>How to build a Docker development setup for PHP Projects [Tutorial Part 1] | pascallandau.com</title>
     <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -156,42 +156,51 @@
   <div class="panel-body bg-danger">
     There is a <strong>follow-up version</strong> of this article available that was published 
     in <strong>2022</strong> - please make sure to read that as well:
-    <br>
+    <br />
     <a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
   </div>
 </div>
-<p>In the third part of this tutorial series on developing PHP on Docker we'll lay the fundamentals to
-build a complete development infrastructure and explain how to &quot;structure&quot; the Docker setup as part
-of a PHP project. Structure as in </p>
-<ul>
-<li>folder structure (&quot;what to put where&quot;)</li>
-<li>Dockerfile templates</li>
-<li>solving common problems (file permissions, runtime configuration, ...)</li>
-</ul>
-<p>We will also create a minimal container setup consisting of php-fpm, nginx and a workspace container that we
+
+<p>In the  this tutorial series on developing PHP on Docker we'll lay the fundamentals to
+build a complete development infrastructure and explain how to "structure" the Docker setup as part
+of a PHP project. Structure as in 
+- folder structure ("what to put where")
+- Dockerfile templates
+- solving common problems (file permissions, runtime configuration, ...)</p>
+
+<p>We will also create a minimal container setup consisting of php-fpm, nginx and a workspace container that we 
 refactor from the previous parts of this tutorial.</p>
+
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/YYI5mTjFDuA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
-<p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.
-The branch for this tutorial is
+
+<p><strong>All code samples are publicly available</strong> in my 
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>. 
+The branch for this tutorial is 
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part_3_structuring-the-docker-setup-for-php-projects">part_3_structuring-the-docker-setup-for-php-projects</a>.</p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
 and the following one is
 <a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
 to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
 <h2>Acknowledgements</h2>
-<p>Shout out to <a href="https://www.xing.com/profile/Nils_Meyer7">Nils Meyer</a>
-for giving the final &quot;[...] nichts offensichtlich falsch&quot; (&quot;nothing obviously wrong&quot;) :)</p>
+
+<p>Shout out to <a href="https://www.xing.com/profile/Nils_Meyer7">Nils Meyer</a> 
+for giving the final "[...] nichts offensichtlich falsch" ("nothing obviously wrong") :)</p>
+
 <h2>Table of contents</h2>
+
 <ul>
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#structuring-the-repository">Structuring the repository</a>
+
 <ul>
 <li><a href="#the-docker-folder">The .docker folder</a></li>
 <li><a href="#shared-folder">The <code>.shared</code> folder</a></li>
@@ -200,8 +209,10 @@ for giving the final &quot;[...] nichts offensichtlich falsch&quot; (&quot;nothi
 <li><a href="#the-makefile">The Makefile</a></li>
 </ul></li>
 <li><a href="#defining-services-php-fpm-nginx-and-workspace">Defining services: php-fpm, nginx and workspace</a>
+
 <ul>
 <li><a href="#php-fpm">php-fpm</a>
+
 <ul>
 <li><a href="#modifying-the-pool-configuration">Modifying the pool configuration</a></li>
 <li><a href="#custom-entrypoint">Custom ENTRYPOINT</a></li>
@@ -209,7 +220,8 @@ for giving the final &quot;[...] nichts offensichtlich falsch&quot; (&quot;nothi
 <li><a href="#nginx">nginx</a></li>
 <li><a href="#workspace-formerly-php-cli">workspace (formerly php-cli)</a></li>
 </ul></li>
-<li><a href="#setting-up-docker-compose">Setting up docker-compose</a> 
+<li><a href="#setting-up-docker-compose">Setting up docker-compose</a>
+
 <ul>
 <li><a href="#docker-compose-yml">docker-compose.yml</a></li>
 <li><a href="#env-example">.env.example</a></li>
@@ -217,18 +229,21 @@ for giving the final &quot;[...] nichts offensichtlich falsch&quot; (&quot;nothi
 <li><a href="#testing-if-everything-works">Testing if everything works</a></li>
 </ul></li>
 <li><a href="#makefile-and-bashrc">Makefile and <code>.bashrc</code></a>
+
 <ul>
 <li><a href="#using-make-as-central-entry-point">Using <code>make</code> as central entry point</a></li>
 <li><a href="#install-make-on-windows-mingw">Install make on Windows (MinGW)</a></li>
 <li><a href="#easy-container-access-via-din-bashrc-helper">Easy container access via <code>din</code> .bashrc helper</a></li>
 </ul></li>
 <li><a href="#fundamentals-on-building-the-containers">Fundamentals on building the containers</a>
+
 <ul>
 <li><a href="#understanding-build-context">Understanding build context</a></li>
 <li><a href="#dockerfile-template">Dockerfile template</a></li>
 <li><a href="#setting-the-timezone">Setting the timezone</a></li>
 <li><a href="#synchronizing-file-and-folder-ownership-on-shared-volumes">Synchronizing file and folder ownership on shared volumes</a></li>
 <li><a href="#modifying-configuration-files">Modifying configuration files</a>
+
 <ul>
 <li><a href="#providing-additional-config-files">Providing additional config files</a></li>
 <li><a href="#changing-non-static-values">Changing non-static values</a></li>
@@ -237,50 +252,58 @@ for giving the final &quot;[...] nichts offensichtlich falsch&quot; (&quot;nothi
 <li><a href="#installing-common-software">Installing common software</a></li>
 <li><a href="#cleaning-up">Cleaning up</a></li>
 <li><a href="#using-entrypoint-for-pre-run-configuration">Using <code>ENTRYPOINT</code> for pre-run configuration</a>
+
 <ul>
 <li><a href="#providing-host-docker-internal-for-linux-host-systems">Providing <code>host.docker.internal</code> for linux host systems</a></li>
 </ul></li>
 </ul></li>
 <li><a href="#wrapping-up">Wrapping up</a></li>
 </ul>
+
 <h2><a id="introduction"></a>Introduction</h2>
+
 <p>When I started my current role as Head of Marketing Technology at ABOUT YOU back in 2016, we heavily
-relied on <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Vagrant (namely: Homestead) as our development infrastructure</a>.
-Though that was much better than
+relied on <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">Vagrant (namely: Homestead) as our development infrastructure</a>. 
+Though that was much better than 
 working on our local machines, we've run into a couple of problems along the way (e.g. diverging software,
 bloated images, slow starting times, complicated readme for onboarding, upgrading php, ...).</p>
+
 <p>Today, everything that we need for the infrastructure is under source control and committed in the same repository
 that we use for our main application. In effect we get <strong>the same infrastructure for every developer</strong> including automatic
-updates &quot;for free&quot;. It is extremely easy to tinker around with updates / new tools due to the ephemeral nature of docker
+updates "for free". It is extremely easy to tinker around with updates / new tools due to the ephemeral nature of docker
 as tear down and rebuild only take one command and a couple of minutes.</p>
+
 <p>To get a feeling for how the process <em>feels</em> like, simply execute the following commands.</p>
+
 <pre><code>git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
 git checkout part_3_structuring-the-docker-setup-for-php-projects
 make docker-clean
 make docker-init
 make docker-build-from-scratch
-make docker-test</code></pre>
-<p>You should now have a running docker environment to develop PHP on docker (unless
+make docker-test
+</code></pre>
+
+<p>You should now have a running docker environment to develop PHP on docker (unless 
 <a href="#building-and-running-the-containers">something is blocking your port 80/443</a>
 or
 <a href="#install-make-on-windows-mingw">you don't have make installed</a>
 ;))</p>
+
 <h2><a id="structuring-the-repository"></a>Structuring the repository</h2>
-<p>While playing around with docker I've tried different ways to &quot;structure&quot; files and folders and ended up with the following
-concepts:</p>
-<ul>
-<li>everything related to docker is <strong>placed in a <code>.docker</code> directory on on the same level as the main application</strong></li>
-<li>in this directory
-<ul>
-<li>each service gets its own subdirectory for configuration</li>
-<li>is a <strong><code>.shared</code> folder containing scripts and configuration</strong> required by multiple services</li>
-<li>is an <strong><code>.env.example</code></strong> file containing variables for the <strong><code>docker-compose.yml</code></strong></li>
-<li>is a <strong><code>docker-test.sh</code></strong> file containing high level tests to validate the docker containers</li>
-</ul></li>
-<li>a <strong>Makefile</strong> with common instructions to control Docker is placed in the repository root</li>
-</ul>
+
+<p>While playing around with docker I've tried different ways to "structure" files and folders and ended up with the following
+concepts:
+- everything related to docker is <strong>placed in a <code>.docker</code> directory on on the same level as the main application</strong>
+- in this directory
+  - each service gets its own subdirectory for configuration
+  - is a <strong><code>.shared</code> folder containing scripts and configuration</strong> required by multiple services
+  - is an <strong><code>.env.example</code></strong> file containing variables for the <strong><code>docker-compose.yml</code></strong>
+  - is a <strong><code>docker-test.sh</code></strong> file containing high level tests to validate the docker containers
+- a <strong>Makefile</strong> with common instructions to control Docker is placed in the repository root</p>
+
 <p>The result looks roughly like this:</p>
+
 <pre><code>&lt;project&gt;/
 ├── .docker/
 |   ├── .shared/
@@ -294,19 +317,25 @@ concepts:</p>
 |   └── docker-test.sh
 ├── Makefile
 ├── index.php
-└──  ... &lt;additional app files&gt;/</code></pre>
+└──  ... &lt;additional app files&gt;/
+</code></pre>
+
 <h3><a id="the-docker-folder"></a>The .docker folder</h3>
+
 <p>As I mentioned, for me it makes a lot of sense to keep the <strong>infrastructure definition close to the codebase</strong>, because
 it is immediately available to every developer. For bigger projects with multiple components there will be a
-code-infrastructure-coupling anyways
-(e.g. in my experience it is usually not possible to simply switch MySQL for PostgreSQL without any other changes)
-and for a library it is a very convenient (although opinionated) way to get started. </p>
-<p>I personally find it rather
+code-infrastructure-coupling anyways 
+(e.g. in my experience it is usually not possible to simply switch MySQL for PostgreSQL without any other changes) 
+and for a library it is a very convenient (although opinionated) way to get started.</p>
+
+<p>I personally find it rather 
 frustrating when I want to contribute to an open source project but find myself spending a significant amount of time
 setting the environment up correctly instead of being able to just work on the code.</p>
-<p>Ymmv, though (e.g. because you don't want everybody with write access to your app repo also to be able to change your
-infrastructure code). We actually went a different route previously and had a second repository (&quot;<app>-inf&quot;)
-that would contain the contents of the <code>.docker</code> folder: </p>
+
+<p>Ymmv, though (e.g. because you don't want everybody with write access to your app repo also to be able to change your 
+infrastructure code). We actually went a different route previously and had a second repository ("<app>-inf") 
+that would contain the contents of the <code>.docker</code> folder:</p>
+
 <pre><code>&lt;project-inf&gt;/
 ├── .shared/
 |   ├── config/
@@ -319,48 +348,62 @@ that would contain the contents of the <code>.docker</code> folder: </p>
 
 &lt;project&gt;/
 ├── index.php
-└──  ... &lt;additional app files&gt;/</code></pre>
-<p>Worked as well, but we often ran into situations where
-the contents of the repo would be stale for some devs, plus it was simply additional overhead with not other benefits
+└──  ... &lt;additional app files&gt;/
+</code></pre>
+
+<p>Worked as well, but we often ran into situations where 
+the contents of the repo would be stale for some devs, plus it was simply additional overhead with not other benefits 
 to us at that point. Maybe <a href="https://medium.com/@porteneuve/mastering-git-submodules-34c65e940407">git submodules</a> will
 enable us to get the best of both worlds - I'll blog about it once we try ;)</p>
+
 <h3><a id="shared-folder"></a>The <code>.shared</code> folder</h3>
-<p>When dealing with multiple services, chances are high that some of those services will be configured similarly, e.g. for</p>
-<ul>
-<li>installing common software </li>
-<li>setting up unix users (with the same ids)</li>
-<li>configuration (think php-cli for workers and php-fpm for web requests)</li>
-</ul>
+
+<p>When dealing with multiple services, chances are high that some of those services will be configured similarly, e.g. for
+- installing common software 
+- setting up unix users (with the same ids)
+- configuration (think php-cli for workers and php-fpm for web requests)</p>
+
 <p>To avoid duplication, I place scripts (simple bash files) and config files in the <code>.shared</code> folder and make it available in
-the build context for each service. I'll explain the process in more detail under
+the build context for each service. I'll explain the process in more detail under 
 <a href="#understanding-build-context">providing the correct build context</a>.</p>
+
 <h3><a id=""></a><code>docker-test.sh</code></h3>
+
 <p>Is really just a simple bash script that includes some high level tests to make sure that the containers are
 built correctly. See section <a href="#testing-if-everything-works">Testing if everything works</a>.</p>
+
 <h3><a id="env-example-and-docker-compose-yml"></a><code>.env.example</code> and <code>docker-compose.yml</code></h3>
+
 <p><code>docker-compose</code> uses a <a href="https://docs.docker.com/compose/environment-variables/#the-env-file"><code>.env</code> file</a>
-for a convenient way to define and
-<a href="https://docs.docker.com/compose/compose-file/#variable-substitution"><code>substitute environment variables</code></a>.
+for a convenient way to define and 
+<a href="https://docs.docker.com/compose/compose-file/#variable-substitution"><code>substitute environment variables</code></a>. 
 Since this <code>.env</code> file is environment specific, it is <strong>NOT</strong>
-part of the repository (i.e. ignored via <code>.gitignore</code>). Instead, we provide a <code>.env.example</code> file that contains
-the required environment variables including reasonable default values. A new dev would usually run
-<code>cp .env.example .env</code> after checking out the repository for the first time.
+part of the repository (i.e. ignored via <code>.gitignore</code>). Instead, we provide a <code>.env.example</code> file that contains 
+the required environment variables including reasonable default values. A new dev would usually run 
+<code>cp .env.example .env</code> after checking out the repository for the first time. 
 See section <a href="#env-example">.env.example</a>.</p>
+
 <h3><a id="the-makefile"></a>The Makefile</h3>
-<p><code>make</code> and <code>Makefile</code>s are among those things that I've heard about occasionally but never really cared to
+
+<p><code>make</code> and <code>Makefile</code>s are among those things that I've heard about occasionally but never really cared to 
 understand (mostly because I associated them with C). Boy, did I miss out. I was comparing different strategies
 to provide code quality tooling (style checkers, static analyzers, tests, ...) and went from custom bash scripts
 over <a href="https://getcomposer.org/doc/articles/scripts.md">composer scripts</a> to finally end up at <code>Makefile</code>s.</p>
+
 <p>The <code>Makefile</code> serves as a central entry point and simplifies the management of the docker containers, e.g. for
 (re-)building, starting, stopping, logging in, etc. See section <a href="#makefile-and-bashrc">Makefile and .bashrc</a>.</p>
+
 <h2><a id="defining-services-php-fpm-nginx-and-workspace"></a>Defining services: php-fpm, nginx and workspace</h2>
-<p>Let's have a look at a real example and &quot;refactor&quot; the
+
+<p>Let's have a look at a real example and "refactor" the 
 <a href="#workspace-formerly-php-cli">php-cli</a>,
 <a href="#php-fpm">php-fpm</a>
 and
 <a href="#nginx">nginx</a>
-containers from the <a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">first part of this tutorial series</a>. </p>
+containers from the <a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">first part of this tutorial series</a>.</p>
+
 <p>This is the folder structure:</p>
+
 <pre><code>&lt;project&gt;/
 ├── .docker/
 |   ├── .shared/
@@ -389,31 +432,46 @@ containers from the <a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10
 |   ├── docker-compose.yml
 |   └── docker-test.sh
 ├── Makefile
-└── index.php</code></pre>
+└── index.php
+</code></pre>
+
 <h3><a id="php-fpm"></a>php-fpm</h3>
+
 <p>Click here to <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/php-fpm/Dockerfile">see the full php-fpm Dockerfile</a>.</p>
+
 <p>Since we will be having two PHP containers, we need to place the common .ini settings in the <code>.shared</code> directory.</p>
+
 <pre><code>|   ├── .shared/
 |   |   ├── config/
 |   |   |   └── php/ 
 |   |   |       └── conf.d/
-|   |   |           └── zz-app.ini</code></pre>
-<p>For now, <code>zz-app.ini</code> will only contain our
+|   |   |           └── zz-app.ini
+</code></pre>
+
+<p>For now, <code>zz-app.ini</code> will only contain our 
 <a href="https://www.scalingphpbook.com/blog/2014/02/14/best-zend-opcache-settings.html">opcache setup</a>:</p>
+
 <pre><code>; enable opcache
 opcache.enable_cli = 1
 opcache.enable = 1
 opcache.fast_shutdown = 1
 ; revalidate everytime (effectively disabled for development)
-opcache.validate_timestamps = 0</code></pre>
-<p>The pool configuration is only relevant for php-fpm, so it goes in the directory of the service. Btw. I highly
-recommend <a href="https://serversforhackers.com/c/lemp-php-fpm-config">this video on PHP-FPM Configuration</a> if your
+opcache.validate_timestamps = 0
+</code></pre>
+
+<p>The pool configuration is only relevant for php-fpm, so it goes in the directory of the service. Btw. I highly 
+recommend <a href="https://serversforhackers.com/c/lemp-php-fpm-config">this video on PHP-FPM Configuration</a> if your 
 php-fpm foo isn't already over 9000.</p>
+
 <pre><code>|   ├── php-fpm/
 |   |   ├── php-fpm.d/
-|   |   |   └── pool.conf</code></pre>
+|   |   |   └── pool.conf
+</code></pre>
+
 <h4><a id="modifying-the-pool-configuration"></a>Modifying the pool configuration</h4>
+
 <p>We're using the <a href="#changing-non-static-values"><code>modify_config.sh</code> script</a> to set the user and group that owns the php-fpm processes.</p>
+
 <pre><code># php-fpm pool config
 COPY ${SERVICE_DIR}/php-fpm.d/* /usr/local/etc/php-fpm.d
 RUN /tmp/scripts/modify_config.sh /usr/local/etc/php-fpm.d/zz-default.conf \
@@ -422,27 +480,39 @@ RUN /tmp/scripts/modify_config.sh /usr/local/etc/php-fpm.d/zz-default.conf \
  &amp;&amp; /tmp/scripts/modify_config.sh /usr/local/etc/php-fpm.d/zz-default.conf \
     "__APP_GROUP" \
     "${APP_GROUP}" \
-;</code></pre>
+;
+</code></pre>
+
 <h4><a id="custom-entrypoint"></a>Custom ENTRYPOINT</h4>
+
 <p>Since php-fpm needs to be debuggable, we need to ensure that the <code>host.docker.internal</code> DNS entry exists,
 so we'll use the <a href="#providing-host-docker-internal-for-linux-host-systems">corresponding ENTRYPOINT</a> to do that.</p>
+
 <pre><code># entrypoint
 RUN mkdir -p /bin/docker-entrypoint/ \
  &amp;&amp; cp /tmp/scripts/docker-entrypoint/* /bin/docker-entrypoint/ \
  &amp;&amp; chmod +x -R /bin/docker-entrypoint/ \
 ;
 
-ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh","php-fpm"]</code></pre>
+ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh","php-fpm"]
+</code></pre>
+
 <h3><a id="nginx"></a>nginx</h3>
+
 <p>Click here to <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/nginx/Dockerfile">see the full nginx Dockerfile</a>.</p>
+
 <p>The nginx setup is even simpler. There is no shared config, so that everything we need resides in</p>
+
 <pre><code>|   ├── nginx/
 |   |   ├── sites-available/
 |   |   |   └── default.conf
 |   |   ├── Dockerfile
-|   |   └── nginx.conf</code></pre>
+|   |   └── nginx.conf
+</code></pre>
+
 <p>Please note, that nginx only has the <code>nginx.conf</code> file for configuration (i.e. there is no <code>conf.d</code> directory or so),
-so we need to define the <strong>full</strong> config in there. </p>
+so we need to define the <strong>full</strong> config in there.</p>
+
 <pre><code>user __APP_USER __APP_GROUP;
 worker_processes 4;
 pid /run/nginx.pid;
@@ -454,20 +524,28 @@ http {
   include /etc/nginx/sites-available/*.conf;
 
   # ...
-}</code></pre>
+}
+</code></pre>
+
 <p>There are two things to note:</p>
+
 <ul>
 <li>user and group are modified dynamically</li>
 <li>we specify <code>/etc/nginx/sites-available/</code> as the directory that holds the config files for the individual files via
 <code>include /etc/nginx/sites-available/*.conf;</code></li>
 </ul>
+
 <p>We need to keep the last point in mind, because we must use the same directory in the Dockerfile:</p>
+
 <pre><code># nginx app config
-COPY ${SERVICE_DIR}/sites-available/* /etc/nginx/sites-available/</code></pre>
-<p>The site's config file
-<a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/nginx/sites-available/default.conf"><code>default.conf</code></a>
-has a variable (<code>__NGINX_ROOT</code>) for the <code>root</code> directive and we &quot;connect&quot; it with the fpm-container via
+COPY ${SERVICE_DIR}/sites-available/* /etc/nginx/sites-available/
+</code></pre>
+
+<p>The site's config file 
+<a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/nginx/sites-available/default.conf"><code>default.conf</code></a> 
+has a variable (<code>__NGINX_ROOT</code>) for the <code>root</code> directive and we "connect" it with the fpm-container via 
 <code>fastcgi_pass php-fpm:9000;</code></p>
+
 <pre><code>server {
     # ...
     root __NGINX_ROOT;
@@ -477,26 +555,38 @@ has a variable (<code>__NGINX_ROOT</code>) for the <code>root</code> directive a
         # ...
         fastcgi_pass php-fpm:9000;
     }
-}</code></pre>
+}
+</code></pre>
+
 <p><code>php-fpm</code> will resolve to the <code>php-fpm</code> container, because we use php-fpm as the service name in the docker-compose
 file, so it will be <a href="https://docs.docker.com/compose/compose-file/#aliases">automatically used as the hostname</a>:</p>
+
 <blockquote>
-<p>Other containers on the same network can use either the service name or [an] alias to connect to one of the service’s containers.</p>
+  <p>Other containers on the same network can use either the service name or [an] alias to connect to one of the service’s containers.</p>
 </blockquote>
+
 <p>In the Dockerfile, we use</p>
+
 <pre><code>ARG APP_CODE_PATH
 RUN /tmp/scripts/modify_config.sh /etc/nginx/sites-available/default.conf \
     "__NGINX_ROOT" \
     "${APP_CODE_PATH}" \
-;</code></pre>
-<p><code>APP_CODE_PATH</code> will be passed via docker-compose when we build the container and mounted as a shared directory
-from the host system. </p>
+;
+</code></pre>
+
+<p><code>APP_CODE_PATH</code> will be passed via docker-compose when we build the container and mounted as a shared directory 
+from the host system.</p>
+
 <h3><a id="workspace-formerly-php-cli"></a>workspace (formerly php-cli)</h3>
+
 <p>Click here to <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/workspace/Dockerfile">see the full workspace Dockerfile</a>.</p>
+
 <p>We will use the former <code>php-cli</code> container and make it our <code>workspace</code> as introduced in part 2 of this tutorial under
-<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#preparing-the-workspace-container">Preparing the &quot;workspace&quot; container</a>.</p>
+<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#preparing-the-workspace-container">Preparing the "workspace" container</a>.</p>
+
 <p>This will be the container we use to point our IDE to, e.g. to execute tests. Its Dockerfile looks almost identical
 to the one of the <code>php-fpm</code> service, apart from the SSH setup:</p>
+
 <pre><code># set up ssh
 RUN apt-get update -yqq &amp;&amp; apt-get install -yqq openssh-server \
  &amp;&amp; mkdir /var/run/sshd \
@@ -511,45 +601,52 @@ RUN mkdir -p ~/.ssh \
  &amp;&amp; chmod 700 ~/.ssh \
  &amp;&amp; chmod 600 ~/.ssh/authorized_keys \
 ;
-USER root</code></pre>
+USER root
+</code></pre>
+
 <h2><a id="setting-up-docker-compose"></a>Setting up docker-compose</h2>
+
 <p>In order to orchestrate the build process, we'll use docker-compose.</p>
+
 <h3><a id="docker-compose-yml"></a>docker-compose.yml</h3>
-<p>See the full
+
+<p>See the full 
 <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/docker-compose.yml">docker-compose.yml file in the repository</a></p>
-<p>Things to note:</p>
-<ul>
-<li>each service uses <code>context: .</code> so it has access to the <code>.shared</code> folder.
-The context is always <a href="https://docs.docker.com/compose/extends/#understanding-multiple-compose-files">relative to the location of the first docker-compose.yml file</a></li>
-<li>all arguments that we used in the Dockerfiles are defined in the <code>args:</code>
-section via
-<pre><code>args:
-- APP_CODE_PATH=${APP_CODE_PATH_CONTAINER}
-- APP_GROUP=${APP_GROUP}
-- APP_GROUP_ID=${APP_GROUP_ID}
-- APP_USER=${APP_USER}
-- APP_USER_ID=${APP_USER_ID}
-- TZ=${TIMEZONE}</code></pre></li>
-<li>the codebase is synced from the host in all containers via
-<pre><code>volumes:
-- ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}</code></pre></li>
-<li>the <code>nginx</code> service exposes ports on the host machine so that we can
-access the containers from &quot;outside&quot; via
-<pre><code>ports:
-- "${NGINX_HOST_HTTP_PORT}:80"
-- "${NGINX_HOST_HTTPS_PORT}:443"</code></pre></li>
-<li>all services are part of the <code>backend</code> network so they can talk to each
-other. The <code>nginx</code> service has an additional alias that allows us to
-define an arbitrary host name via
-<pre><code>networks:
-backend:
-  aliases:
-    - ${APP_HOST}</code></pre>
-<p>I prefer to have a dedicated hostname per project (e.g. <code>docker-php-tutorial.local</code>)
-instead of using <code>127.0.0.1</code> or <code>localhost</code> directly</p></li>
-</ul>
+
+<p>Things to note:
+- each service uses <code>context: .</code> so it has access to the <code>.shared</code> folder.
+  The context is always <a href="https://docs.docker.com/compose/extends/#understanding-multiple-compose-files">relative to the location of the first docker-compose.yml file</a>
+- all arguments that we used in the Dockerfiles are defined in the <code>args:</code>
+  section via
+  <code>args:
+    - APP_CODE_PATH=${APP_CODE_PATH_CONTAINER}
+    - APP_GROUP=${APP_GROUP}
+    - APP_GROUP_ID=${APP_GROUP_ID}
+    - APP_USER=${APP_USER}
+    - APP_USER_ID=${APP_USER_ID}
+    - TZ=${TIMEZONE}</code>
+- the codebase is synced from the host in all containers via
+  <code>volumes:
+    - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}</code>
+- the <code>nginx</code> service exposes ports on the host machine so that we can 
+  access the containers from "outside" via
+  <code>ports:
+    - "${NGINX_HOST_HTTP_PORT}:80"
+    - "${NGINX_HOST_HTTPS_PORT}:443"</code>
+- all services are part of the <code>backend</code> network so they can talk to each
+  other. The <code>nginx</code> service has an additional alias that allows us to
+  define an arbitrary host name via
+  <code>networks:
+    backend:
+      aliases:
+        - ${APP_HOST}</code>
+  I prefer to have a dedicated hostname per project (e.g. <code>docker-php-tutorial.local</code>)
+  instead of using <code>127.0.0.1</code> or <code>localhost</code> directly</p>
+
 <h3><a id="env-example"></a>.env.example</h3>
+
 <p>To fill in all the required variables / arguments, we're using a <code>.env.example</code> file with the following content:</p>
+
 <pre><code># Default settings for docker-compose
 COMPOSE_PROJECT_NAME=docker-php-tutorial
 COMPOSE_FILE=docker-compose.yml
@@ -576,23 +673,36 @@ NGINX_HOST_HTTP_PORT=80
 NGINX_HOST_HTTPS_PORT=443
 
 # workspace
-WORKSPACE_HOST_SSH_PORT=2222</code></pre>
-<p>The <code>COMPOSE_</code> variables in the beginning set some reasonable
+WORKSPACE_HOST_SSH_PORT=2222
+</code></pre>
+
+<p>The <code>COMPOSE_</code> variables in the beginning set some reasonable 
 <a href="https://docs.docker.com/compose/reference/envvars/#compose_file">defaults for docker-compose</a>.</p>
+
 <h3><a id="building-and-running-the-containers"></a>Building and running the containers</h3>
+
 <p>By now, we should have everything we need set up to get our dockerized PHP development up and running. If
-you haven't done it already, now would be a great time to clone
+you haven't done it already, now would be a great time to clone 
 <a href="https://github.com/paslandau/docker-php-tutorial/">the repository</a>
-and checkout the
+and checkout the 
 <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects"><code>part_3_structuring-the-docker-setup-for-php-projects</code> branch</a>:</p>
+
 <pre><code>git clone https://github.com/paslandau/docker-php-tutorial.git
 cd docker-php-tutorial
-git checkout part_3_structuring-the-docker-setup-for-php-projects</code></pre>
+git checkout part_3_structuring-the-docker-setup-for-php-projects
+</code></pre>
+
 <p>Now copy the <code>.env.exmaple</code> to <code>.env</code>. All the default values  should work out of the box - unless you already have something
 running on port <code>80</code> or <code>443</code>. In that case you have to change <code>NGINX_HOST_HTTP_PORT / NGINX_HOST_HTTP_PORT</code> to a free port.</p>
-<pre><code>cp .env.example .env</code></pre>
-<p>We can examine the &quot;final&quot; docker-compose.yml <strong>after</strong> the variable substitution via</p>
-<pre><code>docker-compose -f .docker/docker-compose.yml --project-directory .docker config</code></pre>
+
+<pre><code>cp .env.example .env
+</code></pre>
+
+<p>We can examine the "final" docker-compose.yml <strong>after</strong> the variable substitution via</p>
+
+<pre><code>docker-compose -f .docker/docker-compose.yml --project-directory .docker config
+</code></pre>
+
 <pre><code>networks:
   backend:
     driver: bridge
@@ -621,43 +731,67 @@ services:
     volumes:
     - /d/codebase/docker-php-tutorial:/var/www/current:rw
   php-fpm:
-// ...</code></pre>
+// ...
+</code></pre>
+
 <p>Note, that this command is run from <code>./docker-php-tutorial</code>. If we would run this from <code>./docker-php-tutorial/.docker</code>,
 we could simply use <code>docker-compose config</code> - but since we'll define that in a Makefile later anyway, the additional
-&quot;verbosity&quot; won't matter ;)</p>
-<p>This command is also a great way to check the various paths that are resolved to their absolute form, e.g. </p>
-<pre><code>context: D:\codebase\docker-php-tutorial\.docker</code></pre>
+"verbosity" won't matter ;)</p>
+
+<p>This command is also a great way to check the various paths that are resolved to their absolute form, e.g.</p>
+
+<pre><code>context: D:\codebase\docker-php-tutorial\.docker
+</code></pre>
+
 <p>and</p>
+
 <pre><code>volumes:
-- /d/codebase/docker-php-tutorial:/var/www/current:rw</code></pre>
+- /d/codebase/docker-php-tutorial:/var/www/current:rw
+</code></pre>
+
 <p>The actual build is triggered via</p>
-<pre><code>docker-compose -f .docker/docker-compose.yml --project-directory .docker build --parallel</code></pre>
-<p>Since we have more than one container, it makes sense to build with
+
+<pre><code>docker-compose -f .docker/docker-compose.yml --project-directory .docker build --parallel
+</code></pre>
+
+<p>Since we have more than one container, it makes sense to build with 
 <a href="https://docs.docker.com/compose/reference/build/"><code>--parallel</code></a>.</p>
+
 <p>To start the containers, we use</p>
-<pre><code>docker-compose -f .docker/docker-compose.yml --project-directory .docker up -d</code></pre>
-<p>and should see  </p>
+
+<pre><code>docker-compose -f .docker/docker-compose.yml --project-directory .docker up -d
+</code></pre>
+
+<p>and should see</p>
+
 <pre><code>$ docker-compose -f .docker/docker-compose.yml --project-directory .docker up -d
 Starting docker-php-tutorial_nginx_1     ... done
 Starting docker-php-tutorial_workspace_1 ... done
-Starting docker-php-tutorial_php-fpm_1   ... done</code></pre>
+Starting docker-php-tutorial_php-fpm_1   ... done
+</code></pre>
+
 <h3><a id="testing-if-everything-works"></a>Testing if everything works</h3>
-<p>After rewriting our own docker setup a couple of times, I've come to appreciate a structured way to test if
-&quot;everything&quot; works. Everything as in:</p>
-<ul>
-<li>are all containers running?</li>
-<li>does &quot;host.docker.internal&quot; exist?</li>
-<li>do we see the correct output when sending a request to nginx/php-fpm?</li>
-<li>are all required php extensions installed?</li>
-</ul>
+
+<p>After rewriting our own docker setup a couple of times, I've come to appreciate a structured way to test if 
+"everything" works. Everything as in:
+- are all containers running?
+- does "host.docker.internal" exist?
+- do we see the correct output when sending a request to nginx/php-fpm?
+- are all required php extensions installed?</p>
+
 <p>This might seem superfluous (after all, we just defined excatly that in the Dockerfiles), but there will come a time
 when you (or someone else) need to make changes (new PHP version, new extensions, etc.) and having something that runs
-automatically and informs you about obvious flaws is a real time saver. </p>
-<p>You can see
-<a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/docker-test.sh">the full test file in the repository</a>.
+automatically and informs you about obvious flaws is a real time saver.</p>
+
+<p>You can see 
+<a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/.docker/docker-test.sh">the full test file in the repository</a>. 
 Since my bash isn't the best, I try to keep it as simple as possible. The tests can be run via</p>
-<pre><code>sh .docker/docker-test.sh</code></pre>
+
+<pre><code>sh .docker/docker-test.sh
+</code></pre>
+
 <p>and should yield something like this:</p>
+
 <pre><code>Testing service 'workspace'
 =======
 Checking if 'workspace' has a running container
@@ -673,31 +807,39 @@ OK
 
 Testing service 'php-fpm'
 =======
-...</code></pre>
+...
+</code></pre>
+
 <h2><a id="makefile-and-bashrc"></a>Makefile and <code>.bashrc</code></h2>
+
 <p>In the previous sections I have introduced a couple of commands, e.g. for building and running containers. And to be honest,
 I find it kinda challenging to keep them in mind without having to look up the exact options and arguments. I would
 usually create a helper function or an alias in my local <code>.bashrc</code> file in a situation like that - but that wouldn't
-be available to other members of the team then and it would be very specific to this one project.
+be available to other members of the team then and it would be very specific to this one project. 
 Instead we'll provide a <code>Makefile</code> as a central reference point.</p>
+
 <h3><a id="using-make-as-central-entry-point"></a>Using <code>make</code> as central entry point</h3>
-<p>Please refer
+
+<p>Please refer 
 <a href="https://github.com/paslandau/docker-php-tutorial/blob/part_3_structuring-the-docker-setup-for-php-projects/Makefile">to the repository for the full <code>Makefile</code></a>.</p>
-<p>Going into the details of <code>make</code> is a little out of scope for this article,
-so I kindly refer to some articles that helped me get started:</p>
-<ul>
-<li><a href="https://localheinz.com/blog/2018/01/24/makefile-for-lazy-developers/">Makefile for lazy developers</a></li>
-<li><a href="https://blog.theodo.fr/2018/05/why-you-need-a-makefile-on-your-project/">Why you Need a Makefile on your Project</a></li>
-</ul>
-<p>Both are written with a PHP context in mind.
+
+<p>Going into the details of <code>make</code> is a little out of scope for this article, 
+so I kindly refer to some articles that helped me get started:
+- <a href="https://localheinz.com/blog/2018/01/24/makefile-for-lazy-developers/">Makefile for lazy developers</a>
+- <a href="https://blog.theodo.fr/2018/05/why-you-need-a-makefile-on-your-project/">Why you Need a Makefile on your Project</a></p>
+
+<p>Both are written with a PHP context in mind. 
 Tip: If you are using PhpStorm, give the <a href="https://plugins.jetbrains.com/plugin/9333-makefile-support">Makefile support plugin</a>
-a try. And don't forget the number one rule:
+a try. And don't forget the number one rule: 
 <a href="https://stackoverflow.com/q/14109724">A <code>Makefile</code> requires tabs</a>!</p>
-<p>Note: If you are using Windows, <code>make</code> is probably not available. See
+
+<p>Note: If you are using Windows, <code>make</code> is probably not available. See 
 <a href="#install-make-on-windows-mingw">Install make on Windows (MinGW)</a> for instructions to set it up.</p>
-<p>The <code>Makefile</code> ist located in the root of the application. Since we use a <code>help</code> target that makes the
+
+<p>The <code>Makefile</code> ist located in the root of the application. Since we use a <code>help</code> target that makes the 
 <a href="https://suva.sh/posts/well-documented-makefiles/"><code>Makefile</code> self-documenting</a>, we can simply run <code>make</code> to
 see all the available commands:</p>
+
 <pre><code>$ make
 
 Usage:
@@ -710,51 +852,57 @@ Usage:
   docker-build                 Build all docker images. Build a specific image by providing the service name via: make docker-build CONTAINER=&lt;service&gt;
   docker-up                    Start all docker containers. To only start one container, use CONTAINER=&lt;service&gt;
   docker-down                  Stop all docker containers. To only stop one container, use CONTAINER=&lt;service&gt;
-  docker-test                  Run the infrastructure tests for the docker setup</code></pre>
-<p>As a new developer, your &quot;onboarding&quot; to get a running infrastructure should now look like this:</p>
+  docker-test                  Run the infrastructure tests for the docker setup
+</code></pre>
+
+<p>As a new developer, your "onboarding" to get a running infrastructure should now look like this:</p>
+
 <pre><code>make docker-clean
 make docker-init
 make docker-build-from-scratch
-make docker-test</code></pre>
+make docker-test
+</code></pre>
+
 <h3><a id="install-make-on-windows-mingw"></a>Install make on Windows (MinGW)</h3>
-<p><code>make</code> doesn't exist on Windows and is also not part of the standard installation of MinGW
+
+<p><code>make</code> doesn't exist on Windows and is also not part of the standard installation of MinGW 
 (click here <a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/#git-and-git-bash">to learn how to setup MinGW</a>)
-Setting is up is straight forward but as with &quot;everything UI&quot; it's easier if you can
-actually &quot;see what I'm doing&quot; - so here's a video:</p>
+Setting is up is straight forward but as with "everything UI" it's easier if you can 
+actually "see what I'm doing" - so here's a video:</p>
+
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/taCJhnBXG_w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
-<p>The steps are as follows:</p>
-<ul>
-<li>Set up <code>mingw-get</code>
-<ul>
-<li>Instructions: <a href="https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5">https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5</a></li>
-<li>Download: <a href="https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download">https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download</a></li>
-<li>Install and <a href="/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/#the-path-variable">add the <code>bin/</code> directory to <code>PATH</code> (shortcut <code>systempropertiesadvanced</code>)</a>.
-Notes: 
-<ul>
-<li>Do not use an installation path that contains spaces!</li>
-<li>The installation path can be different from your MinGW location</li>
-</ul></li>
-</ul></li>
-<li>Install <code>mingw32-make</code> via
-<pre><code>mingw-get install mingw32-make</code></pre>
-<ul>
-<li>create the file <code>bin/make</code> with the content
-<pre><code>mingw32-make.exe $*</code></pre></li>
-<li>Note: Sometimes Windows won't recognize non-.exe files - so instead of <code>bin/make</code> you might need to name the file
-<code>bin/make.exe</code> (with the same content)</li>
-</ul></li>
-<li>Open a new shell and type <code>make</code>. The output should look something like this
-<pre><code>$ make
-mingw32-make: *** Keine Targets angegeben und keine ¦make¦-Steuerdatei gefunden.  Schluss.</code></pre></li>
-</ul>
+
+<p>The steps are as follows:
+- Set up <code>mingw-get</code>
+  - Instructions: https://web.archive.org/web/20200226035236/http://www.mingw.org/wiki/getting_started#toc5
+  - Download: https://sourceforge.net/projects/mingw/files/Installer/mingw-get-setup.exe/download
+  - Install and <a href="/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/#the-path-variable">add the <code>bin/</code> directory to <code>PATH</code> (shortcut <code>systempropertiesadvanced</code>)</a>.
+    Notes: 
+     - Do not use an installation path that contains spaces!
+     - The installation path can be different from your MinGW location
+- Install <code>mingw32-make</code> via
+  <code>mingw-get install mingw32-make</code>
+  - create the file <code>bin/make</code> with the content
+    <code>mingw32-make.exe $*</code>
+  - Note: Sometimes Windows won't recognize non-.exe files - so instead of <code>bin/make</code> you might need to name the file
+    <code>bin/make.exe</code> (with the same content)
+- Open a new shell and type <code>make</code>. The output should look something like this
+  <code>$ make
+  mingw32-make: *** Keine Targets angegeben und keine ¦make¦-Steuerdatei gefunden.  Schluss.</code></p>
+
 <h3><a id="easy-container-access-via-din-bashrc-helper"></a>Easy container access via <code>din</code> .bashrc helper</h3>
-<p>I've got one last goodie for working with Docker that I use all the time: </p>
+
+<p>I've got one last goodie for working with Docker that I use all the time:</p>
+
 <p>Logging into a running container via <a href="https://docs.docker.com/engine/reference/commandline/exec/#run-docker-exec-on-a-running-container"><code>docker exec</code></a>
 and the <code>din / dshell</code> helper.</p>
+
 <p><a href="/img/structuring-the-docker-setup-for-php-projects/easy-docker-login-din.gif.png"><img src="/img/structuring-the-docker-setup-for-php-projects/easy-docker-login-din.gif" alt="Log into any running docker container via din helper" /></a></p>
+
 <p>To make this work, put the following code in your <code>.bashrc</code> file</p>
+
 <pre><code>function din() {
   filter=$1
 
@@ -775,38 +923,54 @@ and the <code>din / dshell</code> helper.</p>
     prefix="winpty"
   fi
   ${prefix} docker exec -it ${user} $(docker ps --filter name=${filter} -q | head -1) ${shell}
-}</code></pre>
-<p>The <code>$(docker ps --filter name=${filter} -q | head -1)</code> part will find partial matches on running containers
-for the first argument and pass the result to the <code>docker exec</code> command. In effect, we can log into any container
+}
+</code></pre>
+
+<p>The <code>$(docker ps --filter name=${filter} -q | head -1)</code> part will find partial matches on running containers 
+for the first argument and pass the result to the <code>docker exec</code> command. In effect, we can log into any container 
 by only providing a minimal matching string on the container name. E.g. to log in the <code>workspace</code> container
 I can now simply type <code>din works</code> from <em>anywhere</em> on my system.</p>
+
 <h2><a id="fundamentals-on-building-the-containers"></a>Fundamentals on building the containers</h2>
-<p>Since we have now &quot;seen&quot; the end result, let's take a closer look behind the scenes.
-I assume that you are already somewhat familiar with <code>Dockerfile</code>s and have used <code>docker-compose</code> to orchestrate multiple
-services (if not, check out
+
+<p>Since we have now "seen" the end result, let's take a closer look behind the scenes. 
+I assume that you are already somewhat familiar with <code>Dockerfile</code>s and have used <code>docker-compose</code> to orchestrate multiple 
+services (if not, check out 
 <a href="blog/php-php-fpm-and-nginx-on-docker-in-windows-10/#dockerfile">Persisting image changes with a Dockerfile</a> and
 <a href="blog/php-php-fpm-and-nginx-on-docker-in-windows-10/#docker-compose">Putting it all together: Meet docker-compose</a>). But
 there are some points I would like to cover in a little more detail.</p>
+
 <h3><a id="understanding-build-context"></a>Understanding build context</h3>
+
 <p>There are two essential parts when building a container:</p>
+
 <ul>
 <li>the Dockerfile</li>
 <li>the build context</li>
 </ul>
+
 <p>You can read about the official description in the <a href="http://docs.docker.com/engine/reference/builder/#usage">Dockerfile reference</a>.
 You'll usually see something like this:</p>
-<pre><code>docker build .</code></pre>
+
+<pre><code>docker build .
+</code></pre>
+
 <p>which assumes that you use the current directory as build context and that there is a Dockerfile in the same directory.</p>
+
 <p>But you can also start the build via</p>
+
 <pre><code>docker build .docker -f .docker/nginx/Dockerfile
                  |      |
                  |      └── use the Dockerfile at ".docker/nginx/Dockerfile"
                  |
-                 └── use the .docker subdirectory as build context</code></pre>
-<p>For me, the gist is this: The build context defines the files and folders (recursively) on your machine that are send
-from the <a href="https://docs.docker.com/engine/reference/commandline/cli/">Docker CLI</a> to
+                 └── use the .docker subdirectory as build context
+</code></pre>
+
+<p>For me, the gist is this: The build context defines the files and folders (recursively) on your machine that are send 
+from the <a href="https://docs.docker.com/engine/reference/commandline/cli/">Docker CLI</a> to 
 the <a href="https://docs.docker.com/engine/reference/commandline/dockerd/">Docker Daemon</a> that executes the build process
 of a container so that you can reference those files in the Dockerfile (e.g. via <code>COPY</code>). Take the following structure for example:</p>
+
 <pre><code>&lt;project&gt;/
 ├── .docker/
     ├── .shared/
@@ -814,15 +978,24 @@ of a container so that you can reference those files in the Dockerfile (e.g. via
     |       └── ...
     └── nginx/
         ├── nginx.conf
-        └── Dockerfile</code></pre>
+        └── Dockerfile
+</code></pre>
+
 <p>Assume, that the current working directory is <code>&lt;project&gt;/</code>. If we started a build via</p>
-<pre><code>docker build .docker/nginx -f .docker/nginx/Dockerfile</code></pre>
-<p>the context would <strong>not</strong> include the <code>.shared</code> folder so we wouldn't be able to <code>COPY</code> the <code>scripts/</code> subfolder.
+
+<pre><code>docker build .docker/nginx -f .docker/nginx/Dockerfile
+</code></pre>
+
+<p>the context would <strong>not</strong> include the <code>.shared</code> folder so we wouldn't be able to <code>COPY</code> the <code>scripts/</code> subfolder. 
 If we ran</p>
-<pre><code>docker build .docker -f .docker/nginx/Dockerfile</code></pre>
+
+<pre><code>docker build .docker -f .docker/nginx/Dockerfile
+</code></pre>
+
 <p>however, that would make the <code>.shared</code> folder available. In the Dockerfile itself, I need to know what the build context
-is, because I need to adjust the paths accordingly. Concrete example for the folder structure above and build
+is, because I need to adjust the paths accordingly. Concrete example for the folder structure above and build 
 triggered via <code>docker build .docker -f .docker/nginx/Dockerfile</code>:</p>
+
 <pre><code>FROM:nginx
 
 # build context is .docker ...
@@ -831,23 +1004,27 @@ triggered via <code>docker build .docker -f .docker/nginx/Dockerfile</code>:</p>
 COPY ./.shared /tmp
 
 # ... so the following COPY refers to .docker/nginx/nginx.conf
-COPY ./nginx/nginx.conf /tmp</code></pre>
-<p>The build context for all of our containers will be the <code>.docker</code> directory,
-so that all build processes have access to the <code>.shared</code> scripts and config.
+COPY ./nginx/nginx.conf /tmp
+</code></pre>
+
+<p>The build context for all of our containers will be the <code>.docker</code> directory, 
+so that all build processes have access to the <code>.shared</code> scripts and config. 
 Yes, that also means that the <code>php-fpm</code> container has access to files that are only relevant to the <code>mysql</code> container (for
 instance), but the performance penalty is absolutely neglectable. Plus, as long as we don't actively <code>COPY</code> those irrelevant
 files, they won't bloat up our images.</p>
-<p>A couple of notes:</p>
-<ul>
-<li>I used to think that the build context is <em>always</em> tied to the location of the Dockerfile but that's only the default,
-it can be any directory</li>
-<li>the build context is <strong>actually send</strong> to the build process - i.e. you should avoid unnecessary files / folders as this might
-affect performance, especially on big files (iaw: don't use <code>/</code> as context!)</li>
-<li>similar to <code>git</code>, Docker knows the concept of a <a href="https://docs.docker.com/engine/reference/builder/#dockerignore-file"><code>.dockerignore</code> file</a>
-to exclude files from being included in the build context</li>
-</ul>
+
+<p>A couple of notes:
+- I used to think that the build context is <em>always</em> tied to the location of the Dockerfile but that's only the default,
+  it can be any directory
+- the build context is <strong>actually send</strong> to the build process - i.e. you should avoid unnecessary files / folders as this might
+  affect performance, especially on big files (iaw: don't use <code>/</code> as context!)
+- similar to <code>git</code>, Docker knows the concept of a <a href="https://docs.docker.com/engine/reference/builder/#dockerignore-file"><code>.dockerignore</code> file</a>
+  to exclude files from being included in the build context</p>
+
 <h3><a id="dockerfile-template"></a>Dockerfile template</h3>
+
 <p>The Dockerfiles for the containers roughly follow the structure outlined below:</p>
+
 <pre><code>FROM ...
 
 # path to the directory where the Dockerfile lives relative to the build context
@@ -888,46 +1065,70 @@ RUN /tmp/scripts/cleanup.sh
 
 # define ENTRYPOINT
 ENTRYPOINT [...]
-CMD [...]</code></pre>
+CMD [...]
+</code></pre>
+
 <p>The comments should suffice to give you an overview - so let's talk about the individual parts in detail.</p>
+
 <h3><a id="setting-the-timezone"></a>Setting the timezone</h3>
+
 <p><strong>Script: <code>set_timezone.sh</code></strong></p>
+
 <p>Let's start with a simple and obvious one: Ensuring that all containers use the same system timezone
 (see <a href="https://www.itzgeek.com/how-tos/linux/debian/how-to-change-timezone-in-debian-9-8-ubuntu-16-04-14-04-linuxmint-18.html">here</a>
 and <a href="https://unix.stackexchange.com/q/452559">here</a>)</p>
+
 <pre><code>#!/bin/sh
 
 TZ=$1
-ln -snf /usr/share/zoneinfo/$TZ /etc/localtime &amp;&amp; echo $TZ &gt; /etc/timezone</code></pre>
+ln -snf /usr/share/zoneinfo/$TZ /etc/localtime &amp;&amp; echo $TZ &gt; /etc/timezone
+</code></pre>
+
 <p>The script is then called from the <code>Dockerfile</code> via</p>
+
 <pre><code>ARG TZ=UTC
-RUN /tmp/scripts/set_timezone.sh ${TZ}</code></pre>
+RUN /tmp/scripts/set_timezone.sh ${TZ}
+</code></pre>
+
 <h3><a id="synchronizing-file-and-folder-ownership-on-shared-volumes"></a>Synchronizing file and folder ownership on shared volumes</h3>
+
 <p><strong>Script: <code>create_user.sh</code></strong></p>
-<p>Docker makes it really easy to share files between containers by using <a href="https://docs.docker.com/storage/volumes/">volumes</a>.
+
+<p>Docker makes it really easy to share files between containers by using <a href="https://docs.docker.com/storage/volumes/">volumes</a>. 
 For simplicities sake, you can picture a volume simply as an additional disk that multiple containers have access to.
-And since it's PHP we're talking about here, sharing the same application files is a common requirement
+And since it's PHP we're talking about here, sharing the same application files is a common requirement 
 (e.g. for <code>php-fpm</code>, <code>nginx</code>, <code>php-workers</code>).</p>
+
 <p>As long as you are only dealing with one container, life is easy: You can simply <code>chown</code> files to the correct user.
-But since the containers might have a different user setup, permissions/ownership becomes a problem. Checkout
-<a href="https://serversforhackers.com/c/dckr-file-permissions">this video on Docker &amp; File Permissions</a> for a practical
+But since the containers might have a different user setup, permissions/ownership becomes a problem. Checkout 
+<a href="https://serversforhackers.com/c/dckr-file-permissions">this video on Docker &amp; File Permissions</a> for a practical 
 example in a Laravel application.</p>
-<p>The first thing for me was understanding that file ownership does not depend on the user <strong>name</strong> but rather on the user <strong>id</strong>.
-And you might have guessed it: Two containers might have a user with the same name but with a different id.
+
+<p>The first thing for me was understanding that file ownership does not depend on the user <strong>name</strong> but rather on the user <strong>id</strong>. 
+And you might have guessed it: Two containers might have a user with the same name but with a different id. 
 The same is true for groups, btw. You can check the id by running <code>id &lt;name&gt;</code>, e.g.</p>
+
 <pre><code>id www-data
-uid=33(www-data) gid=33(www-data) groups=33(www-data)</code></pre>
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+</code></pre>
+
 <p><a href="/img/structuring-the-docker-setup-for-php-projects/docker-file-ownership-volume.png"><img src="/img/structuring-the-docker-setup-for-php-projects/docker-file-ownership-volume.png" alt="File ownership with multiple containers using a shared volume" /></a></p>
+
 <p>That's inconvenient but rather easy to solve in most cases, because we have full control over the containers and
-can <a href="https://www.cyberciti.biz/faq/linux-change-user-group-uid-gid-for-all-owned-files/">assign ids as we like</a>
+can <a href="https://www.cyberciti.biz/faq/linux-change-user-group-uid-gid-for-all-owned-files/">assign ids as we like</a> 
 (using <code>usermod -u &lt;id&gt; &lt;name&gt;</code>) and thus making sure every container uses the same user names with the same user ids.</p>
+
 <p>Things get complicated when the volume isn't just a Docker volume but a shared folder on the host. This is usually
 what we want for development, so that changes on the host are immediately reflected in all the containers.</p>
+
 <p><a href="/img/structuring-the-docker-setup-for-php-projects/docker-file-ownership-host.png"><img src="/img/structuring-the-docker-setup-for-php-projects/docker-file-ownership-host.png" alt="File ownership with multiple containers using a shared volume from the host" /></a></p>
+
 <p>This issue <strong>only affects users with a linux host system</strong>! Docker Desktop (previously known as Docker for Mac / Docker for Win)
 has a virtualization layer in between that will effectively erase all ownership settings and make everything shared
 from the host available to every user in a container.</p>
+
 <p>We use the following script to ensure a consistent user setup when building a container:</p>
+
 <pre><code>#!/bin/sh
 
 APP_USER=$1
@@ -979,96 +1180,129 @@ if [ "$old_user_id" != "${APP_USER_ID}" ]; then
         # set the permissions of all "old" files and folder to the new user 
         find / -user $old_user_id -exec chown -h ${APP_USER} {} \; || true
     fi
-fi</code></pre>
+fi
+</code></pre>
+
 <p>The script is then called from the <code>Dockerfile</code> via</p>
+
 <pre><code>ARG APP_USER=www-data
 ARG APP_USER_ID=1000
 ARG APP_GROUP=$(APP_USER)
 ARG APP_GROUP_ID=$(APP_USER_ID)
 
-RUN /tmp/scripts/create_user.sh ${APP_USER} ${APP_GROUP} ${APP_USER_ID} ${APP_GROUP_ID}</code></pre>
-<p>The default values can be overridden by passing in the corresponding
-<a href="https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg">build args</a>. </p>
+RUN /tmp/scripts/create_user.sh ${APP_USER} ${APP_GROUP} ${APP_USER_ID} ${APP_GROUP_ID}
+</code></pre>
+
+<p>The default values can be overridden by passing in the corresponding 
+<a href="https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg">build args</a>.</p>
+
 <p>Linux users should use the user id of the user on their host system - for Docker Desktop users the defaults are fine.</p>
+
 <h3><a id="modifying-configuration-files"></a>Modifying configuration files</h3>
-<p>For most services we probably need some custom configuration settings, like</p>
-<ul>
-<li>setting php.ini values</li>
-<li>changing the default user of a service </li>
-<li>changing the location of logfiles</li>
-</ul>
+
+<p>For most services we probably need some custom configuration settings, like
+- setting php.ini values
+- changing the default user of a service 
+- changing the location of logfiles</p>
+
 <p>There are a couple of<br />
 <a href="https://dantehranian.wordpress.com/2015/03/25/how-should-i-get-application-configuration-into-my-docker-containers/">common approaches to modify application configuration in docker</a>
-and we are currently trying to stick to two rules:</p>
-<ol>
-<li>provide additional files that override defaults if possible</li>
-<li>change non-static values with a simple search and replace via <code>sed</code> during the container build</li>
-</ol>
+and we are currently trying to stick to two rules:
+1. provide additional files that override defaults if possible
+2. change non-static values with a simple search and replace via <code>sed</code> during the container build</p>
+
 <h4><a id="providing-additional-config-files"></a>Providing additional config files</h4>
-<p>Most services allow the specification of additional configuration files that override the default values in
-a default config file. This is great because we only need to define the settings that we actually care about
+
+<p>Most services allow the specification of additional configuration files that override the default values in 
+a default config file. This is great because we only need to define the settings that we actually care about 
 instead of copying a full file with lots of redundant values.</p>
+
 <p>Take the <a href="http://php.net/manual/en/configuration.file.php#configuration.file.scan"><code>php.ini</code> file</a> for example:
 It allows to places additional <code>.ini</code> files in a specific directory that override the default values. An easy way
 to find this directory is <code>php -i | grep "additional .ini"</code>:</p>
+
 <pre><code>$ php -i | grep "additional .ini"
-Scan this dir for additional .ini files =&gt; /usr/local/etc/php/conf.d</code></pre>
-<p>So instead of providing a &quot;full&quot; <code>php.ini</code> file, we will use a <code>zz-app.ini</code> file instead, that <strong>only</strong> contains the
-.ini settings we actually want to change and place it under <code>/usr/local/etc/php/conf.d</code>. </p>
+Scan this dir for additional .ini files =&gt; /usr/local/etc/php/conf.d
+</code></pre>
+
+<p>So instead of providing a "full" <code>php.ini</code> file, we will use a <code>zz-app.ini</code> file instead, that <strong>only</strong> contains the
+.ini settings we actually want to change and place it under <code>/usr/local/etc/php/conf.d</code>.</p>
+
 <p>Why <code>zz-</code>? Because</p>
+
 <blockquote>
-<p>[...] Within each directory, PHP will scan all files ending in .ini in alphabetical order.</p>
+  <p>[...] Within each directory, PHP will scan all files ending in .ini in alphabetical order.</p>
 </blockquote>
+
 <p>so if we want to ensure that our .ini files comes last (overriding all previous settings), we'll give it a
 corresponding prefix :)</p>
-<p>The full process would look like this:</p>
-<ul>
-<li>place the file in the <code>.docker</code> folder, e.g. at <code>.docker/.shared/config/php/conf.d/zz-app.ini</code></li>
-<li>pass the folder as build context</li>
-<li>in the Dockerfile, use <code>COPY .shared/config/php/conf.d/zz-app.ini /usr/local/etc/php/conf.d/zz-app.ini</code></li>
-</ul>
+
+<p>The full process would look like this:
+- place the file in the <code>.docker</code> folder, e.g. at <code>.docker/.shared/config/php/conf.d/zz-app.ini</code>
+- pass the folder as build context
+- in the Dockerfile, use <code>COPY .shared/config/php/conf.d/zz-app.ini /usr/local/etc/php/conf.d/zz-app.ini</code></p>
+
 <h4><a id="changing-non-static-values"></a>Changing non-static values</h4>
+
 <p><strong>Script: <code>modify_config.sh</code></strong></p>
-<p>Some configuration values are subject to local settings and thus should not be hard coded in configuration files.
+
+<p>Some configuration values are subject to local settings and thus should not be hard coded in configuration files. 
 Take the <code>memory_limit</code> configuration for <code>php-fpm</code> as an example: Maybe someone in the team can only dedicate
 a limited amount of memory to docker, so the <code>memory_limit</code> has to be kept lower than usual.</p>
+
 <p>We'll account for that fact by using a variable prefixed by <code>__</code> instead of the real value and replace it with
 a dynamic argument in the Dockerfile. Example for the aforementioned <code>zz-app.ini</code>:</p>
-<pre><code>memory_limit = __MEMORY_LIMIT</code></pre>
+
+<pre><code>memory_limit = __MEMORY_LIMIT
+</code></pre>
+
 <p>We use the following script <code>modify_config.sh</code> to replace the value:</p>
+
 <pre><code>#!/bin/sh
 
 CONFIG_FILE=$1
 VAR_NAME=$2
 VAR_VALUE=$3
 
-sed -i -e "s#${VAR_NAME}#${VAR_VALUE}#" "${CONFIG_FILE}"</code></pre>
+sed -i -e "s#${VAR_NAME}#${VAR_VALUE}#" "${CONFIG_FILE}"
+</code></pre>
+
 <p>The script is then called from the <code>Dockerfile</code> via</p>
+
 <pre><code>ARG PHP_FPM_MEMORY_LIMIT=1024M
 
 RUN /tmp/scripts/modify_config.sh \
     "/usr/local/etc/php/conf.d/zz-app.ini" \
     "__MEMORY_LIMIT" \
     "${PHP_FPM_MEMORY_LIMIT}" \
-;</code></pre>
+;
+</code></pre>
+
 <p>where <code>PHP_FPM_MEMORY_LIMIT</code> has a default value of <code>1024M</code> but can be overridden when the actual build is initiated.</p>
+
 <h3><a id="installing-php-extensions"></a>Installing php extensions</h3>
+
 <p><strong>Script: <code>install_php_extensions.sh</code></strong></p>
-<p>When php extensions are missing, googling will often point to answers for normal linux systems using <code>apt-get</code> or <code>yum</code>,
-e.g. <code>sudo apt-get install php-xdebug</code>. But for the official docker images, the recommended way is using the
+
+<p>When php extensions are missing, googling will often point to answers for normal linux systems using <code>apt-get</code> or <code>yum</code>, 
+e.g. <code>sudo apt-get install php-xdebug</code>. But for the official docker images, the recommended way is using the 
 <a href="https://github.com/docker-library/docs/blob/master/php/README.md#how-to-install-more-php-extensions">docker-php-ext-configure, docker-php-ext-install, and docker-php-ext-enable helper scripts</a>.
 Unfortunately, some extensions have rather complicated dependencies, so that the installation fails.
-Fortunately, there is a great project on Github called
+Fortunately, there is a great project on Github called 
 <a href="https://github.com/mlocati/docker-php-extension-installer">docker-php-extension-installer</a> that takes care of that for us
 and is super easy to use:</p>
+
 <pre><code>FROM php:7.3-cli
 
 ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
 
-RUN chmod uga+x /usr/local/bin/install-php-extensions &amp;&amp; sync &amp;&amp; install-php-extensions xdebug</code></pre>
-<p>The readme also contains an
-<a href="https://github.com/mlocati/docker-php-extension-installer#supported-php-extensions">overview of supported extension</a>
+RUN chmod uga+x /usr/local/bin/install-php-extensions &amp;&amp; sync &amp;&amp; install-php-extensions xdebug
+</code></pre>
+
+<p>The readme also contains an 
+<a href="https://github.com/mlocati/docker-php-extension-installer#supported-php-extensions">overview of supported extension</a> 
 per PHP version. To ensure that all of our PHP containers have the same extensions, we provide the following script:</p>
+
 <pre><code>#!/bin/sh
 
 # add wget
@@ -1082,16 +1316,23 @@ wget -q -O /usr/local/bin/install-php-extensions https://raw.githubusercontent.c
 chmod uga+x /usr/local/bin/install-php-extensions &amp;&amp; sync &amp;&amp; install-php-extensions \
     xdebug \
     opcache \
-;</code></pre>
-<p>If you're not sure which extensions are required by your application, give the
+;
+</code></pre>
+
+<p>If you're not sure which extensions are required by your application, give the 
 <a href="https://github.com/maglnet/ComposerRequireChecker">ComposerRequireChecker</a> a try.</p>
+
 <h3><a id="installing-common-software"></a>Installing common software</h3>
+
 <p><strong>Script: <code>install_software.sh</code></strong></p>
-<p>There is a certain set of software that I want to have readily available in every container. Since this a development
-setup, I'd prioritize ease of use / debug over performance / image size, so this might seem like a little &quot;too much&quot;.
+
+<p>There is a certain set of software that I want to have readily available in every container. Since this a development 
+setup, I'd prioritize ease of use / debug over performance / image size, so this might seem like a little "too much".
 I think I'm also kinda spoiled by my Homestead past, because it's so damn convenient to have everything right at
 your fingertips :)</p>
+
 <p>Anyway, the script is straight forward:</p>
+
 <pre><code>#!/bin/sh
 
 apt-get update -yqq &amp;&amp; apt-get install -yqq \
@@ -1111,18 +1352,22 @@ apt-get update -yqq &amp;&amp; apt-get install -yqq \
     unzip \
     vim \
     wget \
-;</code></pre>
-<p>Notes:</p>
-<ul>
-<li>this list should match <strong>your own set of go-to tools</strong>. I'm fairly open to adding new stuff here if it speeds up the
-dev workflow. But if you don't require some of the tools, get rid of them.</li>
-<li>sorting the software alphabetically is a good practice to avoid unnecessary duplicates. Don't do this by hand, though!
-If you're using an IDE / established text editor, chances are high that this is either a build-in functionality or
-there's a plugin available. I'm using <a href="https://plugins.jetbrains.com/plugin/5919-lines-sorter">Lines Sorter for PhpStorm</a></li>
-</ul>
+;
+</code></pre>
+
+<p>Notes:
+- this list should match <strong>your own set of go-to tools</strong>. I'm fairly open to adding new stuff here if it speeds up the
+  dev workflow. But if you don't require some of the tools, get rid of them.
+- sorting the software alphabetically is a good practice to avoid unnecessary duplicates. Don't do this by hand, though!
+  If you're using an IDE / established text editor, chances are high that this is either a build-in functionality or
+  there's a plugin available. I'm using <a href="https://plugins.jetbrains.com/plugin/5919-lines-sorter">Lines Sorter for PhpStorm</a></p>
+
 <h3><a id="cleaning-up"></a>Cleaning up</h3>
+
 <p><strong>Script: <code>cleanup.sh</code></strong></p>
+
 <p>Nice and simple:</p>
+
 <pre><code>#!/bin/sh
 
 apt-get clean
@@ -1130,29 +1375,31 @@ rm -rf /var/lib/apt/lists/* \
        /tmp/* \
        /var/tmp/* \
        /var/log/lastlog \
-       /var/log/faillog</code></pre>
+       /var/log/faillog
+</code></pre>
+
 <h3><a id="using-entrypoint-for-pre-run-configuration"></a>Using <code>ENTRYPOINT</code> for pre-run configuration</h3>
-<p>Docker went back to the unix roots with the
-<a href="https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well">do on thing and do it well philosophy</a> which is
+
+<p>Docker went back to the unix roots with the 
+<a href="https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well">do on thing and do it well philosophy</a> which is 
 manifested in the <a href="https://medium.freecodecamp.org/docker-entrypoint-cmd-dockerfile-best-practices-abc591c30e21"><code>CMD</code> and <code>ENTRYPOINT</code> instructions</a>.</p>
-<p>As I had a hard time understanding those instructions when I started with Docker, here's my take at a layman's terms description:</p>
-<ul>
-<li>since a container should do one thing, we need to specify that thing. That's what we do with <code>ENTRYPOINT</code>. Concrete examples:
-<ul>
-<li>a <code>mysql</code> container should probably run the <code>mysqld</code> daemon</li>
-<li>a <code>php-fpm</code> container.. well, <code>php-fpm</code></li>
-</ul></li>
-<li>the <code>CMD</code> is passed as the default argument to the <code>ENTRYPOINT</code></li>
-<li>the <code>ENTRYPOINT</code> is executed every time we <em>run</em> a container. Some things can't be done during build but only at runtime
-(e.g. find the IP of the host from within a container - see section
-<a href="providing-host-docker-internal-for-linux-host-systems">Providing <code>host.docker.internal</code> for linux host systems</a>
-) - <code>ENTRYPOINT</code> is a good solution for that problem</li>
-<li>technically, we can only override an already existing <code>ENTRYPOINT</code> from the base image. But: We can structure the new
-<code>ENTRYPOINT</code> like a <a href="https://en.wikipedia.org/wiki/Decorator_pattern">decorator</a> by adding <code>exec "$@"</code> at the end to
-simulate inheritance from the parent image</li>
-</ul>
-<p>To expand on the last point, consider the default
+
+<p>As I had a hard time understanding those instructions when I started with Docker, here's my take at a layman's terms description:
+- since a container should do one thing, we need to specify that thing. That's what we do with <code>ENTRYPOINT</code>. Concrete examples:
+  - a <code>mysql</code> container should probably run the <code>mysqld</code> daemon
+  - a <code>php-fpm</code> container.. well, <code>php-fpm</code>
+- the <code>CMD</code> is passed as the default argument to the <code>ENTRYPOINT</code>
+- the <code>ENTRYPOINT</code> is executed every time we <em>run</em> a container. Some things can't be done during build but only at runtime
+  (e.g. find the IP of the host from within a container - see section 
+  <a href="providing-host-docker-internal-for-linux-host-systems">Providing <code>host.docker.internal</code> for linux host systems</a>
+  ) - <code>ENTRYPOINT</code> is a good solution for that problem
+- technically, we can only override an already existing <code>ENTRYPOINT</code> from the base image. But: We can structure the new 
+  <code>ENTRYPOINT</code> like a <a href="https://en.wikipedia.org/wiki/Decorator_pattern">decorator</a> by adding <code>exec "$@"</code> at the end to 
+  simulate inheritance from the parent image</p>
+
+<p>To expand on the last point, consider the default 
 <a href="https://github.com/docker-library/php/blob/640a30e8ff27b1ad7523a212522472fda84d56ff/7.3/stretch/fpm/docker-php-entrypoint"><code>ENTRYPOINT</code> of the current [2019-02-23; PHP 7.3] <code>php-fpm</code> image</a></p>
+
 <pre><code>#!/bin/sh
 
 set -e
@@ -1162,33 +1409,48 @@ if [ "${1#-}" != "$1" ]; then
     set -- php-fpm "$@"
 fi
 
-exec "$@"</code></pre>
+exec "$@"
+</code></pre>
+
 <p>In the <a href="https://github.com/docker-library/php/blob/640a30e8ff27b1ad7523a212522472fda84d56ff/7.3/stretch/fpm/Dockerfile#L223">corresponding Dockerfile</a>
 we find the following instructions:</p>
+
 <pre><code># [...]
 ENTRYPOINT ["docker-php-entrypoint"]
 # [...]
-CMD ["php-fpm"]</code></pre>
-<p>That means: When we run the container it will pass the string &quot;php-fpm&quot; to the <code>ENTRYPOINT</code> script <code>docker-php-entrypoint</code>
+CMD ["php-fpm"]
+</code></pre>
+
+<p>That means: When we run the container it will pass the string "php-fpm" to the <code>ENTRYPOINT</code> script <code>docker-php-entrypoint</code> 
 as argument which will then execute it (due to the <code>exec "$@"</code> instruction at the end):</p>
+
 <pre><code>$ docker run --name test --rm php:fpm
 [23-Feb-2019 14:49:20] NOTICE: fpm is running, pid 1
 [23-Feb-2019 14:49:20] NOTICE: ready to handle connections
 # php-fpm is running
 # Hit ctrl + c to close the connection
-$ docker stop test</code></pre>
-<p>We could now override the default <code>CMD</code> &quot;php-fpm&quot; with something else, e.g. a simple <code>echo "hello"</code>. The <code>ENTRYPOINT</code>
+$ docker stop test
+</code></pre>
+
+<p>We could now override the default <code>CMD</code> "php-fpm" with something else, e.g. a simple <code>echo "hello"</code>. The <code>ENTRYPOINT</code>
 will happily execute it:</p>
+
 <pre><code>$ docker run --name test --rm php:fpm echo "hello"
-hello</code></pre>
-<p>But now the <code>php-fpm</code> process isn't started any more. How can we echo &quot;hello&quot; but still keep the fpm process running?
+hello
+</code></pre>
+
+<p>But now the <code>php-fpm</code> process isn't started any more. How can we echo "hello" but still keep the fpm process running?
 By adding our own <code>ENTRYPOINT</code> script:</p>
+
 <pre><code>#!/bin/sh
 echo 'hello'
 
-exec "$@"</code></pre>
-<p>Full example (using <a href="https://docs.docker.com/engine/reference/commandline/build/#build-with--">stdin to pass the Dockerfile</a>
+exec "$@"
+</code></pre>
+
+<p>Full example (using <a href="https://docs.docker.com/engine/reference/commandline/build/#build-with--">stdin to pass the Dockerfile</a> 
 via <a href="https://stackoverflow.com/q/2953081/413531">Heredoc string</a>)</p>
+
 <pre><code>$ docker build -t my-fpm -&lt;&lt;'EOF'
 FROM php:fpm
 
@@ -1202,28 +1464,37 @@ RUN  touch "/usr/bin/my-entrypoint.sh" \
 
 ENTRYPOINT ["/usr/bin/my-entrypoint.sh", "docker-php-entrypoint"]
 CMD ["php-fpm"]
-EOF</code></pre>
+EOF
+</code></pre>
+
 <p>Note that we added the <code>ENTRYPOINT</code> of the parent image <code>docker-php-entrypoint</code> as argument to our own <code>ENTRYPOINT</code> script
 <code>/usr/bin/my-entrypoint.sh</code> so that we don't loose its functionality. And we need to define the <code>CMD</code> instruction explicitly,
 because the one from the parent image is <a href="https://stackoverflow.com/a/49031590/413531">automatically removed once we define our own <code>ENTRYPOINT</code></a>.</p>
-<p>But: It works: </p>
+
+<p>But: It works:</p>
+
 <pre><code>$ docker run --name test --rm my-fpm
 hello
 [23-Feb-2019 15:43:25] NOTICE: fpm is running, pid 1
 [23-Feb-2019 15:43:25] NOTICE: ready to handle connections
 # Hit ctrl + c to close the connection
-$ docker stop test</code></pre>
+$ docker stop test
+</code></pre>
+
 <h4><a id="providing-host-docker-internal-for-linux-host-systems"></a>Providing <code>host.docker.internal</code> for linux host systems</h4>
+
 <p><strong>Script: <code>docker-entrypoint/resolve-docker-host-ip.sh</code></strong></p>
-<p>In the previous part of this tutorial series, I explained how to build the
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker">Docker container in a way that it plays nice with PhpStorm and Xdebug</a>.
+
+<p>In the previous part of this tutorial series, I explained how to build the 
+<a href="/blog/setup-phpstorm-with-xdebug-on-docker">Docker container in a way that it plays nice with PhpStorm and Xdebug</a>. 
 The key parts were SSH access and the magical <code>host.docker.internal</code> DNS entry. This works great for Docker Desktop (Windows and Mac)
-but not for Linux. The DNS entry <a href="https://github.com/docker/for-linux/issues/264">doesn't exist there</a>.
-Since we rely on that entry
+but not for Linux. The DNS entry <a href="https://github.com/docker/for-linux/issues/264">doesn't exist there</a>. 
+Since we rely on that entry 
 <a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">to make debugging possible</a>,
-we will set it &quot;manually&quot; <a href="https://stackoverflow.com/a/24049165/413531">if the host doesn't exist</a>
-with the following script
+we will set it "manually" <a href="https://stackoverflow.com/a/24049165/413531">if the host doesn't exist</a> 
+with the following script 
 (inspired by the article <a href="https://dev.to/bufferings/access-host-from-a-docker-container-4099">Access host from a docker container</a>):</p>
+
 <pre><code>#!/bin/sh
 
 set -e
@@ -1239,8 +1510,11 @@ then
   echo "$HOST_IP\t$HOST_DOMAIN" &gt;&gt; /etc/hosts
 fi
 
-exec "$@"</code></pre>
-<p>The script is placed at <code>.shared/docker-entrypoint/resolve-docker-host-ip.sh</code> and added as <code>ENTRYPOINT</code> in the Dockerfile via </p>
+exec "$@"
+</code></pre>
+
+<p>The script is placed at <code>.shared/docker-entrypoint/resolve-docker-host-ip.sh</code> and added as <code>ENTRYPOINT</code> in the Dockerfile via</p>
+
 <pre><code>COPY .shared/scripts/ /tmp/scripts/
 
 RUN mkdir -p /bin/docker-entrypoint/ \
@@ -1248,28 +1522,33 @@ RUN mkdir -p /bin/docker-entrypoint/ \
  &amp;&amp; chmod +x -R /bin/docker-entrypoint/ \
 ;
 
-ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh", ...]</code></pre>
-<p>Notes:</p>
-<ul>
-<li>since this script depends on runtime configuration, we need to run it as an <code>ENTRYPOINT</code></li>
-<li>there is no need to explicitly check for the OS type - we simply make sure that the DNS entry exists
-and add it if it doesn't</li>
-<li>we're using <code>dig</code> (package <code>dnsutils</code>) and <code>ip</code> (package <code>iproute2</code>) which need to be installed
-during the build time of the container. Tip: If you need to figure out the package for a specific command,
-give <a href="https://command-not-found.com/">https://command-not-found.com/</a> a try. See the
-<a href="https://command-not-found.com/dig">entry for <code>dig</code></a> for instance.</li>
-<li>this workaround is only required in containers we want to debug via xdebug</li>
-</ul>
+ENTRYPOINT ["/bin/docker-entrypoint/resolve-docker-host-ip.sh", ...]
+</code></pre>
+
+<p>Notes:
+- since this script depends on runtime configuration, we need to run it as an <code>ENTRYPOINT</code>
+- there is no need to explicitly check for the OS type - we simply make sure that the DNS entry exists
+  and add it if it doesn't
+- we're using <code>dig</code> (package <code>dnsutils</code>) and <code>ip</code> (package <code>iproute2</code>) which need to be installed 
+  during the build time of the container. Tip: If you need to figure out the package for a specific command,
+  give <a href="https://command-not-found.com/">https://command-not-found.com/</a> a try. See the 
+  <a href="https://command-not-found.com/dig">entry for <code>dig</code></a> for instance.
+- this workaround is only required in containers we want to debug via xdebug</p>
+
 <h2><a id="wrapping-up"></a>Wrapping up</h2>
+
 <p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to leave a comment.
-Apart from that, you should now have a running docker setup for your local PHP development as well as a nice &quot;flow&quot;
+Apart from that, you should now have a running docker setup for your local PHP development as well as a nice "flow"
 to get started each day.</p>
-<p>In the next part of this tutorial, we will
+
+<p>In the next part of this tutorial, we will 
 <a href="/blog/docker-from-scratch-for-php-applications-in-2022/">add some more containers (php workers, mysql, redis)</a>
 and use
 <a href="/blog/run-laravel-9-docker-in-2022/">a fresh installation of Laravel 9</a>
 to make use of them.</p>
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic notifications when this next part comes out :)</p>                <hr />
+
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic notifications when this next part comes out :)</p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

@@ -119,93 +119,119 @@
 </header>
 
 <!-- Main Content -->
-<div class="container">
-    <div class="row">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-            <div class="col-md-6 col-s-12 center">
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="col-md-6 col-s-12 center">
  <figure>
   <a href="/img/pascal-landau.jpg">
-    <img src="/img/pascal-landau-400x400.jpg" alt="Pascal Landau">
+    <img src="/img/pascal-landau-400x400.jpg" alt="Pascal Landau" />
   </a>
   <figcaption style="text-align:center; margin-bottom:1em">Pascal Landau</figcaption>
 </figure> 
 </div>
+
 <div class="col-md-6 col-s-12">
 I'm the Technical Director Marketing Intelligence and Technology 
-at <a href="http://corporate.aboutyou.de/en/">About You SE &amp; Co. KG</a>.
+at <a href="http://corporate.aboutyou.de/en/">About You SE & Co. KG</a>.
 I'm passionate about software development especially backend PHP coding. 
-Oh, and Google BigQuery (lots of love </div>
+Oh, and Google BigQuery (lots of love <3) Apart from that I've always enjoyed 
+earning money on the internet - which initially brought me to SEO. Which 
+was a lot more fun when Google was not that sophisticated tbh :)
+</div>
+
 <p>There are some basic philosophies and ground rules I've found useful (this list
 will grow, give it some time :P)</p>
+
 <p><img src="/img/meme-wall.jpg" alt="Dev meme wall" title="My dev meme wall" /></p>
+
 <blockquote>
-<p>give a man a fish and you feed him for a day; teach a man to fish and you feed him for a lifetime</p>
+  <p>give a man a fish and you feed him for a day; teach a man to fish and you feed him for a lifetime</p>
 </blockquote>
+
 <p>I've always enjoyed teaching things. Simply put: I love learning new stuff
 myself and I am grateful for living in a time when almost every piece of
 information one can possibly dream of is out there. When figuring out a
-particular problem myself, there was often that feeling of &quot;if only I had
-known 'x' four hours ago ...&quot; and I'd like to spare other people that
+particular problem myself, there was often that feeling of "if only I had
+known 'x' four hours ago ..." and I'd like to spare other people that
 experience. On the other it gets better with every problem you solve because,
 well, most problems boil down to asking the right questions aka. googling the
 right stuff (which is one of the most valuable skills a developer has to master,
 imho).</p>
+
 <p>I feel very strongly about not simply presenting the solution but explain the
 way you got there. Chances are, you'll encounter a similar problem at some point
 in the future and I would rather give you the necessary tools to figure it out
 yourself than solving it for you <em>again</em>.</p>
+
 <blockquote>
-<p>I can't manage what I can't measure.</p>
-<p>One accurate measurement is worth a thousand expert opinions.</p>
+  <p>I can't manage what I can't measure.</p>
+  
+  <p>One accurate measurement is worth a thousand expert opinions.</p>
 </blockquote>
-<p>These are <em>big</em> ones. If you're coming from a mindset of &quot;always learning&quot;,
+
+<p>These are <em>big</em> ones. If you're coming from a mindset of "always learning",
 you'll embrace the philosophy of
-&quot;The more I know about X, the more I know that I don' t know X&quot; at some point.
+"The more I know about X, the more I know that I don' t know X" at some point.
 You'll start to constantly question your work (and that of others...) because
 you are used to the fact, that there seldom is one truth and the more you get to
 know about a topic, the more likely it is that you'll have to change your
 opinion on something.</p>
+
 <p>Combine that with highly complex fields and black box components (think AI,
 Attribution Modeling, Re-engineering Google's ranking algorithm) and you'll
 quickly notice, that there are perfectly reasonable assumptions that are still
 completely incorrect. It does not matter how you feel about something or how
-much you think you are an &quot;expert&quot;. Unless proven, that really does not count
+much you think you are an "expert". Unless proven, that really does not count
 much. I'm not saying there is no value in an experts opinion, especially if the
 one having it has a lot of experience in the field at hand - that's still super
 valuable in terms of developing a hypothesis.</p>
+
 <p>But in the end, numbers and metrics are your one, true friend.</p>
+
 <blockquote>
-<p>An ounce of prevention is worth a pound of cure</p>
+  <p>An ounce of prevention is worth a pound of cure</p>
 </blockquote>
-<p>As a software engineer, you're probably familiar with &quot;the cost of a bug&quot;:</p>
+
+<p>As a software engineer, you're probably familiar with "the cost of a bug":</p>
+
 <p><img src="/img/cost-of-a-bug.png" alt="Cost of a bug in software development" title="Cost of a bug in software development" /></p>
-<p>After realizing that, the phrase &quot;... but we didn't have time to write tests!&quot;
+
+<p>After realizing that, the phrase "... but we didn't have time to write tests!"
 becomes almost comical. Making errors is human. Things break, that is absolutely
-normal. But isn't it so much better to see that <em>immediately</em> instead of &quot;
-crossing-fingers and hoping that nothing breaks - and if so that no one notices&quot;
+normal. But isn't it so much better to see that <em>immediately</em> instead of "
+crossing-fingers and hoping that nothing breaks - and if so that no one notices"
 ?</p>
+
 <h2>Open Source</h2>
+
 <p>I am a big fan of Open Source Software. Not only because it provides priceless
 software for free, but also because it is a great resource to learn and develop.
 Developing OSS basically means to deal with a potentially infinite pool of
 developers/contributors all across the world as well as managing and
 prioritizing feature requests and bug reports of actual end users.</p>
+
 <p>To make this even possible, you <strong>must</strong> introduce a certain level of automation
 and quality assurance, which ultimately leads to becoming a better developer
 automatically. Examples include:</p>
+
 <ul>
 <li>solving onboarding issues
+
 <ul>
 <li>provide reproducible environments (vagrant/docker)</li>
 <li>automate common actions (composer scripts/Makefile)</li>
 </ul></li>
 <li>aligning multiple developers
+
 <ul>
 <li>enforcing code style (.editorconfig, .gitattributes, PSR-2)</li>
 <li>bug / code smell prevention (code linters, static analyzers)</li>
 <li>provide git-hooks</li>
 </ul></li>
 <li>building continous integration pipelines
+
 <ul>
 <li>set up multi-level testing structures (unit/integration/end2end)</li>
 <li>automatically check pull requests (jenkins)</li>
@@ -216,18 +242,24 @@ automatically. Examples include:</p>
 <li>code deprecation strategies</li>
 <li>...</li>
 </ul>
+
 <p>In the end, this is the same set of skills that I would expect from a great
 inhouse teamlead of a software engineering team. But it's actually rather the
 exception than the norm to meet such developers in my experience (I interview up
 to 5 developers of all levels [junior, intermediate, senior, lead] per week).</p>
+
 <h3>Projects that I currently support:</h3>
+
 <ul>
 <li><a href="https://github.com/paratestphp/paratest">paratestphp/paratest</a>
+
 <ul>
 <li>Framework for the parallel execution of PHP test suites</li>
 </ul></li>
 </ul>
+
 <h2>Short facts</h2>
+
 <ul>
 <li>2006: Began to code (HTML, CSS, PHP, MySQL) including SEO</li>
 <li>2008: Started studying Applied Computer Science via <a href="http://www.sap.com">SAP</a>
@@ -241,29 +273,37 @@ Voted <a href="http://www.seo-united.de/blog/seo/seo-wahlen-2011-gewinner.htm#ne
 <li>2012: Started working as SEO consultant at TRG (The Reach Group) in Hamburg</li>
 <li>2013-01: Started lecturing
 at <a href="http://www.afs-akademie.org/">AFS Akademie für Fortbildung in Suchmaschinenoptimierung</a> (
-twice per year) on the topic of &quot;Pagerank und Trustrank&quot;</li>
+twice per year) on the topic of "Pagerank und Trustrank"</li>
 <li>2013-05: Started working at <a href="http://www.tchibo.com/">Tchibo GmbH</a> as Technical
 SEO Manager</li>
 <li>2016-04: Started working at <a href="http://corporate.aboutyou.de/en/">About You SE &amp; Co. KG</a>
 as Lead/Head of Marketing Technology
+
 <ul>
 <li>2017-07: + Head of SEO</li>
 <li>2017-12: + Head of Webtracking</li>
 <li>2020-03: Technical Director Marketing Intelligence and Technology</li>
 </ul></li>
 </ul>
-<div id="contact"><div id="contact"></div></div>
+
+<div id="contact"></div>
+
 <h2>Slightly longer</h2>
+
 <p>Just go over to my <a href="https://www.linkedin.com/in/pascallandau">LinkedIn profile</a></p>
+
 <h2>Stalk me at</h2>
+
 <ul>
 <li><a href="https://github.com/paslandau/">Github</a></li>
 <li><a href="https://twitter.com/PascalLandau">Twitter</a></li>
 <li><a href="https://www.facebook.com/pascal.landau">Facebook</a></li>
 <li><a href="https://de.linkedin.com/in/pascallandau">LinkedIn</a></li>
-</ul>        </div>
+</ul>
+            </div>
+        </div>
     </div>
-</div>
+</article>    
 
 <hr>
 

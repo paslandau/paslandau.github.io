@@ -151,38 +151,50 @@
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <p>In the fifth part of this tutorial series on developing PHP on Docker we will <strong>setup some PHP code
 quality tools</strong> and provide a convenient way to control them via GNU make.</p>
+
 <p><a href="/img/php-qa-tools-make-docker/run-qa-tools.gif"><img src="/img/php-qa-tools-make-docker/run-qa-tools.gif" alt="Run QA tools" /></a></p>
+
 <p><small>
 FYI: Originally I wanted
-this tutorial to be a part of
+this tutorial to be a part of 
 <a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-because QA checks are imho vital part of a CI setup - but it kinda grew &quot;too big&quot; and took a way
+because QA checks are imho vital part of a CI setup - but it kinda grew "too big" and took a way 
 too much space from, well, actually setting up the CI pipelines :)
 </small></p>
+
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/ocM4ktjqwIg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-5-php-qa-tools-make-docker">part-5-php-qa-tools-make-docker</a>.</p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 and the following one is
 <a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
 to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-<!-- generated -->
-<p><a id='table-of-contents'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
 <h2>Table of contents</h2>
+
 <!-- toc -->
+
 <ul>
 <li><a href="#introduction">Introduction</a>
+
 <ul>
 <li><a href="#the-qa-tools">The QA tools</a>
+
 <ul>
 <li><a href="#phpcs-and-phpcbf">phpcs and phpcbf</a></li>
 <li><a href="#phpstan">phpstan</a></li>
@@ -191,9 +203,10 @@ to get <strong>automatic notifications</strong> when the next part comes out :)<
 <li><a href="#additional-tools-out-of-scope">Additional tools (out of scope)</a></li>
 </ul></li>
 <li><a href="#qa-make-targets">QA make targets</a>
+
 <ul>
 <li><a href="#the-qa-target">The <code>qa</code> target</a></li>
-<li><a href="#the-execute-function">The <code>execute</code> &quot;function&quot;</a></li>
+<li><a href="#the-execute-function">The <code>execute</code> "function"</a></li>
 <li><a href="#parallel-execution-and-a-helper-target">Parallel execution and a helper target</a></li>
 <li><a href="#sprinkle-some-color-on-top">Sprinkle some color on top</a></li>
 </ul></li>
@@ -201,34 +214,46 @@ to get <strong>automatic notifications</strong> when the next part comes out :)<
 <li><a href="#wrapping-up">Wrapping up</a></li>
 </ul></li>
 </ul>
+
 <!-- /toc -->
-<!-- generated -->
-<p><a id='introduction'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
 <h2>Introduction</h2>
+
 <p>Code quality tools ensure a <strong>baseline of code quality</strong> by automatically checking certain rules,
 e.g. <strong>code style definitions</strong>, proper <strong>usage of types</strong>, proper <strong>declaration of dependencies</strong>,
 etc. When run regularly they are a great way to enforce better code and are thus a
 <strong>perfect fit for a CI pipeline</strong>. For this tutorial, I'm going to setup the following tools:</p>
+
 <ul>
 <li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a>
+
 <ul>
 <li><a href="#phpstan">Static Analyzer: phpstan</a></li>
 <li><a href="#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
 <li><a href="#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
 </ul></li>
 </ul>
+
 <p>and provide convenient access through a <a href="#the-qa-target"><code>qa</code> make target</a>. The end result will look
 like this:</p>
+
 <p><a href="/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
-<p>FYI: When we started out with using code quality tools in general, we have used
-<a href="https://github.com/phpro/grumphp">GrumPHP</a> - and I would still recommend it. We have only
+
+<p>FYI: When we started out with using code quality tools in general, we have used 
+<a href="https://github.com/phpro/grumphp">GrumPHP</a> - and I would still recommend it. We have only 
 transitioned away from it because <code>make</code> gives us a little more flexibility and control.</p>
-<p>You can find the &quot;final&quot; makefile
+
+<p>You can find the "final" makefile
 at <a href="https://github.com/paslandau/docker-php-tutorial/blob/part-5-php-qa-tools-make-docker/.make/01-02-application-qa.mk"><code>.make/01-02-application-qa.mk</code></a>.</p>
+
 <p><strong>CAUTION</strong>: The <code>Makefile</code> is build on top of the setup that I introduced in
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>,
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>, 
 so please refer to that tutorial if anything is not clear.</p>
+
 <pre><code class="language-Makefile">##@ [Application: QA]
 
 # variables
@@ -334,29 +359,46 @@ qa: ## Run code quality tools on all files
 qa-exec: phpstan \
     phplint \
     composer-require-checker \
-    phpcs</code></pre>
-<!-- generated -->
-<p><a id='the-qa-tools'> </a></p>
-<!-- /generated -->
+    phpcs
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-qa-tools'> </a>
+<!-- /generated --></p>
+
 <h2>The QA tools</h2>
-<!-- generated -->
-<p><a id='phpcs-and-phpcbf'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='phpcs-and-phpcbf'> </a>
+<!-- /generated --></p>
+
 <h3>phpcs and phpcbf</h3>
+
 <p><code>phpcs</code> is the CLI tool of the style checker
 <a href="https://github.com/squizlabs/PHP_CodeSniffer">squizlabs/PHP_CodeSniffer</a>. It also comes with
 <code>phpcbf</code> - a tool to automatically fix style errors.</p>
+
 <p>Installation via composer:</p>
-<pre><code class="language-shell">make composer ARGS="require --dev squizlabs/php_codesniffer"</code></pre>
+
+<pre><code class="language-shell">make composer ARGS="require --dev squizlabs/php_codesniffer"
+</code></pre>
+
 <p>For now we will simply use the pre-configured ruleset for
 <a href="https://www.php-fig.org/psr/psr-12/">PSR-12: Extended Coding Style</a>. When run in the <code>application</code>
 container for the first time on the <code>app</code> directory via</p>
-<pre><code class="language-text">vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app</code></pre>
+
+<pre><code class="language-text">vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app
+</code></pre>
+
 <p>i.e.</p>
+
 <pre><code class="language-text">--standard=PSR12 =&gt; use the PSR12 ruleset
 --parallel=4     =&gt; run with 4 parallel processes
--p               =&gt; show the progress</code></pre>
+-p               =&gt; show the progress
+</code></pre>
+
 <p>we get the following result:</p>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app
 
 FILE: /var/www/app/app/Console/Kernel.php
@@ -368,6 +410,7 @@ FOUND 2 ERRORS AFFECTING 1 LINE
 ----------------------------------------------------------------------
 PHPCBF CAN FIX THE 2 MARKED SNIFF VIOLATIONS AUTOMATICALLY
 ----------------------------------------------------------------------
+
 
 FILE: /var/www/app/app/Http/Controllers/HomeController.php
 ----------------------------------------------------------------------
@@ -381,6 +424,7 @@ FOUND 4 ERRORS AFFECTING 2 LINES
 PHPCBF CAN FIX THE 4 MARKED SNIFF VIOLATIONS AUTOMATICALLY
 ----------------------------------------------------------------------
 
+
 FILE: /var/www/app/app/Jobs/InsertInDbJob.php
 -------------------------------------------------------------------------------
 FOUND 1 ERROR AFFECTING 1 LINE
@@ -390,6 +434,7 @@ FOUND 1 ERROR AFFECTING 1 LINE
 PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
 -------------------------------------------------------------------------------
 
+
 FILE: /var/www/app/app/Models/User.php
 -------------------------------------------------------------------------------
 FOUND 1 ERROR AFFECTING 1 LINE
@@ -397,8 +442,11 @@ FOUND 1 ERROR AFFECTING 1 LINE
  13 | ERROR | [x] Each imported trait must have its own "use" import statement
 -------------------------------------------------------------------------------
 PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
--------------------------------------------------------------------------------</code></pre>
+-------------------------------------------------------------------------------
+</code></pre>
+
 <p>All errors can be fixed automatically with <code>phpcbf</code>:</p>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/phpcbf --standard=PSR12 --parallel=4 -p app
 
 PHPCBF RESULT SUMMARY
@@ -413,29 +461,44 @@ FILE                                                     FIXED  REMAINING
 A TOTAL OF 8 ERRORS WERE FIXED IN 4 FILES
 -------------------------------------------------------------------------
 
-Time: 411ms; Memory: 8MB</code></pre>
+Time: 411ms; Memory: 8MB
+</code></pre>
+
 <p>and a follow-up run of <code>phpcs</code> doesn't show any more errors:</p>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app
 .................... 20 / 20 (100%)
 
-Time: 289ms; Memory: 8MB</code></pre>
-<!-- generated -->
-<p><a id='phpstan'> </a></p>
-<!-- /generated -->
+
+Time: 289ms; Memory: 8MB
+</code></pre>
+
+<p><!-- generated -->
+<a id='phpstan'> </a>
+<!-- /generated --></p>
+
 <h3>phpstan</h3>
+
 <p><code>phpstan</code> is the CLI tool of the static code analyzer
 <a href="https://github.com/phpstan/phpstan">phpstan/phpstan</a> (see also the
 <a href="https://phpstan.org/user-guide/getting-started">full PHPStan documentation</a>). It provides some
-default &quot;levels&quot; of increasing strictness to report potential bugs based on the AST of the analyzed
+default "levels" of increasing strictness to report potential bugs based on the AST of the analyzed
 PHP code.</p>
+
 <p>Installation via composer:</p>
-<pre><code class="language-shell">make composer ARGS="require --dev phpstan/phpstan"</code></pre>
-<p>Since this is a &quot;fresh&quot; codebase with very little code let's go for the
+
+<pre><code class="language-shell">make composer ARGS="require --dev phpstan/phpstan"
+</code></pre>
+
+<p>Since this is a "fresh" codebase with very little code let's go for the
 <a href="https://phpstan.org/user-guide/rule-levels">highest level 9</a> (as of 2022-04-24) and run it in the
 <code>application</code> container on the <code>app</code> and <code>tests</code> directories via:</p>
+
 <pre><code class="language-text">vendor/bin/phpstan analyse app tests --level=9
 
---level=9        =&gt; use level 9</code></pre>
+--level=9        =&gt; use level 9
+</code></pre>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/phpstan analyse app tests --level=9
  25/25 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
 
@@ -498,47 +561,79 @@ PHP code.</p>
   71     Parameter #1 $config of method Illuminate\Database\Connectors\MySqlConnector::connect() expects array, mixed given.
  ------ ---------------------------------------------------------------------------------------------------------------------
 
- [ERROR] Found 16 errors</code></pre>
+
+ [ERROR] Found 16 errors
+</code></pre>
+
 <p>After fixing (or ignoring :P) all errors, we now get</p>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/phpstan analyse app tests --level=9
 25/25 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
 
-[OK] No errors</code></pre>
-<!-- generated -->
-<p><a id='php-parallel-lint'> </a></p>
-<!-- /generated -->
+[OK] No errors
+</code></pre>
+
+<p><!-- generated -->
+<a id='php-parallel-lint'> </a>
+<!-- /generated --></p>
+
 <h3>php-parallel-lint</h3>
+
 <p><code>php-parallel-lint</code> is the CLI tool of the PHP code linter
 <a href="https://github.com/php-parallel-lint/PHP-Parallel-Lint">php-parallel-lint/PHP-Parallel-Lint</a>. It
 ensures that all PHP files are syntactically correct.</p>
+
 <p>Installation via composer:</p>
-<pre><code class="language-shell">make composer ARGS="require --dev php-parallel-lint/php-parallel-lint"</code></pre>
-<p>&quot;Parallel&quot; is already in the name, so we run it on the full codebase <code>./</code> with 4 parallel processes
+
+<pre><code class="language-shell">make composer ARGS="require --dev php-parallel-lint/php-parallel-lint"
+</code></pre>
+
+<p>"Parallel" is already in the name, so we run it on the full codebase <code>./</code> with 4 parallel processes 
 and exclude the <code>.git</code> and <code>vendor</code> directories to speed up the execution via</p>
-<pre><code class="language-text">vendor/bin/parallel-lint -j 4 --exclude .git --exclude vendor ./</code></pre>
+
+<pre><code class="language-text">vendor/bin/parallel-lint -j 4 --exclude .git --exclude vendor ./
+</code></pre>
+
 <p>i.e.</p>
+
 <pre><code class="language-text">-j 4                              =&gt; use 4 parallel processes
---exclude .git --exclude vendor   =&gt; ignore the .git/ and vendor/ directories</code></pre>
-<p>we get </p>
+--exclude .git --exclude vendor   =&gt; ignore the .git/ and vendor/ directories
+</code></pre>
+
+<p>we get</p>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/parallel-lint -j 4 --exclude .git --exclude vendor ./
 PHP 8.1.1 | 4 parallel jobs
 ............................................................ 60/61 (98 %)
 .                                                            61/61 (100 %)
 
+
 Checked 61 files in 0.2 seconds
-No syntax error found</code></pre>
+No syntax error found
+</code></pre>
+
 <p>No further TODOs here.</p>
-<!-- generated -->
-<p><a id='composer-require-checker'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='composer-require-checker'> </a>
+<!-- /generated --></p>
+
 <h3>composer-require-checker</h3>
+
 <p><code>composer-require-checker</code> is the CLI tool of the dependency checker
 <a href="https://github.com/maglnet/ComposerRequireChecker">maglnet/ComposerRequireChecker</a>. The tool
 ensures that the <code>composer.json</code> file contains all dependencies that are used in the codebase.</p>
+
 <p>Installation via composer:</p>
-<pre><code class="language-shell">make composer ARGS="require --dev maglnet/composer-require-checker"</code></pre>
+
+<pre><code class="language-shell">make composer ARGS="require --dev maglnet/composer-require-checker"
+</code></pre>
+
 <p>Run it via</p>
-<pre><code class="language-text">vendor/bin/composer-require-checker check</code></pre>
+
+<pre><code class="language-text">vendor/bin/composer-require-checker check
+</code></pre>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/composer-require-checker check
 ComposerRequireChecker 4.0.0@baa11a4e9e5072117e3d180ef16c07036cafa4a2
 The following 1 unknown symbols were found:
@@ -546,78 +641,110 @@ The following 1 unknown symbols were found:
 | Unknown Symbol                              | Guessed Dependency |
 +---------------------------------------------+--------------------+
 | Symfony\Component\Console\Input\InputOption |                    |
-+---------------------------------------------+--------------------+</code></pre>
++---------------------------------------------+--------------------+
+</code></pre>
+
 <p>What's going on here?</p>
+
 <p>We use <code>Symfony\Component\Console\Input\InputOption</code> in our <code>\App\Commands\SetupDbCommand</code> and the
-code doesn't &quot;fail&quot; because <code>InputOption</code> is defined in the<code>symfony/console</code> package that is a
+code doesn't "fail" because <code>InputOption</code> is defined in the<code>symfony/console</code> package that is a
 <strong>transitive dependency</strong> of <code>laravel/framework</code>, see the
 <a href="https://github.com/laravel/framework/blob/5b113dad7d2c88e15b65d987ca63f03b2be43e6a/composer.json#L34"><code>laravel/framework composer.json</code></a>
-file. </p>
+file.</p>
+
 <p>I.e. the <code>symfony/console</code> package <strong>does actually exist</strong> in our <code>vendor</code> directory - but
 since we also use it <em>as a first-party-dependency directly in our code</em>, we must declare the
 dependency explicitly. Otherwise, Laravel might at some point decide to drop <code>symfony/console</code>
 and we would be left with broken code.</p>
+
 <p>To fix this, I run</p>
-<pre><code class="language-shell">make composer ARGS="require symfony/console"</code></pre>
+
+<pre><code class="language-shell">make composer ARGS="require symfony/console"
+</code></pre>
+
 <p>which will update the <code>composer.json</code> file and add the dependency. Running
 <code>composer-require-checker</code> again will now yield no further errors.</p>
+
 <pre><code class="language-text">root:/var/www/app# vendor/bin/composer-require-checker check
 ComposerRequireChecker 4.0.0@baa11a4e9e5072117e3d180ef16c07036cafa4a2
-There were no unknown symbols found.</code></pre>
-<!-- generated -->
-<p><a id='additional-tools-out-of-scope'> </a></p>
-<!-- /generated -->
+There were no unknown symbols found.
+</code></pre>
+
+<p><!-- generated -->
+<a id='additional-tools-out-of-scope'> </a>
+<!-- /generated --></p>
+
 <h3>Additional tools (out of scope)</h3>
-<p>In general, I'm a huge fan of code quality tools and we use them quite extensively. At some
-point I'll probably dedicate a whole article to go over them in detail - but for now I'm just
+
+<p>In general, I'm a huge fan of code quality tools and we use them quite extensively. At some 
+point I'll probably dedicate a whole article to go over them in detail - but for now I'm just 
 gonna leave a list for inspiration:</p>
+
 <ul>
 <li><a href="https://packagist.org/packages/brianium/paratest">brianium/paratest</a>
+
 <ul>
 <li>Running PhpUnit tests in parallel</li>
 <li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a></li>
 <li>Update the versions in the <code>composer.json</code> file after an update</li>
 <li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a></li>
-<li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>:
+<li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>: 
 A tool to define dependency layers based on e.g. namespaces</li>
 <li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a></li>
 <li>Show dependencies in the <code>composer.json</code> that are not used in the codebase</li>
 <li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a></li>
-<li>Gives a warning when packages with known vulnerabilities are used </li>
+<li>Gives a warning when packages with known vulnerabilities are used</li>
 <li>Alternative: <a href="https://github.com/fabpot/local-php-security-checker/">local-php-security-checker</a></li>
 </ul></li>
 </ul>
-<!-- generated -->
-<p><a id='qa-make-targets'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='qa-make-targets'> </a>
+<!-- /generated --></p>
+
 <h2>QA make targets</h2>
+
 <p>You might have noticed that <strong>all tools have their own configuration options</strong>. Instead of
 remembering each of them, I'll define corresponding make targets in <code>.make/01-02-application-qa.mk</code>.
-The easiest way to do so would be to &quot;hard-code&quot; the exact commands that I ran previously, e.g.</p>
+The easiest way to do so would be to "hard-code" the exact commands that I ran previously, e.g.</p>
+
 <pre><code class="language-makefile">.PHONY: phpstan
 phpstan:  ## Run static analyzer on all application and test files 
-    @$(EXECUTE_IN_APPLICATION_CONTAINER) vendor/bin/phpstan analyse app tests --level=9</code></pre>
+    @$(EXECUTE_IN_APPLICATION_CONTAINER) vendor/bin/phpstan analyse app tests --level=9
+</code></pre>
+
 <p>(Please refer to the
 <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers">Run commands in the docker containers</a>
-section in the previous tutorial for an explanation of the <code>EXECUTE_IN_APPLICATION_CONTAINER</code>
+section in the previous tutorial for an explanation of the <code>EXECUTE_IN_APPLICATION_CONTAINER</code> 
 variable).</p>
+
 <p>However, this implementation is quite inflexible: What if we want to check a single file or try out
 other options? So let's create some variables instead:</p>
+
 <pre><code class="language-makefile">PHPSTAN_CMD=php vendor/bin/phpstan analyse
 PHPSTAN_ARGS=--level=9
 PHPSTAN_FILES=$(APP_FILES) $(TEST_FILES)
 
 .PHONY: phpstan
 phpstan: ## Run static analyzer on all application and test files 
-    @$(EXECUTE_IN_APPLICATION_CONTAINER) $(PHPSTAN_CMD) $(PHPSTAN_ARGS) $(PHPSTAN_FILES) </code></pre>
-<p>This target allows me to override the defaults and e.g. check only the file
+    @$(EXECUTE_IN_APPLICATION_CONTAINER) $(PHPSTAN_CMD) $(PHPSTAN_ARGS) $(PHPSTAN_FILES) 
+</code></pre>
+
+<p>This target allows me to override the defaults and e.g. check only the file 
 <code>app/Commands/SetupDbCommand.php</code> with <code>--level=1</code></p>
-<pre><code class="language-shell">make phpstan PHPSTAN_FILES=app/Commands/SetupDbCommand.php PHPSTAN_ARGS="--level=1" </code></pre>
+
+<pre><code class="language-shell">make phpstan PHPSTAN_FILES=app/Commands/SetupDbCommand.php PHPSTAN_ARGS="--level=1" 
+</code></pre>
+
 <pre><code class="language-text">$ make phpstan PHPSTAN_FILES=app/Commands/SetupDbCommand.php PHPSTAN_ARGS="--level=1" 
  1/1 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
 
- [OK] No errors</code></pre>
+
+ [OK] No errors
+</code></pre>
+
 <p>The remaining tool variables can be configured in the exact same way:</p>
+
 <pre><code class="language-makefile"># constants
  ## files
 ALL_FILES=./
@@ -641,22 +768,32 @@ PARALLEL_LINT_CMD=php vendor/bin/parallel-lint
 PARALLEL_LINT_ARGS=-j 4 --exclude vendor/ --exclude .docker --exclude .git
 PARALLEL_LINT_FILES=$(ALL_FILES)
 COMPOSER_REQUIRE_CHECKER_CMD=php vendor/bin/composer-require-checker
-COMPOSER_REQUIRE_CHECKER_ARGS=--ignore-parse-errors</code></pre>
-<!-- generated -->
-<p><a id='the-qa-target'> </a></p>
-<!-- /generated -->
+COMPOSER_REQUIRE_CHECKER_ARGS=--ignore-parse-errors
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-qa-target'> </a>
+<!-- /generated --></p>
+
 <h3>The <code>qa</code> target</h3>
+
 <p>From a workflow perspective I usually want to <strong>run all configured qa tools</strong> instead of each one
 individually (being able to run individually is still great if a tool fails, though).</p>
+
 <p>A trivial approach would be a new target that <strong>uses all individual tool targets as preconditions</strong>:</p>
+
 <pre><code class="language-makefile">.PHONY: qa
 qa: phpstan \
     phplint \
     composer-require-checker \
-    phpcs</code></pre>
+    phpcs
+</code></pre>
+
 <p>But we can do better, because this target produces quite a noisy output:</p>
+
 <pre><code class="language-text">$ make qa
  25/25 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
 
  [OK] No errors
 
@@ -664,30 +801,41 @@ PHP 8.1.1 | 4 parallel jobs
 ............................................................ 60/61 (98 %)
 .                                                            61/61 (100 %)
 
+
 Checked 61 files in 0.3 seconds
 No syntax error found
 ComposerRequireChecker 4.0.0@baa11a4e9e5072117e3d180ef16c07036cafa4a2
 There were no unknown symbols found.
 .................... 20 / 20 (100%)
 
-Time: 576ms; Memory: 8MB</code></pre>
+
+Time: 576ms; Memory: 8MB
+</code></pre>
+
 <p>I'd rather have something like this:</p>
+
 <pre><code class="language-text">$ make qa
 phplint                             done   took 1s
 phpcs                               done   took 1s
 phpstan                             done   took 3s
-composer-require-checker            done   took 6s</code></pre>
-<!-- generated -->
-<p><a id='the-execute-function'> </a></p>
-<!-- /generated -->
-<h3>The <code>execute</code> &quot;function&quot;</h3>
+composer-require-checker            done   took 6s
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-execute-function'> </a>
+<!-- /generated --></p>
+
+<h3>The <code>execute</code> "function"</h3>
+
 <p>We'll make this work by <strong>suppressing the tool output</strong> and <strong>using a user-defined <code>execute</code> make
-function</strong> to format all targets nicely. </p>
-<p><small>Though &quot;function&quot; isn't quite correct here, because it's rather a
+function</strong> to format all targets nicely.</p>
+
+<p><small>Though "function" isn't quite correct here, because it's rather a
 <a href="https://www.gnu.org/software/make/manual/html_node/Multi_002dLine.html#Multi_002dLine">multiline variable</a>
-defined via <code>define ... endef</code> that is then &quot;invoked&quot; via
+defined via <code>define ... endef</code> that is then "invoked" via
 the <a href="https://www.gnu.org/software/make/manual/html_node/Call-Function.html">call function</a>.
 </small></p>
+
 <pre><code class="language-makefile"># File: 01-02-application-qa.mk
 
 # call with NO_PROGRESS=true to hide tool progress (makes sense when invoking multiple tools together)
@@ -695,6 +843,7 @@ NO_PROGRESS?=false
 ifeq ($(NO_PROGRESS),true)
     PHPSTAN_ARGS+= --no-progress
 endif
+
 
 # Use NO_PROGRESS=false when running individual tools.
 # On  NO_PROGRESS=true  the corresponding tool has no output on success
@@ -721,52 +870,74 @@ define execute
             exit 1; \
         fi; \
     fi
-endef</code></pre>
+endef
+</code></pre>
+
 <ul>
 <li>the <code>NO_PROGRESS</code> variable is set to <code>false</code> by default and will cause a target to be invoked
 as before, showing all its output immediately
+
 <ul>
 <li>if the variable is set to <code>true</code>, the target is instead invoked via <code>eval</code> and the output is
 captured in the <code>OUTPUT</code> bash variable that will only be printed if the result of the
 invocation is faulty</li>
 </ul></li>
 </ul>
+
 <p>The tool targets are then adjusted to use the new function.</p>
+
 <pre><code class="language-makefile">.PHONY: phpstan
 phpstan: ## Run static analyzer on all application and test files
-    @$(call execute,$(PHPSTAN_CMD),$(PHPSTAN_ARGS),$(PHPSTAN_FILES),$(ARGS))</code></pre>
+    @$(call execute,$(PHPSTAN_CMD),$(PHPSTAN_ARGS),$(PHPSTAN_FILES),$(ARGS))
+</code></pre>
+
 <p>We can now call the <code>phpstan</code> target with <code>NO_PROGRESS=true</code> like so:</p>
+
 <pre><code class="language-text">$ make phpstan NO_PROGRESS=true
-phpstan                             done   took 4s</code></pre>
-<p>An &quot;error&quot; would look likes this:</p>
+phpstan                             done   took 4s
+</code></pre>
+
+<p>An "error" would look likes this:</p>
+
 <pre><code class="language-text">$ make phpstan NO_PROGRESS=true
 phpstan                             fail   took 9s
  ------ ----------------------------------------
   Line   app/Providers/RouteServiceProvider.php
  ------ ----------------------------------------
   49     Cannot access property $id on mixed.
- ------ ----------------------------------------</code></pre>
-<!-- generated -->
-<p><a id='parallel-execution-and-a-helper-target'> </a></p>
-<!-- /generated -->
+ ------ ----------------------------------------
+</code></pre>
+
+<p><!-- generated -->
+<a id='parallel-execution-and-a-helper-target'> </a>
+<!-- /generated --></p>
+
 <h3>Parallel execution and a helper target</h3>
-<p>Technically, this also already works with the <code>qa</code> target and we can even speed up the process by
+
+<p>Technically, this also already works with the <code>qa</code> target and we can even speed up the process by 
 <strong>running the tools in parallel</strong> with
-the <a href="https://www.gnu.org/software/make/manual/html_node/Parallel.html">-j flag for &quot;Parallel Execution&quot;</a></p>
+the <a href="https://www.gnu.org/software/make/manual/html_node/Parallel.html">-j flag for "Parallel Execution"</a></p>
+
 <pre><code class="language-text">$ make -j 4 qa NO_PROGRESS=true
 phpstan                            phplint                            composer-require-checker           phpcs                               done   took 5s
 done   took 5s
 done   took 7s
-done   took 10s</code></pre>
-<p>Well... not quite what we wanted. We also need to use
-<a href="https://www.gnu.org/software/make/manual/html_node/Parallel-Output.html"><code>--output-sync=target</code> to controll the &quot;Output During Parallel Execution&quot;</a></p>
+done   took 10s
+</code></pre>
+
+<p>Well... not quite what we wanted. We also need to use 
+<a href="https://www.gnu.org/software/make/manual/html_node/Parallel-Output.html"><code>--output-sync=target</code> to controll the "Output During Parallel Execution"</a></p>
+
 <pre><code class="language-text">$ make -j 4 --output-sync=target qa NO_PROGRESS=true
 phpstan                             done   took 3s
 phplint                             done   took 1s
 composer-require-checker            done   took 5s
-phpcs                               done   took 1s</code></pre>
+phpcs                               done   took 1s
+</code></pre>
+
 <p>Since this is quite a mouthful to type, we'll use a helper target <code>qa-exec</code> for running the tools
 and put all the inconvenient-to-type options in the final <code>qa</code> target.</p>
+
 <pre><code class="language-makefile"># File: 01-02-application-qa.mk
 #...
 
@@ -781,31 +952,45 @@ qa: ## Run code quality tools on all files
 qa-exec: phpstan \
     phplint \
     composer-require-checker \
-    phpcs</code></pre>
-<p>For the number of parallel processes I use <code>nproc</code> (works on Linux and Windows) resp.
-<code>sysctl -n hw.ncpu</code> (works on Mac) to determine the number of available cores. If you dedicate
-less resources to docker you might want to hard-code this setting to a lower value (e.g. by
-adding a <code>CORES</code> variable in
-the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a>
+    phpcs
+</code></pre>
+
+<p>For the number of parallel processes I use <code>nproc</code> (works on Linux and Windows) resp. 
+<code>sysctl -n hw.ncpu</code> (works on Mac) to determine the number of available cores. If you dedicate 
+less resources to docker you might want to hard-code this setting to a lower value (e.g. by 
+adding a <code>CORES</code> variable in 
+the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env"><code>.make/.env</code></a> 
 file).</p>
-<!-- generated -->
-<p><a id='sprinkle-some-color-on-top'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='sprinkle-some-color-on-top'> </a>
+<!-- /generated --></p>
+
 <h3>Sprinkle some color on top</h3>
-<p>The final piece for getting to the output mentioned in the <a href="#introduction">Introduction</a> is the
+
+<p>The final piece for getting to the output mentioned in the <a href="#introduction">Introduction</a> is the 
 bash-coloring:</p>
+
 <p><a href="/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
+
 <p>To make this work, we need to understand first how colors work in bash:</p>
+
 <blockquote>
-<p>This  [coloring] can be accomplished by adding a <code>\e</code> [or <code>\033</code>] at the beginning to form an
-escape sequence. The escape sequence for specifying color codes is <code>\e[COLORm</code>
-(<code>COLOR</code> represents our (numeric) color code in this case).</p>
+  <p>This  [coloring] can be accomplished by adding a <code>\e</code> [or <code>\033</code>] at the beginning to form an 
+  escape sequence. The escape sequence for specifying color codes is <code>\e[COLORm</code>
+  (<code>COLOR</code> represents our (numeric) color code in this case).</p>
 </blockquote>
+
 <p>(via <a href="https://dev.to/ifenna__/adding-colors-to-bash-scripts-48g4">Adding colors to Bash scripts</a>)</p>
+
 <p>E.g. the following script will print a green text:</p>
-<pre><code class="language-shell">printf "\033[0;32mThis text is green\033[0m"</code></pre>
+
+<pre><code class="language-shell">printf "\033[0;32mThis text is green\033[0m"
+</code></pre>
+
 <p>So we define the required colors as variables and use them in the corresponding places in the
 <a href="#the-execute-function"><code>execute</code> function</a>:</p>
+
 <pre><code class="language-makefile"> ## bash colors
 RED:=\033[0;31m
 GREEN:=\033[0;32m
@@ -839,10 +1024,13 @@ define execute
             exit 1; \
         fi; \
     fi
-endef</code></pre>
-<p>Please note, that i did <strong>not include the tests in the <code>qa</code> target</strong>. I like to run those
-separately, because our tests usually take a lot longer to execute. So in my day-to-day work I
+endef
+</code></pre>
+
+<p>Please note, that i did <strong>not include the tests in the <code>qa</code> target</strong>. I like to run those 
+separately, because our tests usually take a lot longer to execute. So in my day-to-day work I 
 would run <code>make qa</code> and <code>make test</code> to ensure that code quality and tests are passing:</p>
+
 <pre><code class="language-text">$ make qa
 phplint                             done   took 1s
 phpcs                               done   took 1s
@@ -856,23 +1044,30 @@ PHPUnit 9.5.19 #StandWithUkraine
 
 Time: 00:03.772, Memory: 28.00 MB
 
-OK (7 tests, 13 assertions)</code></pre>
-<!-- generated -->
-<p><a id='further-updates-in-the-codebase'> </a></p>
-<!-- /generated -->
+OK (7 tests, 13 assertions)
+</code></pre>
+
+<p><!-- generated -->
+<a id='further-updates-in-the-codebase'> </a>
+<!-- /generated --></p>
+
 <h2>Further updates in the codebase</h2>
-<p>I've also cleaned up the codebase a little in branch
+
+<p>I've also cleaned up the codebase a little in branch 
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-5-php-qa-tools-make-docker">part-5-php-qa-tools-make-docker</a>
-and even though those changes have nothing to todo with &quot;QA tools&quot; I didn't want to leave them
+and even though those changes have nothing to todo with "QA tools" I didn't want to leave them 
 unnoticed:</p>
+
 <ul>
 <li>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)
+
 <ul>
 <li>removing unused values from the <code>.env.example</code> file</li>
 <li>run a <code>composer update</code> to get the latest Laravel version</li>
-<li>add a <code>show-help</code> script to the <code>scripts</code> section of the <code>composer.json</code> file that references the
+<li>add a <code>show-help</code> script to the <code>scripts</code> section of the <code>composer.json</code> file that references the 
 <code>Makefile</code> (see also <a href="https://twitter.com/PascalLandau/status/1518227256648343552">this discussion on Twitter</a>)
-<pre><code class="language-json">{
+<code>json
+{
 "scripts": {
     "show-help": [
         "make"
@@ -881,16 +1076,19 @@ unnoticed:</p>
 "scripts-descriptions": {
     "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
 }
-}</code></pre>
-<p><a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></p></li>
+}</code>
+<a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></li>
 <li>replace <code>docker-compose</code> with <code>docker compose</code> to use <a href="https://docs.docker.com/compose/cli-command/">compose v2</a></li>
 </ul></li>
 </ul>
-<p>For some reason, the last point caused some trouble because Linux and Docker Desktop for Windows
-require a <code>-T</code> flag for the <code>exec</code> command to disable a TTY allocation in some cases. Whereas on
-Docker Desktop for Mac
-<a href="https://github.com/moby/moby/issues/37366#issuecomment-527099456">the missing TTY lead to a cluttered output (&quot;staircase effect&quot;)</a>.</p>
+
+<p>For some reason, the last point caused some trouble because Linux and Docker Desktop for Windows 
+require a <code>-T</code> flag for the <code>exec</code> command to disable a TTY allocation in some cases. Whereas on 
+Docker Desktop for Mac 
+<a href="https://github.com/moby/moby/issues/37366#issuecomment-527099456">the missing TTY lead to a cluttered output ("staircase effect")</a>.</p>
+
 <p>Thus I modified the <code>Makefile</code> to populate a <code>DOCKER_COMPOSE_EXEC_OPTIONS</code> variable based on the OS</p>
+
 <pre><code class="language-makefile"># Add the -T options to "docker compose exec" to avoid the 
 # "panic: the handle is invalid"
 # error on Windows and Linux 
@@ -907,24 +1105,34 @@ else ifeq ($(OS),Darwin)
     # On Mac, the -T must be omitted to avoid cluttered output
     # @see https://github.com/moby/moby/issues/37366#issuecomment-401157643
     DOCKER_COMPOSE_EXEC_OPTIONS=
-endif</code></pre>
+endif
+</code></pre>
+
 <p>And use the variable when defining <code>EXECUTE_IN_*_CONTAINER</code> in <code>.make/02-00-docker.mk</code></p>
+
 <pre><code class="language-makefile">ifeq ($(EXECUTE_IN_CONTAINER),true)
     EXECUTE_IN_ANY_CONTAINER:=$(DOCKER_COMPOSE) exec $(DOCKER_COMPOSE_EXEC_OPTIONS) --user $(APP_USER_NAME) $(DOCKER_SERVICE_NAME)
     EXECUTE_IN_APPLICATION_CONTAINER:=$(DOCKER_COMPOSE) exec $(DOCKER_COMPOSE_EXEC_OPTIONS) --user $(APP_USER_NAME) $(DOCKER_SERVICE_NAME_APPLICATION)
     EXECUTE_IN_WORKER_CONTAINER:=$(DOCKER_COMPOSE) exec $(DOCKER_COMPOSE_EXEC_OPTIONS) --user $(APP_USER_NAME) $(DOCKER_SERVICE_NAME_PHP_WORKER)
-endif</code></pre>
-<!-- generated -->
-<p><a id='wrapping-up'> </a></p>
-<!-- /generated -->
+endif
+</code></pre>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
 <h2>Wrapping up</h2>
+
 <p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
 leave a comment. You should now have a blueprint for adding code quality tools for your dockerized
 application and way to conveniently control them through a Makefile.</p>
-<p>In the next part of this tutorial, we will
+
+<p>In the next part of this tutorial, we will 
 <a href="/blog/git-secret-encrypt-repository-docker/">set up git secret to encrypt secret values and store them directly in the git repository</a>.</p>
+
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
-notifications when this next part comes out :)</p>                <hr />
+notifications when this next part comes out :)</p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

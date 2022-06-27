@@ -149,58 +149,76 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>Variables are a good way to keep a query &quot;clean&quot; and separate parameters from code.
-In Google BigQuery, we can use variables in standard sql by defining them with a
+                <p>Variables are a good way to keep a query "clean" and separate parameters from code. 
+In Google BigQuery, we can use variables in standard sql by defining them with a 
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting#declare"><code>DECLARE</code> statement</a>,
-e.g. </p>
+e.g.</p>
+
 <pre><code>DECLARE foo STRING DEFAULT "foo";
 
-#DECLARE &lt;variable&gt; &lt;type&gt; DEFAULT &lt;value&gt;;</code></pre>
+#DECLARE &lt;variable&gt; &lt;type&gt; DEFAULT &lt;value&gt;;
+</code></pre>
+
 <p>with <code>&lt;type&gt;</code> being one of the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types">BigQuery's built-in standard-sql data types</a></p>
-<p>This is equivalent to variables of other SQL databases, e.g.</p>
-<ul>
-<li><a href="https://dev.mysql.com/doc/refman/8.0/en/user-variables.html">MySQL variables</a>: 
-<pre><code>SET @foo = 'bar';</code></pre></li>
-<li><a href="https://www.postgresql.org/docs/9.1/plpgsql-declarations.html">PostgreSQL variables</a>:
-<pre><code>foo varchar := 'bar';</code></pre></li>
-</ul>
+
+<p>This is equivalent to variables of other SQL databases, e.g.
+- <a href="https://dev.mysql.com/doc/refman/8.0/en/user-variables.html">MySQL variables</a>: 
+  <code>SET @foo = 'bar';</code>
+- <a href="https://www.postgresql.org/docs/9.1/plpgsql-declarations.html">PostgreSQL variables</a>:
+  <code>foo varchar := 'bar';</code></p>
+
 <h2>Code</h2>
+
 <pre><code>DECLARE foo_var STRING DEFAULT "foo";
 
-SELECT foo_var</code></pre>
+SELECT foo_var
+</code></pre>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"><script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5.js"></script>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:200d3282989c48b7893b3c3145b46a6d">Open in BigQuery Console</a></p>
+
 <p><a href="/img/bigquery-snippets/use-variables/use-variables-example.png"><img src="/img/bigquery-snippets/use-variables/use-variables-example.png" alt="BigQuery Console: How to declare and use variables example" title="BigQuery Console: How to declare and use variables example" /></a></p>
+
 <h2>Links</h2>
+
 <ul>
 <li><a href="https://gist.github.com/paslandau/0cb51ba9e532a71fff5108f156afd2f5">Gist on Github</a></li>
 <li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:200d3282989c48b7893b3c3145b46a6d">Example on BigQuery</a></li>
-<li><a href="https://stackoverflow.com/a/58227996/413531">Answer to &quot;Setting Big Query variables like mysql&quot; on Stackoverflow</a></li>
+<li><a href="https://stackoverflow.com/a/58227996/413531">Answer to "Setting Big Query variables like mysql" on Stackoverflow</a></li>
 </ul>
+
 <h2>Use cases</h2>
+
 <p>Hardcoding variables is generally considered a bad practice as it makes it harder to understand and modify a query.
 A frequent use case for me is the definition of date ranges (from and to dates) that are used for querying partitioned tables:</p>
-<pre><code>DECLARE from_date DATE DEFAULT DATE("2018-04-09");
-DECLARE to_date DATE DEFAULT DATE("2018-04-10");
 
-WITH data as(
+<p>````
+DECLARE from_date DATE DEFAULT DATE("2018-04-09");
+DECLARE to_date DATE DEFAULT DATE("2018-04-10");</p>
+
+<p>WITH data as(
   SELECT 
     1 as id,
     DATE("2018-04-08") AS date,
   UNION ALL SELECT 2, DATE("2018-04-09") 
   UNION ALL SELECT 3, DATE("2018-04-10") 
   UNION ALL SELECT 4, DATE("2018-04-11") 
-)
+)</p>
 
-SELECT 
+<p>SELECT 
     id, 
     date
 FROM
     data
 WHERE
-    date BETWEEN from_date AND to_date</code></pre>                <hr />
+    date BETWEEN from_date AND to_date
+```</p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

@@ -149,77 +149,99 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>There is no <code>MEDIAN()</code> function in Google BigQuery, but we can still calculate the MEDIAN
-with the
-<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_cont"><code>PERCENTILE_CONT(x, 0.5)</code></a> or
-<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_disc"><code>PERCENTILE_DISC(x, 0.5)</code></a>
+                <p>There is no <code>MEDIAN()</code> function in Google BigQuery, but we can still calculate the MEDIAN 
+with the 
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_cont"><code>PERCENTILE_CONT(x, 0.5)</code></a> or 
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#percentile_disc"><code>PERCENTILE_DISC(x, 0.5)</code></a> 
 functions. The difference between those two functions is the linear interpolation that is applied
-when using <code>PERCENTILE_CONT(x, 0.5)</code> - so that's probably what you want when dealing with numeric
-values. Take the numbers <code>1,2,3,4</code> for example:</p>
-<ul>
-<li><code>PERCENTILE_CONT(x, 0.5)</code> yields <code>2.5</code> (as the 50% percentile is exactly between 2 and 3)</li>
-<li><code>PERCENTILE_DISC(x, 0.5)</code> yields <code>2</code> (as the 50% percentile is &gt;= 2)</li>
-</ul>
+when using <code>PERCENTILE_CONT(x, 0.5)</code> - so that's probably what you want when dealing with numeric 
+values. Take the numbers <code>1,2,3,4</code> for example:
+- <code>PERCENTILE_CONT(x, 0.5)</code> yields <code>2.5</code> (as the 50% percentile is exactly between 2 and 3)
+- <code>PERCENTILE_DISC(x, 0.5)</code> yields <code>2</code> (as the 50% percentile is >= 2)</p>
+
 <h2>Example</h2>
+
 <pre><code>SELECT 
   PERCENTILE_CONT(x, 0.5) OVER() AS median_cont,
   PERCENTILE_DISC(x, 0.5) OVER() AS median_disc
 FROM
   UNNEST([1,2,3,4]) as x 
-LIMIT 1</code></pre>
+LIMIT 1
+</code></pre>
+
 <p><strong>Result</strong></p>
+
 <table>
 <thead>
 <tr>
-<th style="text-align: right;">median_cont</th>
-<th style="text-align: right;">median_disc</th>
+  <th align="right">median_cont</th>
+  <th align="right">median_disc</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: right;">2.5</td>
-<td style="text-align: right;">2</td>
+  <td align="right">2.5</td>
+  <td align="right">2</td>
 </tr>
 </tbody>
 </table>
+
 <p><strong>Caution</strong>: As of today (2020-06-20), BigQuery only supports <code>PERCENTILE_CONT</code> and <code>PERCENTILE_DISC</code> for window functions
 (hence the <code>OVER()</code> clause and the <code>LIMIT 1</code> in the example above):</p>
+
 <blockquote>
-<p>PERCENTILE_CONT is under development, and we will publish the documentation once it is GA. We will support it as analytic function first, and we plan to support it as aggregate function (allowing GROUP BY) later.</p>
+  <p>PERCENTILE_CONT is under development, and we will publish the documentation once it is GA. We will support it as analytic function first, and we plan to support it as aggregate function (allowing GROUP BY) later.</p>
 </blockquote>
+
 <p>Source: <a href="https://stackoverflow.com/a/45579962/413531">SO: percentile functions with GROUPBY in BigQuery</a></p>
-<p>The more common use case is probably to calculate the median as a result of a <code>GROUP BY</code> statement.
+
+<p>The more common use case is probably to calculate the median as a result of a <code>GROUP BY</code> statement. 
 I.e. I would <em>like</em> to write something like this to get the median of <code>quantity</code> per <code>product_id</code>.</p>
+
 <pre><code>SELECT
   product_id, 
   PERCENTILE_CONT(quantity, 0.5) AS median
 GROUP BY
-  product_id</code></pre>
+  product_id
+</code></pre>
+
 <p>Right now, that is only possible for the average via
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#avg"><code>AVG()</code></a>
-but not for the median. But we can still work around that limitation by using the
+but not for the median. But we can still work around that limitation by using the 
 <code>PERCENTILE_CONT</code> function on a window partitioned by <code>product_id</code>, then group by the <code>product_id</code>
 (to get only one row per <code>product_id</code>)
 and resolve a single median value via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#any_value"><code>ANY_VALUE()</code></a>.</p>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"><script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/14940ec0fd34dc30b36377886c308ab3.js"></script>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=580364496687:0c40a54f0d044cbebdc2745860a75490">Open in BigQuery UI</a></p>
+
 <p><a href="/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png"><img src="/img/bigquery-snippets/calculate-median/calculate-median-bigquery-example.png" alt="BigQuery UI: MEDIAN in BigQuery example" title="BigQuery UI: MEDIAN in BigQuery example" /></a></p>
+
 <h2>Links</h2>
+
 <ul>
-<li><a href="https://stackoverflow.com/a/29095240/413531">Answer to &quot;How to calculate median of a numeric sequence in Google BigQuery efficiently?&quot; on Stackoverflow</a></li>
+<li><a href="https://stackoverflow.com/a/29095240/413531">Answer to "How to calculate median of a numeric sequence in Google BigQuery efficiently?" on Stackoverflow</a></li>
 </ul>
+
 <h2>Notes</h2>
+
 <p>There is also the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#approx_quantiles"><code>APPROX_QUANTILES()</code></a>
-function (mentioned <a href="https://stackoverflow.com/a/39843565/413531">here</a>) that <em>can</em> by applied to a <code>GROUP BY</code>. I didn't have a practical use case for approximate functions
-yet, though. Thus, I don't know the implications of &quot;not using an exact calculation&quot; and rather mention
+function (mentioned <a href="https://stackoverflow.com/a/39843565/413531">here</a>) that <em>can</em> by applied to a <code>GROUP BY</code>. I didn't have a practical use case for approximate functions 
+yet, though. Thus, I don't know the implications of "not using an exact calculation" and rather mention
 this for the sake of completeness. Example:</p>
+
 <pre><code>SELECT
   product_id, 
   APPROX_QUANTILES(quantity, 100)[OFFSET(50)] as approx_median
 GROUP BY
-  product_id</code></pre>                <hr />
+  product_id
+</code></pre>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

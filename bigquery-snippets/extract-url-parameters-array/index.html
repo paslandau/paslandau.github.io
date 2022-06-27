@@ -149,115 +149,132 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>We're gonna use the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_extract_all">REGEXP_EXTRACT_ALL</a>
+                <p>We're gonna use the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_extract_all">REGEXP_EXTRACT_ALL</a> 
 function provided in the Standard SQL dialect of BigQuery
 to extract parameters from the query part of a URL and return them as an ARRAY.</p>
+
 <h2>Code</h2>
+
 <pre><code>#standardSQL
 SELECT
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)((?:[^=]+)=(?:[^&amp;]*))') as params,
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)(?:([^=]+)=(?:[^&amp;]*))') as keys,
   REGEXP_EXTRACT_ALL(query,r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values
 FROM
-  table</code></pre>
+  table
+</code></pre>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a.js"><script src="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a.js"></script>
+
 <h3>Result</h3>
+
 <table>
 <thead>
 <tr>
-<th>Row</th>
-<th>id</th>
-<th>query</th>
-<th>params</th>
-<th>keys</th>
-<th>values</th>
-<th>description</th>
+  <th>Row</th>
+  <th>id</th>
+  <th>query</th>
+  <th>params</th>
+  <th>keys</th>
+  <th>values</th>
+  <th>description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td>1</td>
-<td>?foo=bar</td>
-<td>foo=bar</td>
-<td>foo</td>
-<td>bar</td>
-<td>simple</td>
+  <td>1</td>
+  <td>1</td>
+  <td>?foo=bar</td>
+  <td>foo=bar</td>
+  <td>foo</td>
+  <td>bar</td>
+  <td>simple</td>
 </tr>
 <tr>
-<td>2</td>
-<td>2</td>
-<td>?foo=bar&amp;bar=baz</td>
-<td>foo=bar</td>
-<td>foo</td>
-<td>bar</td>
-<td>multiple params</td>
+  <td>2</td>
+  <td>2</td>
+  <td>?foo=bar&amp;bar=baz</td>
+  <td>foo=bar</td>
+  <td>foo</td>
+  <td>bar</td>
+  <td>multiple params</td>
 </tr>
 <tr>
-<td></td>
-<td></td>
-<td></td>
-<td>bar=baz</td>
-<td>bar</td>
-<td>baz</td>
-<td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>bar=baz</td>
+  <td>bar</td>
+  <td>baz</td>
+  <td></td>
 </tr>
 <tr>
-<td>3</td>
-<td>3</td>
-<td>?foo[]=bar&amp;foo[]=baz</td>
-<td>foo[]=bar</td>
-<td>foo[]</td>
-<td>bar</td>
-<td>arrays</td>
+  <td>3</td>
+  <td>3</td>
+  <td>?foo[]=bar&amp;foo[]=baz</td>
+  <td>foo[]=bar</td>
+  <td>foo[]</td>
+  <td>bar</td>
+  <td>arrays</td>
 </tr>
 <tr>
-<td></td>
-<td></td>
-<td></td>
-<td>foo[]=baz</td>
-<td>foo[]</td>
-<td>baz</td>
-<td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>foo[]=baz</td>
+  <td>foo[]</td>
+  <td>baz</td>
+  <td></td>
 </tr>
 <tr>
-<td>4</td>
-<td>4</td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td>no query</td>
+  <td>4</td>
+  <td>4</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>no query</td>
 </tr>
 </tbody>
 </table>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:e5da849d652a4502b12443a2f14b355a">Open in BigQuery Console</a></p>
+
 <p><a href="/img/bigquery-snippets/extract-url-parameters-array/extract-url-parameters-array-bigquery-example.png"><img src="/img/bigquery-snippets/extract-url-parameters-array/extract-url-parameters-array-bigquery-example.png" alt="BigQuery Console: Extract URL parameters example" title="BigQuery Console: Extract URL parameters example" /></a></p>
+
 <h2>Notes</h2>
+
 <ul>
-<li><code>REGEXP_EXTRACT_ALL</code> only excepts 1 capturing group, hence we need to mark all other groups
+<li><code>REGEXP_EXTRACT_ALL</code> only excepts 1 capturing group, hence we need to mark all other groups 
 as non-capturing with <code>(?:</code></li>
-<li>if the URL contains a fragment part (e.g. <a href="https://example.org/?foo=bar#baz">https://example.org/?foo=bar#baz</a>), the fragment is currently not removed.
-To do so, remove the fragment prior to extraction with
-<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_replace">REGEXP_REPLACE</a>,
+<li>if the URL contains a fragment part (e.g. https://example.org/?foo=bar#baz), the fragment is currently not removed.
+To do so, remove the fragment prior to extraction with 
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_replace">REGEXP_REPLACE</a>, 
 e.g. like so:
-<pre><code>REGEXP_EXTRACT_ALL(
+<code>REGEXP_EXTRACT_ALL(
 REGEXP_EXTRACT(query, r'#.*', ''),
-r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values</code></pre></li>
+r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values</code></li>
 </ul>
+
 <h2>Links</h2>
+
 <ul>
 <li><a href="https://gist.github.com/paslandau/6c46020211a00c39607d5eab1d093f3a">Gist on Github</a></li>
 <li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:e5da849d652a4502b12443a2f14b355a">Example on BigQuery</a></li>
 <li><a href="https://regex101.com/r/iqwgxD/1/">REGEX explanation on Regex101</a></li>
 </ul>
+
 <h2>Use cases</h2>
+
 <ul>
 <li>compile a list of all parameters from your log files</li>
 <li>evaluate the frequency of parameters keys/values</li>
-</ul>                <hr />
+</ul>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

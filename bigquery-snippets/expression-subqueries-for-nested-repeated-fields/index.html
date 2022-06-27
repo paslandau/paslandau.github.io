@@ -149,43 +149,60 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>BigQuery allows to define <a href="https://cloud.google.com/bigquery/docs/nested-repeated">nested and repeated fields</a>
+                <p>BigQuery allows to define <a href="https://cloud.google.com/bigquery/docs/nested-repeated">nested and repeated fields</a> 
 in a table. Although this is very powerful, it makes it much more complex to retrieve the
-data if one is not used to such structures. Especially beginners tend to use an
+data if one is not used to such structures. Especially beginners tend to use an 
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays#flattening_arrays"><code>UNNEST</code> statement</a>
-on the nested fields, followed by a huge
-<code>GROUP BY</code> statement on the not-originally-repeated fields. Imho, using
-<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/expression_subqueries?hl=en">expression subqueries</a>
+ on the nested fields, followed by a huge
+<code>GROUP BY</code> statement on the not-originally-repeated fields. Imho, using 
+<a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/expression_subqueries?hl=en">expression subqueries</a> 
 is oftentimes the better approach here.</p>
+
 <h2>Code</h2>
+
 <pre><code>SELECT
   id,
   (SELECT value from t.repeated_fields LIMIT 1)
 FROM
-  table t  </code></pre>
+  table t  
+</code></pre>
+
 <p><strong>Caution</strong>: When using expression subqueries, you need to make sure that the result is a single value (scalar or array), otherwise you will
 get the error message</p>
+
 <blockquote>
-<p>Scalar subquery produced more than one element</p>
+  <p>Scalar subquery produced more than one element</p>
 </blockquote>
+
 <p>In the example code above this is ensured by enforcing one result via <code>LIMIT 1</code>.</p>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"><script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125.js"></script>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:a3ca0564513344a2981ac658365112c1">Open in BigQuery Console</a></p>
+
 <p><a href="/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png"><img src="/img/bigquery-snippets/expression-subqueries-for-nested-repeated-fields/expression-subquery-example.png" alt="BigQuery Console: How to use expression subqueries for nested and repeated fields example" title="BigQuery Console: How to use expression subqueries for nested and repeated fields example" /></a></p>
+
 <h2>Links</h2>
+
 <ul>
 <li><a href="https://gist.github.com/paslandau/03c73ee5eef2ce217af82a8f7edcb125">Gist on Github</a></li>
 <li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:a3ca0564513344a2981ac658365112c1">Example on BigQuery</a></li>
 </ul>
+
 <h2>Use cases</h2>
+
 <p>The most prominent use case is probably the <a href="https://support.google.com/analytics/answer/3437719?hl=en">BigQuery export schema of Google Analytics</a>.
 To be honest, I also feel that the schema is not very friendly for newcomers with its ~30 RECORD-type (nested) fields and 300+ columns.</p>
-<p>In a nutshell, each row represents one <a href="https://support.google.com/analytics/answer/2731565?hl=en">session</a>.
+
+<p>In a nutshell, each row represents one <a href="https://support.google.com/analytics/answer/2731565?hl=en">session</a>. 
 A session consists of multiple hits. Those hits are also available in the nested and repeated <code>hits</code> field. But wait, there is more...
-Each hit can have a number of so called <code>customDimensions</code> (meta data that can be attached to each hit). So the resulting table structue looks something
+Each hit can have a number of so called <code>customDimensions</code> (meta data that can be attached to each hit). So the resulting table structue looks something 
 like this:</p>
+
 <pre><code>- field_1
 - field_2
 - hits
@@ -193,28 +210,34 @@ like this:</p>
   - field_2
   - customDimensions
     - index 
-    - value </code></pre>
+    - value 
+</code></pre>
+
 <p>The following example uses the public <a href="https://support.google.com/analytics/answer/7586738?hl=en">Google Analytics sample dataset for BigQuery</a> and shows
 a couple of sample expression subqueries</p>
-<pre><code>SELECT 
+
+<p>````
+SELECT 
   fullVisitorId,
   visitStartTime,
   TIMESTAMP_SECONDS(visitStartTime) as started_at,
   TIMESTAMP_SECONDS(visitStartTime + CAST( (SELECT time from t.hits ORDER BY hitNumber DESC LIMIT 1) /1000 AS INT64)) as ended_at,
-  (SELECT COUNT(*) from t.hits) as hit_count,
+  (SELECT COUNT(<em>) from t.hits) as hit_count,
   (SELECT page.hostname || page.pagePath from t.hits WHERE isEntrance = TRUE) as landing_page,
   (
-    SELECT  
-      (SELECT COUNT(*) from h.customDimensions) 
+    SELECT<br />
+      (SELECT COUNT(</em>) from h.customDimensions) 
     FROM 
       t.hits h
     WHERE 
       hitNumber = 1
    ) as customDimension_count_of_first_hit, 
 FROM 
-  `bigquery-public-data.google_analytics_sample.ga_sessions_20170801` t
+  <code>bigquery-public-data.google_analytics_sample.ga_sessions_20170801</code> t
 ORDER BY
-  visitStartTime asc</code></pre>                <hr />
+  visitStartTime asc
+```</p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

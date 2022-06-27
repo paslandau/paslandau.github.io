@@ -149,22 +149,22 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <p>BigQuery provides multiple functions to convert timestamps / dates / datetimes to a different timezone:</p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#date">DATE(timestamp_expression, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#time">TIME(timestamp, timezone)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#datetime">DATETIME(timestamp_expression, timezone)</a></li>
-</ul>
-<p>According to the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#time-zones">docu</a> the <code>timezone</code>
-can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. <code>Europe/Berlin</code>). See this
+                <p>BigQuery provides multiple functions to convert timestamps / dates / datetimes to a different timezone:
+- <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#date">DATE(timestamp_expression, timezone)</a>
+- <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#time">TIME(timestamp, timezone)</a>
+- <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#datetime">DATETIME(timestamp_expression, timezone)</a></p>
+
+<p>According to the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#time-zones">docu</a> the <code>timezone</code> 
+can be provided as UTC-offset (e.g. <code>+02:00</code>) or timezone name (e.g. <code>Europe/Berlin</code>). See this 
 <a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">list of IANA timezone offsets and names</a>.</p>
-<p>The converted dates/times can than be formatted with via </p>
-<ul>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_date">FORMAT_DATE(format_string, date_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_time">FORMAT_TIME(format_string, time_expression)</a></li>
-<li><a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></li>
-</ul>
+
+<p>The converted dates/times can than be formatted with via 
+- <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_date">FORMAT_DATE(format_string, date_expression)</a>
+- <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_time">FORMAT_TIME(format_string, time_expression)</a>
+- <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#format_datetime">FORMAT_DATETIME(format_string, datetime_expression)</a></p>
+
 <h2>Code</h2>
+
 <pre><code>#standardSQL
 SELECT
   DATETIME(timestamp, "Europe/Berlin") as datetime_berlin,
@@ -172,27 +172,41 @@ SELECT
   TIME(timestamp, "Europe/Berlin") as time_berlin,
   FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin")) as formatted_date_time_berlin
 FROM
-  table</code></pre>
+  table
+</code></pre>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"><script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9.js"></script>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Open in BigQuery Console</a></p>
+
 <p><a href="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png"><img src="/img/bigquery-snippets/convert-timestamp-date-datetime-to-different-timezone/convert-timestamp-date-datetime-to-different-timezone-bigquery-example.png" alt="BigQuery Console: Convert timestamp to different timezone example" title="BigQuery Console: Convert timestamp to different timezone" /></a></p>
+
 <h2>Links</h2>
+
 <ul>
 <li><a href="https://gist.github.com/paslandau/b40d8e265884ce2c19b966e52fbf72b9">Gist on Github</a></li>
 <li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:12050165b14e437387aa63757ae7d60c">Example on BigQuery</a></li>
-<li><a href="https://stackoverflow.com/a/43349229/413531">Answer to &quot;BigQuery converting to a different timezone&quot; on Stackoverflow</a></li>
+<li><a href="https://stackoverflow.com/a/43349229/413531">Answer to "BigQuery converting to a different timezone" on Stackoverflow</a></li>
 </ul>
+
 <h2>Use cases</h2>
+
 <p>BigQuery displays data usually in UTC. That leads to problems when using date formatting functions because
 dates and times can be off. Converting the datetimes prior formatting into the correct timezone solves those issues.</p>
-<p>Common formats:</p>
-<pre><code>FORMAT_TIMESTAMP("%F %X", timestamp)                            # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin"))  # %Y-%m-%d %H:%M:%S =&gt; 2018-04-08 18:28:01
-FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))             # %Y-%m-%d          =&gt; 2018-04-08
-FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))             # calendar week     =&gt; 14
-FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S          =&gt; 18:28:01</code></pre>                <hr />
+
+<p>Common formats:
+````
+FORMAT_TIMESTAMP("%F %X", timestamp)                            # %Y-%m-%d %H:%M:%S => 2018-04-08 18:28:01
+FORMAT_DATETIME("%F %X", DATETIME(timestamp, "Europe/Berlin"))  # %Y-%m-%d %H:%M:%S => 2018-04-08 18:28:01
+FORMAT_DATE("%F", DATE(timestamp, "Europe/Berlin"))             # %Y-%m-%d          => 2018-04-08
+FORMAT_DATE("%V", DATE(timestamp, "Europe/Berlin"))             # calendar week     => 14
+FORMAT_TIME("%T", DATETIME(timestamp, "Europe/Berlin"))         # %H:%M:%S          => 18:28:01
+```</p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

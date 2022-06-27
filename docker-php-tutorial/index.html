@@ -119,76 +119,110 @@
 </header>
 
 <!-- Main Content -->
-<div class="container">
-    <div class="row">
-        <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-            <p><a href="/img/docker-php-tutorial.png"><img src="/img/docker-php-tutorial.png" alt="Docker PHP Turorial" /></a></p>
-<p>This page collects all articles that have been published in my <strong>tutorial series on developing
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p><a href="/img/docker-php-tutorial.png"><img src="/img/docker-php-tutorial.png" alt="Docker PHP Turorial" /></a></p>
+
+<p>This page collects all articles that have been published in my <strong>tutorial series on developing 
 PHP on Docker</strong>. You can find all code samples in the
-<a href="https://github.com/paslandau/docker-php-tutorial/">&quot;Docker PHP Tutorial&quot; repository on Github</a>. If
+<a href="https://github.com/paslandau/docker-php-tutorial/">"Docker PHP Tutorial" repository on Github</a>. If
 you want to follow along when new articles are being published, I'd recommend to</p>
+
 <ul>
 <li>subscribe to the <a href="/feed.xml">RSS feed</a></li>
 <li>or <a href="#newsletter">the newsletter</a></li>
 <li>or follow me on <a href="https://twitter.com/PascalLandau">Twitter</a></li>
 </ul>
+
 <p>FYI: Some tutorials provide a video with additional information. There is a
 <a href="https://www.youtube.com/watch?v=YYI5mTjFDuA&amp;list=PLScVLZNShARRTO-ebug0yzbiXDxtw0rtg">YouTube playlist</a>
 available containing all those videos.</p>
+
 <h2>Published parts of the Docker PHP Tutorial</h2>
+
 <h3>Setting up PHP, PHP-FPM and NGINX for local development on Docker</h3>
+
 <p>A primer on Docker. What is Docker? How to install it / transition from Vagrant? How to interact
 with containers? How to organize multiple services (php-cli, php-fpm, nginx) via docker-compose?</p>
+
 <p>👉 <a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">Setting up PHP, PHP-FPM and NGINX for local development on Docker</a> (2018-07-08)</p>
-<h3>Setting up PhpStorm with Xdebug for local development on Docker</h3>
-<p>Using docker for Development. How to configure PhpStorm to play nicely with Docker? How to setup
-Xdebug (including the solution for the dreaded 'Connection with Xdebug was not established.' error)?</p>
-<p>👉 <a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a> (2018-08-06)</p>
+
 <h3>Structuring the Docker setup for PHP Projects</h3>
+
 <p>Running a battle-tested development infrastructure for PHP developers in Docker. How to organize the
 docker folder structure (e.g. shared scripts for containers)? How to establish a convenient workflow
 via <code>make</code>?</p>
+
 <p>👉 <a href="/blog/structuring-the-docker-setup-for-php-projects/">Structuring the Docker setup for PHP Projects</a> (2019-05-20)</p>
+
 <h3>Docker from scratch for PHP 8.1 Applications in 2022</h3>
+
 <p>An update of the previous article with the learnings of the past 3 years:</p>
+
 <ul>
 <li>simplify the setup</li>
 <li>add more containers (redis, mysql, workers)</li>
 <li>prepare for additional environments (CI, production)</li>
 </ul>
+
 <p>👉 <a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a> (2022-03-21)</p>
+
 <h3>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</h3>
+
 <p>An update of the previous article on setting up PhpStorm (Part 2) using the latest PHP version
 (PHP 8.1) as well as the latest Xdebug version (3). The article also covers additional debugging
 challenges (from the browser, from the CLI, from a long running worker process).</p>
+
 <p>👉 <a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a> (2022-03-22)</p>
+
 <h3>Run Laravel 9 on Docker in 2022</h3>
+
 <p>A step-by-step walk through to set up a new Laravel 9 project on the docker setup of this
 tutorial, using a couple of common Laravel components (Commands, Controllers, Queues, Databases).</p>
+
 <p>👉 <a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a> (2022-03-23)</p>
+
 <h3>Set up PHP QA tools and control them via make</h3>
+
 <p>Set up some PHP QA tools like <code>phpcs</code>, <code>phpstan</code>, etc. in the dockerized PHP application and
 provide <code>make</code> targets to run them either in parallel or individually.</p>
+
 <p>👉 <a href="/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a> (2022-04-25)</p>
+
 <h3>Use <code>git secret</code> to encrypt secrets in the repository</h3>
+
 <p>Set up <code>git secret</code> to encrypt and store secrets directly in a git repository. All required
 tools are set up in Docker and their usage is defined via <code>make</code> targets.</p>
+
 <p>👉 <a href="/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a> (2022-04-25)</p>
+
 <h3>Create a CI pipeline for dockerized PHP Apps</h3>
+
 <p>Create a CI pipeline using the dockerized setup introduced in the previous tutorial that can be
 executed on any CI provider. Concrete examples for Gitlab Pipelines and Github actions are included.</p>
+
 <p>👉 <a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a> (2022-04-25)</p>
+
 <h3>A primer on GCP Compute Instance VMs for dockerized Apps</h3>
-<p>Getting started with the Google Cloud Platform (GCP) as infrastructure provider for a container
-registry to push and pull docker images as well as for virtual machines to run dockerized
+
+<p>Getting started with the Google Cloud Platform (GCP) as infrastructure provider for a container 
+registry to push and pull docker images as well as for virtual machines to run dockerized 
 applications.</p>
+
 <p>👉 <a href="/blog/gcp-compute-instance-vm-docker/">A primer on GCP Compute Instance VMs for dockerized Apps</a> (2022-06-20)</p>
+
 <h3>Deploy dockerized PHP Apps to production on GCP via docker compose</h3>
-<p>Introduce a <code>prod</code> environment to build docker images that are then deployed &quot;to production&quot; on a
+
+<p>Introduce a <code>prod</code> environment to build docker images that are then deployed "to production" on a 
 GCP VM to be executed via <code>docker compose</code> as a proof-of-concept.</p>
-<p>👉 <a href="#">Deploy dockerized PHP Apps to production on GCP via docker compose</a> (2022-06-27)</p>        </div>
+
+<p>👉 <a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose</a> (2022-06-29)</p>
+            </div>
+        </div>
     </div>
-</div>
+</article>    
 
 <hr>
 

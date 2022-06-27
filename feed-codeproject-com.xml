@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 20 Jun 2022 07:00:58 +0000</pubDate>
-        <lastBuildDate>Mon, 20 Jun 2022 07:00:58 +0000</lastBuildDate>
+        <pubDate>Mon, 27 Jun 2022 06:09:48 +0000</pubDate>
+        <lastBuildDate>Mon, 27 Jun 2022 06:09:48 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -17,157 +17,293 @@
 <p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
 (Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
 Pipelines</strong>.</p>
+
 <div class="youtube center-div">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <div class="youtube center-div" style="display:none">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/VsNvvt0CMm8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a>.</p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>
-and the next one will be
-<strong>Deploy dockerized PHP Apps on a GCP VM</strong>.</p>
+and the following one is
+<a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/">A primer on GCP Compute Instance VMs for dockerized Apps</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
 to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-<!-- generated -->
 
-<!-- generated -->
-<p><a id='introduction'> </a></p>
-<!-- /generated -->
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+
+<ul>
+<li><a href="#recommended-reading">Recommended reading</a></li>
+<li><a href="#approach">Approach</a></li>
+<li><a href="#try-it-yourself">Try it yourself</a></li>
+</ul></li>
+<li><a href="#ci-setup">CI setup</a>
+
+<ul>
+<li><a href="#general-ci-notes">General CI notes</a>
+
+<ul>
+<li><a href="#initialize-make-for-ci">Initialize <code>make</code> for CI</a></li>
+<li><a href="#wait-for-service-sh">wait-for-service.sh</a></li>
+</ul></li>
+<li><a href="#setup-for-a-local-ci-run">Setup for a "local" CI run</a>
+
+<ul>
+<li><a href="#run-details">Run details</a></li>
+<li><a href="#execution-example">Execution example</a></li>
+</ul></li>
+<li><a href="#setup-for-github-actions">Setup for Github Actions</a>
+
+<ul>
+<li><a href="#the-workflow-file">The Workflow file</a></li>
+</ul></li>
+<li><a href="#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a>
+
+<ul>
+<li><a href="#the-gitlab-ci-yml-pipeline-file">The <code>.gitlab-ci.yml</code> pipeline file</a></li>
+</ul></li>
+<li><a href="#performance">Performance</a>
+
+<ul>
+<li><a href="#the-caching-problem-on-ci">The caching problem on CI</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#docker-changes">Docker changes</a>
+
+<ul>
+<li><a href="#compose-file-updates">Compose file updates</a>
+
+<ul>
+<li><a href="#docker-compose-local-yml">docker-compose.local.yml</a></li>
+<li><a href="#docker-compose-ci-yml">docker-compose.ci.yml</a></li>
+<li><a href="#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a></li>
+</ul></li>
+<li><a href="#build-target-ci">Build target: <code>ci</code></a>
+
+<ul>
+<li><a href="#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>
+
+<ul>
+<li><a href="#use-the-whole-codebase-as-build-context">Use the whole codebase as build context</a></li>
+<li><a href="#build-the-dependencies">Build the dependencies</a></li>
+<li><a href="#create-the-final-image">Create the final image</a></li>
+</ul></li>
+<li><a href="#build-stage-ci-in-the-application-image">Build stage <code>ci</code> in the <code>application</code> image</a></li>
+</ul></li>
+<li><a href="#dockerignore">.dockerignore</a></li>
+</ul></li>
+<li><a href="#makefile-changes">Makefile changes</a>
+
+<ul>
+<li><a href="#initialize-the-shared-variables">Initialize the shared variables</a></li>
+<li><a href="#env-based-docker-compose-config">ENV based docker compose config</a></li>
+</ul></li>
+<li><a href="#codebase-changes">Codebase changes</a>
+
+<ul>
+<li><a href="#add-a-test-for-encrypted-files">Add a test for encrypted files</a></li>
+<li><a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a></li>
+<li><a href="#create-a-junit-report-from-phpunit">Create a JUnit report from PhpUnit</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
 <h2>Introduction</h2>
+
 <p>CI is short for <strong>C</strong>ontinuous <strong>I</strong>ntegration and to me mostly means <strong>running the code quality
 tools and tests of a codebase in an isolated environment</strong> (preferably automatically). This is<br />
 particularly important when working in a team, because <strong>the CI system acts as the final
 gatekeeper</strong> before features or bugfixes are merged into the main branch.</p>
+
 <p>I initially learned about CI systems when I stubbed my toes into the open source water. Back in the
 day I used <a href="https://travis-ci.org/">Travis CI</a> for my own projects and replaced it
 with <a href="https://github.com/features/actions">Github Actions</a> at some point. At ABOUT YOU we started
 out with a self-hosted <a href="https://www.jenkins.io/">Jenkins</a> server and then moved on to
 <a href="https://about.gitlab.com/stages-devops-lifecycle/continuous-integration/">Gitlab CI</a> as a fully
 managed solution (though we use <a href="https://docs.gitlab.com/runner/">custom runners</a>).</p>
-<!-- generated -->
-<p><a id='recommended-reading'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='recommended-reading'> </a>
+<!-- /generated --></p>
+
 <h3>Recommended reading</h3>
-<p>This tutorial builds on top of the previous parts. I'll do my best to cross-reference the
+
+<p>This tutorial builds on top of the previous parts. I'll do my best to cross-reference the 
 corresponding articles when necessary, but I would still recommend to do some upfront reading on:</p>
+
 <ul>
-<li>the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#structuring-the-repository">general folder structure</a>, the
-<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#docker">update of the <code>.docker/</code> directory</a> and the introduction of a
+<li>the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#structuring-the-repository">general folder structure</a>, the 
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#docker">update of the <code>.docker/</code> directory</a> and the introduction of a 
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#make-mk-includes"><code>.make/</code> directory</a></li>
-<li>the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#makefile-and-bashrc">general usage of <code>make</code></a>
-and <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#makefile">it's evolution</a> as well as
+<li>the <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#makefile-and-bashrc">general usage of <code>make</code></a> 
+and <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#makefile">it's evolution</a> as well as 
 the <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">connection to <code>docker compose</code> commands</a></li>
 <li>the concepts of the <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#docker">docker containers and the <code>docker compose</code> setup</a></li>
 </ul>
-<p>And as a nice-to-know:</p>
-<ul>
-<li>the setup of <a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit">PhpUnit for the <code>test</code> make target</a> as well as the
-<a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#qa-make-targets"><code>qa</code> make target</a></li>
-<li>the <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">usage of <code>git-secret</code> to handle secret values</a></li>
-</ul>
-<!-- generated -->
-<p><a id='approach'> </a></p>
-<!-- /generated -->
+
+<p>And as a nice-to-know:
+- the setup of <a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit">PhpUnit for the <code>test</code> make target</a> as well as the 
+  <a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#qa-make-targets"><code>qa</code> make target</a>
+- the <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">usage of <code>git-secret</code> to handle secret values</a></p>
+
+<p><!-- generated -->
+<a id='approach'> </a>
+<!-- /generated --></p>
+
 <h3>Approach</h3>
+
 <p>In this tutorial I'm going to explain <strong>how to make our existing docker setup work with Github Actions
 and <a href="https://docs.gitlab.com/ee/ci/pipelines/">Gitlab CI/CD Pipelines</a></strong>. As I'm a big fan of a
-&quot;progressive enhancement&quot; approach, we will ensure that <strong>all necessary steps can be performed
+"progressive enhancement" approach, we will ensure that <strong>all necessary steps can be performed 
 locally through <code>make</code></strong>. This has the additional benefit of keeping a single source of truth (the
 <code>Makefile</code>) which will come in handy when we set up the CI system on two different providers
 (Github and Gitlab).</p>
+
 <p>The general process will look very similar to the one for local development:</p>
+
 <ul>
 <li>build the docker setup</li>
 <li>start the docker setup</li>
 <li>run the qa tools</li>
 <li>run the tests</li>
 </ul>
-<p>You can see the final results in the <a href="#ci-setup">CI setup</a> section, including the concrete <code>yml</code>
+
+<p>You can see the final results in the <a href="#ci-setup">CI setup</a> section, including the concrete <code>yml</code> 
 files and links to the repositories, see</p>
+
 <ul>
-<li><a href="#setup-for-a-local-ci-run">Setup for a &quot;local&quot; CI run</a></li>
+<li><a href="#setup-for-a-local-ci-run">Setup for a "local" CI run</a></li>
 <li><a href="#setup-for-github-actions">Setup for Github Actions</a></li>
 <li><a href="#setup-for-gitlab-pipelines">Setup for Gitlab Pipelines</a></li>
 </ul>
+
 <p>On a code level, we will <strong>treat CI as an environment</strong>, configured through the env variable <code>ENV</code>. So
-far we only used <code>ENV=local</code> and we will extend that to also use <code>ENV=ci</code>. The necessary changes
+far we only used <code>ENV=local</code> and we will extend that to also use <code>ENV=ci</code>. The necessary changes 
 are explained after the concrete CI setup instructions in the sections</p>
+
 <ul>
 <li><a href="#docker-changes">Docker changes</a></li>
 <li><a href="#makefile-changes">Makefile changes</a></li>
 <li><a href="#codebase-changes">Codebase changes</a></li>
 </ul>
-<!-- generated -->
-<p><a id='try-it-yourself'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='try-it-yourself'> </a>
+<!-- /generated --></p>
+
 <h3>Try it yourself</h3>
-<p>To get a feeling for what's going on, you can start by
-<a href="#setup-for-a-local-ci-run">executing the local CI run</a>: </p>
+
+<p>To get a feeling for what's going on, you can start by 
+<a href="#setup-for-a-local-ci-run">executing the local CI run</a>:</p>
+
 <ul>
 <li>checkout branch
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">part-7-ci-pipeline-docker-php-gitlab-github</a></li>
 <li>initialize <code>make</code></li>
-<li>run the <code>.local-ci.sh</code> script </li>
+<li>run the <code>.local-ci.sh</code> script</li>
 </ul>
+
 <p>This should give you a similar output as presented in the <a href="#execution-example">Execution example</a>.</p>
+
 <pre>git checkout part-7-ci-pipeline-docker-php-gitlab-github
 
 # Initialize make
 make make-init
 
 # Execute the local CI run
-bash .local-ci.sh</pre>
-<!-- generated -->
-<p><a id='ci-setup'> </a></p>
-<!-- /generated -->
+bash .local-ci.sh
+</pre>
+
+<p><!-- generated -->
+<a id='ci-setup'> </a>
+<!-- /generated --></p>
+
 <h2>CI setup</h2>
-<!-- generated -->
-<p><a id='general-ci-notes'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='general-ci-notes'> </a>
+<!-- /generated --></p>
+
 <h3>General CI notes</h3>
-<!-- generated -->
-<p><a id='initialize-make-for-ci'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='initialize-make-for-ci'> </a>
+<!-- /generated --></p>
+
 <h4>Initialize <code>make</code> for CI</h4>
-<p>As a very first step we need to &quot;configure&quot; the codebase to operate for the <code>ci</code> environment.
+
+<p>As a very first step we need to "configure" the codebase to operate for the <code>ci</code> environment.
 This is done through the <code>make-init</code> target as explained later in more detail in the
 <a href="#makefile-changes">Makefile changes</a> section via</p>
-<pre>make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</pre>
+
+<pre>make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
+</pre>
+
 <pre>$ make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
-Created a local .make/.env file</pre>
+Created a local .make/.env file
+</pre>
+
 <p><code>ENV=ci</code> ensures that we</p>
+
 <ul>
 <li>use <a href="#env-based-docker-compose-config">the correct <code>docker compose</code> config files</a></li>
 <li>use <a href="#build-target-ci">the <code>ci</code> build target</a></li>
 </ul>
+
 <p><code>TAG=latest</code> is just a simplification for now because we don't do anything with the images yet.
 In an upcoming tutorial we will push them to a container registry for later usage in production
 deployments and then set the <code>TAG</code> to something more meaningful (like the build number).</p>
+
 <p><code>EXECUTE_IN_CONTAINER=true</code> forces every <code>make</code> command that uses a
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers"><code>RUN_IN_*_CONTAINER</code> setup</a>
 to run in a container. This is important, because <strong>the Gitlab runner will actually run in a
-docker container itself</strong>. However, this would cause any affected target <strong>to omit the
+docker container itself</strong>. However, this would cause any affected target <strong>to omit the 
 <code>$(DOCKER_COMPOSER) exec</code> prefix</strong>.</p>
+
 <p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/execute-always-in-docker.PNG" alt="Execute all targets in the application docker container" /></a></p>
+
 <p><code>GPG_PASSWORD=12345678</code> is the password for the secret <code>gpg</code> key as mentioned in
 <a href="#add-a-password-protected-secret-gpg-key">Add a password-protected secret <code>gpg</code> key</a>.</p>
-<!-- generated -->
-<p><a id='wait-for-service-sh'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='wait-for-service-sh'> </a>
+<!-- /generated --></p>
+
 <h4>wait-for-service.sh</h4>
-<p>I'll explain the &quot;container is up and running but the underlying service is not&quot; problem
+
+<p>I'll explain the "container is up and running but the underlying service is not" problem
 for the <code>mysql</code> service and how we can solve it with a health check later in this article at
 <a href="#adding-a-health-check-for-mysql">Adding a health check for <code>mysql</code></a>.
-On purpose, we don't want <code>docker compose</code> to take care of the waiting because we can make
-&quot;better use of the waiting time&quot; and will instead implement it ourselves with a simple bash
+On purpose, we don't want <code>docker compose</code> to take care of the waiting because we can make 
+"better use of the waiting time" and will instead implement it ourselves with a simple bash 
 script located at <code>.docker/scripts/wait-for-service.sh</code>:</p>
+
 <pre>#!/bin/bash
 
 name=$1
@@ -193,22 +329,30 @@ while true; do
     exit 1
   fi 
   sleep $interval; 
-done</pre>
-<p>This script waits for a docker <code>$service</code> to become &quot;healthy&quot; by
+done
+</pre>
+
+<p>This script waits for a docker <code>$service</code> to become "healthy" by
 <a href="https://stackoverflow.com/a/42738182/413531">checking the <code>.State.Health.Status</code> info</a>
 of the <code>docker inspect</code> command.</p>
+
 <p><strong>CAUTION:</strong> The script uses <code>$(docker ps --filter name="$name" -q)</code> to determine the id of the
-container, i.e. it will &quot;match&quot; all running containers against the <code>$name</code> - this would fail if
+container, i.e. it will "match" all running containers against the <code>$name</code> - this would fail if
 there is more than one matching container! I.e. you must ensure that <code>$name</code> is specific
 enough to identify one single container uniquely.</p>
+
 <p>The script will check up to <code>$max</code> times
 in a interval of <code>$interval</code> seconds. See <a href="https://unix.stackexchange.com/a/82610">these</a>
 <a href="https://unix.stackexchange.com/a/137639">answers</a> on the
-&quot;How do I write a retry logic in script to keep retrying to run it up to 5 times?&quot; question for
+"How do I write a retry logic in script to keep retrying to run it up to 5 times?" question for
 the implementation of the retry logic. To check the health of the <code>mysql</code> service for 5
 times with 1 seconds between each try, it can be called via</p>
-<pre>bash wait-for-service.sh mysql 5 1</pre>
+
+<pre>bash wait-for-service.sh mysql 5 1
+</pre>
+
 <p>Output</p>
+
 <pre>$ bash wait-for-service.sh mysql 5 1
 Waiting for service 'mysql' to become healthy, checking every 1 second(s) for max. 5 times
 [1/5] ...
@@ -224,24 +368,32 @@ $ bash wait-for-service.sh mysql 5 1
 Waiting for service 'mysql' to become healthy, checking every 1 second(s) for max. 5 times
 [1/5] ...
 [2/5] ...
-SUCCESS</pre>
-<p>The problem of &quot;container dependencies&quot; isn't new and there are already some existing solutions
+SUCCESS
+</pre>
+
+<p>The problem of "container dependencies" isn't new and there are already some existing solutions
 out there, e.g.</p>
+
 <ul>
 <li><a href="https://github.com/eficode/wait-for">wait-for</a></li>
 <li><a href="https://github.com/vishnubob/wait-for-it">wait-for-it</a></li>
 <li><a href="https://github.com/jwilder/dockerize#waiting-for-other-dependencies">dockerize</a></li>
 <li><a href="https://github.com/ufoscout/docker-compose-wait">docker-compose-wait</a></li>
 </ul>
+
 <p>But unfortunately all of them operate by checking the availability of a <code>host:port</code> combination
 and in the case of <code>mysql</code> that didn't help, because the container was up, the port was reachable
 but the <code>mysql</code> service in the container was not.</p>
-<!-- generated -->
-<p><a id='setup-for-a-local-ci-run'> </a></p>
-<!-- /generated -->
-<h3>Setup for a &quot;local&quot; CI run</h3>
+
+<p><!-- generated -->
+<a id='setup-for-a-local-ci-run'> </a>
+<!-- /generated --></p>
+
+<h3>Setup for a "local" CI run</h3>
+
 <p>As mentioned under <a href="#approach">Approach</a>, we want to be able to perform all necessary steps
 locally and I created a corresponding script at <code>.local-ci.sh</code>:</p>
+
 <pre>#!/bin/bash
 # fail on any error 
 # @see https://stackoverflow.com/a/3474556/413531
@@ -307,96 +459,121 @@ make docker-down ENV=ci || true
 # EVALUATE RESULTS
 if [ "$FAILED" == "true" ]; then echo "FAILED"; exit 1; fi
 
-echo "SUCCESS"</pre>
-<!-- generated -->
-<p><a id='run-details'> </a></p>
-<!-- /generated -->
+echo "SUCCESS"
+</pre>
+
+<p><!-- generated -->
+<a id='run-details'> </a>
+<!-- /generated --></p>
+
 <h4>Run details</h4>
+
 <ul>
 <li>as a preparation step, we first ensure that no outdated <code>ci</code> containers are running (this is
-only necessary locally, because runners on a remote CI system will start &quot;from scratch&quot;)
-<pre>make docker-down ENV=ci || true</pre></li>
+only necessary locally, because runners on a remote CI system will start "from scratch")
+<code>bash
+make docker-down ENV=ci || true</code></li>
 <li>we take some time measurements to understand how long certain parts take via
-<pre>start_total=$(date +%s)</pre>
-<p>to store the current timestamp</p></li>
+<code>bash
+start_total=$(date +%s)</code>
+to store the current timestamp</li>
 <li>we need the secret <code>gpg</code> key in order to decrypt the secrets and simply copy the
-<a href="#add-a-password-protected-secret-gpg-key">password-protected example key</a>
-(in the actual CI systems the key will be configured as a secret value that is injected in
+<a href="#add-a-password-protected-secret-gpg-key">password-protected example key</a> 
+(in the actual CI systems the key will be configured as a secret value that is injected in 
 the run)
-<pre># STORE GPG KEY
-cp secret-protected.gpg.example secret.gpg</pre></li>
+<code>bash
+# STORE GPG KEY
+cp secret-protected.gpg.example secret.gpg</code></li>
 <li>I like printing some debugging info in order to understand which exact circumstances
 we're dealing with (tbh, this is mostly relevant when setting the CI system up or making
 modifications to it)
-<pre># DEBUG
+<code>bash
+# DEBUG
 docker version
 docker compose version
-cat /etc/*-release || true</pre></li>
+cat /etc/*-release || true</code></li>
 <li>for the docker setup, we start with
 <a href="#initialize-make-for-ci">initializing the environment for <code>ci</code></a>
-<pre># SETUP DOCKER
-make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</pre>
-<p>then build the docker setup</p>
-<pre>make docker-build</pre>
-<p>and finally add a <code>.build/</code> directory to
-<a href="#create-a-junit-report-from-phpunit">collect the build artifacts</a></p>
-<pre>mkdir -p .build &amp;&amp; chmod 777 .build</pre></li>
+<code>bash
+# SETUP DOCKER
+make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</code>
+then build the docker setup
+<code>bash
+make docker-build</code>
+and finally add a <code>.build/</code> directory to
+<a href="#create-a-junit-report-from-phpunit">collect the build artifacts</a>
+<code>bash
+mkdir -p .build &amp;&amp; chmod 777 .build</code></li>
 <li>then, the docker setup is started
-<pre># START DOCKER
-make docker-up</pre>
-<p>and <code>gpg</code> is initialized so that
-<a href="#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a></p>
-<pre>make gpg-init
-make secret-decrypt-with-password</pre>
-<p>We don't need to pass a <code>GPG_PASSWORD</code> to <code>secret-decrypt-with-password</code> because we have set
-it up in the previous step as a default value via <code>make-init</code></p></li>
+<code>bash
+# START DOCKER
+make docker-up</code>
+and <code>gpg</code> is initialized so that
+<a href="#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a>
+<code>bash
+make gpg-init
+make secret-decrypt-with-password</code>
+We don't need to pass a <code>GPG_PASSWORD</code> to <code>secret-decrypt-with-password</code> because we have set
+it up in the previous step as a default value via <code>make-init</code></li>
 <li>once the <code>application</code> container is running, the qa tools are run by invoking the
 <a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#the-qa-target"><code>qa</code> make target</a>
-<pre># QA
-make qa || FAILED=true</pre>
-<p>The <code>|| FAILED=true</code> part makes sure that the script will not be terminated if the checks fail.
-Instead, the fact that a failure happened is &quot;recorded&quot; in the <code>FAILED</code> variable so that we
+<code>bash
+# QA
+make qa || FAILED=true</code>
+The <code>|| FAILED=true</code> part makes sure that the script will not be terminated if the checks fail.
+Instead, the fact that a failure happened is "recorded" in the <code>FAILED</code> variable so that we
 can evaluate it at the end. We don't want the script to stop here because we want the
-following steps to be executed as well (e.g. the tests).</p></li>
+following steps to be executed as well (e.g. the tests).</li>
 <li>to mitigate the
-<a href="#adding-a-health-check-for-mysql">&quot;<code>mysql</code> is not ready&quot; problem</a>, we will now apply the
+<a href="#adding-a-health-check-for-mysql">"<code>mysql</code> is not ready" problem</a>, we will now apply the
 <a href="#wait-for-service-sh">wait-for-service.sh script</a>
-<pre># WAIT FOR CONTAINERS
-bash .docker/scripts/wait-for-service.sh mysql 30 1</pre></li>
-<li>once <code>mysql</code> is ready, we can execute the tests via the
-<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit"><code>test</code> make target</a> and
+<code>bash
+# WAIT FOR CONTAINERS
+bash .docker/scripts/wait-for-service.sh mysql 30 1</code></li>
+<li>once <code>mysql</code> is ready, we can execute the tests via the 
+<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit"><code>test</code> make target</a> and 
 apply the same <code>|| FAILED=true</code> workaround as for the qa tools
-<pre># TEST
-make test || FAILED=true</pre></li>
+<code>bash
+# TEST
+make test || FAILED=true</code></li>
 <li>finally, all the timers are printed
-<pre># RUNTIMES
+<code>bash
+# RUNTIMES
 echo "Build docker:        " `expr $end_docker_build - $start_docker_build`
 echo "Start docker:        " `expr $end_docker_up - $start_docker_up  `
 echo "QA:                  " `expr $end_qa - $start_qa`
 echo "Wait for containers: " `expr $end_wait_for_containers - $start_wait_for_containers`
 echo "Tests:               " `expr $end_test - $start_test`
 echo "---------------------"
-echo "Total:               " `expr $end_total - $start_total`</pre></li>
+echo "Total:               " `expr $end_total - $start_total`</code></li>
 <li>we clean up the resources (this is only necessary when running locally, because the runner of
 a CI system would be shut down anyways)
-<pre># CLEANUP
+<code>bash
+# CLEANUP
 make make-init
-make docker-down ENV=ci || true</pre></li>
-<li>
-<p>and finally evaluate if any error occurred when running the qa tools or the tests</p>
+make docker-down ENV=ci || true</code></li>
+<li><p>and finally evaluate if any error occurred when running the qa tools or the tests</p>
+
 <pre># EVALUATE RESULTS
 if [ "$FAILED" == "true" ]; then echo "FAILED"; exit 1; fi
 
-echo "SUCCESS"</pre>
-</li>
+echo "SUCCESS"
+</pre></li>
 </ul>
-<!-- generated -->
-<p><a id='execution-example'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='execution-example'> </a>
+<!-- /generated --></p>
+
 <h4>Execution example</h4>
+
 <p>Executing the script via</p>
-<pre>bash .local-ci.sh</pre>
+
+<pre>bash .local-ci.sh
+</pre>
+
 <p>yields the following (shortened) output:</p>
+
 <pre>$ bash .local-ci.sh
 Container dofroscra_ci-redis-1  Stopping
 # Stopping all other `ci` containers ...
@@ -458,25 +635,33 @@ Container dofroscra_ci-mysql-1  Stopping
 # Stopping all other `ci` containers ...
 # ...
 
-SUCCESS</pre>
-<!-- generated -->
-<p><a id='setup-for-github-actions'> </a></p>
-<!-- /generated -->
+SUCCESS
+</pre>
+
+<p><!-- generated -->
+<a id='setup-for-github-actions'> </a>
+<!-- /generated --></p>
+
 <h3>Setup for Github Actions</h3>
+
 <ul>
 <li><a href="https://github.com/paslandau/docker-php-tutorial/tree/part-7-ci-pipeline-docker-php-gitlab-github">Repository (branch <code>part-7-ci-pipeline-docker-php-gitlab-github</code>)</a></li>
 <li><a href="https://github.com/paslandau/docker-php-tutorial/actions">CI/CD overview (Actions)</a></li>
 <li><a href="https://github.com/paslandau/docker-php-tutorial/runs/5866235820?check_suite_focus=true">Example of a successful job</a></li>
 <li><a href="https://github.com/paslandau/docker-php-tutorial/runs/5867485802?check_suite_focus=true">Example of a failed job</a></li>
 </ul>
+
 <p><a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/github-action-example.PNG" alt="Github Action example" /></a></p>
+
 <p>If you are completely new to Github Actions, I recommend to start with the
 <a href="https://docs.github.com/en/actions/quickstart">official Quickstart Guide for GitHub Actions</a>
 and the
 <a href="https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions">Understanding GitHub Actions</a>
 article. In short:</p>
+
 <ul>
 <li>Github Actions are based on so called <strong>Workflows</strong>
+
 <ul>
 <li>Workflows are <code>yaml</code> files that  live in the special <code>.github/workflows</code> directory in the
 repository</li>
@@ -484,17 +669,25 @@ repository</li>
 <li>a Workflow can contain multiple <strong>Jobs</strong></li>
 <li>each Job consists of a series of <strong>Steps</strong></li>
 <li>each Step needs a <code>run:</code> element that represents a command that is executed by a new shell
+
 <ul>
 <li>multi-line commands that should use the same shell are written as
-<pre>- run : |
-    echo "line 1"
-    echo "line 2"</pre>
-<p>See also <a href="https://stackoverflow.com/a/59536836/413531">difference between &quot;run |&quot; and multiple runs in github actions</a></p></li>
+```yaml
+
+<ul>
+<li>run : |
+echo "line 1"
+echo "line 2"
+```
+See also <a href="https://stackoverflow.com/a/59536836/413531">difference between "run |" and multiple runs in github actions</a></li>
+</ul></li>
 </ul></li>
 </ul>
-<!-- generated -->
-<p><a id='the-workflow-file'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='the-workflow-file'> </a>
+<!-- /generated --></p>
+
 <hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/'>CI Pipelines for dockerized PHP Apps with Github & Gitlab [Tutorial Part 7]</a></b></p>
 ]]></description>
                 <pubDate>Mon, 25 Apr 2022 07:00:00 +0000</pubDate>
@@ -507,54 +700,154 @@ repository</li>
 <hr />
 
 <p>In the sixth part of this tutorial series on developing PHP on Docker we will <strong>setup <code>git-secret</code>
-to store secrets directly in the repository</strong>. Everything will be handled through Docker and
+to store secrets directly in the repository</strong>. Everything will be handled through Docker and 
 added as make targets for a convenient workflow.</p>
+
 <p><a href="https://www.pascallandau.com/img/git-secret-encrypt-repository-docker/git-secret-example.gif"><img src="https://www.pascallandau.com/img/git-secret-encrypt-repository-docker/git-secret-example.gif" alt="git-secret example" title="git-secret example" /></a></p>
+
 <p><small>
-FYI:
-This tutorial is a precursor to the next a part
+FYI: 
+This tutorial is a precursor to the next a part 
 <a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-because dealing with secrets is an important aspect when setting up a CI system (and later when
+because dealing with secrets is an important aspect when setting up a CI system (and later when 
 deploying to production) - but I feel it's complex enough to warrant its own article.
 </small></p>
-<div class="youtube" style="display:none">
+
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/pZ-vFMfKcLY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-6-git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>.</p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>
 and the following one is
 <a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-<!-- generated -->
 
-<!-- generated -->
-<p><a id='introduction'> </a></p>
-<!-- /generated -->
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#tooling">Tooling</a>
+
+<ul>
+<li><a href="#gpg">gpg</a>
+
+<ul>
+<li><a href="#gpg-installation">gpg installation</a></li>
+<li><a href="#gpg-usage">gpg usage</a>
+
+<ul>
+<li><a href="#create-gpg-key-pair">Create GPG key pair</a></li>
+<li><a href="#export-list-and-import-private-gpg-keys">Export, list and import private GPG keys</a></li>
+<li><a href="#export-list-and-import-public-gpg-keys">Export, list and import public GPG keys</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#git-secret">git-secret</a>
+
+<ul>
+<li><a href="#git-secret-installation">git-secret installation</a>
+
+<ul>
+<li><a href="#the-git-permission-issue">The <code>git</code> permission issue</a></li>
+</ul></li>
+<li><a href="#git-secret-usage">git-secret usage</a>
+
+<ul>
+<li><a href="#initialize-git-secret">Initialize git-secret</a>
+
+<ul>
+<li><a href="#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a></li>
+</ul></li>
+<li><a href="#adding-listing-and-removing-users">Adding, listing and removing users</a>
+
+<ul>
+<li><a href="#reminder-rotate-the-encrypted-secrets">Reminder: Rotate the encrypted secrets</a></li>
+</ul></li>
+<li><a href="#adding-listing-and-removing-files-for-encryption">Adding, listing and removing files for encryption</a></li>
+<li><a href="#encrypt-files">Encrypt files</a></li>
+<li><a href="#decrypting-files">Decrypting files</a></li>
+<li><a href="#show-changes-between-encrypted-and-decrypted-files">Show changes between encrypted and decrypted files</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><a href="#makefile-adjustments">Makefile adjustments</a></li>
+<li><a href="#workflow">Workflow</a>
+
+<ul>
+<li><a href="#process-challenges">Process challenges</a>
+
+<ul>
+<li><a href="#updating-secrets">Updating secrets</a></li>
+<li><a href="#code-reviews-and-merge-conflicts">Code reviews and merge conflicts</a></li>
+<li><a href="#local-git-secret-and-gpg-setup">Local <code>git-secret</code> and <code>gpg</code> setup</a></li>
+</ul></li>
+<li><a href="#scenarios">Scenarios</a>
+
+<ul>
+<li><a href="#initial-setup-of-gpg-keys">Initial setup of <code>gpg</code> keys</a></li>
+<li><a href="#initial-setup-of-git-secret">Initial setup of <code>git-secret</code></a></li>
+<li><a href="#initialize-gpg-after-container-startup">Initialize <code>gpg</code> after container startup</a></li>
+<li><a href="#adding-new-team-members">Adding (new) team members</a></li>
+<li><a href="#adding-and-encrypting-files">Adding and encrypting files</a></li>
+<li><a href="#decrypt-files">Decrypt files</a></li>
+<li><a href="#removing-files">Removing files</a></li>
+<li><a href="#removing-team-members">Removing team members</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#pros-and-cons">Pros and cons</a>
+
+<ul>
+<li><a href="#pro">Pro</a></li>
+<li><a href="#cons">Cons</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
 <h2>Introduction</h2>
-<p>Dealing with secrets (passwords, tokens, key files, etc.) is close to &quot;naming things&quot;
+
+<p>Dealing with secrets (passwords, tokens, key files, etc.) is close to "naming things"
 when it comes to hard problems in software engineering. Some things to consider:</p>
+
 <ul>
 <li><strong>security is paramount</strong> - but high security often goes hand in hand with high inconvenience
+
 <ul>
 <li>and if things get too complicated, people look for shortcuts...</li>
 </ul></li>
 <li>in a team, <strong>sharing certain secret values</strong> is often mandatory
+
 <ul>
 <li>so now we need to think about secure ways to distribute and update secrets across multiple
 people</li>
 </ul></li>
 <li>concrete secret values often <strong>depend on the environment</strong>
+
 <ul>
-<li>inherently tricky to &quot;test&quot; or even &quot;review&quot;, because those values are &quot;by definition&quot;
-different on &quot;your machine&quot; than on &quot;production&quot;</li>
+<li>inherently tricky to "test" or even "review", because those values are "by definition"
+different on "your machine" than on "production"</li>
 </ul></li>
 </ul>
+
 <p>In fact, entire products have been build around dealing with secrets, e.g.
 <a href="https://www.vaultproject.io/">HashiCorp Vault</a>,
 <a href="https://aws.amazon.com/secrets-manager/">AWS Secrets Manager</a> or the
@@ -563,23 +856,33 @@ with a certain overhead as it's yet another service that needs to be integrated 
 maintained. Maybe it is the exactly right decision for your use-case - maybe it's overkill.
 By the end of this article you'll at least be aware of an alternative with a lower barrier to entry.
 See also the <a href="#pros-and-cons">Pros and cons</a> section in the end for an overview.</p>
+
 <p>Even though it's
 <a href="https://withblue.ink/2021/05/07/storing-secrets-and-passwords-in-git-is-bad.html">generally not advised to store secrets in a repository</a>,
 I'll propose exactly that in this tutorial:</p>
+
 <ul>
 <li>identify files that contain secret values</li>
 <li>make sure they are added to <code>.gitignore</code></li>
 <li>encrypt them via <code>git-secret</code></li>
 <li>commit the encrypted files to the repository</li>
 </ul>
+
 <p>In the end, we will be able to call</p>
-<pre>make secret-decrypt</pre>
+
+<pre>make secret-decrypt
+</pre>
+
 <p>to reveal secrets in the codebase, make modifications to them if necessary and then run</p>
-<pre>make secret-encrypt</pre>
-<p>to encrypt them again so that they can be committed (and pushed to the remote repository). To
+
+<pre>make secret-encrypt
+</pre>
+
+<p>to encrypt them again so that they can be committed (and pushed to the remote repository). To 
 see it in action, check out branch
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>
 and run the following commands:</p>
+
 <pre># checkout the branch
 git checkout part-6-git-secret-encrypt-repository-docker
 
@@ -601,15 +904,20 @@ ls passwords.txt
 make secret-decrypt
 
 # show the content of the secret file
-cat passwords.txt</pre>
-<!-- generated -->
-<p><a id='tooling'> </a></p>
-<!-- /generated -->
+cat passwords.txt
+</pre>
+
+<p><!-- generated -->
+<a id='tooling'> </a>
+<!-- /generated --></p>
+
 <h2>Tooling</h2>
+
 <p>We will set up <code>gpg</code> and <code>git-secret</code> in the php <code>base</code> image, so that the tools become available in
 all other containers. Please refer to
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 for an in-depth explanation of the docker images.</p>
+
 <div class="panel panel-default">
   <div class="panel-heading">
     <strong>Caution</strong>
@@ -617,52 +925,68 @@ for an in-depth explanation of the docker images.</p>
   <div class="panel-body bg-danger">
     All following commands are 
     <strong>executed <em>in</em> the <code>application</code> container.</strong>
-    <br>
-    <br>
+    <br />
+    <br />
     <strong>Tip:</strong>
-    <br>
-    See <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via%20-din-bashrc-helper">Easy container access via din .bashrc helper</a>
+    <br />
+    See <a href="https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via -din-bashrc-helper">Easy container access via din .bashrc helper</a>
     for a convenient shortcut to log into docker containers.
   </div>
 </div>
-<p>Please note, that there is a caveat when using <code>git-secret</code> in a folder that is shared between
-the host system and a docker container. I'll explain that in more detail (including a workaround)
-in section
+
+<p>Please note, that there is a caveat when using <code>git-secret</code> in a folder that is shared between 
+the host system and a docker container. I'll explain that in more detail (including a workaround) 
+in section 
 <a href="#the-git-secret-directory-and-the-gpg-agent-socket">The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</a>.</p>
-<!-- generated -->
-<p><a id='gpg'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='gpg'> </a>
+<!-- /generated --></p>
+
 <h3>gpg</h3>
+
 <p><code>gpg</code> is short for <a href="https://gnupg.org/">The GNU Privacy Guard</a> and is an open source implementation
 of the OpenPGP standard. In short, it allows us to create a personal key file pair
 (similar to SSH keys) with a private secret key and a public
 key that can be shared with other parties whose messages you want to decrypt.</p>
-<!-- generated -->
-<p><a id='gpg-installation'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='gpg-installation'> </a>
+<!-- /generated --></p>
+
 <h4>gpg installation</h4>
-<p>To install it, we can simply run <code>apk add gnupg</code> and thus update
+
+<p>To install it, we can simply run <code>apk add gnupg</code> and thus update 
 <code>.docker/images/php/base/Dockerfile</code> accordingly</p>
+
 <pre># File: .docker/images/php/base/Dockerfile
 
 RUN apk add --update --no-cache \
         bash \
         gnupg \
         make \
-#...</pre>
-<!-- generated -->
-<p><a id='gpg-usage'> </a></p>
-<!-- /generated -->
+#...
+</pre>
+
+<p><!-- generated -->
+<a id='gpg-usage'> </a>
+<!-- /generated --></p>
+
 <h4>gpg usage</h4>
+
 <p>I'll only cover the strictly necessary <code>gpg</code> commands here. Please refer to
-<a href="https://git-secret.io/#using-gpg">the &quot;Using GPG&quot; section in the <code>git-secret</code> docu</a>
+<a href="https://git-secret.io/#using-gpg">the "Using GPG" section in the <code>git-secret</code> docu</a>
 and/or <a href="https://linuxhint.com/generate-gpg-keys-gpg/">How to generate PGP keys with GPG</a>
 for further information.</p>
-<!-- generated -->
-<p><a id='create-gpg-key-pair'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='create-gpg-key-pair'> </a>
+<!-- /generated --></p>
+
 <h5>Create GPG key pair</h5>
+
 <p>We need <code>gpg</code> to <strong>create the gpg key pair</strong> via</p>
+
 <pre>name="Pascal Landau"
 email="pascal.landau@example.com"
 gpg --batch --gen-key &lt;&lt;EOF
@@ -674,14 +998,21 @@ Name-Real: $name
 Name-Email: $email
 Expire-Date: 0
 %no-protection
-EOF</pre>
+EOF
+</pre>
+
 <p>The <code>%no-protection</code> will create a key without password, see
-also <a href="https://gist.github.com/woods/8970150">this gist to &quot;Creating gpg keys non-interactively&quot;</a>.
+also <a href="https://gist.github.com/woods/8970150">this gist to "Creating gpg keys non-interactively"</a>.
 To use a password (e.g. <code>12345678</code>, we could have replace the <code>%no-protection</code> line with</p>
-<pre>Passphrase: 12345678</pre>
-<p>All options for the unattended creation are defined in the
-<a href="https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html">official docs at &quot;Unattended key generation&quot;</a>.</p>
+
+<pre>Passphrase: 12345678
+</pre>
+
+<p>All options for the unattended creation are defined in the 
+<a href="https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html">official docs at "Unattended key generation"</a>.</p>
+
 <p>Output:</p>
+
 <pre>$ name="Pascal Landau"
 $ email="pascal.landau@example.com"
 $ gpg --batch --gen-key &lt;&lt;EOF
@@ -695,19 +1026,29 @@ $ gpg --batch --gen-key &lt;&lt;EOF
 &gt; %no-protection
 &gt; EOF
 gpg: key E1E734E00B611C26 marked as ultimately trusted
-gpg: revocation certificate stored as '/root/.gnupg/opengpg-revocs.d/74082D81525723F5BF5B2099E1E734E00B611C26.rev'</pre>
+gpg: revocation certificate stored as '/root/.gnupg/opengpg-revocs.d/74082D81525723F5BF5B2099E1E734E00B611C26.rev'
+</pre>
+
 <p>You could also run <code>gpg --gen-key</code> without the <code>--batch</code> flag to be guided interactively through the
 process.</p>
-<!-- generated -->
-<p><a id='export-list-and-import-private-gpg-keys'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='export-list-and-import-private-gpg-keys'> </a>
+<!-- /generated --></p>
+
 <h5>Export, list and import private GPG keys</h5>
+
 <p>The <strong>private key can be exported</strong> via</p>
+
 <pre>email="pascal.landau@example.com"
 path="secret.gpg"
-gpg --output "$path" --armor --export-secret-key "$email"</pre>
+gpg --output "$path" --armor --export-secret-key "$email"
+</pre>
+
 <p><strong>This secret key must never be shared</strong>!</p>
+
 <p>It looks like this:</p>
+
 <pre>-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 lQOYBF7VVBwBCADo9un+SySu/InHSkPDpFVKuZXg/s4BbZmqFtYjvUUSoRAeSejv
@@ -717,10 +1058,16 @@ XDPO3Rys+CmnZchcEgnbOfQlEqo51DMj6mRF2Ra/6svh7lqhrixGx1BaKn6VlHkC
 ncIcHxNZt7eK644nWDn7j52HsRi+wcWsZ9mjkUgZLtyMPJNB5qlKQ18QgVdEAhuZ
 xT3SieoBPd+tZikhu3BqyIifmLnxOJOjOIhbQrgFiblvzU1iOUOTOcSIB+7A
 =YmRm
------END PGP PRIVATE KEY BLOCK-----</pre>
+-----END PGP PRIVATE KEY BLOCK-----
+</pre>
+
 <p>All <strong>secret keys can be listed</strong> via</p>
-<pre>gpg --list-secret-keys</pre>
+
+<pre>gpg --list-secret-keys
+</pre>
+
 <p>Output:</p>
+
 <pre>$ gpg --list-secret-keys
 /root/.gnupg/pubring.kbx
 ------------------------
@@ -728,11 +1075,17 @@ sec   rsa2048 2022-03-27 [SCEA]
       74082D81525723F5BF5B2099E1E734E00B611C26
 uid           [ultimate] Pascal Landau &lt;pascal.landau@example.com&gt;
 ssb   rsa2048 2022-03-27 [SEA]
+
 </pre>
+
 <p>You can <strong>import the private key</strong> via</p>
+
 <pre>path="secret.gpg"
-gpg --import "$path"</pre>
+gpg --import "$path"
+</pre>
+
 <p>and get the following output:</p>
+
 <pre>$ path="secret.gpg"
 $ gpg --import "$path"
 gpg: key E1E734E00B611C26: "Pascal Landau &lt;pascal.landau@example.com&gt;" not changed
@@ -740,23 +1093,35 @@ gpg: key E1E734E00B611C26: secret key imported
 gpg: Total number processed: 1
 gpg:              unchanged: 1
 gpg:       secret keys read: 1
-gpg:  secret keys unchanged: 1</pre>
-<p><strong>Caution:</strong> If the secret key requires a password, you would now be prompted for it. We can
+gpg:  secret keys unchanged: 1
+</pre>
+
+<p><strong>Caution:</strong> If the secret key requires a password, you would now be prompted for it. We can 
 circumvent the prompt by using <code>--batch --yes --pinentry-mode loopback</code>:</p>
+
 <pre>path="secret.gpg"
-gpg --import --batch --yes --pinentry-mode loopback "$path"</pre>
+gpg --import --batch --yes --pinentry-mode loopback "$path"
+</pre>
+
 <p>See also <a href="https://betakuang.medium.com/using-command-line-passphrase-input-for-gpg-with-git-for-windows-f78ae2c7cd2e">Using Command-Line Passphrase Input for GPG</a>.
-In doing so, we don't need to provide the password just yet - but we must pass it later when we
+In doing so, we don't need to provide the password just yet - but we must pass it later when we 
 attempt to <a href="#decrypting-files">decrypt files</a>.</p>
-<!-- generated -->
-<p><a id='export-list-and-import-public-gpg-keys'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='export-list-and-import-public-gpg-keys'> </a>
+<!-- /generated --></p>
+
 <h5>Export, list and import public GPG keys</h5>
+
 <p>The <strong>public key can be exported</strong> to <code>public.gpg</code> via</p>
+
 <pre>email="pascal.landau@example.com"
 path="public.gpg"
-gpg --armor --export "$email" &gt; "$path"</pre>
+gpg --armor --export "$email" &gt; "$path"
+</pre>
+
 <p>It looks like this:</p>
+
 <pre>-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQENBF7VVBwBCADo9un+SySu/InHSkPDpFVKuZXg/s4BbZmqFtYjvUUSoRAeSejv
@@ -766,49 +1131,76 @@ G21nwttQGut+F+GdpDJL6W4pmLS31Kxpt6LCAxhID+PRYiJQ4k3inJfeUx7Ws339
 t7eK644nWDn7j52HsRi+wcWsZ9mjkUgZLtyMPJNB5qlKQ18QgVdEAhuZxT3SieoB
 Pd+tZikhu3BqyIifmLnxOJOjOIhbQrgFiblvzU1iOUOTOcSIB+7A
 =g0hF
------END PGP PUBLIC KEY BLOCK-----</pre>
+-----END PGP PUBLIC KEY BLOCK-----
+</pre>
+
 <p><strong>List all public keys</strong> via</p>
-<pre>gpg --list-keys</pre>
+
+<pre>gpg --list-keys
+</pre>
+
 <p>Output:</p>
+
 <pre>$ gpg --list-keys
 /root/.gnupg/pubring.kbx
 ------------------------
 pub   rsa2048 2022-03-27 [SCEA]
       74082D81525723F5BF5B2099E1E734E00B611C26
 uid           [ultimate] Pascal Landau &lt;pascal.landau@example.com&gt;
-sub   rsa2048 2022-03-27 [SEA]</pre>
+sub   rsa2048 2022-03-27 [SEA]
+</pre>
+
 <p>The <strong>public key can be imported</strong> in the same way as private keys via</p>
+
 <pre>path="public.gpg"
-gpg --import "$path"</pre>
+gpg --import "$path"
+</pre>
+
 <p>Example:</p>
+
 <pre>$ gpg --import /var/www/app/public.gpg
 gpg: key E1E734E00B611C26: "Pascal Landau &lt;pascal.landau@example.com&gt;" not changed
 gpg: Total number processed: 1
-gpg:              unchanged: 1</pre>
-<!-- generated -->
-<p><a id='git-secret'> </a></p>
-<!-- /generated -->
+gpg:              unchanged: 1
+</pre>
+
+<p><!-- generated -->
+<a id='git-secret'> </a>
+<!-- /generated --></p>
+
 <h3>git-secret</h3>
+
 <p>The official website of <a href="https://git-secret.io/">git-secret</a> is already doing a great job of
-introducing the tool. In short, it allows us to <strong>declare certain files as &quot;secrets&quot;</strong> and <strong>encrypt
+introducing the tool. In short, it allows us to <strong>declare certain files as "secrets"</strong> and <strong>encrypt
 them via <code>gpg</code></strong> - using the keys of all trusted parties. The encrypted file can then by <strong>stored
 safely directly in the git repository</strong> and <strong>decrypted if required</strong>.</p>
+
 <p>In this tutorial I'm using <code>git-secret v0.4.0</code></p>
+
 <pre>$ git secret --version
-0.4.0</pre>
-<!-- generated -->
-<p><a id='git-secret-installation'> </a></p>
-<!-- /generated -->
+0.4.0
+</pre>
+
+<p><!-- generated -->
+<a id='git-secret-installation'> </a>
+<!-- /generated --></p>
+
 <h4>git-secret installation</h4>
+
 <p>The <a href="https://git-secret.io/installation#alpine">installation instructions for Alpine</a> read as
 follows:</p>
+
 <pre>sh -c "echo 'https://gitsecret.jfrog.io/artifactory/git-secret-apk/all/main'" &gt;&gt; /etc/apk/repositories
 wget -O /etc/apk/keys/git-secret-apk.rsa.pub 'https://gitsecret.jfrog.io/artifactory/api/security/keypair/public/repositories/git-secret-apk'
-apk add --update --no-cache git-secret</pre>
-<p>Plus, we need to account for a recent change in <code>git</code> that requires that the parent directory is
+apk add --update --no-cache git-secret
+</pre>
+
+<p>Plus, we need to account for a recent change in <code>git</code> that requires that the parent directory is 
 owned by the user executing the <code>git</code> command. See also the more detailed explanation in section
 <a href="#the-git-permission-issue">The <code>git</code> permission issue</a>.</p>
+
 <p>We update the <code>.docker/images/php/base/Dockerfile</code> accordingly:</p>
+
 <pre># File: .docker/images/php/base/Dockerfile
 
 # install git-secret
@@ -825,66 +1217,100 @@ RUN echo "https://gitsecret.jfrog.io/artifactory/git-secret-apk/all/main" &gt;&g
 #...
 
 # Fix the git permission issue
-RUN git config --system --add safe.directory "$APP_CODE_PATH"</pre>
-<!-- generated -->
-<p><a id='the-git-permission-issue'> </a></p>
-<!-- /generated -->
+RUN git config --system --add safe.directory "$APP_CODE_PATH"
+</pre>
+
+<p><!-- generated -->
+<a id='the-git-permission-issue'> </a>
+<!-- /generated --></p>
+
 <h5>The <code>git</code> permission issue</h5>
-<p>In April 2022,
+
+<p>In April 2022, 
 <a href="https://github.blog/2022-04-12-git-security-vulnerability-announced/">Github accounced the security vulnerability <code>CVE-2022-24765</code></a>,
 that was fixed in <code>git v2.35.2</code></p>
+
 <blockquote>
-<p>This version changes Git’s behavior when looking for a top-level <code>.git</code> directory to stop when
-its directory traversal changes ownership from the current user. </p>
+  <p>This version changes Git’s behavior when looking for a top-level <code>.git</code> directory to stop when 
+  its directory traversal changes ownership from the current user.</p>
 </blockquote>
-<p>In practice, the following error occurs if the parent directory is not owned by the user that
+
+<p>In practice, the following error occurs if the parent directory is not owned by the user that 
 executes the <code>git</code> command</p>
+
 <pre>Error: fatal: unsafe repository ('/parent/dir/of/.git-folder' is owned by someone else)
 To add an exception for this directory, call:
 
-    git config --global --add safe.directory /parent/dir/of/.git-folder</pre>
+    git config --global --add safe.directory /parent/dir/of/.git-folder
+</pre>
+
 <p>When using <code>git secret</code>, we would get the slightly misleading error message</p>
-<pre>git-secret: abort: not in dir with git repo. Use 'git init' or 'git clone', then in repo use 'git secret init'</pre>
-<p>We can &quot;fix&quot; the issue by using the new multi-valued
-<a href="https://git-scm.com/docs/git-config/2.36.0#Documentation/git-config.txt-safedirectory">safe.directory</a>
+
+<pre>git-secret: abort: not in dir with git repo. Use 'git init' or 'git clone', then in repo use 'git secret init'
+</pre>
+
+<p>We can "fix" the issue by using the new multi-valued 
+<a href="https://git-scm.com/docs/git-config/2.36.0#Documentation/git-config.txt-safedirectory">safe.directory</a> 
 configuration via</p>
-<pre><code>git config --system --add safe.directory /parent/dir/of/.git-folder</code></pre>
-<p>Note, that we didn't use the suggested <code>--global</code> option but <code>--system</code> instead, so that the
+
+<pre><code>git config --system --add safe.directory /parent/dir/of/.git-folder
+</code></pre>
+
+<p>Note, that we didn't use the suggested <code>--global</code> option but <code>--system</code> instead, so that the 
 configuration is set for <em>any</em> user.</p>
-<p>Wait - why not just ensure <strong>that the parent directory of the <code>.git</code> folder has the correct
+
+<p>Wait - why not just ensure <strong>that the parent directory of the <code>.git</code> folder has the correct 
 permissions</strong>?</p>
-<p>Well... there's currently (2022-05-28) a <strong>bug in Docker Desktop that makes the permissions of bind
-mounts kinda unpredictable</strong>, see
+
+<p>Well... there's currently (2022-05-28) a <strong>bug in Docker Desktop that makes the permissions of bind 
+mounts kinda unpredictable</strong>, see 
 <a href="https://github.com/docker/for-win/issues/12742">Ownership of files set via bind mount is set to user who accesses the file first</a>
 and by applying the fix directly in the <code>Dockerfile</code> we can solve the issue reliably.</p>
-<!-- generated -->
-<p><a id='git-secret-usage'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='git-secret-usage'> </a>
+<!-- /generated --></p>
+
 <h4>git-secret usage</h4>
-<!-- generated -->
-<p><a id='initialize-git-secret'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='initialize-git-secret'> </a>
+<!-- /generated --></p>
+
 <h5>Initialize git-secret</h5>
+
 <p><code>git-secret</code> is initialized via the following command <em>run in the root of the git repository</em></p>
-<pre>git secret init</pre>
+
+<pre>git secret init
+</pre>
+
 <pre>$ git secret init
-git-secret: init created: '/var/www/app/.gitsecret/'</pre>
+git-secret: init created: '/var/www/app/.gitsecret/'
+</pre>
+
 <p>We only need to do this once, because we'll commit the folder to git later. It contains the
 following files:</p>
+
 <pre>$ git status | grep ".gitsecret"
         new file:   .gitsecret/keys/pubring.kbx
         new file:   .gitsecret/keys/pubring.kbx~
         new file:   .gitsecret/keys/trustdb.gpg
-        new file:   .gitsecret/paths/mapping.cfg</pre>
+        new file:   .gitsecret/paths/mapping.cfg
+</pre>
+
 <p>The <code>pubring.kbx~</code> file (with the trailing tilde <code>~</code>) is only a temporary file and can safely be
 git-ignored. See also
 <a href="https://github.com/sobolevn/git-secret/issues/566#issuecomment-570059374">Can't find any docs about keyring.kbx~ file</a>.</p>
-<!-- generated -->
-<p><a id='the-git-secret-directory-and-the-gpg-agent-socket'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='the-git-secret-directory-and-the-gpg-agent-socket'> </a>
+<!-- /generated --></p>
+
 <h6>The <code>git-secret</code> directory and the <code>gpg-agent</code> socket</h6>
-<p>To use <code>git-secret</code> in a directory that is <strong>shared between the host system and docker</strong>, we need to
+
+<p>To use <code>git-secret</code> in a directory that is <strong>shared between the host system and docker</strong>, we need to 
 also run the following commands:</p>
+
 <pre>tee .gitsecret/keys/S.gpg-agent &lt;&lt;EOF
 %Assuan%
 socket=/tmp/S.gpg-agent
@@ -898,165 +1324,203 @@ EOF
 tee .gitsecret/keys/gpg-agent.conf &lt;&lt;EOF
 extra-socket /tmp/S.gpg-agent.extra
 browser-socket /tmp/S.gpg-agent.browser
-EOF</pre>
-<p>This is necessary because there is an issue <strong>when <code>git-secret</code> is used in a setup where the
-codebase is shared between the host system and a docker container</strong>.
+EOF
+</pre>
+
+<p>This is necessary because there is an issue <strong>when <code>git-secret</code> is used in a setup where the 
+codebase is shared between the host system and a docker container</strong>. 
 I've explained the details in the Github issue
-<a href="https://github.com/sobolevn/git-secret/issues/806">&quot;gpg: can't connect to the agent: IPC connect call failed&quot; error in docker alpine on shared volume</a>.</p>
-<p>In short:</p>
-<ul>
-<li><code>gpg</code> uses a <code>gpg-agent</code> to perform its tasks and the two tools communicate through sockets
-that are created in the <code>--home-directory</code> of the <code>gpg-agent</code></li>
-<li>the agent is started implicitly through a <code>gpg</code> command used by <code>git-secret</code>, using the
-<code>.gitsecret/keys</code> directories as a <code>--home-directory</code></li>
-<li>because the location of the <code>--home-directory</code> is shared with the host system, the socket
-creation fails (potentially only an issue for Docker Desktop, see the related discussion in
-Github issue <a href="https://github.com/docker/for-mac/issues/483#issuecomment-647325015">Support for sharing unix sockets</a>)</li>
-</ul>
+<a href="https://github.com/sobolevn/git-secret/issues/806">"gpg: can't connect to the agent: IPC connect call failed" error in docker alpine on shared volume</a>.</p>
+
+<p>In short:
+- <code>gpg</code> uses a <code>gpg-agent</code> to perform its tasks and the two tools communicate through sockets 
+  that are created in the <code>--home-directory</code> of the <code>gpg-agent</code>
+- the agent is started implicitly through a <code>gpg</code> command used by <code>git-secret</code>, using the 
+  <code>.gitsecret/keys</code> directories as a <code>--home-directory</code>
+- because the location of the <code>--home-directory</code> is shared with the host system, the socket 
+  creation fails (potentially only an issue for Docker Desktop, see the related discussion in 
+  Github issue <a href="https://github.com/docker/for-mac/issues/483#issuecomment-647325015">Support for sharing unix sockets</a>)</p>
+
 <p>The corresponding error messages are</p>
+
 <pre>gpg: can't connect to the agent: IPC connect call failed
 
-gpg-agent: error binding socket to '/var/www/app/.gitsecret/keys/S.gpg-agent': I/O error</pre>
-<p>The <strong>workaround for this problem</strong> can be found in
-<a href="https://askubuntu.com/a/1053594/1583296">this thread</a>: Configure <code>gpg</code> to use different
-locations for the sockets by
+gpg-agent: error binding socket to '/var/www/app/.gitsecret/keys/S.gpg-agent': I/O error
+</pre>
+
+<p>The <strong>workaround for this problem</strong> can be found in 
+<a href="https://askubuntu.com/a/1053594/1583296">this thread</a>: Configure <code>gpg</code> to use different 
+locations for the sockets by 
 <a href="https://github.com/sobolevn/git-secret/issues/806#issuecomment-1084202671">placing additional <code>gpg</code> configuration files in the <code>.gitsecret/keys</code> directory</a>:</p>
+
 <p><strong>S.gpg-agent</strong></p>
+
 <pre>%Assuan%
-socket=/tmp/S.gpg-agent</pre>
+socket=/tmp/S.gpg-agent
+</pre>
+
 <p><strong>S.gpg-agent.ssh</strong></p>
+
 <pre>%Assuan%
-socket=/tmp/S.gpg-agent.ssh</pre>
+socket=/tmp/S.gpg-agent.ssh
+</pre>
+
 <p><strong>gpg-agent.conf</strong></p>
+
 <pre>extra-socket /tmp/S.gpg-agent.extra
-browser-socket /tmp/S.gpg-agent.browser</pre>
-<!-- generated -->
-<p><a id='adding-listing-and-removing-users'> </a></p>
-<!-- /generated -->
+browser-socket /tmp/S.gpg-agent.browser
+</pre>
+
+<p><!-- generated -->
+<a id='adding-listing-and-removing-users'> </a>
+<!-- /generated --></p>
+
 <h5>Adding, listing and removing users</h5>
+
 <p>To <strong>add a new user</strong>, you must first <a href="#export-list-and-import-public-gpg-keys">import its public gpg key</a>. Then
 run:</p>
+
 <pre>email="pascal.landau@example.com"
-git secret tell "$email"</pre>
+git secret tell "$email"
+</pre>
+
 <p>In this case, the user <code>pascal.landau@example.com</code> will now be able to decrypt the secrets.</p>
+
 <p>To <strong>show the users</strong> run</p>
-<pre>git secret whoknows</pre>
+
+<pre>git secret whoknows
+</pre>
+
 <pre>$ git secret whoknows
-pascal.landau@example.com</pre>
+pascal.landau@example.com
+</pre>
+
 <p><strong>To remove a user</strong>, run</p>
+
 <pre>email="pascal.landau@example.com"
-git secret killperson "$email"</pre>
+git secret killperson "$email"
+</pre>
+
 <p>FYI: This command was renamed to <code>removeperson</code> in <code>git-secret &gt;= 0.5.0</code></p>
+
 <pre>$ git secret killperson pascal.landau@example.com
 git-secret: removed keys.
 git-secret: now [pascal.landau@example.com] do not have an access to the repository.
-git-secret: make sure to hide the existing secrets again.</pre>
+git-secret: make sure to hide the existing secrets again.
+</pre>
+
 <p>User <code>pascal.landau@example.com</code> will no longer be able to decrypt the secrets.</p>
+
 <p><strong>Caution: The secrets need to be re-encrypted after removing a user!</strong></p>
-<!-- generated -->
-<p><a id='reminder-rotate-the-encrypted-secrets'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='reminder-rotate-the-encrypted-secrets'> </a>
+<!-- /generated --></p>
+
 <h6>Reminder: Rotate the encrypted secrets</h6>
-<p>Please be aware that <strong>not only your secrets are stored in git, but who had access as well</strong>. I.e.
-even if you remove a user and re-encrypt the secrets, that user would <strong>still be able to decrypt
-the secrets of a previous commit</strong> (when the user was still added). In consequence, <strong>you need
+
+<p>Please be aware that <strong>not only your secrets are stored in git, but who had access as well</strong>. I.e. 
+even if you remove a user and re-encrypt the secrets, that user would <strong>still be able to decrypt 
+the secrets of a previous commit</strong> (when the user was still added). In consequence, <strong>you need 
 to rotate the encrypted secrets themselves as well after removing a user</strong>.</p>
-<p>But isn't that a great flaw in the system, making it a bad idea to use <code>git-secret</code> in general? </p>
-<p>In my opinion: No. </p>
-<p>If the removed user had access to the secrets at <strong>any</strong> point in time (no
-matter where they have been stored), he could very well have just created a local copy or simply
-&quot;written them down&quot;. In terms of security there is really no &quot;added downside&quot; due to <code>git-secret</code>.
-It just makes it <em>very</em> clear that you <em>must</em> rotate the secrets ¯\_(ツ)_/¯</p>
-<p>See also this
+
+<p>But isn't that a great flaw in the system, making it a bad idea to use <code>git-secret</code> in general?</p>
+
+<p>In my opinion: No.</p>
+
+<p>If the removed user had access to the secrets at <strong>any</strong> point in time (no 
+matter where they have been stored), he could very well have just created a local copy or simply 
+"written them down". In terms of security there is really no "added downside" due to <code>git-secret</code>.
+It just makes it <em>very</em> clear that you <em>must</em> rotate the secrets ¯&#92;&#95;(ツ)&#95;/¯</p>
+
+<p>See also this 
 <a href="https://news.ycombinator.com/item?id=11663403">lengthy discussion on <code>git-secret</code> on Hacker News</a>.</p>
-<!-- generated -->
-<p><a id='adding-listing-and-removing-files-for-encryption'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='adding-listing-and-removing-files-for-encryption'> </a>
+<!-- /generated --></p>
+
 <h5>Adding, listing and removing files for encryption</h5>
+
 <p>Run <code>git secret add [filenames...]</code> for <strong>files you want to encrypt</strong>. Example:</p>
-<pre>git secret add .env</pre>
-<p>If <code>.env</code> is not added in <code>.gitignore</code>, <code>git-secret</code> will display a warning and add it
+
+<pre>git secret add .env
+</pre>
+
+<p>If <code>.env</code> is not added in <code>.gitignore</code>, <code>git-secret</code> will display a warning and add it 
 automatically.</p>
+
 <pre>git-secret: these files are not in .gitignore: .env
 git-secret: auto adding them to .env
-git-secret: 1 item(s) added.</pre>
+git-secret: 1 item(s) added.
+</pre>
+
 <p>Otherwise, the file is added with no warning.</p>
+
 <pre>$ git secret add .env
-git-secret: 1 item(s) added.</pre>
+git-secret: 1 item(s) added.
+</pre>
+
 <p>You only need to add files once. They are then stored in <code>.gitsecret/paths/mapping.cfg</code>:</p>
+
 <pre>$ cat .gitsecret/paths/mapping.cfg
-.env:505070fc20233cb426eac6a3414399d0f466710c993198b1088e897fdfbbb2d5</pre>
+.env:505070fc20233cb426eac6a3414399d0f466710c993198b1088e897fdfbbb2d5
+</pre>
+
 <p>You can also show the added files via</p>
-<pre>git secret list</pre>
+
+<pre>git secret list
+</pre>
+
 <pre>$ git secret list
-.env</pre>
+.env
+</pre>
+
 <p><strong>Caution: The files are not yet encrypted!</strong></p>
+
 <p>If you want to <strong>remove a file from being encrypted</strong>, run</p>
-<pre>git secret remove .env</pre>
+
+<pre>git secret remove .env
+</pre>
+
 <p>Output</p>
+
 <pre>$ git secret remove .env
 git-secret: removed from index.
-git-secret: ensure that files: [.env] are now not ignored.</pre>
-<!-- generated -->
-<p><a id='encrypt-files'> </a></p>
-<!-- /generated -->
+git-secret: ensure that files: [.env] are now not ignored.
+</pre>
+
+<p><!-- generated -->
+<a id='encrypt-files'> </a>
+<!-- /generated --></p>
+
 <h5>Encrypt files</h5>
+
 <p>To actually <strong>encrypt the files</strong>, run:</p>
-<pre>git secret hide</pre>
+
+<pre>git secret hide
+</pre>
+
 <p>Output:</p>
+
 <pre>$ git secret hide
-git-secret: done. 1 of 1 files are hidden.</pre>
+git-secret: done. 1 of 1 files are hidden.
+</pre>
+
 <p>The encrypted (binary) file is stored at <code>$filename.secret</code>, i.e. <code>.env.secret</code> in this case:</p>
+
 <pre>$ cat .env.secret
 �☺♀♥�H~�B�Ӯ☺�"��▼♂F�►���l�Cs��S�@MHWs��e������{♣♫↕↓�L� ↕s�1�J$◄♥�;���ǆ֕�Za�����\u�ٲ&amp; ¶��V�► ���6��
-;&lt;�d:��}ҨD%.�;��&amp;��G����vWW�]&gt;���߶��▲;D�+Rs�S→�Y!&amp;J��۪8���ٔF��→f����*��$♠���&amp;RC�8▼♂�☻z h��Z0M�T&gt;</pre>
-<p>The encrypted files are de-cryptable <strong>for all users that have been added via <code>git secret tell</code></strong>.
+;&lt;�d:��}ҨD%.�;��&amp;��G����vWW�]&gt;���߶��▲;D�+Rs�S→�Y!&amp;J��۪8���ٔF��→f����*��$♠���&amp;RC�8▼♂�☻z h��Z0M�T&gt;
+</pre>
+
+<p>The encrypted files are de-cryptable <strong>for all users that have been added via <code>git secret tell</code></strong>. 
 That also means that you need to <strong>run this command again whenever a new user is added</strong>.</p>
-<!-- generated -->
-<p><a id='decrypting-files'> </a></p>
-<!-- /generated -->
-<h5>Decrypting files</h5>
-<p>You can <strong>decrypt files</strong> via</p>
-<pre>git secret reveal</pre>
-<p>Output:</p>
-<pre>$ git secret reveal
-File '/var/www/app/.env' exists. Overwrite? (y/N) y
-git-secret: done. 1 of 1 files are revealed.</pre>
-<ul>
-<li>the files are decrypted and will overwrite the current, unencrypted files (if they already exist)
-<ul>
-<li>use the <code>-f</code> option to force the overwrite and run non-interactively</li>
-</ul></li>
-<li>if you only want to check the content of an encrypted file, you can use
-<code>git secret cat $filename</code> (e.g. <code>git secret cat .env</code>)</li>
-</ul>
-<p>In case the secret <code>gpg</code> key is password protected, you must pass the password
-<a href="https://git-secret.io/git-secret-reveal">via the <code>-p</code> option</a>. E.g. for password <code>123456</code></p>
-<pre>git secret reveal -p 123456</pre>
-<!-- generated -->
-<p><a id='show-changes-between-encrypted-and-decrypted-files'> </a></p>
-<!-- /generated -->
-<h5>Show changes between encrypted and decrypted files</h5>
-<p>One problem that comes with encrypted files: <strong>You can't review them during a code review in a
-remote tool</strong>. So in order to understand what changes have been made, it is helpful to
-<strong>show the changes between the encrypted and the decrypted files</strong>. This can be done via</p>
-<pre>git secret changes</pre>
-<p>Output:</p>
-<pre>$ echo "foo" &gt;&gt; .env
-$ git secret changes
-git-secret: changes in /var/www/app/.env:
---- /dev/fd/63
-+++ /var/www/app/.env
-@@ -34,3 +34,4 @@
- MAIL_ENCRYPTION=null
- MAIL_FROM_ADDRESS=null
- MAIL_FROM_NAME="${APP_NAME}"
-+foo</pre>
-<p>Note the <code>+foo</code> at the bottom of the output. It was added in the first line via
-<code>echo "foo"&gt; &gt;&gt; .env</code>.</p>
-<!-- generated -->
-<p><a id='makefile-adjustments'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='decrypting-files'> </a>
+<!-- /generated --></p>
+
 <hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/'>Use git-secret to encrypt secrets in the repository [Tutorial Part 6]</a></b></p>
 ]]></description>
                 <pubDate>Mon, 25 Apr 2022 06:00:00 +0000</pubDate>
@@ -1070,58 +1534,109 @@ git-secret: changes in /var/www/app/.env:
 
 <p>In the fifth part of this tutorial series on developing PHP on Docker we will <strong>setup some PHP code
 quality tools</strong> and provide a convenient way to control them via GNU make.</p>
+
 <p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/run-qa-tools.gif"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/run-qa-tools.gif" alt="Run QA tools" /></a></p>
+
 <p><small>
 FYI: Originally I wanted
-this tutorial to be a part of
+this tutorial to be a part of 
 <a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>
-because QA checks are imho vital part of a CI setup - but it kinda grew &quot;too big&quot; and took a way
+because QA checks are imho vital part of a CI setup - but it kinda grew "too big" and took a way 
 too much space from, well, actually setting up the CI pipelines :)
 </small></p>
+
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/ocM4ktjqwIg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch with the final result of this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-5-php-qa-tools-make-docker">part-5-php-qa-tools-make-docker</a>.</p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>
 and the following one is
 <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/">Use git-secret to encrypt secrets in the repository</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
 to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-<!-- generated -->
 
-<!-- generated -->
-<p><a id='introduction'> </a></p>
-<!-- /generated -->
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+
+<ul>
+<li><a href="#the-qa-tools">The QA tools</a>
+
+<ul>
+<li><a href="#phpcs-and-phpcbf">phpcs and phpcbf</a></li>
+<li><a href="#phpstan">phpstan</a></li>
+<li><a href="#php-parallel-lint">php-parallel-lint</a></li>
+<li><a href="#composer-require-checker">composer-require-checker</a></li>
+<li><a href="#additional-tools-out-of-scope">Additional tools (out of scope)</a></li>
+</ul></li>
+<li><a href="#qa-make-targets">QA make targets</a>
+
+<ul>
+<li><a href="#the-qa-target">The <code>qa</code> target</a></li>
+<li><a href="#the-execute-function">The <code>execute</code> "function"</a></li>
+<li><a href="#parallel-execution-and-a-helper-target">Parallel execution and a helper target</a></li>
+<li><a href="#sprinkle-some-color-on-top">Sprinkle some color on top</a></li>
+</ul></li>
+<li><a href="#further-updates-in-the-codebase">Further updates in the codebase</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
 <h2>Introduction</h2>
+
 <p>Code quality tools ensure a <strong>baseline of code quality</strong> by automatically checking certain rules,
 e.g. <strong>code style definitions</strong>, proper <strong>usage of types</strong>, proper <strong>declaration of dependencies</strong>,
 etc. When run regularly they are a great way to enforce better code and are thus a
 <strong>perfect fit for a CI pipeline</strong>. For this tutorial, I'm going to setup the following tools:</p>
+
 <ul>
 <li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a>
+
 <ul>
 <li><a href="#phpstan">Static Analyzer: phpstan</a></li>
 <li><a href="#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
 <li><a href="#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
 </ul></li>
 </ul>
+
 <p>and provide convenient access through a <a href="#the-qa-target"><code>qa</code> make target</a>. The end result will look
 like this:</p>
+
 <p><a href="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG"><img src="https://www.pascallandau.com/img/php-qa-tools-make-docker/qa-tool-output.PNG" alt="QA tool output" /></a></p>
-<p>FYI: When we started out with using code quality tools in general, we have used
-<a href="https://github.com/phpro/grumphp">GrumPHP</a> - and I would still recommend it. We have only
+
+<p>FYI: When we started out with using code quality tools in general, we have used 
+<a href="https://github.com/phpro/grumphp">GrumPHP</a> - and I would still recommend it. We have only 
 transitioned away from it because <code>make</code> gives us a little more flexibility and control.</p>
-<p>You can find the &quot;final&quot; makefile
+
+<p>You can find the "final" makefile
 at <a href="https://github.com/paslandau/docker-php-tutorial/blob/part-5-php-qa-tools-make-docker/.make/01-02-application-qa.mk"><code>.make/01-02-application-qa.mk</code></a>.</p>
+
 <p><strong>CAUTION</strong>: The <code>Makefile</code> is build on top of the setup that I introduced in
-<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>,
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>, 
 so please refer to that tutorial if anything is not clear.</p>
+
 <pre>##@ [Application: QA]
 
 # variables
@@ -1227,29 +1742,46 @@ qa: ## Run code quality tools on all files
 qa-exec: phpstan \
     phplint \
     composer-require-checker \
-    phpcs</pre>
-<!-- generated -->
-<p><a id='the-qa-tools'> </a></p>
-<!-- /generated -->
+    phpcs
+</pre>
+
+<p><!-- generated -->
+<a id='the-qa-tools'> </a>
+<!-- /generated --></p>
+
 <h2>The QA tools</h2>
-<!-- generated -->
-<p><a id='phpcs-and-phpcbf'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='phpcs-and-phpcbf'> </a>
+<!-- /generated --></p>
+
 <h3>phpcs and phpcbf</h3>
+
 <p><code>phpcs</code> is the CLI tool of the style checker
 <a href="https://github.com/squizlabs/PHP_CodeSniffer">squizlabs/PHP_CodeSniffer</a>. It also comes with
 <code>phpcbf</code> - a tool to automatically fix style errors.</p>
+
 <p>Installation via composer:</p>
-<pre>make composer ARGS="require --dev squizlabs/php_codesniffer"</pre>
+
+<pre>make composer ARGS="require --dev squizlabs/php_codesniffer"
+</pre>
+
 <p>For now we will simply use the pre-configured ruleset for
 <a href="https://www.php-fig.org/psr/psr-12/">PSR-12: Extended Coding Style</a>. When run in the <code>application</code>
 container for the first time on the <code>app</code> directory via</p>
-<pre>vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app</pre>
+
+<pre>vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app
+</pre>
+
 <p>i.e.</p>
+
 <pre>--standard=PSR12 =&gt; use the PSR12 ruleset
 --parallel=4     =&gt; run with 4 parallel processes
--p               =&gt; show the progress</pre>
+-p               =&gt; show the progress
+</pre>
+
 <p>we get the following result:</p>
+
 <pre>root:/var/www/app# vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app
 
 FILE: /var/www/app/app/Console/Kernel.php
@@ -1261,6 +1793,7 @@ FOUND 2 ERRORS AFFECTING 1 LINE
 ----------------------------------------------------------------------
 PHPCBF CAN FIX THE 2 MARKED SNIFF VIOLATIONS AUTOMATICALLY
 ----------------------------------------------------------------------
+
 
 FILE: /var/www/app/app/Http/Controllers/HomeController.php
 ----------------------------------------------------------------------
@@ -1274,6 +1807,7 @@ FOUND 4 ERRORS AFFECTING 2 LINES
 PHPCBF CAN FIX THE 4 MARKED SNIFF VIOLATIONS AUTOMATICALLY
 ----------------------------------------------------------------------
 
+
 FILE: /var/www/app/app/Jobs/InsertInDbJob.php
 -------------------------------------------------------------------------------
 FOUND 1 ERROR AFFECTING 1 LINE
@@ -1283,6 +1817,7 @@ FOUND 1 ERROR AFFECTING 1 LINE
 PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
 -------------------------------------------------------------------------------
 
+
 FILE: /var/www/app/app/Models/User.php
 -------------------------------------------------------------------------------
 FOUND 1 ERROR AFFECTING 1 LINE
@@ -1290,8 +1825,11 @@ FOUND 1 ERROR AFFECTING 1 LINE
  13 | ERROR | [x] Each imported trait must have its own "use" import statement
 -------------------------------------------------------------------------------
 PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
--------------------------------------------------------------------------------</pre>
+-------------------------------------------------------------------------------
+</pre>
+
 <p>All errors can be fixed automatically with <code>phpcbf</code>:</p>
+
 <pre>root:/var/www/app# vendor/bin/phpcbf --standard=PSR12 --parallel=4 -p app
 
 PHPCBF RESULT SUMMARY
@@ -1306,29 +1844,44 @@ FILE                                                     FIXED  REMAINING
 A TOTAL OF 8 ERRORS WERE FIXED IN 4 FILES
 -------------------------------------------------------------------------
 
-Time: 411ms; Memory: 8MB</pre>
+Time: 411ms; Memory: 8MB
+</pre>
+
 <p>and a follow-up run of <code>phpcs</code> doesn't show any more errors:</p>
+
 <pre>root:/var/www/app# vendor/bin/phpcs --standard=PSR12 --parallel=4 -p app
 .................... 20 / 20 (100%)
 
-Time: 289ms; Memory: 8MB</pre>
-<!-- generated -->
-<p><a id='phpstan'> </a></p>
-<!-- /generated -->
+
+Time: 289ms; Memory: 8MB
+</pre>
+
+<p><!-- generated -->
+<a id='phpstan'> </a>
+<!-- /generated --></p>
+
 <h3>phpstan</h3>
+
 <p><code>phpstan</code> is the CLI tool of the static code analyzer
 <a href="https://github.com/phpstan/phpstan">phpstan/phpstan</a> (see also the
 <a href="https://phpstan.org/user-guide/getting-started">full PHPStan documentation</a>). It provides some
-default &quot;levels&quot; of increasing strictness to report potential bugs based on the AST of the analyzed
+default "levels" of increasing strictness to report potential bugs based on the AST of the analyzed
 PHP code.</p>
+
 <p>Installation via composer:</p>
-<pre>make composer ARGS="require --dev phpstan/phpstan"</pre>
-<p>Since this is a &quot;fresh&quot; codebase with very little code let's go for the
+
+<pre>make composer ARGS="require --dev phpstan/phpstan"
+</pre>
+
+<p>Since this is a "fresh" codebase with very little code let's go for the
 <a href="https://phpstan.org/user-guide/rule-levels">highest level 9</a> (as of 2022-04-24) and run it in the
 <code>application</code> container on the <code>app</code> and <code>tests</code> directories via:</p>
+
 <pre>vendor/bin/phpstan analyse app tests --level=9
 
---level=9        =&gt; use level 9</pre>
+--level=9        =&gt; use level 9
+</pre>
+
 <pre>root:/var/www/app# vendor/bin/phpstan analyse app tests --level=9
  25/25 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
 
@@ -1391,47 +1944,79 @@ PHP code.</p>
   71     Parameter #1 $config of method Illuminate\Database\Connectors\MySqlConnector::connect() expects array, mixed given.
  ------ ---------------------------------------------------------------------------------------------------------------------
 
- [ERROR] Found 16 errors</pre>
+
+ [ERROR] Found 16 errors
+</pre>
+
 <p>After fixing (or ignoring :P) all errors, we now get</p>
+
 <pre>root:/var/www/app# vendor/bin/phpstan analyse app tests --level=9
 25/25 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
 
-[OK] No errors</pre>
-<!-- generated -->
-<p><a id='php-parallel-lint'> </a></p>
-<!-- /generated -->
+[OK] No errors
+</pre>
+
+<p><!-- generated -->
+<a id='php-parallel-lint'> </a>
+<!-- /generated --></p>
+
 <h3>php-parallel-lint</h3>
+
 <p><code>php-parallel-lint</code> is the CLI tool of the PHP code linter
 <a href="https://github.com/php-parallel-lint/PHP-Parallel-Lint">php-parallel-lint/PHP-Parallel-Lint</a>. It
 ensures that all PHP files are syntactically correct.</p>
+
 <p>Installation via composer:</p>
-<pre>make composer ARGS="require --dev php-parallel-lint/php-parallel-lint"</pre>
-<p>&quot;Parallel&quot; is already in the name, so we run it on the full codebase <code>./</code> with 4 parallel processes
+
+<pre>make composer ARGS="require --dev php-parallel-lint/php-parallel-lint"
+</pre>
+
+<p>"Parallel" is already in the name, so we run it on the full codebase <code>./</code> with 4 parallel processes 
 and exclude the <code>.git</code> and <code>vendor</code> directories to speed up the execution via</p>
-<pre>vendor/bin/parallel-lint -j 4 --exclude .git --exclude vendor ./</pre>
+
+<pre>vendor/bin/parallel-lint -j 4 --exclude .git --exclude vendor ./
+</pre>
+
 <p>i.e.</p>
+
 <pre>-j 4                              =&gt; use 4 parallel processes
---exclude .git --exclude vendor   =&gt; ignore the .git/ and vendor/ directories</pre>
-<p>we get </p>
+--exclude .git --exclude vendor   =&gt; ignore the .git/ and vendor/ directories
+</pre>
+
+<p>we get</p>
+
 <pre>root:/var/www/app# vendor/bin/parallel-lint -j 4 --exclude .git --exclude vendor ./
 PHP 8.1.1 | 4 parallel jobs
 ............................................................ 60/61 (98 %)
 .                                                            61/61 (100 %)
 
+
 Checked 61 files in 0.2 seconds
-No syntax error found</pre>
+No syntax error found
+</pre>
+
 <p>No further TODOs here.</p>
-<!-- generated -->
-<p><a id='composer-require-checker'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='composer-require-checker'> </a>
+<!-- /generated --></p>
+
 <h3>composer-require-checker</h3>
+
 <p><code>composer-require-checker</code> is the CLI tool of the dependency checker
 <a href="https://github.com/maglnet/ComposerRequireChecker">maglnet/ComposerRequireChecker</a>. The tool
 ensures that the <code>composer.json</code> file contains all dependencies that are used in the codebase.</p>
+
 <p>Installation via composer:</p>
-<pre>make composer ARGS="require --dev maglnet/composer-require-checker"</pre>
+
+<pre>make composer ARGS="require --dev maglnet/composer-require-checker"
+</pre>
+
 <p>Run it via</p>
-<pre>vendor/bin/composer-require-checker check</pre>
+
+<pre>vendor/bin/composer-require-checker check
+</pre>
+
 <pre>root:/var/www/app# vendor/bin/composer-require-checker check
 ComposerRequireChecker 4.0.0@baa11a4e9e5072117e3d180ef16c07036cafa4a2
 The following 1 unknown symbols were found:
@@ -1439,78 +2024,110 @@ The following 1 unknown symbols were found:
 | Unknown Symbol                              | Guessed Dependency |
 +---------------------------------------------+--------------------+
 | Symfony\Component\Console\Input\InputOption |                    |
-+---------------------------------------------+--------------------+</pre>
++---------------------------------------------+--------------------+
+</pre>
+
 <p>What's going on here?</p>
+
 <p>We use <code>Symfony\Component\Console\Input\InputOption</code> in our <code>\App\Commands\SetupDbCommand</code> and the
-code doesn't &quot;fail&quot; because <code>InputOption</code> is defined in the<code>symfony/console</code> package that is a
+code doesn't "fail" because <code>InputOption</code> is defined in the<code>symfony/console</code> package that is a
 <strong>transitive dependency</strong> of <code>laravel/framework</code>, see the
 <a href="https://github.com/laravel/framework/blob/5b113dad7d2c88e15b65d987ca63f03b2be43e6a/composer.json#L34"><code>laravel/framework composer.json</code></a>
-file. </p>
+file.</p>
+
 <p>I.e. the <code>symfony/console</code> package <strong>does actually exist</strong> in our <code>vendor</code> directory - but
 since we also use it <em>as a first-party-dependency directly in our code</em>, we must declare the
 dependency explicitly. Otherwise, Laravel might at some point decide to drop <code>symfony/console</code>
 and we would be left with broken code.</p>
+
 <p>To fix this, I run</p>
-<pre>make composer ARGS="require symfony/console"</pre>
+
+<pre>make composer ARGS="require symfony/console"
+</pre>
+
 <p>which will update the <code>composer.json</code> file and add the dependency. Running
 <code>composer-require-checker</code> again will now yield no further errors.</p>
+
 <pre>root:/var/www/app# vendor/bin/composer-require-checker check
 ComposerRequireChecker 4.0.0@baa11a4e9e5072117e3d180ef16c07036cafa4a2
-There were no unknown symbols found.</pre>
-<!-- generated -->
-<p><a id='additional-tools-out-of-scope'> </a></p>
-<!-- /generated -->
+There were no unknown symbols found.
+</pre>
+
+<p><!-- generated -->
+<a id='additional-tools-out-of-scope'> </a>
+<!-- /generated --></p>
+
 <h3>Additional tools (out of scope)</h3>
-<p>In general, I'm a huge fan of code quality tools and we use them quite extensively. At some
-point I'll probably dedicate a whole article to go over them in detail - but for now I'm just
+
+<p>In general, I'm a huge fan of code quality tools and we use them quite extensively. At some 
+point I'll probably dedicate a whole article to go over them in detail - but for now I'm just 
 gonna leave a list for inspiration:</p>
+
 <ul>
 <li><a href="https://packagist.org/packages/brianium/paratest">brianium/paratest</a>
+
 <ul>
 <li>Running PhpUnit tests in parallel</li>
 <li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a></li>
 <li>Update the versions in the <code>composer.json</code> file after an update</li>
 <li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a></li>
-<li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>:
+<li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>: 
 A tool to define dependency layers based on e.g. namespaces</li>
 <li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a></li>
 <li>Show dependencies in the <code>composer.json</code> that are not used in the codebase</li>
 <li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a></li>
-<li>Gives a warning when packages with known vulnerabilities are used </li>
+<li>Gives a warning when packages with known vulnerabilities are used</li>
 <li>Alternative: <a href="https://github.com/fabpot/local-php-security-checker/">local-php-security-checker</a></li>
 </ul></li>
 </ul>
-<!-- generated -->
-<p><a id='qa-make-targets'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='qa-make-targets'> </a>
+<!-- /generated --></p>
+
 <h2>QA make targets</h2>
+
 <p>You might have noticed that <strong>all tools have their own configuration options</strong>. Instead of
 remembering each of them, I'll define corresponding make targets in <code>.make/01-02-application-qa.mk</code>.
-The easiest way to do so would be to &quot;hard-code&quot; the exact commands that I ran previously, e.g.</p>
+The easiest way to do so would be to "hard-code" the exact commands that I ran previously, e.g.</p>
+
 <pre>.PHONY: phpstan
 phpstan:  ## Run static analyzer on all application and test files 
-    @$(EXECUTE_IN_APPLICATION_CONTAINER) vendor/bin/phpstan analyse app tests --level=9</pre>
+    @$(EXECUTE_IN_APPLICATION_CONTAINER) vendor/bin/phpstan analyse app tests --level=9
+</pre>
+
 <p>(Please refer to the
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#run-commands-in-the-docker-containers">Run commands in the docker containers</a>
-section in the previous tutorial for an explanation of the <code>EXECUTE_IN_APPLICATION_CONTAINER</code>
+section in the previous tutorial for an explanation of the <code>EXECUTE_IN_APPLICATION_CONTAINER</code> 
 variable).</p>
+
 <p>However, this implementation is quite inflexible: What if we want to check a single file or try out
 other options? So let's create some variables instead:</p>
+
 <pre>PHPSTAN_CMD=php vendor/bin/phpstan analyse
 PHPSTAN_ARGS=--level=9
 PHPSTAN_FILES=$(APP_FILES) $(TEST_FILES)
 
 .PHONY: phpstan
 phpstan: ## Run static analyzer on all application and test files 
-    @$(EXECUTE_IN_APPLICATION_CONTAINER) $(PHPSTAN_CMD) $(PHPSTAN_ARGS) $(PHPSTAN_FILES) </pre>
-<p>This target allows me to override the defaults and e.g. check only the file
+    @$(EXECUTE_IN_APPLICATION_CONTAINER) $(PHPSTAN_CMD) $(PHPSTAN_ARGS) $(PHPSTAN_FILES) 
+</pre>
+
+<p>This target allows me to override the defaults and e.g. check only the file 
 <code>app/Commands/SetupDbCommand.php</code> with <code>--level=1</code></p>
-<pre>make phpstan PHPSTAN_FILES=app/Commands/SetupDbCommand.php PHPSTAN_ARGS="--level=1" </pre>
+
+<pre>make phpstan PHPSTAN_FILES=app/Commands/SetupDbCommand.php PHPSTAN_ARGS="--level=1" 
+</pre>
+
 <pre>$ make phpstan PHPSTAN_FILES=app/Commands/SetupDbCommand.php PHPSTAN_ARGS="--level=1" 
  1/1 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
 
- [OK] No errors</pre>
+
+ [OK] No errors
+</pre>
+
 <p>The remaining tool variables can be configured in the exact same way:</p>
+
 <pre># constants
  ## files
 ALL_FILES=./
@@ -1534,22 +2151,32 @@ PARALLEL_LINT_CMD=php vendor/bin/parallel-lint
 PARALLEL_LINT_ARGS=-j 4 --exclude vendor/ --exclude .docker --exclude .git
 PARALLEL_LINT_FILES=$(ALL_FILES)
 COMPOSER_REQUIRE_CHECKER_CMD=php vendor/bin/composer-require-checker
-COMPOSER_REQUIRE_CHECKER_ARGS=--ignore-parse-errors</pre>
-<!-- generated -->
-<p><a id='the-qa-target'> </a></p>
-<!-- /generated -->
+COMPOSER_REQUIRE_CHECKER_ARGS=--ignore-parse-errors
+</pre>
+
+<p><!-- generated -->
+<a id='the-qa-target'> </a>
+<!-- /generated --></p>
+
 <h3>The <code>qa</code> target</h3>
+
 <p>From a workflow perspective I usually want to <strong>run all configured qa tools</strong> instead of each one
 individually (being able to run individually is still great if a tool fails, though).</p>
+
 <p>A trivial approach would be a new target that <strong>uses all individual tool targets as preconditions</strong>:</p>
+
 <pre>.PHONY: qa
 qa: phpstan \
     phplint \
     composer-require-checker \
-    phpcs</pre>
+    phpcs
+</pre>
+
 <p>But we can do better, because this target produces quite a noisy output:</p>
+
 <pre>$ make qa
  25/25 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
 
  [OK] No errors
 
@@ -1557,22 +2184,30 @@ PHP 8.1.1 | 4 parallel jobs
 ............................................................ 60/61 (98 %)
 .                                                            61/61 (100 %)
 
+
 Checked 61 files in 0.3 seconds
 No syntax error found
 ComposerRequireChecker 4.0.0@baa11a4e9e5072117e3d180ef16c07036cafa4a2
 There were no unknown symbols found.
 .................... 20 / 20 (100%)
 
-Time: 576ms; Memory: 8MB</pre>
+
+Time: 576ms; Memory: 8MB
+</pre>
+
 <p>I'd rather have something like this:</p>
+
 <pre>$ make qa
 phplint                             done   took 1s
 phpcs                               done   took 1s
 phpstan                             done   took 3s
-composer-require-checker            done   took 6s</pre>
-<!-- generated -->
-<p><a id='the-execute-function'> </a></p>
-<!-- /generated -->
+composer-require-checker            done   took 6s
+</pre>
+
+<p><!-- generated -->
+<a id='the-execute-function'> </a>
+<!-- /generated --></p>
+
 <hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/php-qa-tools-make-docker/'>Set up PHP QA tools and control them via make [Tutorial Part 5]</a></b></p>
 ]]></description>
                 <pubDate>Mon, 25 Apr 2022 05:00:00 +0000</pubDate>
@@ -1580,122 +2215,204 @@ composer-require-checker            done   took 6s</pre>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php-qa-tools-make-docker/</guid>
             </item>
                     <item>
-                <title>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</title>
-                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</a></p>
+                <title>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</title>
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</a></p>
 <hr />
 
 <p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
 install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
 for the front end requests.</p>
+
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/BpsBzpMD87c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <p><strong>All code samples are publicly available</strong> in my
 <a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
 You find the branch for this tutorial at
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a>.</p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
 and the following one is
 <a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
 to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-<!-- generated -->
 
-<!-- generated -->
-<p><a id='introduction'> </a></p>
-<!-- /generated -->
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#install-extensions">Install extensions</a></li>
+<li><a href="#install-laravel">Install Laravel</a></li>
+<li><a href="#update-the-php-poc">Update the PHP POC</a>
+
+<ul>
+<li><a href="#config">config</a>
+
+<ul>
+<li><a href="#database-connection">database connection</a></li>
+<li><a href="#queue-connection">queue connection</a></li>
+</ul></li>
+<li><a href="#controllers">Controllers</a></li>
+<li><a href="#commands">Commands</a></li>
+<li><a href="#jobs-and-workers">Jobs and workers</a></li>
+<li><a href="#tests">Tests</a></li>
+</ul></li>
+<li><a href="#makefile-updates">Makefile updates</a>
+
+<ul>
+<li><a href="#clearing-the-queue">Clearing the queue</a></li>
+</ul></li>
+<li><a href="#running-the-poc">Running the POC</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
 <h2>Introduction</h2>
-<p>The goal of this tutorial is to run the
+
+<p>The goal of this tutorial is to run the 
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#php-poc">PHP POC from part 4.1</a>
-using Laravel as a framework instead of &quot;plain PHP&quot;.
+using Laravel as a framework instead of "plain PHP". 
 We'll use the newest version of Laravel (Laravel 9) that was
 <a href="https://laravel-news.com/laravel-9-released">released at the beginning of February 2022</a>.</p>
-<!-- generated -->
-<p><a id='install-extensions'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='install-extensions'> </a>
+<!-- /generated --></p>
+
 <h2>Install extensions</h2>
+
 <p>Before Laravel can be installed, we need to add the necessary extensions of the framework (and all
 its dependencies) to the <code>php-base</code> image:</p>
+
 <pre><code># File: .docker/images/php/base/Dockerfile
 
 # ...
 
 RUN apk add --update --no-cache  \
         php-curl~=${TARGET_PHP_VERSION} \
+
 </code></pre>
-<!-- generated -->
-<p><a id='install-laravel'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='install-laravel'> </a>
+<!-- /generated --></p>
+
 <h2>Install Laravel</h2>
+
 <p>We'll start by
 <a href="https://laravel.com/docs/9.x/installation#installation-via-composer">creating a new Laravel project with composer</a></p>
-<pre><code>composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts</code></pre>
+
+<pre><code>composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts
+</code></pre>
+
 <p>The files are added to <code>/tmp/laravel</code> because
 <a href="https://github.com/composer/composer/issues/1135#issuecomment-10358244">composer projects cannot be created in non-empty folders</a>
 , so we need to create the project in a temporary location first and move it afterwards.</p>
+
 <p>Since I don't have PHP 8 installed on my laptop, I'll execute the command in the <code>application</code>
 docker container via</p>
-<pre><code>make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND='composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts'</code></pre>
+
+<pre><code>make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND='composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts'
+</code></pre>
+
 <p>and then move the files into the application directory via</p>
+
 <pre><code>rm -rf public/ tests/ composer.* phpunit.xml
 make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND="bash -c 'mv -n /tmp/laravel/{.*,*} .' &amp;&amp; rm -f /tmp/laravel"
-cp .env.example .env</code></pre>
+cp .env.example .env
+</code></pre>
+
 <p><strong>Notes</strong></p>
+
 <ul>
 <li><code>composer install</code> is skipped via <code>--no-install</code> to avoid having to copy over the <code>vendor/</code> folder
 (which is super slow on Docker Desktop)</li>
-<li><a href="https://unix.stackexchange.com/a/127713">existing directories cannot be overwritten by <code>mv</code></a>
-thus I remove <code>public/</code> and <code>tests/</code> upfront (as well as the <code>composer</code> and <code>phpunit</code> config
+<li><a href="https://unix.stackexchange.com/a/127713">existing directories cannot be overwritten by <code>mv</code></a> 
+thus I remove <code>public/</code> and <code>tests/</code> upfront (as well as the <code>composer</code> and <code>phpunit</code> config 
 files)</li>
 <li><code>mv</code> uses the <code>-n</code> flag so that existing files like our <code>.editorconfig</code> are not overwritten</li>
-<li>I need to use <code>bash -c</code> to run the command in the container because otherwise
-<a href="https://github.com/moby/moby/issues/12558#issuecomment-94775867">the <code>*</code> wildcard would have no effect in the container</a> </li>
+<li>I need to use <code>bash -c</code> to run the command in the container because otherwise 
+<a href="https://github.com/moby/moby/issues/12558#issuecomment-94775867">the <code>*</code> wildcard would have no effect in the container</a></li>
 </ul>
-<p>To finalize the installation I need to install the composer dependencies and execute the
-<code>create-project</code> scripts defined in
+
+<p>To finalize the installation I need to install the composer dependencies and execute the 
+<code>create-project</code> scripts defined in 
 <a href="https://github.com/laravel/laravel/blob/9.x/composer.json#L45"><code>composer.json</code></a>:</p>
+
 <pre><code>make composer ARGS=install
-make composer ARGS="run-script post-create-project-cmd"</code></pre>
-<p>Since our nginx configuration was already pointing to the <code>public/</code> directory, we can immediately
-open <a href="http://127.0.0.1">http://127.0.0.1</a> in the browser and should see the frontpage of
+make composer ARGS="run-script post-create-project-cmd"
+</code></pre>
+
+<p>Since our nginx configuration was already pointing to the <code>public/</code> directory, we can immediately 
+open <a href="http://127.0.0.1">http://127.0.0.1</a> in the browser and should see the frontpage of 
 a fresh Laravel installation.</p>
-<!-- generated -->
-<p><a id='update-the-php-poc'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='update-the-php-poc'> </a>
+<!-- /generated --></p>
+
 <h2>Update the PHP POC</h2>
-<!-- generated -->
-<p><a id='config'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='config'> </a>
+<!-- /generated --></p>
+
 <h3>config</h3>
-<p>We need to update the connection information for the database and the queue (previously
+
+<p>We need to update the connection information for the database and the queue (previously 
 configured via <code>dependencies.php</code>) in the <code>.env</code> file</p>
-<!-- generated -->
-<p><a id='database-connection'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='database-connection'> </a>
+<!-- /generated --></p>
+
 <h4>database connection</h4>
+
 <pre><code>DB_CONNECTION=mysql
 DB_HOST=mysql
 DB_PORT=3306
 DB_DATABASE=application_db
 DB_USERNAME=root
-DB_PASSWORD=secret_mysql_root_password</code></pre>
-<!-- generated -->
-<p><a id='queue-connection'> </a></p>
-<!-- /generated -->
+DB_PASSWORD=secret_mysql_root_password
+</code></pre>
+
+<p><!-- generated -->
+<a id='queue-connection'> </a>
+<!-- /generated --></p>
+
 <h4>queue connection</h4>
+
 <pre><code>QUEUE_CONNECTION=redis
 
 REDIS_HOST=redis
-REDIS_PASSWORD=secret_redis_password</code></pre>
-<!-- generated -->
-<p><a id='controllers'> </a></p>
-<!-- /generated -->
+REDIS_PASSWORD=secret_redis_password
+</code></pre>
+
+<p><!-- generated -->
+<a id='controllers'> </a>
+<!-- /generated --></p>
+
 <h3>Controllers</h3>
-<p>The functionality of the previous <code>public/index.php</code> file now lives in the <code>HomeController</code> at
+
+<p>The functionality of the previous <code>public/index.php</code> file now lives in the <code>HomeController</code> at 
 <code>app/Http/Controllers/HomeController.php</code></p>
+
 <pre>class HomeController extends Controller
 {
     use DispatchesJobs;
@@ -1747,8 +2464,11 @@ REDIS_PASSWORD=secret_redis_password</code></pre>
         return view('home')-&gt;with(["content" =&gt; $content]);
     }
 }
+
 </pre>
+
 <p>Its content is displayed via the <code>home</code> view located at <code>resources/views/home.blade.php</code>:</p>
+
 <pre><code>&lt;!DOCTYPE html&gt;
 &lt;html&gt;
     &lt;head&gt;
@@ -1757,15 +2477,23 @@ REDIS_PASSWORD=secret_redis_password</code></pre>
     &lt;body&gt;
     {!! $content !!}
     &lt;/body&gt;
-&lt;/html&gt;</code></pre>
+&lt;/html&gt;
+</code></pre>
+
 <p>The controller is added as a route in <code>routes/web.php</code>:</p>
-<pre>Route::get('/', \App\Http\Controllers\HomeController::class)-&gt;name("home");</pre>
-<!-- generated -->
-<p><a id='commands'> </a></p>
-<!-- /generated -->
+
+<pre>Route::get('/', \App\Http\Controllers\HomeController::class)-&gt;name("home");
+</pre>
+
+<p><!-- generated -->
+<a id='commands'> </a>
+<!-- /generated --></p>
+
 <h3>Commands</h3>
-<p>We will replace the <code>setup.php</code> script with a <code>SetupDbCommand</code> that is located at
+
+<p>We will replace the <code>setup.php</code> script with a <code>SetupDbCommand</code> that is located at 
 <code>app/Commands/SetupDbCommand.php</code></p>
+
 <pre>class SetupDbCommand extends Command
 {
     /**
@@ -1807,20 +2535,29 @@ REDIS_PASSWORD=secret_redis_password</code></pre>
 
         $this-&gt;info("Done.");
     }
-}</pre>
+}
+</pre>
+
 <p>Register it the <code>AppServiceProvider</code> in <code>app/Providers/AppServiceProvider.php</code></p>
+
 <pre>    public function register()
     {
         $this-&gt;commands([
             \App\Commands\SetupDbCommand::class
         ]);
-    }</pre>
+    }
+</pre>
+
 <p>and update the <code>setup-db</code> target in <code>.make/01-00-application-setup.mk</code> to run the <code>artisan</code> Command</p>
+
 <pre>.PHONY: setup-db
 setup-db: ## Setup the DB tables
-    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan app:setup-db $(ARGS);</pre>
-<p>We will also create a migration for the <code>jobs</code> table in
+    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan app:setup-db $(ARGS);
+</pre>
+
+<p>We will also create a migration for the <code>jobs</code> table in 
 <code>database/migrations/2022_02_10_000000_create_jobs_table.php</code>:</p>
+
 <pre>return new class extends Migration
 {
     public function up(): void
@@ -1830,13 +2567,18 @@ setup-db: ## Setup the DB tables
             $table-&gt;string('value');
         });
     }
-};</pre>
-<!-- generated -->
-<p><a id='jobs-and-workers'> </a></p>
-<!-- /generated -->
+};
+</pre>
+
+<p><!-- generated -->
+<a id='jobs-and-workers'> </a>
+<!-- /generated --></p>
+
 <h3>Jobs and workers</h3>
-<p>We will replace the <code>worker.php</code> script with <code>InsertInDbJob</code> located at
+
+<p>We will replace the <code>worker.php</code> script with <code>InsertInDbJob</code> located at 
 <code>app/Jobs/InsertInDbJob.php</code></p>
+
 <pre>class InsertInDbJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
@@ -1850,24 +2592,44 @@ setup-db: ## Setup the DB tables
     {
         $databaseManager-&gt;insert("INSERT INTO `jobs`(value) VALUES(?)", [$this-&gt;jobId]);
     }
-}</pre>
-<p>though this will &quot;only&quot; handle the insertion part. For the worker itself we will use the native
+}
+</pre>
+
+<p>though this will "only" handle the insertion part. For the worker itself we will use the native
 <code>\Illuminate\Queue\Console\WorkCommand</code> via</p>
-<pre><code>php artisan queue:work</code></pre>
+
+<pre><code>php artisan queue:work
+</code></pre>
+
 <p>We need to adjust the <code>.docker/images/php/worker/Dockerfile</code> and change</p>
-<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/worker.php"</code></pre>
+
+<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/worker.php"
+</code></pre>
+
 <p>to</p>
-<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/artisan queue:work"</code></pre>
-<p>Since this change takes place directly in the Dockerfile, we must now rebuild the image </p>
-<pre><code>$ make docker-build-image DOCKER_SERVICE_NAME=php-worker</code></pre>
+
+<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/artisan queue:work"
+</code></pre>
+
+<p>Since this change takes place directly in the Dockerfile, we must now rebuild the image</p>
+
+<pre><code>$ make docker-build-image DOCKER_SERVICE_NAME=php-worker
+</code></pre>
+
 <p>and restart it</p>
-<pre><code>$ make docker-up</code></pre>
-<!-- generated -->
-<p><a id='tests'> </a></p>
-<!-- /generated -->
+
+<pre><code>$ make docker-up
+</code></pre>
+
+<p><!-- generated -->
+<a id='tests'> </a>
+<!-- /generated --></p>
+
 <h3>Tests</h3>
+
 <p>I'd also like to take this opportunity to add a <code>Feature</code> test for the <code>HomeController</code> at
 <code>tests/Feature/App/Http/Controllers/HomeControllerTest.php</code>:</p>
+
 <pre>class HomeControllerTest extends TestCase
 {
     public function setUp(): void
@@ -1988,10 +2750,13 @@ setup-db: ## Setup the DB tables
             -&gt;assertSee($expected, false)
         ;
     }
-}</pre>
-<p>The test checks the database as well as the queue and uses the helper methods
+}
+</pre>
+
+<p>The test checks the database as well as the queue and uses the helper methods 
 <code>$this-&gt;setupDatabase()</code> and <code>$this-&gt;setupQueue()</code> that I defined in the base test case at
 <code>tests/TestCase.php</code> as follows</p>
+
 <pre>   /**
      * @template T
      * @param class-string&lt;T&gt; $className
@@ -2049,19 +2814,25 @@ setup-db: ## Setup the DB tables
             $database  = $connection-&gt;getDatabaseName();
             $pdo-&gt;exec("CREATE DATABASE IF NOT EXISTS `{$database}`;");
         }
-    }</pre>
-<p>The methods ensure that the tests are only executed if the proper database connection and queue
+    }
+</pre>
+
+<p>The methods ensure that the tests are only executed if the proper database connection and queue 
 driver is configured. This is done through environment variables and I like using
 <a href="https://laravel.com/docs/9.x/testing#the-env-testing-environment-file">a dedicated <code>.env</code> file located at <code>.env.testing</code></a><br />
-for all testing <code>ENV</code> values instead of defining them in the <code>phpunit.xml</code> config file via <code>&lt;env&gt;</code>
+for all testing <code>ENV</code> values instead of defining them in the <code>phpunit.xml</code> config file via <code>&lt;env&gt;</code> 
 elements:</p>
+
 <pre># File: .env.testing
 
 DB_CONNECTION=testing
 DB_DATABASE=testing
 QUEUE_CONNECTION=testing
-REDIS_DB=1000</pre>
+REDIS_DB=1000
+</pre>
+
 <p>The corresponding connections have to be configured in the <code>config</code> files</p>
+
 <pre># File: config/database.php
 
 return [
@@ -2099,7 +2870,9 @@ return [
             'database' =&gt; env('REDIS_DB', '1000'),
         ],
     ],
-];</pre>
+];
+</pre>
+
 <pre># File: config/queue.php
 
 return [
@@ -2116,8 +2889,11 @@ return [
             'after_commit' =&gt; false,
         ],
     ],
-];</pre>
+];
+</pre>
+
 <p>The tests can be executed via <code>make test</code></p>
+
 <pre><code>$ make test
 ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit -c phpunit.xml
 PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
@@ -2126,37 +2902,55 @@ PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
 
 Time: 00:02.709, Memory: 28.00 MB
 
-OK (7 tests, 13 assertions)</code></pre>
-<!-- generated -->
-<p><a id='makefile-updates'> </a></p>
-<!-- /generated -->
+OK (7 tests, 13 assertions)
+</code></pre>
+
+<p><!-- generated -->
+<a id='makefile-updates'> </a>
+<!-- /generated --></p>
+
 <h2>Makefile updates</h2>
-<!-- generated -->
-<p><a id='clearing-the-queue'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='clearing-the-queue'> </a>
+<!-- /generated --></p>
+
 <h3>Clearing the queue</h3>
-<p>For convenience while testing I added a make target to clear all items from the queue in
+
+<p>For convenience while testing I added a make target to clear all items from the queue in 
 <code>.make/01-01-application-commands.mk</code></p>
+
 <pre>.PHONY: clear-queue
 clear-queue: ## Clear the job queue
-    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan queue:clear $(ARGS)</pre>
-<!-- generated -->
-<p><a id='running-the-poc'> </a></p>
-<!-- /generated -->
+    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan queue:clear $(ARGS)
+</pre>
+
+<p><!-- generated -->
+<a id='running-the-poc'> </a>
+<!-- /generated --></p>
+
 <h2>Running the POC</h2>
-<p>Since the POC only uses <code>make</code> targets and we basically just &quot;refactored&quot; them, there is no
+
+<p>Since the POC only uses <code>make</code> targets and we basically just "refactored" them, there is no 
 modification necessary to make the existing <code>test.sh</code> work:</p>
+
 <pre><code>$ bash test.sh
+
 
   Building the docker setup
 
+
 //...
+
 
   Starting the docker setup
 
+
 //...
 
+
   Clearing DB
+
 
 ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application php artisan app:setup-db --drop;
 Dropping all database tables...
@@ -2176,7 +2970,9 @@ Migrating: 2022_02_10_000000_create_jobs_table
 Migrated:  2022_02_10_000000_create_jobs_table (31.85ms)
 Done.
 
+
   Stopping workers
+
 
 ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl stop worker:*;
 worker:worker_00: stopped
@@ -2184,7 +2980,9 @@ worker:worker_01: stopped
 worker:worker_02: stopped
 worker:worker_03: stopped
 
+
   Ensuring that queue and db are empty
+
 
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
@@ -2209,7 +3007,9 @@ array (
     &lt;/body&gt;
 &lt;/html&gt;
 
+
   Dispatching a job 'foo'
+
 
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
@@ -2221,7 +3021,9 @@ array (
     &lt;/body&gt;
 &lt;/html&gt;
 
+
   Asserting the job 'foo' is on the queue
+
 
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
@@ -2236,7 +3038,9 @@ array (
     &lt;/body&gt;
 &lt;/html&gt;
 
+
   Starting the workers
+
 
 ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl start worker:*;
 worker:worker_00: started
@@ -2244,7 +3048,9 @@ worker:worker_01: started
 worker:worker_02: started
 worker:worker_03: started
 
+
   Asserting the queue is now empty
+
 
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
@@ -2258,7 +3064,9 @@ array (
     &lt;/body&gt;
 &lt;/html&gt;
 
+
   Asserting the db now contains the job 'foo'
+
 
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
@@ -2276,67 +3084,125 @@ array (
 )
     &lt;/body&gt;
 &lt;/html&gt;
+
 </code></pre>
-<!-- generated -->
-<p><a id='wrapping-up'> </a></p>
-<!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4.3]</a></b></p>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</a></b></p>
 ]]></description>
                 <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/</guid>
             </item>
                     <item>
-                <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</title>
-                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</a></p>
+                <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</title>
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</a></p>
 <hr />
 
-<p>In this part of the tutorial series on developing PHP on Docker we
-will <strong>setup our local development environment to be used by PhpStorm and Xdebug</strong>. We will also
-ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw
-the tool <code>strace</code> into the mix for debugging long running processes.</p>
+<p>In this part of the tutorial series on developing PHP on Docker we 
+will <strong>set up our local development environment to be used by PhpStorm and Xdebug</strong>. We will also 
+ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw 
+the tool <code>strace</code> into the mix for debugging long-running processes.</p>
+
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/bZ1MiynqT98" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
+
 <p>All code samples are publicly available in my
 <a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
-You find the branch for this tutorial at
+You find the branch for this tutorial at 
 <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
+
 <p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
 <a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
 and the following one is
 <a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>.</p>
+
 <p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a>
 to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-<!-- generated -->
 
-<!-- generated -->
-<p><a id='introduction'> </a></p>
-<!-- /generated -->
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#install-tools">Install Tools</a>
+
+<ul>
+<li><a href="#install-composer">Install composer</a></li>
+<li><a href="#install-xdebug">Install Xdebug</a></li>
+<li><a href="#install-phpunit">Install PHPUnit</a></li>
+<li><a href="#install-ssh">Install SSH</a></li>
+</ul></li>
+<li><a href="#setup-phpstorm">Setup PhpStorm</a>
+
+<ul>
+<li><a href="#ssh-configuration">SSH Configuration</a></li>
+<li><a href="#php-interpreter">PHP Interpreter</a></li>
+<li><a href="#phpunit">PHPUnit</a></li>
+<li><a href="#debugging">Debugging</a>
+
+<ul>
+<li><a href="#debug-code-executed-via-phpstorm">Debug code executed via PhpStorm</a></li>
+<li><a href="#debug-code-executed-via-php-fpm-cli-or-from-a-worker">Debug code executed via php-fpm, cli or from a worker</a>
+
+<ul>
+<li><a href="#php-fpm">php-fpm</a></li>
+<li><a href="#cli">cli</a></li>
+<li><a href="#php-workers">php-workers</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><a href="#strace">strace</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
 <h2>Introduction</h2>
+
 <p>This article is mostly an update of
 <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-but will also cover the &quot;remaining cases&quot; of <strong>debugging php-fpm</strong> and <strong>php worker processes</strong>. </p>
+but will also cover the "remaining cases" of <strong>debugging php-fpm</strong> and <strong>php worker processes</strong>.</p>
+
 <p>We will still rely on an <strong>always-running docker setup</strong> that we connect to via an SSH Configuration
-instead of using the
+instead of using the 
 <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#run-debug-a-php-script-on-docker-server">built-in docker-compose capabilities</a>
-as I feel it's closer to what we do in CI / production. However, we will <strong>not use SSH keys</strong>
-any longer but simply authenticate via password. This reduces complexity and removes any
-pesky warnings regarding &quot;SSH keys being exposed in a repository&quot;.</p>
-<!-- generated -->
-<p><a id='install-tools'> </a></p>
-<!-- /generated -->
+as I feel it's closer to what we do in CI / production. However, we will <strong>not use SSH keys</strong> 
+any longer but simply authenticate via password. This reduces complexity and removes any 
+pesky warnings regarding "SSH keys being exposed in a repository".</p>
+
+<p><!-- generated -->
+<a id='install-tools'> </a>
+<!-- /generated --></p>
+
 <h2>Install Tools</h2>
-<!-- generated -->
-<p><a id='install-composer'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='install-composer'> </a>
+<!-- /generated --></p>
+
 <h3>Install composer</h3>
-<p><a href="https://getcomposer.org/">Composer</a> is installed by pulling
-<a href="https://hub.docker.com/_/composer">the official composer docker image</a> and simply &quot;copying&quot; the
+
+<p><a href="https://getcomposer.org/">Composer</a> is installed by pulling 
+<a href="https://hub.docker.com/_/composer">the official composer docker image</a> and simply "copying" the 
 composer executable over to the base php image. In addition, composer needs the extensions
 <code>mbstring</code> and <code>phar</code></p>
+
 <pre><code># File: .docker/images/php/base/Dockerfile
 
 ARG ALPINE_VERSION
@@ -2352,21 +3218,32 @@ RUN apk add --update --no-cache  \
 
 # ...
 
-COPY --from=composer /usr/bin/composer /usr/local/bin/composer</code></pre>
-<p>Because we want our build to be deterministic, we &quot;pin&quot; the composer version by adding a
-<code>COMPOSER_VERSION</code> variable to the <code>.docker/.env</code> file </p>
-<pre>COMPOSER_VERSION=2.2.5</pre>
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+</code></pre>
+
+<p>Because we want our build to be deterministic, we "pin" the composer version by adding a 
+<code>COMPOSER_VERSION</code> variable to the <code>.docker/.env</code> file</p>
+
+<pre>COMPOSER_VERSION=2.2.5
+</pre>
+
 <p>and using it in <code>.docker/docker-compose/docker-compose-php-base.yml</code>:</p>
+
 <pre>services:
   php-base:
     build:
       args:
-        - COMPOSER_VERSION=${COMPOSER_VERSION?}</pre>
-<!-- generated -->
-<p><a id='install-xdebug'> </a></p>
-<!-- /generated -->
+        - COMPOSER_VERSION=${COMPOSER_VERSION?}
+</pre>
+
+<p><!-- generated -->
+<a id='install-xdebug'> </a>
+<!-- /generated --></p>
+
 <h3>Install Xdebug</h3>
+
 <p>Install the extension via <code>apk</code> (only for the <code>local</code> target):</p>
+
 <pre># File: .docker/images/php/base/Dockerfile
 
 FROM base as local
@@ -2374,10 +3251,13 @@ FROM base as local
 RUN apk add --no-cache --update \
         php-xdebug~=${TARGET_PHP_VERSION} \
     # ensure that xdebug is not enabled by default
-    &amp;&amp; rm -f /etc/php8/conf.d/00_xdebug.ini</pre>
-<p>We also don't want to enable <code>xdebug</code> immediately but only when we need it (due to the decrease
-in performance when the extension is enabled), hence we remove the default config file and
+    &amp;&amp; rm -f /etc/php8/conf.d/00_xdebug.ini
+</pre>
+
+<p>We also don't want to enable <code>xdebug</code> immediately but only when we need it (due to the decrease 
+in performance when the extension is enabled), hence we remove the default config file and 
 disable the extension in the application <code>.ini</code> file</p>
+
 <pre><code># File: .docker/images/php/base/conf.d/zz-app-local.ini
 
 ; Note:
@@ -2385,25 +3265,34 @@ disable the extension in the application <code>.ini</code> file</p>
 ;zend_extension=xdebug
 xdebug.client_host=host.docker.internal
 xdebug.start_with_request=yes
-xdebug.mode=debug</code></pre>
+xdebug.mode=debug
+</code></pre>
+
 <p>See <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker">Fix Xdebug on PhpStorm when run from a Docker container</a>
 for an explanation of the <code>xdebug.client_host=host.docker.internal</code> setting (previously called
 <code>xdebug.remote_host</code> in xdebug &lt; 3). This will still work out of the box for Docker Desktop, but
-for Linux users we need to add the
+for Linux users we need to add the 
 <a href="https://github.com/docker/for-linux/issues/264#issuecomment-965465879"><code>host-gateway</code> magic reference</a>
 <strong>to all PHP containers</strong> (we can't add it to the php base image because this is a runtime setting):</p>
+
 <pre>services:
   service:
     extra_hosts:
-      - host.docker.internal:host-gateway</pre>
-<p>Finally, we need to add
+      - host.docker.internal:host-gateway
+</pre>
+
+<p>Finally, we need to add 
 <a href="https://www.jetbrains.com/help/phpstorm/debugging-a-php-cli-script.html">the environment variable <code>PHP_IDE_CONFIG</code></a>
-<strong>to all PHP containers</strong>. The variable is defined as <code>PHP_IDE_CONFIG=serverName=dofroscra</code>, where
-&quot;dofroscra&quot; is the name of the server that we will configure later for debugging. Because we
+<strong>to all PHP containers</strong>. The variable is defined as <code>PHP_IDE_CONFIG=serverName=dofroscra</code>, where 
+"dofroscra" is the name of the server that we will configure later for debugging. Because we 
 need the same value in multiple places, the variable is configured in <code>.docker/.env</code>:</p>
-<pre><code>PHP_IDE_CONFIG=serverName=dofroscra</code></pre>
+
+<pre><code>PHP_IDE_CONFIG=serverName=dofroscra
+</code></pre>
+
 <p>And then added in
 <code>.docker/docker-compose/docker-compose.local.yml</code></p>
+
 <pre>services:
   php-fpm:
     environment:
@@ -2415,63 +3304,92 @@ need the same value in multiple places, the variable is configured in <code>.doc
 
   application:
     environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}</pre>
-<!-- generated -->
-<p><a id='install-phpunit'> </a></p>
-<!-- /generated -->
+      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
+</pre>
+
+<p><!-- generated -->
+<a id='install-phpunit'> </a>
+<!-- /generated --></p>
+
 <h3>Install PHPUnit</h3>
-<p>PHPUnit will be installed via <code>composer</code> but will not be &quot;baked into the image&quot; for local
-development. Thus, we must run <code>composer require</code> <strong>in the container</strong>. To make this more
-convenient a make target for running arbitrary composer commands is added in
+
+<p>PHPUnit will be installed via <code>composer</code> but will not be "baked into the image" for local 
+development. Thus, we must run <code>composer require</code> <strong>in the container</strong>. To make this more 
+convenient a make target for running arbitrary composer commands is added in 
 <code>.make/01-00-application-setup.mk</code>:</p>
+
 <pre>.PHONY: composer
 composer: ## Run composer commands. Specify the command e.g. via ARGS="install"
-    $(EXECUTE_IN_APPLICATION_CONTAINER) composer $(ARGS);</pre>
-<p>This allows me to run <code>make composer ARGS="install"</code> from the host system to execute <code>composer install</code> in the container. In consequence, <code>composer</code> will use the PHP version and extensions of
+    $(EXECUTE_IN_APPLICATION_CONTAINER) composer $(ARGS);
+</pre>
+
+<p>This allows me to run <code>make composer ARGS="install"</code> from the host system to execute <code>composer 
+install</code> in the container. In consequence, <code>composer</code> will use the PHP version and extensions of 
 the <code>application</code> container to install the dependencies, yet I will still see the installed files
 locally because the codebase is configured as a volume for the container.</p>
+
 <p>Before installing phpunit, we must add the required extensions <code>dom</code> and <code>xml</code> to the container</p>
+
 <pre><code># File: .docker/images/php/base/Dockerfile
 
 # ...
 
 RUN apk add --update --no-cache  \
         php-dom~=${TARGET_PHP_VERSION} \
-        php-xml~=${TARGET_PHP_VERSION} \</code></pre>
-<p>as well as rebuild and restart the docker setup via </p>
+        php-xml~=${TARGET_PHP_VERSION} \
+</code></pre>
+
+<p>as well as rebuild and restart the docker setup via</p>
+
 <pre><code>make docker-build
 make docker-down
-make docker-up</code></pre>
+make docker-up
+</code></pre>
+
 <p>Now we can add phpunit via</p>
-<pre><code>make composer ARGS='require "phpunit/phpunit"'</code></pre>
+
+<pre><code>make composer ARGS='require "phpunit/phpunit"'
+</code></pre>
+
 <p>which will create a <code>composer.json</code> file and setup up the <code>vendor/</code> directory:</p>
+
 <pre><code>$ make composer ARGS='require "phpunit/phpunit"'
 Using version ^9.5 for phpunit/phpunit
 ./composer.json has been created
 Running composer update phpunit/phpunit
 Loading composer repositories with package information
 Updating dependencies
-...</code></pre>
-<p><strong>CAUTION</strong>: If you <strong>run into the following permission error</strong> at this step, you are likely using
-Linux and
+...
+</code></pre>
+
+<p><strong>CAUTION</strong>: If you <strong>run into the following permission error</strong> at this step, you are likely using 
+Linux and 
 haven't set the <code>APP_USER_ID</code> and <code>APP_GROUP_ID</code> variables as described in the previous article
-under
+under 
 <a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#solving-permission-issues">Solving permission issues</a>.</p>
+
 <pre>make composer ARGS='req phpunit/phpunit' ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application composer req phpunit/phpunit
 ./composer.json is not writable.
-make: *** [.make/01-00-application-setup.mk:14: composer] Error 1</pre>
-<p>I have also added </p>
+make: *** [.make/01-00-application-setup.mk:14: composer] Error 1
+</pre>
+
+<p>I have also added</p>
+
 <ul>
 <li>a minimal <code>phpunit.xml</code> config file</li>
-<li>a test case at <code>tests/SomeTest.php</code> </li>
-<li>and a new Makefile for &quot;anything related to qa&quot; at <code>.make/01-02-application-qa.mk</code>:</li>
+<li>a test case at <code>tests/SomeTest.php</code></li>
+<li>and a new Makefile for "anything related to qa" at <code>.make/01-02-application-qa.mk</code>:</li>
 </ul>
+
 <pre>##@ [Application: QA]
 
 .PHONY: test
 test: ## Run the test suite 
-    $(EXECUTE_IN_WORKER_CONTAINER) vendor/bin/phpunit -c phpunit.xml</pre>
+    $(EXECUTE_IN_WORKER_CONTAINER) vendor/bin/phpunit -c phpunit.xml
+</pre>
+
 <p>So I can run tests simply via <code>make test</code></p>
+
 <pre><code>$ make test
 ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit
 PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
@@ -2480,17 +3398,22 @@ PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
 
 Time: 00:00.324, Memory: 4.00 MB
 
-OK (1 test, 1 assertion)</code></pre>
-<!-- generated -->
-<p><a id='install-ssh'> </a></p>
-<!-- /generated -->
+OK (1 test, 1 assertion)
+</code></pre>
+
+<p><!-- generated -->
+<a id='install-ssh'> </a>
+<!-- /generated --></p>
+
 <h3>Install SSH</h3>
-<p>We will execute commands from PhpStorm via ssh in the <code>application</code> container. As mentioned, we
-won't use a key file for authentication but will instead simply use a password that is
-configured via the <code>APP_SSH_PASSWORD</code> variable in <code>.docker/.env</code> and passed to the image in
-<code>.docker/docker-compose/docker-compose.local.yml</code>. In addition, we map port <code>2222</code> from the
+
+<p>We will execute commands from PhpStorm via ssh in the <code>application</code> container. As mentioned, we 
+won't use a key file for authentication but will instead simply use a password that is 
+configured via the <code>APP_SSH_PASSWORD</code> variable in <code>.docker/.env</code> and passed to the image in 
+<code>.docker/docker-compose/docker-compose.local.yml</code>. In addition, we map port <code>2222</code> from the 
 host system to port <code>22</code> of the application container and make sure that the codebase is shared
 as a volume between host and container</p>
+
 <pre>  application:
     build:
       args:
@@ -2498,8 +3421,11 @@ as a volume between host and container</p>
     volumes:
       - ${APP_CODE_PATH_HOST?}:${APP_CODE_PATH_CONTAINER?}
     ports:
-      - "${APPLICATION_SSH_HOST_PORT:-2222}:22"</pre>
+      - "${APPLICATION_SSH_HOST_PORT:-2222}:22"
+</pre>
+
 <p>The container already contains <code>openssh</code> and sets the password</p>
+
 <pre>ARG BASE_IMAGE
 FROM ${BASE_IMAGE} as base
 
@@ -2519,23 +3445,31 @@ RUN ssh-keygen -A
 # we use SSH deployment configuration in PhpStorm for local development
 EXPOSE 22
 
-CMD ["/usr/sbin/sshd", "-D"]</pre>
-<!-- generated -->
-<p><a id='setup-phpstorm'> </a></p>
-<!-- /generated -->
+CMD ["/usr/sbin/sshd", "-D"]
+</pre>
+
+<p><!-- generated -->
+<a id='setup-phpstorm'> </a>
+<!-- /generated --></p>
+
 <h2>Setup PhpStorm</h2>
-<p>We will configure a remote PHP interpreter that uses an SSH connection to run commands in the
-<code>application</code> container. Before,
+
+<p>We will configure a remote PHP interpreter that uses an SSH connection to run commands in the 
+<code>application</code> container. Before, 
 <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#configure-the-deployment-configuration">we have been using an <code>SFTP Deployment configuration</code></a>
-, which was kinda confusing (&quot;What is SFTP doing here?&quot;), so we will use an
-<a href="https://www.jetbrains.com/help/phpstorm/create-ssh-configurations.html">SSH Configuration</a>
+, which was kinda confusing ("What is SFTP doing here?"), so we will use an 
+<a href="https://www.jetbrains.com/help/phpstorm/create-ssh-configurations.html">SSH Configuration</a> 
 instead and configure the path mappings in the <strong>Cli Interpreter</strong> interface</p>
-<!-- generated -->
-<p><a id='ssh-configuration'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='ssh-configuration'> </a>
+<!-- /generated --></p>
+
 <h3>SSH Configuration</h3>
-<p>At <code>File | Settings | Tools | SSH Configurations</code> create a new SSH Configuration named
-&quot;Docker PHP Tutorial&quot; with the following settings </p>
+
+<p>At <code>File | Settings | Tools | SSH Configurations</code> create a new SSH Configuration named 
+"Docker PHP Tutorial" with the following settings</p>
+
 <ul>
 <li>Host: 127.0.0.1</li>
 <li>Port: see <code>APPLICATION_SSH_HOST_PORT</code> in <code>.docker/docker-compose/docker-compose.local.yml</code></li>
@@ -2543,70 +3477,109 @@ instead and configure the path mappings in the <strong>Cli Interpreter</strong> 
 <li>Authentication type: Password</li>
 <li>Password: see <code>APP_SSH_PASSWORD</code> in <code>.docker/.env</code></li>
 </ul>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG" alt="PhpStorm SSH Configuration" title="PhpStorm SSH Configuration" /></a></p>
-<!-- generated -->
-<p><a id='php-interpreter'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='php-interpreter'> </a>
+<!-- /generated --></p>
+
 <h3>PHP Interpreter</h3>
+
 <p>At <code>File | Settings | PHP</code> add a new PHP CLI interpreter that uses the new SSH Configuration</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG" alt="PhpStorm new CLI interpreter" title="PhpStorm new CLI interpreter" /></a></p>
+
 <p>In addition, we define the <strong>path to the xdebug extension</strong> because it is disabled by default but
 PhpStorm can enable it automatically if required. You can find the path in the <code>application</code>
 container via</p>
+
 <pre><code>root:/var/www/app# php -i | grep extension_dir
 extension_dir =&gt; /usr/lib/php8/modules =&gt; /usr/lib/php8/modules
 root:/var/www/app# ll /usr/lib/php8/modules | grep xdebug
--rwxr-xr-x    1 root     root        303936 Jan  9 00:21 xdebug.so</code></pre>
-<p>We still need to
+-rwxr-xr-x    1 root     root        303936 Jan  9 00:21 xdebug.so
+</code></pre>
+
+<p>We still need to 
 <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
 by adding a custom PHP option for <code>xdebug.client_host=host.docker.internal</code>. That's the same value
 we use in <code>.docker/images/php/base/conf.d/zz-app-local.ini</code>.</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG" alt="PhpStorm Xdebug settings for the CLI interpreter" title="PhpStorm Xdebug settings for the CLI interpreter" /></a></p>
+
 <p>In the interpreter overview we must now configure the <strong>path mappings</strong> so that PhpStorm knows
-&quot;which local file belongs to which remote one&quot;. The remote folder is defined in <code>.docker/.env</code> via</p>
-<pre>APP_CODE_PATH_CONTAINER=/var/www/app</pre>
+"which local file belongs to which remote one". The remote folder is defined in <code>.docker/.env</code> via</p>
+
+<pre>APP_CODE_PATH_CONTAINER=/var/www/app
+</pre>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG" alt="PhpStorm path mappings for the CLI interpreter" title="PhpStorm path mappings for the CLI interpreter" /></a></p>
+
 <p>Afterwards we can set a breakpoint e.g. in <code>setup.php</code> and start debugging:</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
+
 <p>The screenshot shows that PhpStorm adds the Xdebug extension that we defined previously.</p>
-<!-- generated -->
-<p><a id='phpunit'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='phpunit'> </a>
+<!-- /generated --></p>
+
 <h3>PHPUnit</h3>
+
 <p><code>phpunit</code> is configured via <code>File | Settings | PHP | Test Frameworks</code>. First, we select the
 interpreter that we just added</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG" alt="Set up phpunit in PhpStorm" title="Set up phpunit in PhpStorm" /></a></p>
+
 <p>Then, we add the paths to the composer autoload script and the <code>phpunit.xml</code> configuration file.</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG" alt="phpunit settings in PhpStorm" title="phpunit settings in PhpStorm" /></a></p>
+
 <p>PhpStorm will now execute tests using the PHP interpreter in the <code>application</code> container</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG" alt="Run a phpunit test in PhpStorm" title="Run a phpunit test in PhpStorm" /></a></p>
-<!-- generated -->
-<p><a id='debugging'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='debugging'> </a>
+<!-- /generated --></p>
+
 <h3>Debugging</h3>
-<p>First of all, if you haven't already please also take a look at the
-<a href="https://xdebug.org/docs/step_debug">official xdebug documentation</a>. Derick is doing a great job
+
+<p>First of all, if you haven't already please also take a look at the 
+<a href="https://xdebug.org/docs/step_debug">official xdebug documentation</a>. Derick is doing a great job 
 at explaining xdebug in detail including some helpful videos like
 <a href="https://www.youtube.com/watch?v=4opFac50Vwo">Xdebug 3: Xdebug with Docker and PhpStorm in 5 minutes</a></p>
-<!-- generated -->
-<p><a id='debug-code-executed-via-phpstorm'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='debug-code-executed-via-phpstorm'> </a>
+<!-- /generated --></p>
+
 <h4>Debug code executed via PhpStorm</h4>
-<p>This should already work out of the box. Simply set a break point, right-click on a file and choose
-&quot;Debug '...'&quot;</p>
+
+<p>This should already work out of the box. Simply set a break point, right-click on a file and choose 
+"Debug '...'"</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
-<!-- generated -->
-<p><a id='debug-code-executed-via-php-fpm-cli-or-from-a-worker'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='debug-code-executed-via-php-fpm-cli-or-from-a-worker'> </a>
+<!-- /generated --></p>
+
 <h4>Debug code executed via php-fpm, cli or from a worker</h4>
-<p>For code that is executed &quot;directly&quot; by a container without PhpStorm, we first need to enable
-<code>xdebug</code> in the container by removing the <code>;</code> in front of the extension in
+
+<p>For code that is executed "directly" by a container without PhpStorm, we first need to enable 
+<code>xdebug</code> in the container by removing the <code>;</code> in front of the extension in 
 <code>/etc/php8/conf.d/zz-app-local.ini</code></p>
+
 <pre><code>; Note:
 ; Remove the comment ; to enable debugging
-zend_extension=xdebug</code></pre>
+zend_extension=xdebug
+</code></pre>
+
 <p>To make this a little more convenient, we use dedicated make recipes for those actions in
 <code>.make/01-01-application-commands.mk</code></p>
+
 <pre>.PHONY: execute-in-container
 execute-in-container: ## Execute a command in a container. E.g. via "make execute-in-container DOCKER_SERVICE_NAME=php-fpm COMMAND="echo 'hello'"
     @$(if $(DOCKER_SERVICE_NAME),,$(error DOCKER_SERVICE_NAME is undefined))
@@ -2619,88 +3592,138 @@ enable-xdebug: ## Enable xdebug in the given container specified by "DOCKER_SERV
 
 .PHONY: disable-xdebug
 disable-xdebug: ## Disable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
-    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/;zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"</pre>
+    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/;zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"
+</pre>
+
 <p>To capture incoming requests, we need to make PhpStorm listen for PHP Debug connections via
-<code>Run | Start Listening for PHP Debug Connections</code>. </p>
+<code>Run | Start Listening for PHP Debug Connections</code>.</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG" alt="PhpStorm: Start Listening for PHP Debug Connections" title="PhpStorm: Start Listening for PHP Debug Connections" /></a></p>
-<p>The corresponding ports are configured at <code>File | Settings | PHP | Debug</code>. In Xdebug &lt; 3 the
-default port was <code>9000</code> and in <a href="https://xdebug.org/docs/all_settings#client_port">Xdebug 3 it is <code>9003</code></a> </p>
+
+<p>The corresponding ports are configured at <code>File | Settings | PHP | Debug</code>. In Xdebug &lt; 3 the 
+default port was <code>9000</code> and in <a href="https://xdebug.org/docs/all_settings#client_port">Xdebug 3 it is <code>9003</code></a></p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG" alt="PhpStorm: configure xdebug ports" title="PhpStorm: configure xdebug ports" /></a></p>
+
 <p>Finally, we need to add a server via <code>File | Settings | PHP | Servers</code></p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG" alt="PhpStorm: configure a server" title="PhpStorm: configure a server" /></a></p>
-<p>The name of the server must match the value of the <code>serverName</code> key in the environment variable
+
+<p>The name of the server must match the value of the <code>serverName</code> key in the environment variable 
 <code>PHP_IDE_CONFIG</code> that we configured previously as <code>serverName=dofroscra</code>.</p>
-<!-- generated -->
-<p><a id='php-fpm'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='php-fpm'> </a>
+<!-- /generated --></p>
+
 <h5>php-fpm</h5>
+
 <p>For <code>php-fpm</code> we must
 <a href="https://stackoverflow.com/a/43076457">restart the <code>php-fpm</code> process without restarting the container</a>
 after we have activated <code>xdebug</code> via</p>
-<pre><code>kill -USR2 1</code></pre>
+
+<pre><code>kill -USR2 1
+</code></pre>
+
 <p>Since this is a pain to remember, we add a make target in <code>.make/01-01-application-commands.mk</code></p>
+
 <pre># @see https://stackoverflow.com/a/43076457
 .PHONY: restart-php-fpm
 restart-php-fpm: ## Restart the php-fpm service
-    "$(MAKE)" execute-in-container DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME_PHP_FPM) COMMAND="kill -USR2 1"</pre>
+    "$(MAKE)" execute-in-container DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME_PHP_FPM) COMMAND="kill -USR2 1"
+</pre>
+
 <p>So we can now simply run</p>
+
 <pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-fpm
-make restart-php-fpm</code></pre>
+make restart-php-fpm
+</code></pre>
+
 <p>Setting a breakpoint in <code>public/index.php</code> and opening <a href="http://127.0.0.1/">http://127.0.0.1/</a> in
 a browser or via <code>curl http://127.0.0.1/</code> will halt the execution as expected.</p>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG" alt="PhpStorm debugging breakpoint for php-fpm" title="PhpStorm debugging breakpoint for php-fpm" /></a></p>
-<!-- generated -->
-<p><a id='cli'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='cli'> </a>
+<!-- /generated --></p>
+
 <h5>cli</h5>
-<p>Instead of triggering a PHP script via HTTP request, we can also run CLI scripts - think of the
+
+<p>Instead of triggering a PHP script via HTTP request, we can also run CLI scripts - think of the 
 <code>make setup-db</code> target for instance. To debug such invocations, we need to follow the same steps
 as before:</p>
+
 <ul>
 <li>enable the <code>xdebug</code> extension in the <code>application</code> container</li>
-<li>&quot;Listening for PHP Debug Connections&quot; from PhpStorm</li>
+<li>"Listening for PHP Debug Connections" from PhpStorm</li>
 </ul>
+
 <p>Running the following make targets will trigger a breakpoint in <code>setup.php</code>:</p>
+
 <pre><code>make enable-xdebug DOCKER_SERVICE_NAME=application
-make setup-db</code></pre>
+make setup-db
+</code></pre>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG" alt="PhpStorm debugging breakpoint for cli" title="PhpStorm debugging breakpoint for cli" /></a></p>
-<!-- generated -->
-<p><a id='php-workers'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='php-workers'> </a>
+<!-- /generated --></p>
+
 <h5>php-workers</h5>
+
 <p>And finally the same thing for long running PHP processes (aka workers). Just as before:</p>
+
 <ul>
 <li>enable the <code>xdebug</code> extension in the <code>php-worker</code> container</li>
-<li>&quot;Listening for PHP Debug Connections&quot; from PhpStorm</li>
-<li>restart the php workers  </li>
+<li>"Listening for PHP Debug Connections" from PhpStorm</li>
+<li>restart the php workers</li>
 </ul>
+
 <p>Running the following make targets will trigger a breakpoint in <code>worker.php</code>:</p>
+
 <pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-worker
-make restart-workers</code></pre>
+make restart-workers
+</code></pre>
+
 <p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG" alt="PhpStorm debugging breakpoint for php-workers" title="PhpStorm debugging breakpoint for php-workers" /></a></p>
-<!-- generated -->
-<p><a id='strace'> </a></p>
-<!-- /generated -->
+
+<p><!-- generated -->
+<a id='strace'> </a>
+<!-- /generated --></p>
+
 <h2>strace</h2>
-<p><a href="https://strace.io/">strace</a> is a great tool for debugging long running processes that I've
+
+<p><a href="https://strace.io/">strace</a> is a great tool for debugging long running processes that I've 
 adopted after reading <a href="https://derickrethans.nl/what-is-php-doing.html">What is PHP doing?</a>. I've
 added it to the php base image:</p>
+
 <pre>RUN apk add --update --no-cache \
-        strace</pre>
-<p>You can attach to any running process via <code>sudo strace -p $processId</code> - BUT that doesn't work
+        strace
+</pre>
+
+<p>You can attach to any running process via <code>sudo strace -p $processId</code> - BUT that doesn't work 
 out of the box on docker and will fail with the error message</p>
-<pre><code>strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted</code></pre>
-<p>This is caused by a security measure from docker and
+
+<pre><code>strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted
+</code></pre>
+
+<p>This is caused by a security measure from docker and 
 <a href="https://stackoverflow.com/a/46676868">can be circumvented</a> by adding</p>
+
 <pre>services:
   service:
     cap_add:
       - "SYS_PTRACE"
     security_opt:
-      - "seccomp=unconfined"</pre>
-<p>in <code>.docker/docker-compose/docker-compose.local.yml</code> <strong>to all PHP containers</strong>. After
+      - "seccomp=unconfined"
+</pre>
+
+<p>in <code>.docker/docker-compose/docker-compose.local.yml</code> <strong>to all PHP containers</strong>. After 
 rebuilding and restarting the docker setup, you can now e.g. log in the <code>php-worker</code> container
 and run <code>strace</code> on a php worker process:</p>
+
 <pre><code>application:/var/www/app# ps aux
 PID   USER     TIME  COMMAND
     1 applicat  0:00 {supervisord} /usr/bin/python3 /usr/bin/supervisord
@@ -2716,11 +3739,14 @@ restart_syscall(&lt;... resuming interrupted read ...&gt;) = 0
 poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
 sendto(4, "*2\r\n$4\r\nRPOP\r\n$5\r\nqueue\r\n", 25, MSG_DONTWAIT, NULL, 0) = 25
 poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 1 ([{fd=4, revents=POLLIN}])
-recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1</code></pre>
-<!-- generated -->
-<p><a id='wrapping-up'> </a></p>
-<!-- /generated -->
-<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 4.2]</a></b></p>
+recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1
+</code></pre>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</a></b></p>
 ]]></description>
                 <pubDate>Tue, 22 Mar 2022 11:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>

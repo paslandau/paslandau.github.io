@@ -151,10 +151,13 @@
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <p>In Google BigQuery we can define named subqueries via <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax?hl=en#with_clause"><code>WITH</code> clauses</a>.
 Those <code>WITH</code> clauses are a very comfortable way to structure complex queries as it allows to reference those queries like actual tables later on.</p>
-<p><strong>Note</strong>: BigQuery also supports <em>actcual</em> temporary tables via <code>CREATE TEMPORARY TABLE</code>. See the official documention on
+
+<p><strong>Note</strong>: BigQuery also supports <em>actcual</em> temporary tables via <code>CREATE TEMPORARY TABLE</code>. See the official documention on 
 <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/data-definition-language#temporary_tables">temporary tables</a> for further infos.
 This is out of scope for this snippet, though.</p>
+
 <h2>Code</h2>
+
 <pre><code>WITH filtered_data as (
   SELECT 
     id
@@ -166,39 +169,53 @@ This is out of scope for this snippet, though.</p>
 SELECT
   *
 FROM
-  filtered_data  </code></pre>
+  filtered_data  
+</code></pre>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"><script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99.js"></script>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Open in BigQuery Console</a></p>
+
 <p><a href="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png"><img src="/img/bigquery-snippets/use-temporary-tables-with-named-subquery/use-temporary-tables-via-with-named-subqueries-example.png" alt="BigQuery Console: How to use temporay tables via WITH named subqueries example" title="BigQuery Console: How to use temporay tables via WITH named subqueries example" /></a></p>
+
 <h2>Links</h2>
+
 <ul>
 <li><a href="https://gist.github.com/paslandau/662a42456dc9dc77b6cbdb1d6acb8c99">Gist on Github</a></li>
 <li><a href="https://console.cloud.google.com/bigquery?sq=106862046541:96765412c1ea44a8b5a85cb697c3c945">Example on BigQuery</a></li>
-<li><a href="https://stackoverflow.com/a/38149549/413531">Answer to &quot;How to create temporary table in Google BigQuery&quot; on Stackoverflow</a></li>
+<li><a href="https://stackoverflow.com/a/38149549/413531">Answer to "How to create temporary table in Google BigQuery" on Stackoverflow</a></li>
 </ul>
+
 <h2>Use cases</h2>
-<p>Named subqueries are a great way to structure complex queries and give sub-results a meaningful name.
+
+<p>Named subqueries are a great way to structure complex queries and give sub-results a meaningful name. 
 When working with partitioned tables, I always use temporary tables via WITH to make sure I restrict the query to
 scan only a limited number of partitions.</p>
-<p>Conceptual example:</p>
-<pre><code>DECLARE from_date TIMESTAMP DEFAULT "2018-04-09";
-DECLARE to_date TIMESTAMP DEFAULT "2018-04-10";
 
-WITH huge_table_partition as(
+<p>Conceptual example:
+````
+DECLARE from_date TIMESTAMP DEFAULT "2018-04-09";
+DECLARE to_date TIMESTAMP DEFAULT "2018-04-10";</p>
+
+<p>WITH huge_table_partition as(
   SELECT 
     *
   FROM 
     huge_table
   WHERE
     _PARTITIONTIME BETWEEN from_date AND to_date
-)
+)</p>
 
-SELECT 
+<p>SELECT 
   *
 FROM
-  huge_table_partition</code></pre>                <hr />
+  huge_table_partition
+```</p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.

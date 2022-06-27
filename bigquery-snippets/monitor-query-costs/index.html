@@ -150,25 +150,26 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <p>Cost monitoring in Google BigQuery can be a difficult task, especially within a growing organization and
-lots of (independent) stakeholders that have access to the data. If your organization is not using
-reserved slots (<a href="https://cloud.google.com/bigquery/pricing#flat_rate_pricing">flat-rate pricing</a>)
-but is billed by the number of bytes processed
-(<a href="https://cloud.google.com/bigquery/pricing#on_demand_pricing">on-demand pricing</a>),
-costs can get quickly out of hand, and we need the means to investigate or &quot;debug&quot; the BigQuery
-usage in order to understand:</p>
-<ul>
-<li><strong>who</strong> ran queries with a high cost</li>
-<li><strong>what</strong> were the exact queries</li>
-<li><strong>when</strong> did those queries run (and are they maybe even running regularly) </li>
-</ul>
+lots of (independent) stakeholders that have access to the data. If your organization is not using 
+reserved slots (<a href="https://cloud.google.com/bigquery/pricing#flat_rate_pricing">flat-rate pricing</a>) 
+but is billed by the number of bytes processed 
+(<a href="https://cloud.google.com/bigquery/pricing#on_demand_pricing">on-demand pricing</a>), 
+costs can get quickly out of hand, and we need the means to investigate or "debug" the BigQuery 
+usage in order to understand:
+- <strong>who</strong> ran queries with a high cost
+- <strong>what</strong> were the exact queries
+- <strong>when</strong> did those queries run (and are they maybe even running regularly)</p>
+
 <p>Previously, we had to manually set up query logging via Stackdriver as explained in the article
 <a href="https://cloud.google.com/blog/products/data-analytics/taking-a-practical-approach-to-bigquery-cost-monitoring">Taking a practical approach to BigQuery cost monitoring</a>
-but in late 2019 BigQuery introduced
-<a href="https://cloud.google.com/bigquery/docs/information-schema-intro"><code>INFORMATION_SCHEMA</code> views</a>
-as a beta feature that also contain data about BigQuery jobs via the
+but in late 2019 BigQuery introduced 
+<a href="https://cloud.google.com/bigquery/docs/information-schema-intro"><code>INFORMATION_SCHEMA</code> views</a> 
+as a beta feature that also contain data about BigQuery jobs via the 
 <a href="https://cloud.google.com/bigquery/docs/information-schema-jobs"><code>INFORMATION_SCHEMA.JOBS_BY_*</code> views</a>
 and became <a href="https://cloud.google.com/bigquery/docs/release-notes#June_16_2020">generally available (GA) at 2020-06-16</a></p>
+
 <h2>Examples</h2>
+
 <pre><code>SELECT 
   creation_time,
   job_id,
@@ -181,53 +182,64 @@ FROM
 
 SELECT * FROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT
 
-SELECT * FROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION</code></pre>
+SELECT * FROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION
+</code></pre>
+
 <h2>Working Example</h2>
-<script src="https://gist.github.com/paslandau/980f251cbbb2f0dddff9da6425007e3f.js"><script src="https://gist.github.com/paslandau/980f251cbbb2f0dddff9da6425007e3f.js"></script></script>
+
+<script src="https://gist.github.com/paslandau/980f251cbbb2f0dddff9da6425007e3f.js"></script>
+
 <ul>
 <li>this query will select the most interesting fields in terms of cost monitoring from the <code>INFORMATION_SCHEMA.JOBS_BY_USER</code>
 view for all jobs that have been run in region US in the currently selected project</li>
-<li>the <code>cost_in_dollar</code> is estimate by calculating the <code>total_bytes_processed</code> in Terabyte and
-multiplying the result with $5.00 (which corresponds to the cost as of today 2020-06-22).
-Also, we only take those costs into account if the query was not answered from the cache
+<li>the <code>cost_in_dollar</code> is estimate by calculating the <code>total_bytes_processed</code> in Terabyte and 
+multiplying the result with $5.00 (which corresponds to the cost as of today 2020-06-22). 
+Also, we only take those costs into account if the query was not answered from the cache 
 (see the <code>cache_hit != true</code> condition)</li>
 <li>the <code>creation_time</code> is converted to our local timezone</li>
 <li>the results are restricted to the past 30 days by using the <code>WHERE</code> clause to filter
 on the partition column <code>creation_time</code></li>
 <li>feel free to replace <code>JOBS_BY_PROJECT</code> with <code>JOBS_BY_USER</code> or <code>JOBS_BY_ORGANIZATION</code></li>
 </ul>
+
 <h2>Run on BigQuery</h2>
+
 <p><a href="https://console.cloud.google.com/bigquery?sq=580364496687:b0c09fa64661413eb91f5e7e0fcedebd">Open in BigQuery UI</a></p>
+
 <p><a href="/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png"><img src="/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png" alt="BigQuery UI: Monitor query costs in BigQuery example" title="BigQuery UI: Monitor query costs in BigQuery example" /></a></p>
+
 <h2>Notes</h2>
-<p>While playing around with the <code>INFORMATION_SCHEMA</code> views I've hit a couple of gotchas:</p>
-<ul>
-<li>the different views <a href="https://cloud.google.com/bigquery/docs/information-schema-jobs?hl=en#required_permissions">require different permissions</a></li>
-<li>the views are regionalized, i.e. we <strong>must</strong> prefix the region (see <code>region-us</code> in the view specification) and
-must run the job <em>in that region</em> (e.g. from the BigQuery UI via
-<a href="https://cloud.google.com/bigquery/docs/running-queries#queries"><code>More &gt; Query Settings &gt; Processing location</code></a>)</li>
-<li>it is not possible to <strong>mix multiple regions</strong> in the query, because a query with processing location <code>US</code>
-can only access resources in location <code>US</code>. Though it would be very helpful for organizations that actively use different locations,
-something like this is not possible:
-<pre><code>SELECT * FROM 
-(SELECT * `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION)
-UNION ALL
-(SELECT * `region-eu`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION)</code></pre></li>
-<li>data is currently only kept for the past 180 days</li>
-<li>the <code>JOBS_BY_USER</code> view seems to &quot;match&quot; the user based on the email address. My user email adress is a <code>@googlemail.com</code>
-address; in the user column it is stored as <code>@gmail.com</code>. Thus, I get no results when using <code>JOBS_BY_USER</code></li>
-<li><code>JOBS_BY_USER</code> and <code>JOBS_BY_PROJECT</code> will use the currently selected project by default. A different
-project (e.g. <code>other-project</code>) can be specified via 
-<pre><code>SELECT * FROM `other-project.region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT</code></pre></li>
-<li>the full <code>query</code> is not available for <code>JOBS_BY_ORGANIZATION</code></li>
-</ul>
+
+<p>While playing around with the <code>INFORMATION_SCHEMA</code> views I've hit a couple of gotchas:
+- the different views <a href="https://cloud.google.com/bigquery/docs/information-schema-jobs?hl=en#required_permissions">require different permissions</a>
+- the views are regionalized, i.e. we <strong>must</strong> prefix the region (see <code>region-us</code> in the view specification) and
+  must run the job <em>in that region</em> (e.g. from the BigQuery UI via 
+  <a href="https://cloud.google.com/bigquery/docs/running-queries#queries"><code>More &gt; Query Settings &gt; Processing location</code></a>)
+- it is not possible to <strong>mix multiple regions</strong> in the query, because a query with processing location <code>US</code>
+  can only access resources in location <code>US</code>. Though it would be very helpful for organizations that actively use different locations,
+  something like this is not possible:
+  <code>SELECT * FROM 
+    (SELECT * `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION)
+    UNION ALL
+    (SELECT * `region-eu`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION)</code>
+- data is currently only kept for the past 180 days
+- the <code>JOBS_BY_USER</code> view seems to "match" the user based on the email address. My user email adress is a <code>@googlemail.com</code>
+  address; in the user column it is stored as <code>@gmail.com</code>. Thus, I get no results when using <code>JOBS_BY_USER</code>
+- <code>JOBS_BY_USER</code> and <code>JOBS_BY_PROJECT</code> will use the currently selected project by default. A different
+  project (e.g. <code>other-project</code>) can be specified via 
+  <code>SELECT * FROM `other-project.region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT</code>
+- the full <code>query</code> is not available for <code>JOBS_BY_ORGANIZATION</code></p>
+
 <h2>Use Cases</h2>
+
 <p>I use this approach in our organization to set up a view based on <code>INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION</code>
-that is then used as a data source for <a href="https://datastudio.google.com/">Google DataStudio</a>.
+that is then used as a data source for <a href="https://datastudio.google.com/">Google DataStudio</a>. 
 This allows me to get a quick high level overview
 over all query costs and further enables me to drill down deeper if I need to. I can even find the exact
 queries via their <code>job_id</code>.</p>
-<p><a href="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png"><img src="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png" alt="BigQuery cost monitoring dashboard" title="BigQuery cost monitoring dashboard" /></a></p>                <hr />
+
+<p><a href="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png"><img src="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png" alt="BigQuery cost monitoring dashboard" title="BigQuery cost monitoring dashboard" /></a></p>
+                <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
                 (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
