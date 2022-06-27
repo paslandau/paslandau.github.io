@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 27 Jun 2022 06:09:48 +0000</pubDate>
-        <lastBuildDate>Mon, 27 Jun 2022 06:09:48 +0000</lastBuildDate>
+        <pubDate>Mon, 27 Jun 2022 07:38:07 +0000</pubDate>
+        <lastBuildDate>Mon, 27 Jun 2022 07:38:07 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</title>
@@ -7238,7 +7238,7 @@ notifications when this next part comes out :)</p>
             </item>
                     <item>
                 <title>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</title>
-                <description><![CDATA[<p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
+                <description><![CDATA[<p>In this part of my tutorial series on developing PHP on Docker we will
 install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
 for the front end requests.</p>
 
@@ -8790,33 +8790,8 @@ notifications when this next part comes out :)</p>
             </item>
                     <item>
                 <title>Docker from scratch for PHP 8.1 Applications in 2022 [Tutorial Part 2]</title>
-                <description><![CDATA[<p>In the fourth part of this tutorial series on developing PHP on Docker we will revisit the previous
-tutorials and update some things to be up-to-date in 2022. The article will be split in 3
-subparts:</p>
-
-<ul>
-<li>Part 4.1: Update the code structure (<strong>this article</strong>)
-
-<ul>
-<li>we'll also introduce three new containers (PHP workers, MySQL and redis) and add a small proof
-of concept to tie all containers together</li>
-</ul></li>
-<li>Part 4.2: Add the tools for local development (
-<a href="/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>,
-<strong>available at 2022-03-22</strong>)
-
-<ul>
-<li>make the setup work with PhpStorm, including the ability to execute phpunit tests and run 
-xdebug for all php containers (application, fpm and php workers)</li>
-</ul></li>
-<li>Part4.3: Include Laravel (
-<a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>,
-<strong>available at 2022-03-23</strong>)
-
-<ul>
-<li>refactor the code to use Commands, Controllers, Queues, etc.</li>
-</ul></li>
-</ul>
+                <description><![CDATA[<p>In this part of my tutorial series on developing PHP on Docker we will revisit the previous
+tutorials and update some things to be up-to-date in 2022.</p>
 
 <div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NuSWKx9FSso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 27 Jun 2022 06:09:48 +0000</pubDate>
-        <lastBuildDate>Mon, 27 Jun 2022 06:09:48 +0000</lastBuildDate>
+        <pubDate>Mon, 27 Jun 2022 07:38:07 +0000</pubDate>
+        <lastBuildDate>Mon, 27 Jun 2022 07:38:07 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -2219,7 +2219,7 @@ composer-require-checker            done   took 6s
                 <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</a></p>
 <hr />
 
-<p>In this third subpart of the fourth part of this tutorial series on developing PHP on Docker we will
+<p>In this part of my tutorial series on developing PHP on Docker we will
 install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
 for the front end requests.</p>
 
