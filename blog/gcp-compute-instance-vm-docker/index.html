@@ -2217,17 +2217,20 @@ Login Succeeded
 Logging in with your password grants your terminal complete access to your account.
 For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/
 </code></pre></li>
-<li><a href="#pushing-images-to-the-registry">pushing it to the registry</a>
-<code>bash
-docker push gcr.io/pl-dofroscra-p/my-nginx</code>
-<code>text
-$ docker push gcr.io/pl-dofroscra-p/my-nginx
+<li><p><a href="#pushing-images-to-the-registry">pushing it to the registry</a> 
+via</p>
+
+<pre><code class="language-bash">docker push gcr.io/pl-dofroscra-p/my-nginx
+</code></pre>
+
+<pre><code class="language-text"><br />$ docker push gcr.io/pl-dofroscra-p/my-nginx
 Using default tag: latest
-The push refers to repository [gcr.io/pl-dofroscra-1/my-nginx]
+The push refers to repository gcr.io/pl-dofroscra-1/my-nginx
 ad4683501621: Preparing
-# ...
+...
 ad4683501621: Pushed
-latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775</code></li>
+latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775
+</code></pre></li>
 <li>and "deploying it on the VM"</li>
 </ul>
 

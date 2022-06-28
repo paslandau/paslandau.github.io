@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 27 Jun 2022 07:38:07 +0000</pubDate>
-        <lastBuildDate>Mon, 27 Jun 2022 07:38:07 +0000</lastBuildDate>
+        <pubDate>Tue, 28 Jun 2022 07:29:39 +0000</pubDate>
+        <lastBuildDate>Tue, 28 Jun 2022 07:29:39 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</title>
@@ -2078,17 +2078,20 @@ Login Succeeded
 Logging in with your password grants your terminal complete access to your account.
 For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/
 </code></pre></li>
-<li><a href="#pushing-images-to-the-registry">pushing it to the registry</a>
-<code>bash
-docker push gcr.io/pl-dofroscra-p/my-nginx</code>
-<code>text
-$ docker push gcr.io/pl-dofroscra-p/my-nginx
+<li><p><a href="#pushing-images-to-the-registry">pushing it to the registry</a> 
+via</p>
+
+<pre><code class="language-bash">docker push gcr.io/pl-dofroscra-p/my-nginx
+</code></pre>
+
+<pre><code class="language-text"><br />$ docker push gcr.io/pl-dofroscra-p/my-nginx
 Using default tag: latest
-The push refers to repository [gcr.io/pl-dofroscra-1/my-nginx]
+The push refers to repository gcr.io/pl-dofroscra-1/my-nginx
 ad4683501621: Preparing
-# ...
+...
 ad4683501621: Pushed
-latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775</code></li>
+latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775
+</code></pre></li>
 <li>and "deploying it on the VM"</li>
 </ul>
 
@@ -2487,10 +2490,6 @@ notifications when this next part comes out :)</p>
 Pipelines</strong>.</p>
 
 <div class="youtube center-div">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
-<div class="youtube center-div" style="display:none">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/VsNvvt0CMm8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
@@ -3583,6 +3582,10 @@ They can be accessed in the <a href="https://gitlab.com/docker-php-tutorial/dock
 <!-- /generated --></p>
 
 <h3>Performance</h3>
+
+<div class="youtube center-div">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 <p><strong>Performance isn't an issue right now</strong>, because the CI runs take only about ~1 min (Github Actions)
 and ~2 min (Gitlab Pipelines), but that's mostly because we only ship a super minimal
@@ -7158,25 +7161,30 @@ and even though those changes have nothing to todo with "QA tools" I didn't want
 unnoticed:</p>
 
 <ul>
-<li>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)
+<li><p>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)</p>
 
 <ul>
 <li>removing unused values from the <code>.env.example</code> file</li>
 <li>run a <code>composer update</code> to get the latest Laravel version</li>
 <li>add a <code>show-help</code> script to the <code>scripts</code> section of the <code>composer.json</code> file that references the 
-<code>Makefile</code> (see also <a href="https://twitter.com/PascalLandau/status/1518227256648343552">this discussion on Twitter</a>)
-<code>json
-{
-"scripts": {
-    "show-help": [
-        "make"
-    ]
-},
-"scripts-descriptions": {
-    "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
+<code>Makefile</code> (see also <a href="https://twitter.com/PascalLandau/status/1518227256648343552">this discussion on Twitter</a>)</li>
+</ul>
+
+<pre><code class="language-json"><br />{
+    "scripts": {
+        "show-help": [
+            "make"
+        ]
+    },
+    "scripts-descriptions": {
+        "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
+    }
 }
-}</code>
-<a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></li>
+</code></pre>
+
+<p><a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></p>
+
+<ul>
 <li>replace <code>docker-compose</code> with <code>docker compose</code> to use <a href="https://docs.docker.com/compose/cli-command/">compose v2</a></li>
 </ul></li>
 </ul>

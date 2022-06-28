@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Mon, 27 Jun 2022 07:38:07 +0000</pubDate>
-        <lastBuildDate>Mon, 27 Jun 2022 07:38:07 +0000</lastBuildDate>
+        <pubDate>Tue, 28 Jun 2022 07:29:39 +0000</pubDate>
+        <lastBuildDate>Tue, 28 Jun 2022 07:29:39 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -19,10 +19,6 @@
 Pipelines</strong>.</p>
 
 <div class="youtube center-div">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/aGWGJQWtH1I" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
-<div class="youtube center-div" style="display:none">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/VsNvvt0CMm8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 

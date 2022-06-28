@@ -1059,25 +1059,30 @@ and even though those changes have nothing to todo with "QA tools" I didn't want
 unnoticed:</p>
 
 <ul>
-<li>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)
+<li><p>removing unnecessary files (<code>.styleci.yml</code>, <code>package.json</code>, <code>webpack.mix.js</code>)</p>
 
 <ul>
 <li>removing unused values from the <code>.env.example</code> file</li>
 <li>run a <code>composer update</code> to get the latest Laravel version</li>
 <li>add a <code>show-help</code> script to the <code>scripts</code> section of the <code>composer.json</code> file that references the 
-<code>Makefile</code> (see also <a href="https://twitter.com/PascalLandau/status/1518227256648343552">this discussion on Twitter</a>)
-<code>json
-{
-"scripts": {
-    "show-help": [
-        "make"
-    ]
-},
-"scripts-descriptions": {
-    "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
+<code>Makefile</code> (see also <a href="https://twitter.com/PascalLandau/status/1518227256648343552">this discussion on Twitter</a>)</li>
+</ul>
+
+<pre><code class="language-json"><br />{
+    "scripts": {
+        "show-help": [
+            "make"
+        ]
+    },
+    "scripts-descriptions": {
+        "show-help": "Display available 'make' commands (we use make instead of composer scripts)."
+    }
 }
-}</code>
-<a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></li>
+</code></pre>
+
+<p><a href="/img/php-qa-tools-make-docker/make-composer-scripts.gif"><img src="/img/php-qa-tools-make-docker/make-composer-scripts.gif" alt="Run make via composer script" /></a></p>
+
+<ul>
 <li>replace <code>docker-compose</code> with <code>docker compose</code> to use <a href="https://docs.docker.com/compose/cli-command/">compose v2</a></li>
 </ul></li>
 </ul>
