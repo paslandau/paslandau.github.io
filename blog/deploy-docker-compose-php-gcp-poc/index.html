@@ -1,0 +1,2768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Deploy dockerized PHP applications to &#039;production&#039; on a GCP VM and run them via docker compose.">
+            <meta name="author" content="Pascal Landau">
+        <title>Deploy dockerized PHP Apps to production on GCP via docker compose [Tutorial Part 9] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+
+
+
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Deploy dockerized PHP Apps to production on GCP</h1>
+                                            <h2 class="subheading">- via docker compose as a POC</h2>
+                                                                <span class="meta">
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-06-29 06:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
+                        </span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <p>In the ninth part of this tutorial series on developing PHP on Docker we will 
+<strong>deploy our dockerized PHP application to a production environment</strong> (a GCP Compute Instance VM)
+and <strong>run it via <code>docker compose</code> as a proof of concept</strong>.</p>
+
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/I6gaVR21fnw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-9-deploy-docker-compose-php-gcp-poc">part-9-deploy-docker-compose-php-gcp-poc</a>.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/gcp-compute-instance-vm-docker">Create a GCP Compute Instance VM for dockerized PHP Apps</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h3>Table of contents</h3>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#codebase-changes">Codebase changes</a>
+
+<ul>
+<li><a href="#restructure-the-codebase">Restructure the codebase</a></li>
+<li><a href="#the-build-directory">The <code>.build</code> directory</a></li>
+<li><a href="#the-secrets-directory">The <code>.secrets</code> directory</a></li>
+<li><a href="#the-tutorial-directory">The <code>.tutorial</code> directory</a></li>
+<li><a href="#the-infrastructure-directory">The <code>.infrastructure</code> directory</a></li>
+<li><a href="#add-a-gpg-key-for-production">Add a <code>gpg</code> key for production</a></li>
+<li><a href="#show-the-build-info">Show the <code>build-info</code></a></li>
+<li><a href="#optimize-gitignore">Optimize <code>.gitignore</code></a></li>
+</ul></li>
+<li><a href="#docker-changes">Docker changes</a>
+
+<ul>
+<li><a href="#a-env-file-for-prod">A <code>.env</code> file for <code>prod</code></a></li>
+<li><a href="#updating-the-docker-compose-yml-configuration-files">Updating the <code>docker-compose.yml</code> configuration files</a>
+
+<ul>
+<li><a href="#docker-compose-local-ci-prod-yml"><code>docker-compose.local.ci.prod.yml</code></a></li>
+<li><a href="#docker-compose-local-prod-yml"><code>docker-compose.local.prod.yml</code></a></li>
+<li><a href="#docker-compose-prod-yml"><code>docker-compose.prod.yml</code></a></li>
+</ul></li>
+<li><a href="#adjust-the-dockerignore-file">Adjust the <code>.dockerignore</code> file</a></li>
+<li><a href="#build-target-prod">Build target: <code>prod</code></a>
+
+<ul>
+<li><a href="#build-stage-prod-in-the-php-base-image">Build stage <code>prod</code> in the <code>php-base</code> image</a>
+
+<ul>
+<li><a href="#env-based-branching"><code>ENV</code> based branching</a></li>
+<li><a href="#avoid-composer-dev-dependencies">Avoid composer dev dependencies</a></li>
+<li><a href="#remove-unnecessary-directories">Remove unnecessary directories</a></li>
+<li><a href="#remove-secrets-for-other-environments">Remove secrets for other environments</a></li>
+<li><a href="#decrypt-the-secrets-via-entrypoint">Decrypt the secrets via <code>ENTRYPOINT</code></a></li>
+<li><a href="#copy-codebase-and-build-info-file">Copy codebase and <code>build-info</code> file</a></li>
+</ul></li>
+<li><a href="#build-stage-prod-in-the-remaining-images">Build stage <code>prod</code> in the remaining images</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#makefile-changes">Makefile changes</a>
+
+<ul>
+<li><a href="#adding-gcp-values-to-make-variables-env">Adding GCP values to <code>.make/variables.env</code></a></li>
+<li><a href="#env-based-docker-compose-config">ENV based <code>docker compose</code> config</a></li>
+<li><a href="#changes-to-the-git-secret-recipes">Changes to the <code>git-secret</code> recipes</a></li>
+<li><a href="#additional-docker-recipes">Additional <code>docker</code> recipes</a></li>
+<li><a href="#gcp-recipes">GCP recipes</a></li>
+<li><a href="#infrastructure-recipes">Infrastructure recipes</a></li>
+<li><a href="#deployment-recipes">Deployment recipes</a></li>
+</ul></li>
+<li><a href="#deployment-workflow">Deployment workflow</a>
+
+<ul>
+<li><a href="#the-deploy-target">The <code>deploy</code> target</a></li>
+<li><a href="#avoiding-code-drift">Avoiding code drift</a></li>
+<li><a href="#the-build-info-file">The <code>build-info</code> file</a></li>
+<li><a href="#build-and-push-the-docker-images">Build and push the <code>docker</code> images</a></li>
+<li><a href="#create-the-deployment-archive">Create the deployment archive</a></li>
+<li><a href="#deployment-commands-on-the-vm">Deployment commands on the VM</a>
+
+<ul>
+<li><a href="#the-deploy-sh-script">The <code>deploy.sh</code> script</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>In the previous tutorial
+<a href="/blog/gcp-compute-instance-vm-docker/">Create a GCP compute instance VM to run dockerized applications</a>
+we have created a Compute Instance VM on GCP and prepared it to run <code>docker</code> containers. For 
+this tutorial I made a small adjustment and changed the machine type from <code>e2-micro</code> to
+<code>e2-small</code> because we need a little more memory to run the whole application.</p>
+
+<p>In this tutorial, we will use the VM as a <strong>production environment</strong>, i.e. we will</p>
+
+<ul>
+<li>prepare our <code>docker</code> setup for production usage</li>
+<li>build and push the production-ready <code>docker</code> images to the GCP registry from our local system</li>
+<li>pull and start the images on the VM</li>
+</ul>
+
+<p>The whole process will be defined <a href="#the-deploy-target">in a single <code>make</code> target called <code>deploy</code></a>.</p>
+
+<p><strong>To try it yourself:</strong></p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    The following steps <strong>will create actual infrastructure on GCP</strong> which means you
+    will create costs (albeit quite little). Please make sure to shut the project down once you are
+    done, see <a href="/blog/gcp-compute-instance-vm-docker/#cleanup">Cleanup</a> of the previous
+    tutorial.
+  </div>
+</div>
+
+<ul>
+<li>create an account on GCP, <a href="/blog/gcp-compute-instance-vm-docker/#preconditions-project-and-owner-service-account">a project and a master service account</a>
+
+<ul>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#create-service-account-key-file">create a keyfile</a> 
+for the service account, name it <code>gcp-master-service-account-key.json</code> and move it to the 
+root of the repository</li>
+</ul></li>
+<li>checkout branch
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-9-deploy-docker-compose-php-gcp-poc">part-9-deploy-docker-compose-php-gcp-poc</a></li>
+<li>update the <code>.make/variables.env</code> file with your GCP project id and VM name</li>
+<li>initialize local docker setup via
+
+<ul>
+<li>copying the secret gpg key to the root of the repository via 
+<code>bash
+cp .tutorial/secret.gpg.example ./secret.gpg</code></li>
+<li>initializing the shared variables via <code>make make-init</code></li>
+<li>building the docker setup via <code>make docker-build</code></li>
+<li>start the docker setup via <code>make docker-up</code></li>
+<li>decrypt the secrets via 
+<code>make gpg-init
+make secret-decrypt</code></li>
+</ul></li>
+<li>run the script located at <code>.infrastructure/setup-gcp.sh</code> to create a GCP VM</li>
+<li>run <code>make deploy IGNORE_UNCOMMITTED_CHANGES=true</code> to deploy the application</li>
+<li>run <code>make deployment-setup-db-on-vm</code> to run the DB migrations</li>
+<li>run <code>make gcp-show-ip</code> to retrieve the public IP of the VM and open it in a browser</li>
+</ul>
+
+<pre><code class="language-bash">project_id=my-new-project100
+vm_name=my-vm-name
+
+git checkout part-9-deploy-docker-compose-php-gcp-poc
+sed -i "s/pl-dofroscra-p/${project_id}/g" .make/variables.env
+sed -i "s/dofroscra-test/${vm_name}/g" .make/variables.env
+cp .tutorial/secret.gpg.example ./secret.gpg
+make make-init
+make docker-build
+make docker-up
+make gpg-init
+make secret-decrypt
+bash .infrastructure/setup-gcp.sh $project_id $vm_name
+make deploy IGNORE_UNCOMMITTED_CHANGES=true
+make deployment-setup-db-on-vm
+echo "http://$(make -s gcp-show-ip)/"
+</code></pre>
+
+<p><strong>Note: It can take a couple of minutes until the infrastructure is up and running.</strong></p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    Please consider this whole tutorial <strong>only as a POC</strong>! 
+    <code>docker compose</code> should not be
+    used on a single VM in a production setup, because one huge benefit of docker is the separation
+    of services into horizontally scalable containers. Using a single VM would pretty much defeat
+    the purpose. <br>
+    <br>
+    In addition, we will use <code>docker</code> containers for the 
+    <code>mysql</code> and <code>redis</code> databases. It would be far better to use 
+    managed services like
+    <a href ="https://cloud.google.com/memorystore/docs/redis">Memorystore for <code>redis</code></a> and
+    <a href ="https://cloud.google.com/sql/docs/mysql">Cloud SQL for <code>mysql</code></a>
+    so that we don't have to deal with backups etc. ourselves.
+  </div>
+</div>
+
+<p><strong>Note:</strong> 
+We will tackle those issues and "remove" the POC status in the next part of the tutorial series.</p>
+
+<p><!-- generated -->
+<a id='codebase-changes'> </a>
+<!-- /generated --></p>
+
+<h2>Codebase changes</h2>
+
+<p>Before we dive into the <code>docker</code> stuff, let's quickly talk about some cleanup work in the 
+codebase that you can get via
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-9-deploy-docker-compose-php-gcp-poc">part-9-deploy-docker-compose-php-gcp-poc</a>.</p>
+
+<p><!-- generated -->
+<a id='restructure-the-codebase'> </a>
+<!-- /generated --></p>
+
+<h3>Restructure the codebase</h3>
+
+<p><!-- generated -->
+<a id='the-build-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.build</code> directory</h4>
+
+<p>We already know this directory from the previous tutorial where we used it as a temporary directory
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#create-a-junit-report-from-phpunit">to collect build artifacts from the CI pipeline</a>.
+Now, we will make use of it again as a temporary directory to</p>
+
+<ul>
+<li>prepare <a href="#create-the-deployment-archive">the creation of the deployment archive</a></li>
+<li>create a <a href="#the-build-info-file"><code>build-info</code> file</a> to pass it to the <code>docker</code> daemon in the build context</li>
+</ul>
+
+<p>The files in the directory are ignored via <code>.gitignore</code> as they are only temporarily required</p>
+
+<pre><code class="language-gitignore"># File: .gitignore
+
+.build/*
+</code></pre>
+
+<p>However, since the <code>build-info</code> file must be passed to docker, we will have a slight deviation 
+between the <code>.gitignore</code> and the <code>.dockerignore</code> file.</p>
+
+<pre><code class="language-dockerignore"># File: .dockerignore
+
+.build/*
+
+# kept files
+!.build/build-info
+</code></pre>
+
+<p>I'm mentioning this here specifically, because we usually 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#dockerignore">strive for a parity between <code>.gitignore</code> and <code>.dockerignore</code></a>.</p>
+
+<p><!-- generated -->
+<a id='the-secrets-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.secrets</code> directory</h4>
+
+<p>Since we will store <em>all</em> secrets for <em>all</em> environments in the codebase, <strong>we will organize them 
+by environment</strong> as subdirectories in a new <code>.secrets</code> directory:</p>
+
+<pre><code class="language-text">.secrets/
+├── ci
+│   └── ci-secret.txt.secret
+├── prod
+│   ├── app.env.secret
+│   └── docker.env.secret
+└── shared
+    └── passwords.txt.secret
+</code></pre>
+
+<p>This will also make it easier to 
+<a href="#remove-secrets-for-other-environments">pick the correct files per environment when building the docker image</a>
+and 
+<a href="#decrypt-the-secrets-via-entrypoint">select them for decryption in the <code>ENTRYPOINT</code></a>.</p>
+
+<p>The <code>.secrets/shared/</code> directory contains all secret files that are required by <em>all</em> 
+environments, whereas <code>.secrets/ci/</code> contains only <code>ci</code> secrets and <code>.secrets/prod/</code> contains only 
+<code>prod</code> secrets, respectively.</p>
+
+<p>In our codebase there are already <strong>two files that contain actual secrets</strong>: The <code>.env</code> file and 
+the <code>.docker/.env</code> file. Both of them contain the credentials for <code>mysql</code> and <code>redis</code>, and the 
+<code>.env</code> file also contains the <code>APP_KEY</code> that 
+<a href="https://tighten.com/blog/app-key-and-you/">is used by Laravel to encrypt cookies</a></p>
+
+<blockquote>
+  <p>Laravel uses the [<code>APP_KEY</code>] for all encrypted cookies, including the session cookie, before 
+  handing them off to the user's browser, and it uses it to decrypt cookies read from the browser.</p>
+</blockquote>
+
+<pre><code class="language-dotenv"># File: .env
+
+APP_KEY=base64:C8X1hLE2bpok8OS+bJ1cTB9wNASJNRLibqUrDq2ls4Q=
+DB_PASSWORD=production_secret_mysql_root_password
+REDIS_PASSWORD=production_secret_redis_password
+</code></pre>
+
+<pre><code class="language-dotenv"># File: .docker/.env
+
+MYSQL_PASSWORD=production_secret
+MYSQL_ROOT_PASSWORD=production_secret_mysql_root_password
+REDIS_PASSWORD=production_secret_redis_password
+</code></pre>
+
+<p>I have created the encrypted <code>.secret</code> files by moving the unencrypted files to the <code>.secrets/</code> 
+directory and made sure to add them to the <code>.gitignore</code> file with the rules</p>
+
+<pre><code class="language-gitignore"># ...
+
+.secrets/*/*
+!**/*.secret
+</code></pre>
+
+<p>Then I ran</p>
+
+<pre><code class="language-bash">make secret-add FILES=".secrets/*/*"
+
+make secret-encrypt
+</code></pre>
+
+<pre><code class="language-text">$ make secret-add FILES=".secrets/*/*"
+"C:/Program Files/Git/mingw64/bin/make" -s git-secret ARGS="add .secrets/*/*"
+git-secret: 4 item(s) added.
+
+$ make secret-encrypt
+"C:/Program Files/Git/mingw64/bin/make" -s git-secret ARGS="hide"
+git-secret: done. 4 of 4 files are hidden.
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-tutorial-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.tutorial</code> directory</h4>
+
+<p>I have mentioned before, that 
+<a href="/blog/git-secret-encrypt-repository-docker/#introduction">I would normally not store secret <code>gpg</code> keys in the repository</a>,
+but I'm still doing it in this tutorial so that it's easier to follow along. To make clear 
+which files are affected by this "exception to the rule", I have moved them in a dedicated 
+<code>.tutorial</code> directory:</p>
+
+<pre><code class="language-text">.tutorial/
+├── secret-ci-protected.gpg.example
+├── secret-production-protected.gpg.example
+└── secret.gpg.example
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-infrastructure-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.infrastructure</code> directory</h4>
+
+<p>The <code>.infrastructure</code> directory contains all files that are used to manage the infrastructure and 
+deployments. The directory was introduced in the 
+<a href="/blog/gcp-compute-instance-vm-docker/">previous part</a> and looks as follows</p>
+
+<pre><code class="language-text">.infrastructure/
+├── scripts/
+│     ├── deploy.sh
+│     └── provision.sh
+└── setup-gcp.sh
+</code></pre>
+
+<ul>
+<li>the <code>scripts</code> directory contains files that are transferred to and then executed on the VM
+
+<ul>
+<li><code>deploy.sh</code> is a script to <strong>perform all necessary deployment steps on the VM</strong> and is explained 
+in more detail in section <a href="#deployment-commands-on-the-vm">Deployment commands on the VM</a></li>
+<li><code>provision.sh</code> is a script to <strong>install <code>docker</code> and <code>docker compose</code> on the VM</strong> and contains 
+the commands that are explained in section <a href="/blog/gcp-compute-instance-vm-docker/#installing-docker-and-docker-compose">Installing <code>docker</code> and <code>docker compose</code></a></li>
+</ul></li>
+<li><code>setup-gcp.sh</code> is run to set up a VM initially and was described in more detail under
+<a href="/blog/gcp-compute-instance-vm-docker/#putting-it-all-together">Putting it all together</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='add-a-gpg-key-for-production'> </a>
+<!-- /generated --></p>
+
+<h3>Add a <code>gpg</code> key for production</h3>
+
+<p>We have created a new <code>gpg</code> key pair for the <code>prod</code> environment 
+when <a href="#add-a-gpg-key-for-production">setting up the VM on GCP</a>. The secret key is located
+at <code>.tutorial/secret-production-protected.gpg.example</code> and the public key at 
+<code>.dev/gpg-keys/production-public.gpg</code>.</p>
+
+<p><!-- generated -->
+<a id='show-the-build-info'> </a>
+<!-- /generated --></p>
+
+<h3>Show the <code>build-info</code></h3>
+
+<p>As part of the deployment, we generate a <a href="#the-build-info-file"><code>build-info</code> file</a> that allows 
+us to understand "which version of the codebase lives inside a container". This file is located 
+<strong>at the root of the repository</strong>, and we expose it as the web route <code>/info</code> (via the <code>php-fpm</code> 
+container) and as the command <code>info</code> (via the <code>application</code> container).</p>
+
+<p><strong>routes/web.php</strong></p>
+
+<pre><code class="language-php"># ...
+
+Route::get('/info', function () {
+    $info = file_get_contents(__DIR__."/../build-info");
+    return new \Illuminate\Http\Response($info, 200, ["Content-type" =&gt; "text/plain"]);
+});
+</code></pre>
+
+<p>Show via <code>curl http://localhost/info</code></p>
+
+<p><strong>routes/console.php</strong></p>
+
+<pre><code class="language-php"># ...
+
+Artisan::command('info', function () {
+    $info = file_get_contents(__DIR__."/../build-info");
+    $this-&gt;line($info);
+})-&gt;purpose('Display build information about the codebase');
+</code></pre>
+
+<p>Show via <code>php artisan info</code></p>
+
+<p><!-- generated -->
+<a id='optimize-gitignore'> </a>
+<!-- /generated --></p>
+
+<h3>Optimize <code>.gitignore</code></h3>
+
+<p>Laravel uses multiple <code>.gitignore</code> files to retain a directory structure, because 
+<a href="https://stackoverflow.com/a/115992/413531">empty directories cannot be added to git</a>. 
+<a href="https://stackoverflow.com/a/53208503/413531">This is a valid strategy</a>, but it makes 
+<a href="https://stackoverflow.com/a/29695734/413531">understanding "what is actually ignored" more complex</a>.</p>
+
+<p>In addition, it makes it harder to 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#dockerignore">keep <code>.gitignore</code> and <code>.dockerignore</code> in sync</a>,
+because we can't simply "copy the contents of the <code>./.gitignore</code>" any longer as it might not 
+contain all rules.</p>
+
+<p>Thus, I have identified all directory-specific <code>.gitignore</code> files via</p>
+
+<pre><code class="language-bash">find . -path ./vendor -prune -o -name .gitignore -print
+</code></pre>
+
+<pre><code class="language-text">find . -path ./vendor -prune -o -name .gitignore -print
+./.gitignore
+./bootstrap/cache/.gitignore
+./database/.gitignore
+./storage/app/.gitignore
+./storage/app/public/.gitignore
+./storage/framework/.gitignore
+./storage/framework/cache/.gitignore
+./storage/framework/cache/data/.gitignore
+./storage/framework/sessions/.gitignore
+./storage/framework/testing/.gitignore
+./storage/framework/views/.gitignore
+./storage/logs/.gitignore
+</code></pre>
+
+<p><strong>CAUTION</strong>: Usually, the files simply contain the rules</p>
+
+<pre><code class="language-gitignore">*
+!.gitignore
+</code></pre>
+
+<p>The only exception is <code>./database/.gitignore</code> which contains</p>
+
+<pre><code class="language-gitignore">*.sqlite*
+</code></pre>
+
+<p>TBH, I would consider this rather a bug, because this rule SHOULD actually live the main 
+<code>.gitignore</code> file. But for us it means, that we need to keep this rule as</p>
+
+<pre><code class="language-gitignore">database/*.sqlite*
+</code></pre>
+
+<p>Before we add them to the <code>.gitignore</code> file, it is important to understand 
+<a href="https://git-scm.com/docs/gitignore#_pattern_format">how <code>git</code> handles the <code>gitignore</code> file</a></p>
+
+<blockquote>
+  <p>An optional prefix "<code>!</code>" which negates the pattern; any matching file excluded by a previous 
+  pattern will become included again. <strong>It is not possible to re-include a file if a parent 
+  directory of that file is excluded</strong>. Git doesn’t list excluded directories for performance 
+  reasons, so any patterns on contained files have no effect, no matter where they are defined.</p>
+</blockquote>
+
+<p>In other words: Consider the following structure</p>
+
+<pre><code class="language-text">storage/
+└── app
+    ├── .gitignore
+    └── public
+        └── .gitignore
+</code></pre>
+
+<p>We might be tempted to write the rules as</p>
+
+<pre><code class="language-gitignore">storage/app/*
+!storage/app/.gitignore
+!storage/app/public/.gitignore
+</code></pre>
+
+<p>But that won't work as expected:
+<code>storage/app/*</code> ignores "everything" in the <code>storage/app/</code> directory, so that <code>git</code> <strong>wouldn't even 
+look</strong> into the <code>storage/app/public/</code> directory and thus wouldn't find the 
+<code>storage/app/public/.gitignore</code> file! In consequence, the rule <code>!storage/app/public/.gitignore</code> 
+doesn't have any affect and the file would <em>not</em> be added to the git repository.</p>
+
+<p>Instead, I need to allow the <code>public</code> directory explicitly by adding the rule 
+<code>!storage/app/public/</code> and ignore all files in it apart from the <code>.gitignore</code> file via 
+<code>storage/app/public/*</code>. So we are essentially saying:</p>
+
+<ul>
+<li>ignore all files in the <code>storage/app/</code> directory</li>
+<li>but NOT the <code>storage/app/public/</code> directory ITSELF</li>
+<li>though do still ignore all files IN the <code>storage/app/public/</code> directory</li>
+<li>but NOT the <code>storage/app/public/.gitignore</code> file</li>
+</ul>
+
+<pre><code class="language-gitignore"># ignore all files in the storage/app/ directory
+storage/app/*
+!storage/app/.gitignore
+# but NOT the storage/app/public/ directory ITSELF
+!storage/app/public/
+# do still ignore all files IN storage/app/public/
+storage/app/public/*
+# but NOT the storage/app/public/.gitignore file
+!storage/app/public/.gitignore
+</code></pre>
+
+<p>We can simplify the rules a little more via <code>!**.gitignore</code>, i.e. <em>all</em> <code>gitignore</code> files in any 
+directory should be included</p>
+
+<pre><code class="language-gitignore">storage/app/*
+!storage/app/public/
+storage/app/public/*
+
+!**.gitignore
+</code></pre>
+
+<p>So the final rules for all directory-specific <code>.gitignore</code> files become</p>
+
+<pre><code>bootstrap/cache/*
+database/*.sqlite*
+storage/app/*
+!storage/app/public/
+storage/app/public/*
+storage/framework/*
+!storage/framework/cache/
+storage/framework/cache/*
+!storage/framework/cache/data/
+storage/framework/cache/data/*
+!storage/framework/sessions/
+storage/framework/sessions/*
+!storage/framework/testing/
+storage/framework/testing/*
+!storage/framework/views/
+storage/framework/views/*
+!storage/framework/logs/
+storage/framework/logs/*
+
+!**.gitignore
+</code></pre>
+
+<p><strong>Caution</strong>: If Laravel changes the rules for their directory-specific <code>.gitignore</code> files, we 
+must adjust our rules as well! Luckily this usually only happens on major version upgrades, though.</p>
+
+<p>The full <code>.gitignore</code> file becomes</p>
+
+<pre><code class="language-gitignore">**/*.env*
+!.env.example
+!.make/variables.env
+.idea
+.phpunit.result.cache
+vendor/
+secret.gpg
+.gitsecret/keys/random_seed
+.gitsecret/keys/pubring.kbx~
+.secrets/*/*
+!**/*.secret
+gcp-service-account-key.json
+gcp-master-service-account-key.json
+
+# =&gt; directory-specific .gitignore files by Laravel
+bootstrap/cache/*
+database/*.sqlite*
+storage/app/*
+!storage/app/public/
+storage/app/public/*
+storage/framework/*
+!storage/framework/cache/
+storage/framework/cache/*
+!storage/framework/cache/data/
+storage/framework/cache/data/*
+!storage/framework/sessions/
+storage/framework/sessions/*
+!storage/framework/testing/
+storage/framework/testing/*
+!storage/framework/views/
+storage/framework/views/*
+!storage/framework/logs/
+storage/framework/logs/*
+
+# =&gt; directory-specific .gitignore files from us
+.build/*
+
+# =&gt; keep ALL .gitignore files
+!**.gitignore
+</code></pre>
+
+<p>It will be <a href="#adjust-the-dockerignore-file">"synced" later with the <code>.dockerignore</code> file</a>.</p>
+
+<p><!-- generated -->
+<a id='docker-changes'> </a>
+<!-- /generated --></p>
+
+<h2>Docker changes</h2>
+
+<p>For this tutorial we will use <code>docker compose</code> to <strong>build the containers</strong> as well as to 
+<strong>run them "in production"</strong>, i.e. on the GCP VM. The <code>docker compose</code> configuration will 
+essentially be a combination of the <code>local</code> and <code>ci</code> config from the previous tutorials:</p>
+
+<ul>
+<li>We will need all the services that 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker">we already know from the <strong><code>local</code> environment</strong></a>,
+i.e.
+<a href="/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG"><img src="/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG" alt="Docker images" title="Docker images" /></a>
+
+<ul>
+<li><code>nginx</code></li>
+<li><code>mysql</code></li>
+<li><code>redis</code></li>
+<li><code>php-worker</code></li>
+<li><code>php-fpm</code></li>
+<li><code>application</code></li>
+</ul></li>
+<li>The codebase will be baked into the image and we will <strong>bind mount a <code>gpg</code> secret key</strong> at 
+runtime to decrypt the secrets - exactly 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#docker-compose-ci-yml">as we did in the previous tutorial with the <strong><code>ci</code> environment</strong></a>
+<a href="/img/ci-pipeline-docker-php-gitlab-github/codebase-in-docker-image-share-secret-key.PNG"><img src="/img/ci-pipeline-docker-php-gitlab-github/codebase-in-docker-image-share-secret-key.PNG" alt="Add the codebase in the docker image and share a secret key file" /></a></li>
+</ul>
+
+<p>In the previous tutorial we have used the environment (<code>ci</code>) to 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#compose-file-updates">identify the necessary <code>docker-compose.yml</code> configuration files</a> 
+and also
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#build-target-ci">as a new build target in the <code>Dockerfiles</code></a>. 
+We'll stick to this process and <strong>add yet another environment called <code>prod</code></strong>.</p>
+
+<p><!-- generated -->
+<a id='a-env-file-for-prod'> </a>
+<!-- /generated --></p>
+
+<h3>A <code>.env</code> file for <code>prod</code></h3>
+
+<p>For our <code>local</code> and <code>ci</code> environments we didn't really care about the <code>.env</code> file that we used for 
+<code>docker compose</code> and have simply <strong>added a ready-to-use template at <code>.docker/.env.example</code> that is 
+NOT ignored by <code>git</code></strong>. Even though the file contains credentials, e.g. for <code>mysql</code> and <code>redis</code>, 
+it's okay if those are "exposed" in the repository, <strong>because we won't store any production data 
+in those databases</strong> in <code>local</code> and <code>ci</code>.</p>
+
+<p>For <code>prod</code> however, the situation is different: We certainly do NOT want to expose the 
+credentials. Luckily we already have <a href="/blog/git-secret-encrypt-repository-docker/"><code>git secret</code> set up</a>
+and thus could simply 
+<a href="#the-secrets-directory">add an encrypted template file at <code>.secrets/prod/docker.env</code></a>. We will 
+later 
+<a href="#create-the-deployment-archive">decrypt the file and add it to the deployment archive</a> 
+to transfer it to the VM 
+<a href="#deployment-commands-on-the-vm">in order to start the docker setup there</a>.</p>
+
+<p><!-- generated -->
+<a id='updating-the-docker-compose-yml-configuration-files'> </a>
+<!-- /generated --></p>
+
+<h3>Updating the <code>docker-compose.yml</code> configuration files</h3>
+
+<p>We will use the same technique as before to "assemble" our <code>docker compose</code> configuration, i.e. 
+we use <strong>multiple compose files with environment specific settings</strong>. For <code>prod</code>, we use the files</p>
+
+<ul>
+<li><a href="#docker-compose-local-ci-prod-yml"><code>docker-compose.local.ci.prod.yml</code></a>
+
+<ul>
+<li>contains config settings for <em>all</em> environments</li>
+</ul></li>
+<li><a href="#docker-compose-local-prod-yml"><code>docker-compose.local.prod.yml</code></a>
+
+<ul>
+<li>contains config settings only for <code>local</code> and <code>prod</code></li>
+</ul></li>
+<li><a href="#docker-compose-prod-yml"><code>docker-compose.prod.yml</code></a>
+
+<ul>
+<li>contains config settings only for <code>prod</code></li>
+</ul></li>
+</ul>
+
+<p>The assembling is once again <a href="#env-based-docker-compose-config">performed via Makefile</a>.</p>
+
+<p><!-- generated -->
+<a id='docker-compose-local-ci-prod-yml'> </a>
+<!-- /generated --></p>
+
+<h4><code>docker-compose.local.ci.prod.yml</code></h4>
+
+<p>This file was simply renamed from file <code>docker-compose.local.ci.yml</code>. It contains</p>
+
+<ul>
+<li><p><code>network</code> and <code>volume</code> definitions</p>
+
+<pre><code class="language-yaml">networks:
+  network:
+    driver: ${NETWORKS_DRIVER?}
+
+volumes:
+  mysql:
+    name: mysql-${ENV?}
+    driver: ${VOLUMES_DRIVER?}
+  redis:
+    name: redis-${ENV?}
+    driver: ${VOLUMES_DRIVER?}
+</code></pre></li>
+<li>the build instructions for the <code>application</code> service
+<code>yaml
+application:
+  image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/application-${ENV?}:${TAG?}
+  build:
+    context: ../
+    dockerfile: ./images/php/application/Dockerfile
+    target: ${ENV?}
+    args:
+      - BASE_IMAGE=${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+      - ENV=${ENV?}</code></li>
+<li><p>the configuration for the <code>mysql</code> and <code>redis</code> services</p>
+
+<pre><code class="language-yaml">mysql:
+  image: mysql:${MYSQL_VERSION?}
+  platform: linux/amd64
+  environment:
+    - MYSQL_DATABASE=${MYSQL_DATABASE:-application_db}
+    - MYSQL_USER=${MYSQL_USER:-application_user}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD?}
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD?}
+    - TZ=${TIMEZONE:-UTC}
+  networks:
+    - network
+  healthcheck:
+    test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+    timeout: 1s
+    retries: 30
+    interval: 2s
+
+redis:
+  image: redis:${REDIS_VERSION?}
+  command: &gt;
+    --requirepass ${REDIS_PASSWORD?}
+  networks:
+    - network
+</code></pre></li>
+</ul>
+
+<p><!-- generated -->
+<a id='docker-compose-local-prod-yml'> </a>
+<!-- /generated --></p>
+
+<h4><code>docker-compose.local.prod.yml</code></h4>
+
+<p>This file is based on the 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#docker-compose-local-yml"><code>docker-compose.local.yml</code> of the previous tutorial</a>
+<strong>without any settings for local development</strong>. It contains</p>
+
+<ul>
+<li><p>build instructions for the <code>php-fpm</code>, <code>php-worker</code> and <code>nginx</code> services (because 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#docker-changes">we didn't need those in the configuration for the <code>ci</code> environment</a>)</p>
+
+<pre><code class="language-yaml">php-fpm:
+  image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-fpm-${ENV?}:${TAG?}
+  build:
+    context: ../
+    dockerfile: ./images/php/fpm/Dockerfile
+    target: ${ENV?}
+    args:
+      - BASE_IMAGE=${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+      - TARGET_PHP_VERSION=${PHP_VERSION?}
+
+php-worker:
+  image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-worker-${ENV?}:${TAG?}
+  build:
+    context: ../
+    dockerfile: ./images/php/worker/Dockerfile
+    target: ${ENV?}
+    args:
+      - BASE_IMAGE=${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+      - PHP_WORKER_PROCESS_NUMBER=${PHP_WORKER_PROCESS_NUMBER:-4}
+
+nginx:
+  image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/nginx-${ENV?}:${TAG?}
+  build:
+    context: ../
+    dockerfile: ./images/nginx/Dockerfile
+    target: ${ENV?}
+    args:
+      - NGINX_VERSION=${NGINX_VERSION?}
+      - APP_CODE_PATH=${APP_CODE_PATH_CONTAINER?}
+  ports:
+    - "${NGINX_HOST_HTTP_PORT:-80}:80"
+    - "${NGINX_HOST_HTTPS_PORT:-443}:443"
+</code></pre></li>
+<li>port forwarding for the <code>nginx</code> service, because we want to forward incoming requests on the 
+VM to the <code>nginx</code> docker container
+<code>yaml
+nginx:
+  ports:
+    - "${NGINX_HOST_HTTP_PORT:-80}:80"
+    - "${NGINX_HOST_HTTPS_PORT:-443}:443"</code></li>
+<li><p>volume configuration for the <code>mysql</code> and <code>redis</code> services</p>
+
+<pre><code class="language-yaml">mysql:
+  volumes:
+    - mysql:/var/lib/mysql
+
+redis:
+  volumes:
+    - redis:/data
+</code></pre></li>
+</ul>
+
+<p>The following settings are <strong>only retained in <code>docker-compose.local.yml</code></strong></p>
+
+<ul>
+<li>bind mount of the codebase
+<code>yaml
+application|php-fpm|php-worker|nginx:
+  volumes:
+    - ${APP_CODE_PATH_HOST?}:${APP_CODE_PATH_CONTAINER?}</code></li>
+<li><p>port sharing with the host system (excluding nginx ports)</p>
+
+<pre><code class="language-yaml">application:
+  ports:
+    - "${APPLICATION_SSH_HOST_PORT:-2222}:22"
+
+mysql:
+  ports:
+    - "${MYSQL_HOST_PORT:-3306}:6379"
+
+redis:
+  ports:
+    - "${REDIS_HOST_PORT:-6379}:6379"
+</code></pre></li>
+<li>any settings for local dev tools for all php images (<code>application</code>, <code>php-fpm</code>, <code>php-worker</code>)
+<code>yaml
+application|php-fpm|php-worker:
+  environment:
+    - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
+  cap_add:
+    - "SYS_PTRACE"
+  security_opt:
+    - "seccomp=unconfined"
+  extra_hosts:
+    host.docker.internal:host-gateway</code></li>
+</ul>
+
+<p><!-- generated -->
+<a id='docker-compose-prod-yml'> </a>
+<!-- /generated --></p>
+
+<h4><code>docker-compose.prod.yml</code></h4>
+
+<p>In this file,</p>
+
+<ul>
+<li>we bind-mount the secret gpg key into all <code>php</code> services 
+(<a href="/blog/ci-pipeline-docker-php-gitlab-github/#docker-compose-ci-yml">as we did in the previous tutorial for the <code>docker-compose.ci.yml</code> file</a>)
+<code>yaml
+  volumes:
+    - ${APP_CODE_PATH_HOST?}/secret.gpg:${APP_CODE_PATH_CONTAINER?}/secret.gpg:ro</code></li>
+<li>we <a href="https://docs.docker.com/compose/compose-file/compose-file-v3/#env_file">provide an <code>env</code> file</a> 
+for all <code>php</code> services
+<code>yaml
+  env_file:
+    - ../../compose-secrets.env</code>
+The <code>env</code> file is used to pass the <code>GPG_PASSWORD</code> as environment variable to the containers.
+This is required to decrypt the secrets on container start. See section
+<a href="#decrypt-the-secrets-via-entrypoint">Decrypt the secrets via <code>ENTRYPOINT</code></a> for a more in-depth 
+explanation of the process and <a href="#the-deploy-sh-script">The <code>deploy.sh</code> script</a> for the origin 
+of the <code>compose-secrets.env</code> file.</li>
+</ul>
+
+<p><!-- generated -->
+<a id='adjust-the-dockerignore-file'> </a>
+<!-- /generated --></p>
+
+<h3>Adjust the <code>.dockerignore</code> file</h3>
+
+<p>Since we have 
+<a href="#optimize-gitignore">modified the <code>.gitignore</code> file</a> , we need to adjust the <code>.dockerignore</code> 
+file as well. In addition to the <code>gitignore</code> rules, we need three additional rules:</p>
+
+<ol>
+<li><code>.git</code>: <a href="/blog/ci-pipeline-docker-php-gitlab-github/#dockerignore">Known from the previous tutorial</a>. 
+We don't need to transfer the <code>.git</code> directory to the build context</li>
+<li><code>!.build/build-info</code>: We don't need the content of 
+<a href="#the-build-directory">the <code>.build/</code> directory</a>, but we <strong>do</strong> need the 
+<a href="#the-build-info-file">the <code>build-info</code> file</a></li>
+<li><code>vendor/**</code>: Has to be added as a workaround for the <code>docker compose</code> bug
+<a href="https://github.com/docker/compose/issues/9508">Inconsistent ".dockerignore" behavior between "docker build" and "docker compose build"</a>
+that causes <code>docker compose build</code> to include <code>.gitignore</code> files in the <code>vendor/</code> directory.
+This would mess with the build of the <code>php-base</code> image as we expect that no <code>vendor/</code> folder 
+exists</li>
+</ol>
+
+<p>So the full <code>.dockerignore</code> file becomes</p>
+
+<pre><code class="language-dockerignore"># ---
+# Rules from .gitignore
+# ---
+**/*.env*
+!.env.example
+!.make/variables.env
+.idea
+.phpunit.result.cache
+vendor/
+secret.gpg
+.gitsecret/keys/random_seed
+.gitsecret/keys/pubring.kbx~
+.secrets/*/*
+!**/*.secret
+.build/*
+!.gitkeep
+gcp-service-account-key.json
+
+# =&gt; directory-specific .gitignore files by Laravel
+bootstrap/cache/*
+database/*.sqlite*
+storage/app/*
+!storage/app/public/
+storage/app/public/*
+storage/framework/*
+!storage/framework/cache/
+storage/framework/cache/*
+!storage/framework/cache/data/
+storage/framework/cache/data/*
+!storage/framework/sessions/
+storage/framework/sessions/*
+!storage/framework/testing/
+storage/framework/testing/*
+!storage/framework/views/
+storage/framework/views/*
+!storage/framework/logs/
+storage/framework/logs/*
+
+# =&gt; directory-specific .gitignore files from us
+.build/*
+
+# =&gt; keep ALL .gitignore files
+!**.gitignore
+
+# ---
+# Rules specifically for .dockerignore
+# ---
+
+# =&gt; don't transfer the git directory
+.git
+
+# =&gt; keep the build-info file
+!.build/build-info
+
+# [WORKAROUND]
+# temporary fix for https://github.com/docker/compose/issues/9508
+# Otherwise, `docker compose build` would transfer the `.gitignore` files 
+# in the vendor/ directory to the build context
+vendor/**
+</code></pre>
+
+<p><!-- generated -->
+<a id='build-target-prod'> </a>
+<!-- /generated --></p>
+
+<h3>Build target: <code>prod</code></h3>
+
+<p>For building the images for the <code>prod</code> environment, we stick to
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#build-target-ci">the technique of the previous tutorial</a>
+once again. In short:</p>
+
+<ul>
+<li>initialize the <code>make</code> setup for <code>ENV=prod</code> via
+<code>bash
+make make-init ENVS="ENV=prod"</code>
+so that all subsequent <code>make</code> invocations use <code>ENV=prod</code> by default, see also section
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#initialize-the-shared-variables">Initialize the shared variables</a>
+of the previous tutorial</li>
+<li>the <code>ENV</code> is passed as environment variable to the <code>docker compose</code> command as defined in the
+<code>.make/02-00-docker.mk</code> Makefile include AND
+<a href="#env-based-docker-compose-config">the config files for <code>prod</code> are selected</a>
+<code>bash
+ENV=prod docker compose -p -f ./.docker/docker-compose/docker-compose.local.ci.prod.yml -f ./.docker/docker-compose/docker-compose.local.prod.yml -f ./.docker/docker-compose/docker-compose.prod.yml</code></li>
+<li>the <code>ENV</code> environment variable is used to define the <code>target</code> property as well as the <code>image</code>
+name in the <code>docker compose</code> config files. This can be verified via <code>make docker-config</code>, for
+instance
+<code>text
+$ make docker-config
+services:
+application:
+  build:
+    target: prod
+  image: gcr.io/pl-dofroscra-p/dofroscra/application-prod:latest
+# ...</code></li>
+</ul>
+
+<p>For <code>ci</code> we only needed the <code>php-base</code> images as well as the <code>application</code> image. For <code>prod</code>
+however, we need <em>all</em> images.</p>
+
+<p><!-- generated -->
+<a id='build-stage-prod-in-the-php-base-image'> </a>
+<!-- /generated --></p>
+
+<h4>Build stage <code>prod</code> in the <code>php-base</code> image</h4>
+
+<p>We will re-use a lot of the code that we used in the previous tutorial to build the <code>php-base</code> 
+image - so I'd recommend giving the corresponding section 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#build-stage-ci-in-the-php-base-image">Build stage <code>ci</code> in the <code>php-base</code> image</a>
+a look if anything is not clear.</p>
+
+<p>The relevant parts of the <code>.docker/images/php/base/Dockerfile</code> will be explained in the 
+following sections but are also shown here for the sake of a better overview:</p>
+
+<pre><code class="language-Dockerfile">ARG ALPINE_VERSION
+ARG COMPOSER_VERSION
+FROM composer:${COMPOSER_VERSION} as composer
+FROM alpine:${ALPINE_VERSION} as base
+
+ARG APP_USER_NAME
+ARG APP_GROUP_NAME
+ARG APP_CODE_PATH
+ARG TARGET_PHP_VERSION
+ARG ENV
+ENV APP_USER_NAME=${APP_USER_NAME}
+ENV APP_GROUP_NAME=${APP_GROUP_NAME}
+ENV APP_CODE_PATH=${APP_CODE_PATH}
+ENV TARGET_PHP_VERSION=${TARGET_PHP_VERSION}
+ENV ENV=${ENV}
+
+RUN apk add --no-cache php8~=${TARGET_PHP_VERSION}
+
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+
+WORKDIR $APP_CODE_PATH
+
+FROM base as codebase
+
+# By only copying the composer files required to run composer install
+# the layer will be cached and only invalidated when the composer dependencies are changed
+COPY ./composer.json /dependencies/
+COPY ./composer.lock /dependencies/
+
+# use a cache mount to cache the composer dependencies
+# this is essentially a cache that lives in Docker BuildKit (i.e. has nothing to do with the host system) 
+RUN --mount=type=cache,target=/tmp/.composer \
+    cd /dependencies &amp;&amp; \
+    # COMPOSER_HOME=/tmp/.composer sets the home directory of composer that
+    # also controls where composer looks for the cache 
+    # so we don't have to download dependencies again (if they are cached)
+    # @see https://stackoverflow.com/a/60518444 for the correct if-then-else syntax:
+    # - end all commands with ; \
+    # - except THEN and ELSE
+    if [ "$ENV" == "prod" ] ; \
+    then \
+      # on production, we don't want test dependencies
+      COMPOSER_HOME=/tmp/.composer composer install --no-scripts --no-plugins --no-progress -o --no-dev; \
+    else  \
+      COMPOSER_HOME=/tmp/.composer composer install --no-scripts --no-plugins --no-progress -o; \
+    fi
+
+# copy the full codebase
+COPY ../_blog /codebase
+
+# move the dependencies
+RUN mv /dependencies/vendor /codebase/vendor
+
+# remove files we don't require in the image to keep the image size small
+RUN cd /codebase &amp;&amp; \
+    rm -rf .docker/ .build/ .infrastructure/ &amp;&amp; \
+    if [ "$ENV" == "prod" ] ; \
+    then \
+      # on production, we don't want tests
+      rm -rf tests/; \
+    fi
+
+# Remove all secrets that are NOT required for the given ENV:
+#  `find /codebase/.secrets -type f -print` lists all files in the .secrets directory
+#  `grep -v "/\(shared\|$ENV\)/"` matches only the files that are NOT in the shared/ or $ENV/ (e.g. prod/) directories
+#  `grep -v ".secret\$"` ensures that we remove all files that are NOT ending in .secret
+#    FYI: 
+#     the "$" has to be escaped with a "\" 
+#     "Escaping is possible by adding a \ before the variable"
+#     @see https://docs.docker.com/engine/reference/builder/#environment-replacement
+#  `xargs rm -f` retrieves the remaining file and deletes them
+#    FYI: 
+#     `xargs` is necessary to convert the stdin to args for `rm`
+#     @see https://stackoverflow.com/a/20307392/413531
+#     the `-f` flag is required so that `rm` doesn't fail if no files are matched
+RUN find /codebase/.secrets -type f -print | grep -v "/\(shared\|$ENV\)/" | xargs rm -f &amp;&amp; \
+    find /codebase/.secrets -type f -print | grep -v ".secret\$" | xargs rm -f &amp;&amp; \
+    # list the remaining files for debugging purposes
+    find /codebase/.secrets -type f -print
+
+# We need a git repository for git-secret to work (can be an empty one)
+RUN cd /codebase &amp;&amp; \
+    git init
+
+FROM base as prod
+
+# We will use a custom ENTRYPOINT to decrypt the secrets when the container starts.
+# This way, we can store the secrets in their encrypted form directly in the image.
+# Note: Because we defined a custom ENTRYPOINT, the default CMD of the base image
+#       will be overriden. Thus, we must explicitly re-define it here via `CMD ["/bin/sh"]`.
+#       This behavior is described in the docs as:
+#       "If CMD is defined from the base image, setting ENTRYPOINT will reset CMD to an empty value. In this scenario, CMD must be defined in the current image to have a value."
+#       @see https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact
+COPY ./.docker/images/php/base/decrypt-secrets.sh /decrypt-secrets.sh
+RUN chmod +x /decrypt-secrets.sh
+CMD ["/bin/sh"]
+ENTRYPOINT ["/decrypt-secrets.sh"]
+
+COPY --from=codebase --chown=$APP_USER_NAME:$APP_GROUP_NAME /codebase $APP_CODE_PATH
+
+COPY --chown=$APP_USER_NAME:$APP_GROUP_NAME ./.build/build-info $APP_CODE_PATH/build-info
+</code></pre>
+
+<p><!-- generated -->
+<a id='env-based-branching'> </a>
+<!-- /generated --></p>
+
+<h5><code>ENV</code> based branching</h5>
+
+<p>So far, we have <strong>used the <code>ENV</code> to determine the final build stage</strong> of the docker image, by 
+using it as value for the <code>target</code> property in the <code>docker compose</code> config files. This 
+introduces a certain level of flexibility, but we would be forced to duplicate code if the 
+same logic is required for multiple <code>ENV</code> that use different build stages.</p>
+
+<p><strong>For <code>RUN</code> statements we can achieve branching on a more granular level by using <code>if...else</code> 
+conditions</strong>. The syntax is described in<br />
+<a href="https://stackoverflow.com/a/60518444">this SO answer to "Dockerfile if else condition with external arguments"</a>:</p>
+
+<ul>
+<li>place a <code>\</code> at the end of each line</li>
+<li>end each command with <code>;</code></li>
+</ul>
+
+<p><strong>Example:</strong></p>
+
+<pre><code class="language-Dockerfile">RUN if [ "$ENV" == "prod" ] ; \
+    then \
+      echo "ENV is prod"; \
+    else \
+      echo "ENV is NOT prod"; \
+    fi
+</code></pre>
+
+<p>This works, because we don't just use the <code>ENV</code> as the build target, but we also pass it as a 
+build argument in the <code>.docker/docker-compose/docker-compose-php-base.yml</code> file:</p>
+
+<pre><code class="language-yaml">services:
+  php-base:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+    build:
+      args:
+        - ENV=${ENV?}
+      target: ${ENV?}
+</code></pre>
+
+<p><!-- generated -->
+<a id='avoid-composer-dev-dependencies'> </a>
+<!-- /generated --></p>
+
+<h5>Avoid composer dev dependencies</h5>
+
+<p><strong>A production image should only contain the dependencies that are necessary to run the code in 
+production</strong>. This explicitly <em>excludes</em> dependencies that are only required for development or
+testing.</p>
+
+<p>This isn't only about image size, but also about security. E.g. take a look at
+<a href="https://nvd.nist.gov/vuln/detail/CVE-2017-9841">CVE-2017-9841</a> - a remote code execution
+vulnerability in <code>phpunit</code>. In a
+<a href="https://thephp.cc/artikel/phpunit-ein-sicherheitsrisiko">blog post</a> (german) Sebastian Bergmann
+(creator of PHPUnit) mentions that</p>
+
+<blockquote>
+  <p>A dependency like PHPUnit, that is only required for the developing the software but not
+  running it, is not supposed to be deployed to the production system</p>
+</blockquote>
+
+<p>Thus, we will add the 
+<a href="https://getcomposer.org/doc/03-cli.md#install-i"><code>--no-dev</code> flag of the <code>composer install</code> command</a>
+for <code>ENV=prod</code>:</p>
+
+<pre><code class="language-Dockerfile">FROM base as codebase
+
+# ...
+
+RUN --mount=type=cache,target=/tmp/.composer \
+    cd /dependencies &amp;&amp; \
+    if [ "$ENV" == "prod" ] ; \
+    then \
+      COMPOSER_HOME=/tmp/.composer composer install --no-scripts --no-plugins --no-progress -o --no-dev; \
+    else  \
+      COMPOSER_HOME=/tmp/.composer composer install --no-scripts --no-plugins --no-progress -o; \
+    fi
+</code></pre>
+
+<p>Note: See also section 
+<a href="/ci-pipeline-docker-php-gitlab-github/#build-the-dependencies">Build the dependencies</a> of the 
+previous tutorial for an explanation of the <code>--mount=type=cache,target=/tmp/.composer</code> part.</p>
+
+<p><!-- generated -->
+<a id='remove-unnecessary-directories'> </a>
+<!-- /generated --></p>
+
+<h5>Remove unnecessary directories</h5>
+
+<p>We already learned that <strong>no unnecessary stuff should end up in the image</strong>. This doesn't stop at 
+<code>composer</code> dependencies but does in our case also include some other directories:</p>
+
+<ul>
+<li><code>.docker</code> (the docker setup files)</li>
+<li><code>.build</code> (used to pass <a href="#the-build-info-file">the <code>build-info</code> file</a>)</li>
+<li><code>.infrastructure</code> (see <a href="#the-infrastructure-directory">The <code>.infrastructure</code> directory</a>)</li>
+<li><code>tests</code> (the test files)</li>
+</ul>
+
+<pre><code class="language-Dockerfile">FROM base as codebase
+
+# ...
+
+RUN cd /codebase &amp;&amp; \
+    rm -rf .docker/ .build/ .infrastructure/ &amp;&amp; \
+    if [ "$ENV" == "prod" ] ; \
+    then \
+      rm -rf tests/; \
+    fi
+</code></pre>
+
+<p><!-- generated -->
+<a id='remove-secrets-for-other-environments'> </a>
+<!-- /generated --></p>
+
+<h5>Remove secrets for other environments</h5>
+
+<p>We have <a href="#the-secrets-directory">re-organized the secrets previously</a> so that all 
+secrets for an environment are located in the corresponding <code>.secrets/$ENV/</code> subdirectory. We can 
+now make use of that separation <strong>to keep only the secret files that we actually need</strong>. This 
+adds an additional layer of security, because everybody with a correct secret <code>gpg</code> key file can 
+decrypt <em>all</em> the secrets. But: If our "<code>prod</code> secrets" don't even exist in the "<code>ci</code> images" 
+they also cannot be leaked if <code>ci</code> is compromised.</p>
+
+<pre><code class="language-Dockerfile">FROM base as codebase
+
+# ...
+
+RUN find /codebase/.secrets -type f -print | grep -v "/\(shared\|$ENV\)/" | xargs rm -f &amp;&amp; \
+    find /codebase/.secrets -type f -print | grep -v ".secret\$" | xargs rm -f &amp;&amp; \
+    # list the remaining files for debugging purposes
+    find /codebase/.secrets -type f -print
+</code></pre>
+
+<p>Notes:</p>
+
+<ul>
+<li><code>find /codebase/.secrets -type f -print</code> lists all files in the .secrets directory</li>
+<li><code>grep -v "/\(shared\|$ENV\)/"</code> matches only the files that are NOT in the <code>shared/</code> or <code>$ENV/</code> 
+(e.g. <code>prod/</code>) directories</li>
+<li><code>grep -v ".secret\$"</code> ensures that we remove all files that are NOT ending in <code>.secret</code>
+
+<ul>
+<li>as per <a href="https://docs.docker.com/engine/reference/builder/#environment-replacement">documentation</a>, 
+the <code>$</code> has to be escaped with a <code>\</code>
+> "Escaping is possible by adding a \ before the variable"</li>
+</ul></li>
+<li><code>xargs rm -f</code> retrieves the remaining file and deletes them
+
+<ul>
+<li><code>xargs</code> is necessary to 
+<a href="https://stackoverflow.com/a/20307392/413531">convert the <code>stdin</code> to arguments for <code>rm</code></a></li>
+<li>the <code>-f</code> flag is required so that <code>rm</code> doesn't fail if no files are matched</li>
+</ul></li>
+</ul>
+
+<p><!-- generated -->
+<a id='decrypt-the-secrets-via-entrypoint'> </a>
+<!-- /generated --></p>
+
+<h5>Decrypt the secrets via <code>ENTRYPOINT</code></h5>
+
+<p>In the <a href="/blog/ci-pipeline-docker-php-gitlab-github/">CI pipeline setup</a> we <strong>decrypt the secret 
+files in a manual step</strong> after the containers have been started, see 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#run-details">Run details</a>:</p>
+
+<blockquote>
+  <p>[...]
+  then, the docker setup is started
+  [...]
+  and gpg is initialized so that the secrets can be decrypted</p>
+
+<pre><code>   make gpg-init
+   make secret-decrypt-with-password
+</code></pre>
+</blockquote>
+
+<p>It "works" as long as <strong>no secrets are required when the container starts</strong>. This is unfortunately 
+no longer the case, because the <code>php-worker</code> container will start its workers immediately, and 
+they require a valid <code>.env</code> file - but
+<a href="#the-secrets-directory">the <code>.env</code> file for <code>prod</code> is only stored encrypted in the image</a>.
+Thus, we must ensure that <strong>the secrets are decrypted as soon as the container starts</strong> - 
+preferably before any other command is run. This sounds like 
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#using-entrypoint-for-pre-run-configuration">the perfect job for <code>ENTRYPOINT</code></a>:</p>
+
+<blockquote>
+  <p>the ENTRYPOINT is executed every time we run a container. Some things can't be done during 
+  build but only at runtime [...] - ENTRYPOINT is a good solution for that problem</p>
+</blockquote>
+
+<p>In our case, the <code>ENTRYPOINT</code> should</p>
+
+<ul>
+<li>initialize <code>gpg</code> (i.e. "read the secret gpg key") via
+<code>bash
+make gpg-init</code></li>
+<li>decrypt the secrets via
+<code>bash
+make secret-decrypt</code></li>
+<li>move/copy the decrypted files if necessary<br />
+<code>bash
+cp .secrets/prod/app.env .env</code></li>
+</ul>
+
+<p>and I have created a corresponding script at <code>.docker/images/php/base/decrypt-secrets.sh</code>:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+# exit immediately on error
+set -e
+
+# initialize make
+make make-init ENVS="ENV=prod GPG_PASSWORD=$GPG_PASSWORD"
+
+# read the secret gpg key
+make gpg-init
+
+# Only decrypt files required for production
+files=$(make secret-list | grep "/\(shared\|prod\)/" | tr '\n' ' ')
+make secret-decrypt-with-password FILES="$files"
+
+cp .secrets/prod/app.env .env
+
+# treat this script as a "decorator" and execute any other command after running it
+# @see https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#using-entrypoint-for-pre-run-configuration
+exec "$@"
+</code></pre>
+
+<p>Notes:</p>
+
+<ul>
+<li><code>make make-init ENVS="ENV=prod GPG_PASSWORD=$GPG_PASSWORD"</code> initializes <code>make</code> and requires 
+that an environment variable named <code>$GPG_PASSWORD</code> exists
+
+<ul>
+<li>this is ensured via the <code>env_file</code> property in 
+<a href="#docker-compose-prod-yml"><code>docker-compose.prod.yml</code></a></li>
+</ul></li>
+<li><code>make gpg-init</code> requires that a secret <code>gpg</code> key exists at <code>./secret.gpg</code> (see 
+<a href="/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">Local <code>git-secret</code> and <code>gpg</code> setup</a>)
+
+<ul>
+<li>this is ensured via the bind mount in <a href="#docker-compose-prod-yml"><code>docker-compose.prod.yml</code></a></li>
+</ul></li>
+<li><code>files=$(make secret-list | grep "/\(shared\|prod\)/" | tr '\n' ' ')</code> retrieves all secret 
+files that are relevant for production
+
+<ul>
+<li><a href="/blog/git-secret-encrypt-repository-docker/#makefile-adjustments"><code>make secret-list</code></a> will 
+list all secret files</li>
+<li><code>grep "/\(shared\|prod\)/"</code> reduces the list to only the ones in the <code>.secrets/shared/</code> and
+<code>.secrets/prod/</code> directories</li>
+<li><code>tr '\n' ' '</code> replaces new lines with spaces in the result so that the <code>$files</code> variable can 
+be passed savely as an argument to the next command</li>
+</ul></li>
+<li>via <code>make secret-decrypt-with-password FILES="$files"</code>
+
+<ul>
+<li>we make sure to <strong>only decrypt files that are relevant for production</strong>. This is important, 
+because <strong>the <code>prod</code> image only contains production secrets</strong>. Secrets for any other environment 
+<a href="#remove-secrets-for-other-environments">will not be part of the image</a>. 
+If we wouldn't provide a dedicated list of files, <code>git-secret</code> would attempt to decrypt <em>all</em> 
+secrets that it knows and would fail if an encrypted file is missing with the error
+<code>text
+gpg: can't open '/missing-file.secret': No such file or directory
+gpg: decrypt_message failed: No such file or directory
+git-secret: abort: problem decrypting file with gpg: exit code 2: /missing-file</code></li>
+<li>in addition, the <code>secret-decrypt-with-password</code> target expects that the <code>GPG_PASSWORD</code> variable 
+is populated (see first point).</li>
+</ul></li>
+<li>the last line 
+<a href="https://unix.stackexchange.com/a/467003"><code>exec "$@"</code> ensures that everything "works as before"</a>,
+i.e. the same
+<code>ENTRYPOINT</code> / <code>CMD</code> is used in the containers (e.g. <code>php-fpm</code> will still invoke the <code>php-fpm</code> 
+process once the secrets have been decrypted)</li>
+</ul>
+
+<p>The final code in the <code>Dockerfile</code> looks like this:</p>
+
+<pre><code class="language-Dockerfile">FROM base as prod
+
+COPY ./.docker/images/php/base/decrypt-secrets.sh /decrypt-secrets.sh
+RUN chmod +x /decrypt-secrets.sh
+CMD ["/bin/sh"]
+ENTRYPOINT ["/decrypt-secrets.sh"]
+</code></pre>
+
+<p><strong>Note</strong>: Because we defined a custom <code>ENTRYPOINT</code>, the default <code>CMD</code> of the base image  will be 
+overridden. Thus, we must explicitly re-define it here via <code>CMD ["/bin/sh"]</code>. This behavior is also
+<a href="https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact">described in the docs</a>:</p>
+
+<blockquote>
+  <p>If CMD is defined from the base image, setting <code>ENTRYPOINT</code> will reset <code>CMD</code> to an empty value. In 
+  this scenario, <code>CMD</code> must be defined in the current image to have a value.</p>
+</blockquote>
+
+<p><!-- generated -->
+<a id='copy-codebase-and-build-info-file'> </a>
+<!-- /generated --></p>
+
+<h5>Copy codebase and <code>build-info</code> file</h5>
+
+<p>As before, we will 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#create-the-final-image">copy the final "build artifact" from the <code>codebase</code> build stage</a>
+to only retain a single layer in the image. In addition, we also copy 
+<a href="#the-build-info-file">the <code>build-info</code> file</a> from <code>./.build/build-info</code> to the root of the 
+codebase.</p>
+
+<pre><code class="language-Dockerfile">FROM base as prod
+
+COPY --from=codebase --chown=$APP_USER_NAME:$APP_GROUP_NAME /codebase $APP_CODE_PATH
+
+COPY --chown=$APP_USER_NAME:$APP_GROUP_NAME ./.build/build-info $APP_CODE_PATH/build-info
+</code></pre>
+
+<p><!-- generated -->
+<a id='build-stage-prod-in-the-remaining-images'> </a>
+<!-- /generated --></p>
+
+<h4>Build stage <code>prod</code> in the remaining images</h4>
+
+<p>In the remaining images for <code>nginx</code>, <code>php-fpm</code>, <code>php-worker</code> and <code>application</code>, there are no 
+dedicated instructions for the <code>prod</code> target. We must still define the build stage, though, via</p>
+
+<pre><code class="language-Dockerfile">FROM base as prod
+</code></pre>
+
+<p>Otherwise, the build would fail with the error</p>
+
+<pre><code class="language-text">failed to solve: rpc error: code = Unknown desc = failed to solve with frontend dockerfile.v0: failed to create LLB definition: target stage prod could not be found
+</code></pre>
+
+<p><!-- generated -->
+<a id='makefile-changes'> </a>
+<!-- /generated --></p>
+
+<h2>Makefile changes</h2>
+
+<p>I have updated the default <code>help</code> target that prints all available commands to also include some 
+information about the current environment (usually set e.g. via <code>make make-init ENVS="ENV=prod"</code>). 
+The full recipe is</p>
+
+<pre><code class="language-Makefile">help:
+    @printf '%-43s \033[1mDefault values: \033[0m     \n'
+    @printf '%-43s ===================================\n'
+    @printf '%-43s ENV: \033[31m "$(ENV)" \033[0m     \n'
+    @printf '%-43s TAG: \033[31m "$(TAG)" \033[0m     \n'
+    @printf '%-43s ===================================\n'
+    @printf '%-43s \033[3mRun the following command to set them:\033[0m\n'
+    @printf '%-43s \033[1mmake make-init ENVS="ENV=prod TAG=latest"\033[0m\n'
+    @awk 'BEGIN {FS = ":.*##"; printf "\n\033[1mUsage:\033[0m\n  make \033[36m&lt;target&gt;\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-40s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' Makefile .make/*.mk
+</code></pre>
+
+<p>and will now print a header showing the values of the <code>$(ENV)</code> and <code>$(TAG)</code> variables:</p>
+
+<pre><code class="language-text">$ make
+                                            Default values:
+                                            ===================================
+                                            ENV:  "local"
+                                            TAG:  "latest"
+                                            ===================================
+                                            Run the following command to set them:
+                                            make make-init ENVS="ENV=prod TAG=latest"
+
+Usage:
+  make &lt;target&gt;
+
+[Make]
+  make-init                                 Initializes the local .makefile/.env file with ENV variables for make. Use via ENVS="KEY_1=value1 KEY_2=value2"
+
+[Application: Setup]
+
+</code></pre>
+
+<p><!-- generated -->
+<a id='adding-gcp-values-to-make-variables-env'> </a>
+<!-- /generated --></p>
+
+<h3>Adding GCP values to <code>.make/variables.env</code></h3>
+
+<p>The <code>.make/variables.env</code> file contains the "default" shared variables, that are neither "secret" 
+nor likely to be changed (see <a href="/blog/ci-pipeline-docker-php-gitlab-github/#initialize-the-shared-variables">Initialize the shared variables</a>).</p>
+
+<p>Those variables include the <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#image-naming-convention">"ingredients" for the image naming convention</a></p>
+
+<pre><code class="language-text">$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_SERVICE_NAME)-$(ENV)
+</code></pre>
+
+<p>Since we will now 
+<a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-container-registry">use our own registry</a>, we 
+need to change the <code>DOCKER_REGISTRY</code> value from <code>docker.io</code> to <code>gcr.io/pl-dofroscra-p</code> (see section 
+<a href="/blog/gcp-compute-instance-vm-docker/#pushing-images-to-the-registry">Pushing images to the registry</a>).</p>
+
+<p>In addition, we will need three more GCP specific variables that are required for the new 
+<a href="#gcp-recipes"><code>gcloud</code> cli <code>make</code> targets</a>:</p>
+
+<ul>
+<li><code>GCP_PROJECT_ID</code>: The <a href="/blog/gcp-compute-instance-vm-docker/#set-up-a-gcp-project">GCP project id</a></li>
+<li><code>GCP_ZONE</code>: The <a href="/blog/gcp-compute-instance-vm-docker/#general-vm-settings">availability zone of the GCP VM</a></li>
+<li><code>GCP_VM_NAME</code>: The <a href="/blog/gcp-compute-instance-vm-docker/#general-vm-settings">name of the GCP VM</a></li>
+</ul>
+
+<p>So the full content of <code>.make/variables.env</code> becomes</p>
+
+<pre><code class="language-dotenv">DOCKER_REGISTRY=gcr.io/pl-dofroscra-p
+DOCKER_NAMESPACE=dofroscra
+APP_USER_NAME=application
+APP_GROUP_NAME=application
+GCP_PROJECT_ID=pl-dofroscra-p
+GCP_ZONE=us-central1-a
+GCP_VM_NAME=dofroscra-test
+</code></pre>
+
+<p><!-- generated -->
+<a id='env-based-docker-compose-config'> </a>
+<!-- /generated --></p>
+
+<h3>ENV based <code>docker compose</code> config</h3>
+
+<p>We use the same technique as described 
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#env-based-docker-compose-config">in the previous tutorial to assemble the <code>docker compose</code> config files</a>
+by adding the config files for <code>ENV=prod</code> and the corresponding <code>DOCKER_COMPOSE_FILES</code> 
+definition in <code>.make/02-00-docker.mk</code>:</p>
+
+<pre><code class="language-Makefile"># File .make/02-00-docker.mk
+
+# ...
+
+DOCKER_COMPOSE_DIR:=...
+DOCKER_COMPOSE_COMMAND:=...
+
+DOCKER_COMPOSE_FILE_LOCAL_CI_PROD:=$(DOCKER_COMPOSE_DIR)/docker-compose.local.ci.prod.yml
+DOCKER_COMPOSE_FILE_LOCAL_PROD:=$(DOCKER_COMPOSE_DIR)/docker-compose.local.prod.yml
+DOCKER_COMPOSE_FILE_LOCAL:=$(DOCKER_COMPOSE_DIR)/docker-compose.local.yml
+DOCKER_COMPOSE_FILE_CI:=$(DOCKER_COMPOSE_DIR)/docker-compose.ci.yml
+DOCKER_COMPOSE_FILE_PROD:=$(DOCKER_COMPOSE_DIR)/docker-compose.prod.yml
+
+ifeq ($(ENV),prod)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL_PROD) -f $(DOCKER_COMPOSE_FILE_PROD)
+else ifeq ($(ENV),ci)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI_PROD) -f $(DOCKER_COMPOSE_FILE_CI)
+else ifeq ($(ENV),local)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL)
+endif
+
+DOCKER_COMPOSE:=$(DOCKER_COMPOSE_COMMAND) $(DOCKER_COMPOSE_FILES)
+</code></pre>
+
+<p>FYI: There is no dedicated <code>docker compose</code> config file for settings that only affect <code>ci</code> and 
+<code>prod</code> (i.e. <code>docker-compose.ci.prod.yml</code>).</p>
+
+<p>The "final" <code>$(DOCKER_COMPOSE_FILES)</code> variable will look like this:</p>
+
+<pre><code class="language-text">-f ./.docker/docker-compose/docker-compose.local.ci.prod.yml -f ./.docker/docker-compose/docker-compose.local.prod.yml -f ./.docker/docker-compose/docker-compose.prod.yml
+</code></pre>
+
+<p>and the "full" <code>$(DOCKER_COMPOSE)</code> variable like this:</p>
+
+<pre><code class="language-text">ENV=prod TAG=latest DOCKER_REGISTRY=gcr.io/pl-dofroscra-p DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker compose -p dofroscra_prod --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.local.ci.prod.yml -f ./.docker/docker-compose/docker-compose.local.prod.yml -f ./.docker/docker-compose/docker-compose.prod.yml
+</code></pre>
+
+<p><!-- generated -->
+<a id='changes-to-the-git-secret-recipes'> </a>
+<!-- /generated --></p>
+
+<h3>Changes to the <code>git-secret</code> recipes</h3>
+
+<p>The <code>git-secret</code> recipes are defined in <code>01-00-application-setup.mk</code> and have been added 
+originally in
+<a href="/blog/git-secret-encrypt-repository-docker/#makefile-adjustments">Use <code>git secret</code> to encrypt secrets in the repository: Makefile adjustments</a>.</p>
+
+<p>I have modified the targets <code>secret-decrypt</code> and <code>secret-decrypt-with-password</code> to accept an 
+optional list of files to decrypt via the <code>FILES</code> variable. If the variable is empty, <em>all</em> 
+files are decrypted. This is required for the 
+<a href="#decrypt-the-secrets-via-entrypoint"><code>decrypt-secrets.sh</code> script</a>, because we will 
+<a href="#remove-secrets-for-other-environments">only store the secrets that are relevant for the curently built environment</a>
+in the image and the decryption would fail if we attempted to decrypt files that don't exist.</p>
+
+<pre><code class="language-Makefile"># ...
+
+.PHONY: secret-decrypt
+secret-decrypt: ## Decrypt secret files via `git-secret reveal -f`. Use FILES=file1 to decrypt only file1 instead of all files
+    "$(MAKE)" -s git-secret ARGS="reveal -f $(FILES)"
+
+.PHONY: secret-decrypt-with-password
+secret-decrypt-with-password: ## Decrypt secret files using a password for gpg. Use FILES=file1 to decrypt only file1 instead of all files
+    @$(if $(GPG_PASSWORD),,$(error GPG_PASSWORD is undefined))
+    "$(MAKE)" -s git-secret ARGS="reveal -f -p $(GPG_PASSWORD) $(FILES)" 
+</code></pre>
+
+<p>In addition, I made a minor adjustment to the targets <code>secret-add</code>, <code>secret-cat</code> and 
+<code>secret-remove</code> to use the variable name <code>FILES</code> (plural) instead of <code>FILE</code>, because all of 
+them can also work with a list of files instead of just a single one.</p>
+
+<p><!-- generated -->
+<a id='additional-docker-recipes'> </a>
+<!-- /generated --></p>
+
+<h3>Additional <code>docker</code> recipes</h3>
+
+<p>The following targets have been added to <code>.make/02-00-docker.mk</code></p>
+
+<pre><code class="language-Makefile">compose-secrets.env:
+    @echo "# This file only exists because docker compose cannot run `build` otherwise," &gt; ./compose-secrets.env
+    @echo "# because it is referenced as an `env_file` in the docker compose config file" &gt; ./compose-secrets.env
+    @echo "# for the `prod` environment. On `prod` it will contain the necessary ENV variables," &gt; ./compose-secrets.env
+    @echo "# but on all other environments this 'placeholder' file is created." &gt; ./compose-secrets.env
+    @echo "# The file is generated automatically via `make` if a docker compose target is executed" &gt; ./compose-secrets.env
+    @echo "# @see https://github.com/docker/compose/issues/1973#issuecomment-1148257736" &gt; ./compose-secrets.env
+
+.PHONY: docker-push
+docker-push: validate-docker-variables ## Push all docker images to the remote repository
+    $(DOCKER_COMPOSE) push $(ARGS)
+
+.PHONY: docker-pull
+docker-pull: validate-docker-variables ## Pull all docker images from the remote repository
+    $(DOCKER_COMPOSE) pull $(ARGS)
+
+.PHONY: docker-exec
+docker-exec: validate-docker-variables ## Execute a command in a docker container. Usage: `make docker-exec DOCKER_SERVICE_NAME="application" DOCKER_COMMAND="echo 'Hello world!'"`
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    @$(if $(DOCKER_COMMAND),,$(error "DOCKER_COMMAND is undefined"))
+    $(DOCKER_COMPOSE) exec -T $(DOCKER_SERVICE_NAME) $(DOCKER_COMMAND)
+
+# @see https://www.linuxfixes.com/2022/01/solved-how-to-test-dockerignore-file.html
+# helpful to debug a .dockerignore file
+.PHONY: docker-show-build-context
+docker-show-build-context: ## Show all files that are in the docker build context for `docker build`
+    @echo -e "FROM busybox\nCOPY . /codebase\nCMD find /codebase -print" | docker image build --no-cache -t build-context -f - .
+    @docker run --rm build-context | sort
+
+# `docker build` and `docker compose build` are behaving differently
+# @see https://github.com/docker/compose/issues/9508
+.PHONY: docker-show-compose-build-context
+docker-show-compose-build-context: ## Show all files that are in the docker build context for `docker compose build`
+    @.dev/scripts/docker-compose-build-context/show-build-context.sh
+
+# Note: This is only a temporary target until https://github.com/docker/for-win/issues/12742 is fixed
+.PHONY: docker-fix-mount-permissions
+docker-fix-mount-permissions: ## Fix the permissions of the bind-mounted folder, @see https://github.com/docker/for-win/issues/12742
+    $(EXECUTE_IN_APPLICATION_CONTAINER) ls -al
+</code></pre>
+
+<ul>
+<li><code>compose-secrets.env</code> ensures that the file <code>./compose-secrets.env</code> exists in the root of the 
+repository. The target is added as precondition to the <code>validate-docker-variables</code> target so 
+that 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#enforce-required-parameters">it is checked whenever another <code>docker compose</code> target is run</a>
+<code>makefile
+.PHONY: validate-docker-variables
+validate-docker-variables: .docker/.env compose-secrets.env</code>
+Without this file, <code>docker compose build</code> would fail for the <code>prod</code> environment, because the
+file only exists "on the VM" and 
+<a href="#docker-compose-prod-yml">is defined as <code>env_file</code> setting in <code>docker-compose.prod.yml</code></a>.
+This is one of those annoying cases when the 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker-compose">dual-<code>build</code>-and-<code>run</code>-usage of <code>docker compose</code></a> 
+gets in the way, see also 
+<a href="https://github.com/docker/compose/issues/1973#issuecomment-1148257736">GH issue "Allow some commands to run without full config validation"</a></li>
+<li><code>docker-push</code> uses <code>docker compose push</code> to <em>push</em> all defined services to the registry</li>
+<li><code>docker-pull</code> uses <code>docker compose pull</code> to <em>pull</em> all defined services from the registry</li>
+<li><code>docker-exec</code> uses <code>docker compose exec</code> to run arbitrary commands in the docker container 
+that is specified via the <code>$(DOCKER_SERVICE_NAME)</code> variable. The command itself has to be passed 
+via the <code>$(DOCKER_COMMAND)</code> variable</li>
+<li><code>docker-show-build-context</code> is a small helper script that builds a temporary image and lists 
+all files in the build context - this is very helpful to debug entries in the <code>.dockerignore</code> 
+file. See also: <a href="https://www.linuxfixes.com/2022/01/solved-how-to-test-dockerignore-file.html">[SOLVED] How to test dockerignore file?</a></li>
+<li><code>docker-show-compose-build-context</code> does the same but for <code>docker compose build</code> - which 
+currently (in <code>docker compose</code> v2.5.1) 
+<a href="https://github.com/docker/compose/issues/9508">seems to behave differently than <code>docker build</code></a></li>
+<li><code>docker-fix-mount-permissions</code> is a only a temporary target that provides a workaround for a 
+bug I filed in the Docker Desktop for Windows repository: 
+<a href="https://github.com/docker/for-win/issues/12742">Ownership of files set via bind mount is set to user who accesses the file first</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='gcp-recipes'> </a>
+<!-- /generated --></p>
+
+<h3>GCP recipes</h3>
+
+<p>For the <a href="#deployment-workflow">deployment</a>, we need to communicate with the VM and will use 
+the <a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-gcloud-cli-tool"><code>gcloud</code> cli</a> to run 
+<a href="/blog/gcp-compute-instance-vm-docker/#gcloud-ssh-command">SSH commands via IAP tunneling</a>. The cli 
+requires a couple of default parameters like the VM name, the project id, the availability 
+zone and the location of the key file for the service account, that we 
+<a href="#adding-gcp-values-to-make-variables-env">conveniently defined in the <code>.make/variables.env</code> file</a>.</p>
+
+<p>The GCP targets are defined in <code>.make/03-00-gcp.mk</code>:</p>
+
+<pre><code class="language-Makefile">##@ [GCP]
+
+.PHONY: gcp-init
+gcp-init: validate-gcp-variables ## Initialize the `gcloud` cli and authenticate docker with the keyfile defined via GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY.
+    @$(if $(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY),,$(error "GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY is undefined"))
+    @$(if $(GCP_PROJECT_ID),,$(error "GCP_PROJECT_ID is undefined"))
+    gcloud auth activate-service-account --key-file="$(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY)" --project="$(GCP_PROJECT_ID)"
+    cat "$(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY)" | docker login -u _json_key --password-stdin https://gcr.io
+
+.PHONY: validate-gcp-variables
+validate-gcp-variables:
+    @$(if $(GCP_PROJECT_ID),,$(error "GCP_PROJECT_ID is undefined"))
+    @$(if $(GCP_ZONE),,$(error "GCP_ZONE is undefined"))
+    @$(if $(GCP_VM_NAME),,$(error "GCP_VM_NAME is undefined"))
+
+# @see https://cloud.google.com/sdk/gcloud/reference/compute/ssh
+.PHONY: gcp-ssh-command
+gcp-ssh-command: validate-gcp-variables ## Run an arbitrary SSH command on the VM via IAP tunnel. Usage: `make gcp-ssh-command COMMAND="whoami"`
+    @$(if $(COMMAND),,$(error "COMMAND is undefined"))
+    gcloud compute ssh $(GCP_VM_NAME) --project $(GCP_PROJECT_ID) --zone $(GCP_ZONE) --tunnel-through-iap --command="$(COMMAND)"
+
+.PHONY: gcp-ssh-login
+gcp-ssh-login: validate-gcp-variables ## Log into a VM via IAP tunnel
+    gcloud compute ssh $(GCP_VM_NAME) --project $(GCP_PROJECT_ID) --zone $(GCP_ZONE) --tunnel-through-iap
+
+# @see https://cloud.google.com/sdk/gcloud/reference/compute/scp
+.PHONY: gcp-scp-command
+gcp-scp-command: validate-gcp-variables ## Copy a file via scp to the VM via IAP tunnel. Usage: `make gcp-scp-command SOURCE="foo" DESTINATION="bar"`
+    @$(if $(SOURCE),,$(error "SOURCE is undefined"))
+    @$(if $(DESTINATION),,$(error "DESTINATION is undefined"))
+    gcloud compute scp $(SOURCE) $(GCP_VM_NAME):$(DESTINATION) --project $(GCP_PROJECT_ID) --zone $(GCP_ZONE) --tunnel-through-iap
+
+# Defines the default secret version to retrieve from the Secret Manager
+SECRET_VERSION?=latest
+
+# @see https://cloud.google.com/sdk/gcloud/reference/secrets/versions/access
+.PHONY: gcp-secret-get
+gcp-secret-get: ## Retrieve and print the secret $(SECRET_NAME) in version $(SECRET_VERSION) from the Secret Manager
+    @$(if $(SECRET_NAME),,$(error "SECRET_NAME is undefined"))
+    @$(if $(SECRET_VERSION),,$(error "SECRET_VERSION is undefined"))
+    @gcloud secrets versions access $(SECRET_VERSION) --secret=$(SECRET_NAME)
+
+.PHONY: gcp-docker-exec
+gcp-docker-exec: ## Run a command in a docker container on the VM. Usage: `make gcp-docker-exec DOCKER_SERVICE_NAME="application" DOCKER_COMMAND="echo 'Hello world!'"`
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    @$(if $(DOCKER_COMMAND),,$(error "DOCKER_COMMAND is undefined"))
+    "$(MAKE)" -s gcp-ssh-command COMMAND="cd $(CODEBASE_DIRECTORY) &amp;&amp; make docker-exec DOCKER_SERVICE_NAME='$(DOCKER_SERVICE_NAME)' DOCKER_COMMAND='$(DOCKER_COMMAND)'"
+
+# @see https://cloud.google.com/compute/docs/instances/view-ip-address
+.PHONY: gcp-show-ip
+gcp-show-ip: ## Show the IP address of the VM specified by GCP_VM_NAME.
+    gcloud compute instances describe $(GCP_VM_NAME) --zone $(GCP_ZONE) --project=$(GCP_PROJECT_ID) --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+</code></pre>
+
+<ul>
+<li><code>gcp-init</code> ensures that the correct service account is 
+<a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-gcloud-cli-tool">activated for the <code>gcloud</code> cli</a>
+and is also used for 
+<a href="/blog/gcp-compute-instance-vm-docker/#authenticate-docker"><code>docker</code> authentication</a></li>
+<li><code>validate-gcp-variables</code> is the pendant to the <code>validate-docker-variables</code> in the 
+<code>.make/02-00-docker.mk</code> file and checks if the default variables <code>GCP_PROJECT_ID</code>, 
+<code>GCP_ZONE</code> and <code>GCP_VM_NAME</code> exist. See also section
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#enforce-required-parameters">Enforce required parameters</a></li>
+<li><code>gcp-ssh-command</code> is used to run arbitrary SSH commands on the VM using
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh"><code>gcloud compute ssh</code></a>
+The command is defined via the <code>COMMAND</code> variable</li>
+<li><code>gcp-ssh-login</code> is a convenience target to 
+<a href="/blog/gcp-compute-instance-vm-docker/#login-using-the-identity-aware-proxy-iap-concept">log into the GCP VM via SSH using IAP tunneling</a></li>
+<li><code>gcp-scp-command</code> copies files from the local system to the VM via <code>scp</code> using 
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/scp"><code>gcloud compute scp</code></a>
+The source must be defined via the <code>SOURCE</code> variable and the destination via the <code>DESTINATION</code> 
+variable</li>
+<li><code>gcp-secret-get</code> retrieves a secret from the <a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-secret-manager">Secret Manager</a>.
+The secret has to specified via the <code>SECRET_NAME</code> variable and an optional version can be given 
+via the <code>VERSION</code> variable (that defaults to <code>latest</code> if omitted)</li>
+<li><code>gcp-docker-exec</code> runs the <code>gcp-ssh-command</code> target to execute the 
+<a href="#additional-docker-recipes"><code>docker-exec</code> target</a> on the VM</li>
+<li><code>gcp-show-ip</code> <a href="https://cloud.google.com/compute/docs/instances/view-ip-address">retrieves the ip address of the VM on GCP</a>
+as explained in</li>
+</ul>
+
+<p><!-- generated -->
+<a id='infrastructure-recipes'> </a>
+<!-- /generated --></p>
+
+<h3>Infrastructure recipes</h3>
+
+<p>For the infrastructure, we currently only have a single target defined in the 
+<code>.make/04-00-infrastructure.mk</code> file</p>
+
+<pre><code class="language-Makefile">##@ [Infrastructure]
+
+.PHONY: infrastructure-setup-vm
+infrastructure-setup-vm: ## Set the GCP VM up
+    bash .infrastructure/setup-gcp.sh   
+</code></pre>
+
+<ul>
+<li><code>infrastructure-setup-vm</code> runs the script defined in the
+<a href="#the-infrastructure-directory"><code>.infrastructure/setup-gcp.sh</code></a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='deployment-recipes'> </a>
+<!-- /generated --></p>
+
+<h3>Deployment recipes</h3>
+
+<p>The <a href="#deployment-workflow">Deployment workflow</a> is described in more detail in the following 
+section, thus I'll only show the corresponding targets defined in <code>.make/05-00-deployment.mk</code>
+here</p>
+
+<pre><code class="language-Makefile">##@ [Deployment]
+
+.PHONY: deploy
+deploy: # Build all images and deploy them to GCP
+    @printf "$(GREEN)Switching to 'local' environment$(NO_COLOR)\n"
+    @make --no-print-directory make-init
+    @printf "$(GREEN)Starting docker setup locally$(NO_COLOR)\n"
+    @make --no-print-directory docker-up
+    @printf "$(GREEN)Verifying that there are no changes in the secrets$(NO_COLOR)\n"
+    @make --no-print-directory gpg-init
+    @make --no-print-directory deployment-guard-secret-changes
+    @printf "$(GREEN)Verifying that there are no uncommitted changes in the codebase$(NO_COLOR)\n"
+    @make --no-print-directory deployment-guard-uncommitted-changes
+    @printf "$(GREEN)Initializing gcloud$(NO_COLOR)\n"
+    @make --no-print-directory gcp-init
+    @printf "$(GREEN)Switching to 'prod' environment$(NO_COLOR)\n"
+    @make --no-print-directory make-init ENVS="ENV=prod TAG=latest"
+    @printf "$(GREEN)Creating build information file$(NO_COLOR)\n"
+    @make --no-print-directory deployment-create-build-info-file
+    @printf "$(GREEN)Building docker images$(NO_COLOR)\n"
+    @make --no-print-directory docker-build
+    @printf "$(GREEN)Pushing images to the registry$(NO_COLOR)\n"
+    @make --no-print-directory docker-push
+    @printf "$(GREEN)Creating the deployment archive$(NO_COLOR)\n"
+    @make deployment-create-tar
+    @printf "$(GREEN)Copying the deployment archive to the VM and run the deployment$(NO_COLOR)\n"
+    @make --no-print-directory deployment-run-on-vm
+    @printf "$(GREEN)Clearing deployment archive$(NO_COLOR)\n"
+    @make --no-print-directory deployment-clear-tar
+    @printf "$(GREEN)Switching to 'local' environment$(NO_COLOR)\n"
+    @make --no-print-directory make-init
+
+# directory on the VM that will contain the files to start the docker setup
+CODEBASE_DIRECTORY=/tmp/codebase
+
+IGNORE_SECRET_CHANGES?=
+
+.PHONY: deployment-guard-secret-changes
+deployment-guard-secret-changes: ## Check if there are any changes between the decrypted and encrypted secret files
+    if ( ! make secret-diff || [ "$$(make secret-diff | grep ^@@)" != "" ] ) &amp;&amp; [ "$(IGNORE_SECRET_CHANGES)" == "" ] ; then \
+        printf "Found changes in the secret files =&gt; $(RED)ABORTING$(NO_COLOR)\n\n"; \
+        printf "Use with IGNORE_SECRET_CHANGES=true to ignore this warning\n\n"; \
+        make secret-diff; \
+        exit 1; \
+    fi
+    @echo "No changes in the secret files!"
+
+IGNORE_UNCOMMITTED_CHANGES?=
+
+.PHONY: deployment-guard-uncommitted-changes
+deployment-guard-uncommitted-changes: ## Check if there are any git changes and abort if so. The check can be ignore by passing `IGNORE_UNCOMMITTED_CHANGES=true`
+    if [ "$$(git status -s)" != "" ] &amp;&amp; [ "$(IGNORE_UNCOMMITTED_CHANGES)" == "" ] ; then \
+        printf "Found uncommitted changes in git =&gt; $(RED)ABORTING$(NO_COLOR)\n\n"; \
+        printf "Use with IGNORE_UNCOMMITTED_CHANGES=true to ignore this warning\n\n"; \
+        git status -s; \
+        exit 1; \
+    fi
+    @echo "No uncommitted changes found!"
+
+# FYI: make converts all new lines in spaces when they are echo'd 
+# @see https://stackoverflow.com/a/54068252/413531
+# To execute a shell command via $(command), the $ has to be escaped with another $
+#  ==&gt; $$(command)
+# @see https://stackoverflow.com/a/26564874/413531
+.PHONY: deployment-create-build-info-file
+deployment-create-build-info-file: ## Create a file containing version information about the codebase
+    @echo "BUILD INFO" &gt; ".build/build-info"
+    @echo "==========" &gt;&gt; ".build/build-info"
+    @echo "User  :" $$(whoami) &gt;&gt; ".build/build-info"
+    @echo "Date  :" $$(date --rfc-3339=seconds) &gt;&gt; ".build/build-info"
+    @echo "Branch:" $$(git branch --show-current) &gt;&gt; ".build/build-info"
+    @echo "" &gt;&gt; ".build/build-info"
+    @echo "Commit" &gt;&gt; ".build/build-info"
+    @echo "------" &gt;&gt; ".build/build-info"
+    @git log -1 --no-color &gt;&gt; ".build/build-info"
+
+# create tar archive
+#  tar -czvf archive.tar.gz ./source
+#
+# extract tar archive
+#  tar -xzvf archive.tar.gz -C ./target
+#
+# @see https://www.cyberciti.biz/faq/how-to-create-tar-gz-file-in-linux-using-command-line/
+# @see https://serverfault.com/a/330133
+.PHONY: deployment-create-tar
+deployment-create-tar:
+    # create the build directory
+    rm -rf .build/deployment
+    mkdir -p .build/deployment
+    # copy the necessary files
+    mkdir -p .build/deployment/.docker/docker-compose/
+    cp -r .docker/docker-compose/ .build/deployment/.docker/
+    cp -r .make .build/deployment/
+    cp Makefile .build/deployment/
+    cp .infrastructure/scripts/deploy.sh .build/deployment/
+    # make sure we don't have any .env files in the build directory (don't wanna leak any secrets) ...
+    find .build/deployment -name '.env' -delete
+    # ... apart from the .env file we need to start docker
+    cp .secrets/prod/docker.env .build/deployment/.docker/.env
+    # create the archive
+    tar -czvf .build/deployment.tar.gz -C .build/deployment/ ./
+
+.PHONY: deployment-clear-tar
+deployment-clear-tar:
+    # clear the build directory
+    rm -rf .build/deployment
+    # remove the archive
+    rm -rf .build/deployment.tar.gz
+
+.PHONY: deployment-run-on-vm
+deployment-run-on-vm:## Run the deployment script on the VM
+    "$(MAKE)" -s gcp-scp-command SOURCE=".build/deployment.tar.gz" DESTINATION="deployment.tar.gz"
+    "$(MAKE)" -s gcp-ssh-command COMMAND="sudo rm -rf $(CODEBASE_DIRECTORY) &amp;&amp; sudo mkdir -p $(CODEBASE_DIRECTORY) &amp;&amp; sudo tar -xzvf deployment.tar.gz -C $(CODEBASE_DIRECTORY) &amp;&amp; cd $(CODEBASE_DIRECTORY) &amp;&amp; sudo bash deploy.sh"
+
+.PHONY: deployment-setup-db-on-vm
+deployment-setup-db-on-vm: ## Setup the application on the VM. CAUTION: The docker setup must be running!
+    "$(MAKE)" -s gcp-docker-exec DOCKER_SERVICE_NAME="application" DOCKER_COMMAND="make setup-db"
+</code></pre>
+
+<ul>
+<li><code>deploy</code> is the main target to <a href="#the-deploy-target">trigger a full deployment</a></li>
+<li><code>deployment-guard-uncommitted-changes</code> checks if there are changes in the codebase that have 
+not been committed to git, yet. We want to avoid that, because that might cause a 
+<a href="#avoiding-code-drift">"drift" between the codebase and the deployed code</a></li>
+<li><code>deployment-guard-secret-changes</code> does the same but for secrets</li>
+<li><code>deployment-create-build-info-file</code> creates 
+<a href="#the-build-info-file">the <code>build-info</code> file</a> in the <code>.build/</code> directory</li>
+<li><code>deployment-create-tar</code> 
+<a href="#create-the-deployment-archive">creates a deployment <code>tar</code> archive</a> that contains all necessary 
+files to start the <code>docker</code> setup via <code>docker compose</code> on the VM</li>
+<li><code>deployment-clear-tar</code> removes the archive including any temporary files that have been 
+created via <code>deployment-create-tar</code></li>
+<li><code>deployment-run-on-vm</code> copies the deployment <code>tar</code> archive to the VM, extracts it and runs the 
+deployment script defined in <a href="#the-infrastructure-directory">.infrastructure/scripts/deploy.sh</a>, see
+section <a href="#deployment-commands-on-the-vm">Deployment commands on the VM</a></li>
+<li><code>deployment-setup-db-on-vm</code> executes the <code>setup-db</code> command in the <code>application</code> container on 
+the VM</li>
+</ul>
+
+<p><!-- generated -->
+<a id='deployment-workflow'> </a>
+<!-- /generated --></p>
+
+<h2>Deployment workflow</h2>
+
+<p>As a precondition we expect <a href="/blog/gcp-compute-instance-vm-docker/#the-actual-vm-creation">that a GCP VM is up and running</a>.
+The basic idea of the deployment is:</p>
+
+<ul>
+<li>build the <code>docker</code> images using the <code>prod</code> environment and <strong>push</strong> them to the remote registry</li>
+<li>log into the VM and <strong>pull</strong> the images</li>
+<li>use <code>docker compose</code> on the VM to <strong>start</strong> the <code>docker</code> setup</li>
+</ul>
+
+<p>This shouldn't be too complicated - we already do the same thing locally, don't we? In theory: 
+Yes. In practice, there is <strong>one major difference: Locally, we have access to our repository</strong>, 
+including the files for running</p>
+
+<ul>
+<li>the <code>docker</code> setup (=> the <code>.docker</code> directory)</li>
+<li>the <code>make</code> setup to control the application (=> the <code>Makefile</code> and the <code>.make</code> directory)</li>
+</ul>
+
+<p>Fortunately we can solve this issue easily and provide a single <code>make</code> target named <code>deploy</code> 
+that will take care of everything.</p>
+
+<p><!-- generated -->
+<a id='the-deploy-target'> </a>
+<!-- /generated --></p>
+
+<h3>The <code>deploy</code> target</h3>
+
+<p>The <code>deploy</code> target runs all necessary commands for a deployment:</p>
+
+<p>Run safeguard checks to <a href="#avoiding-code-drift">avoid code drift</a></p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Switching to 'local' environment$(NO_COLOR)\n"
+    @make --no-print-directory make-init
+    @printf "$(GREEN)Starting docker setup locally$(NO_COLOR)\n"
+    @make --no-print-directory docker-up
+    @printf "$(GREEN)Verifying that there are no changes in the secrets$(NO_COLOR)\n"
+    @make --no-print-directory gpg-init
+    @make --no-print-directory deployment-guard-secret-changes
+    @printf "$(GREEN)Verifying that there are no uncommitted changes in the codebase$(NO_COLOR)\n"
+    @make --no-print-directory deployment-guard-uncommitted-changes
+</code></pre>
+
+<p>Make sure the <a href="#gcp-recipes"><code>gcloud</code> cli is initialized</a> with the GCP deployment service 
+account and that this account is also used to authenticate docker. Otherwise, we won't be able 
+to push images to our GCP container registry.</p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Initializing gcloud$(NO_COLOR)\n"
+    @make --no-print-directory gcp-init
+</code></pre>
+
+<p>Enable the <code>prod</code> environment for the <code>make</code> setup, see section
+<a href="#env-based-docker-compose-config">ENV based <code>docker compose</code> config</a></p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Switching to 'prod' environment$(NO_COLOR)\n"
+    @make --no-print-directory make-init ENVS="ENV=prod TAG=latest"
+</code></pre>
+
+<p>Create <a href="#the-build-info-file">the <code>build-info</code> file</a></p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Creating build information file$(NO_COLOR)\n"
+    @make --no-print-directory deployment-create-build-info-file
+</code></pre>
+
+<p><a href="#build-and-push-the-docker-images">Build and push the <code>docker</code> images</a></p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Building docker images$(NO_COLOR)\n"
+    @make --no-print-directory docker-build
+    @printf "$(GREEN)Pushing images to the registry$(NO_COLOR)\n"
+    @make --no-print-directory docker-push
+</code></pre>
+
+<p><a href="#create-the-deployment-archive">Create the deployment archive</a></p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Creating the deployment archive$(NO_COLOR)\n"
+    @make deployment-create-tar
+</code></pre>
+
+<p><a href="#deployment-commands-on-the-vm">Run deployment commands on the VM</a></p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Copying the deployment archive to the VM and run the deployment$(NO_COLOR)\n"
+    @make --no-print-directory deployment-run-on-vm
+</code></pre>
+
+<p>Cleanup the deployment by removing the local deployment archive and enabling the default 
+environment  (<code>local</code>) for the <code>make</code> setup.</p>
+
+<pre><code class="language-Makefile">    @printf "$(GREEN)Clearing deployment archive$(NO_COLOR)\n"
+    @make --no-print-directory deployment-clear-tar
+    @printf "$(GREEN)Switching to 'local' environment$(NO_COLOR)\n"
+    @make --no-print-directory make-init
+</code></pre>
+
+<p><!-- generated -->
+<a id='avoiding-code-drift'> </a>
+<!-- /generated --></p>
+
+<h3>Avoiding code drift</h3>
+
+<p>The term "code drift" is derived from <a href="https://coder.com/blog/what-is-configuration-drift">configuration drift</a>,
+which indicates the (subtle) differences in configuration between environments:</p>
+
+<blockquote>
+  <p>If you've ever heard an engineer lamenting (or sometimes arrogantly proclaiming) 
+  "well, it works on my machine" then you have been witness to configuration drift.</p>
+</blockquote>
+
+<p>In our case it refers to <strong>differences between our git repository and the code in the docker 
+images</strong> as well as <strong>changes between the decrypted and encrypted secret files</strong>. These problems 
+can occur, because we are currently 
+<strong>executing the deployment from our local machine</strong> and we might have made some
+<strong>changes in the codebase</strong> when we build the docker images that are not yet reflected in git. The 
+build context sent to the <code>docker</code> daemon would then be different from the git repository resp. 
+the encrypted <code>.secret</code> files. This can lead to all sorts of hard-to-debug quirks and should 
+thus be avoided.</p>
+
+<p>When we deploy later <strong>from the CI pipelines, those problems simply won't occur</strong>, because the whole 
+<strong>codebase will be identical with the git repository</strong> - but I really do NOT want to lose the 
+ability to deploy code from my local system (devs that went through Gitlab / Github downtimes 
+will understand...)</p>
+
+<p>Corresponding checks are implemented via the <code>deployment-guard-uncommitted-changes</code> and 
+<code>deployment-guard-secret-changes</code> targets that exit with <code>exit 1</code> (a non-zero status code) which in 
+turn makes the <a href="#the-deploy-target"><code>deploy</code> target</a> stop/fail.</p>
+
+<pre><code class="language-Makefile">IGNORE_SECRET_CHANGES?=
+
+.PHONY: deployment-guard-secret-changes
+deployment-guard-secret-changes: ## Check if there are any changes between the decrypted and encrypted secret files
+    if ( ! make secret-diff || [ "$$(make secret-diff | grep ^@@)" != "" ] ) &amp;&amp; [ "$(IGNORE_SECRET_CHANGES)" == "" ] ; then \
+        printf "Found changes in the secret files =&gt; $(RED)ABORTING$(NO_COLOR)\n\n"; \
+        printf "Use with IGNORE_SECRET_CHANGES=true to ignore this warning\n\n"; \
+        make secret-diff; \
+        exit 1; \
+    fi
+    @echo "No changes in the secret files!"
+</code></pre>
+
+<p><a href="/blog/git-secret-encrypt-repository-docker/#makefile-adjustments"><code>make secret-diff</code></a> is used 
+to check for differences between decrypted and encrypted secrets.</p>
+
+<p><code>! make secret-diff</code> checks if the commands exits with a non-zero exit code. This happens for 
+instance, when the secrets have not been decrypted yet. The error is</p>
+
+<pre><code class="language-gitignore">git-secret: abort: file not found. Consider using 'git secret reveal': &lt;missing-file&gt;
+</code></pre>
+
+<p>If the command doesn't fail, the changes are displayed in a <code>diff</code> format, e.g.</p>
+
+<pre><code class="language-diff"> --- /dev/fd/63
+ +++ /var/www/app/.secrets/shared/passwords.txt
+ @@ -1 +1,2 @@
+  my_secret_password
+ +1
+ foo
+</code></pre>
+
+<p>We use <code>grep ^@@</code> to check the existence of a "line that starts with @@" to identify a change.
+If no changes are found, the info <code>"No changes in the secret files!"</code> is printed. Otherwise, a 
+warning is shown. The check an be suppressed by passing <code>IGNORE_SECRET_CHANGES=true</code>.</p>
+
+<pre><code class="language-Makefile">IGNORE_UNCOMMITTED_CHANGES?=
+
+.PHONY: deployment-guard-uncommitted-changes
+deployment-guard-uncommitted-changes: ## Check if there are any git changes and abort if so. The check can be ignore by passing `IGNORE_UNCOMMITTED_CHANGES=true`
+    if [ "$$(git status -s)" != "" ] &amp;&amp; [ "$(IGNORE_UNCOMMITTED_CHANGES)" == "" ] ; then \
+        printf "Found uncommitted changes in git =&gt; $(RED)ABORTING$(NO_COLOR)\n\n"; \
+        printf "Use with IGNORE_UNCOMMITTED_CHANGES=true to ignore this warning\n\n"; \
+        git status -s; \
+        exit 1; \
+    fi
+    @echo "No uncommitted changes found!"
+</code></pre>
+
+<p>For <code>deployment-guard-uncommitted-changes</code> we use <code>git status -s</code> to check for any uncommitted 
+changes. If no changes are found the info <code>"No uncommitted changes found!"</code> is printed. 
+Otherwise, a warning is shown. The check an be suppressed by passing 
+<code>IGNORE_UNCOMMITTED_CHANGES=true</code>.</p>
+
+<p><!-- generated -->
+<a id='the-build-info-file'> </a>
+<!-- /generated --></p>
+
+<h3>The <code>build-info</code> file</h3>
+
+<p>When testing the deployments I often needed to identify small bugs in the code. The more complex 
+the whole process gets, the more things can go wrong and the more "stuff needs to be checked". 
+One of them is the <a href="#avoiding-code-drift">code drift mentioned in the previous section</a>, btw.</p>
+
+<p>To make my life a little easier, <strong>I added a file called <code>build-info</code> that contains information 
+about the build</strong> and will be stored in the docker images - allowing me to inspect the file 
+later, see also section <a href="#show-the-build-info">Show the <code>build-info</code></a>.</p>
+
+<p>The file is created via <code>deployment-create-build-info-file</code> target</p>
+
+<pre><code class="language-Makefile">.PHONY: deployment-create-build-info-file
+deployment-create-build-info-file: ## Create a file containing version information about the codebase
+    @echo "BUILD INFO" &gt; ".build/build-info"
+    @echo "==========" &gt;&gt; ".build/build-info"
+    @echo "User  :" $$(whoami) &gt;&gt; ".build/build-info"
+    @echo "Date  :" $$(date --rfc-3339=seconds) &gt;&gt; ".build/build-info"
+    @echo "Branch:" $$(git branch --show-current) &gt;&gt; ".build/build-info"
+    @echo "" &gt;&gt; ".build/build-info"
+    @echo "Commit" &gt;&gt; ".build/build-info"
+    @echo "------" &gt;&gt; ".build/build-info"
+    @git log -1 --no-color &gt;&gt; ".build/build-info"
+</code></pre>
+
+<p>The file is created on the host system under <code>.build/build-info</code> and then 
+<a href="#copy-codebase-and-build-info-file">copied to <code>./build-info</code> in the <code>Dockerfile</code> of the <code>php-base</code> image</a>.
+To execute a shell command via <code>$(command)</code>, 
+<a href="https://stackoverflow.com/a/26564874/413531">the <code>$</code> has to be escaped with another <code>$</code></a>, to 
+not be interpreted by <code>make</code> as a variable. Example:</p>
+
+<pre><code class="language-Makefile">some-target:
+    $$(command)
+</code></pre>
+
+<p>FYI: I learned that 
+<a href="https://stackoverflow.com/a/54068252/413531"><code>make</code> converts all new lines in spaces when they are echo'd</a>
+because I initially used</p>
+
+<pre><code class="language-text">@echo $$(git log -1 --no-color) &gt;&gt; ".build/build-info"
+</code></pre>
+
+<p>instead of</p>
+
+<pre><code class="language-text">@git log -1 --no-color &gt;&gt; ".build/build-info"
+</code></pre>
+
+<p>which would remove all new lines.</p>
+
+<p>A final file <code>build-info</code> file looks like this:</p>
+
+<pre><code class="language-text">BUILD INFO
+==========
+User  : Pascal
+Date  : 2022-05-22 17:10:21+02:00
+Branch: part-9-deploy-docker-compose-php-gcp-poc
+
+Commit
+------
+commit c47464536613874d192696d93d3c97b138c7a6be
+Author: Pascal Landau &lt;pascal.landau@googlemail.com&gt;
+Date:   Sun May 22 17:10:15 2022 +0200
+
+    Testing the new `build-info` file
+
+</code></pre>
+
+<p><!-- generated -->
+<a id='build-and-push-the-docker-images'> </a>
+<!-- /generated --></p>
+
+<h3>Build and push the <code>docker</code> images</h3>
+
+<p><code>make</code> is initialized with <code>ENV=prod</code>, i.e. calling <code>make docker-build</code> will use 
+<a href="#env-based-docker-compose-config">the correct <code>docker compose</code> config</a> for <strong>building</strong> production 
+images. In addition, we have adjusted the <code>DOCKER_REGISTRY</code> to <code>gcr.io/pl-dofroscra-p</code> in the
+<a href="#adding-gcp-values-to-make-variables-env">.make/variables.env file</a>, so that the images will 
+immediately be <a href="/blog/gcp-compute-instance-vm-docker/#pushing-images-to-the-registry">tagged correctly</a>
+as</p>
+
+<pre><code class="language-text">gcr.io/pl-dofroscra-p/dofroscra/$service-prod
+
+# e.g. for `php-base`
+
+gcr.io/pl-dofroscra-p/dofroscra/php-base-prod
+</code></pre>
+
+<p><strong>Example:</strong></p>
+
+<pre><code class="language-text">$ make docker-build
+ENV=prod TAG=latest DOCKER_REGISTRY=gcr.io/pl-dofroscra-p DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker compose -p dofroscra_prod --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose-php-base.yml build php-base
+#1 [internal] load build definition from Dockerfile
+# ...
+
+$ docker image ls 
+REPOSITORY                                          TAG     IMAGE ID       CREATED          SIZE
+gcr.io/pl-dofroscra-p/dofroscra/php-fpm-prod        latest  2be3bec977de   24 seconds ago   147MB
+gcr.io/pl-dofroscra-p/dofroscra/php-worker-prod     latest  6dbf14d1b329   25 seconds ago   181MB
+gcr.io/pl-dofroscra-p/dofroscra/php-base-prod       latest  9164976a78a6   32 seconds ago   130MB
+gcr.io/pl-dofroscra-p/dofroscra/application-prod    latest  377fdee0f12a   32 seconds ago   130MB
+gcr.io/pl-dofroscra-p/dofroscra/nginx-prod          latest  42dd1608d126   24 seconds ago   23.5MB
+</code></pre>
+
+<p>Thanks to the image name, we can also immediately <strong>push</strong> the images to the remote registry via 
+<code>make docker-push</code>. Note, that we see a lot of <code>Layer already exists</code> infos in the console 
+output for the <code>php-fpm</code> and <code>php-worker</code> images. This is due to the fact that we use 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#php-images">a common <code>php-base</code> base image</a> 
+for <code>application</code>, <code>php-fpm</code> and <code>php-worker</code>, i.e. <strong>those images have a lot of layers in 
+common</strong> and only the layers of <code>application</code> are pushed. <code>docker</code> uses the 
+<a href="https://stackoverflow.com/questions/36339514/how-docker-calculates-the-hash-of-each-layer-is-it-deterministic">layer hash</a> 
+to identify which layers already exist.</p>
+
+<pre><code class="language-text">$ make docker-push
+ENV=prod TAG=latest DOCKER_REGISTRY=gcr.io/pl-dofroscra-p DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker compose -p dofroscra_prod --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.local.ci.prod.yml -f ./.docker/docker-compose/docker-compose.local.prod.yml -f ./.docker/docker-compose/docker-compose.prod.yml push
+mysql Skipped
+redis Skipped
+Pushing application: c8f4416c4383 Preparing
+#...
+Pushing application: 6bbfa8829d07 Pushing [==================================================&gt;]  3.584kB
+#...
+Pushing php-worker: 6bbfa8829d07 Layer already exists
+#...
+Pushing php-fpm: 6bbfa8829d07 Layer already exists
+</code></pre>
+
+<p><!-- generated -->
+<a id='create-the-deployment-archive'> </a>
+<!-- /generated --></p>
+
+<h3>Create the deployment archive</h3>
+
+<p>As described in the <a href="#deployment-workflow">introduction of the Deployment workflow</a>, we need to 
+<strong>make our <code>make</code> and <code>docker</code> setup somehow available on the VM</strong>. We will solve this issue by 
+<strong>creating a <code>tar</code> archive with all necessary files locally</strong> and 
+<a href="#deployment-commands-on-the-vm">transfer it to the VM</a>.</p>
+
+<p>The archive is created via the <code>deployment-create-tar</code> target</p>
+
+<pre><code class="language-Makefile">.PHONY: deployment-create-tar
+deployment-create-tar:
+    # create the build directory
+    rm -rf .build/deployment
+    mkdir -p .build/deployment
+    # copy the necessary files
+    mkdir -p .build/deployment/.docker/docker-compose/
+    cp -r .docker/docker-compose/ .build/deployment/.docker/
+    cp -r .make .build/deployment/
+    cp Makefile .build/deployment/
+    cp .infrastructure/scripts/deploy.sh .build/deployment/
+    # make sure we don't have any .env files in the build directory (don't wanna leak any secrets) ...
+    find .build/deployment -name '.env' -delete
+    # ... apart from the .env file we need to start docker
+    cp .secrets/prod/docker.env .build/deployment/.docker/.env
+    # create the archive
+    tar -czvf .build/deployment.tar.gz -C .build/deployment/ ./
+</code></pre>
+
+<p>The recipe uses the <code>.build/deployment</code> directory as a temporary location to store all necessary 
+files, i.e.</p>
+
+<ul>
+<li>the <code>docker compose</code> config files in <code>.docker/docker-compose/</code></li>
+<li>the <code>Makefile</code> and the <code>.make</code> directory in the root of the codebase for the <code>make</code> setup</li>
+<li>the <code>.infrastructure/scripts/deploy.sh</code> script to run the deployment</li>
+</ul>
+
+<p>In addition, we copy <a href="#a-env-file-for-prod">the <code>.secrets/prod/docker.env</code> file</a> to use it as the 
+<code>.env</code> file for <code>docker compose</code>. <strong>Caution</strong>: This only works, because we have 
+<a href="#avoiding-code-drift">verified previously that there are no changes between the decrypted and encrypted .secret files</a>
+(which also means that <code>.secrets/prod/docker.env</code> is already decrypted).</p>
+
+<p>Once all files are copied, the whole directory is added to the <code>.build/deployment.tar.gz</code> 
+archive via</p>
+
+<pre><code class="language-bash">tar -czvf .build/deployment.tar.gz -C .build/deployment/ ./
+</code></pre>
+
+<p>The <code>-C .build/deployment/</code> option makes sure that 
+<a href="https://serverfault.com/a/330133">the directory structure is retained when extracting the archive</a>.
+For the remaining options take a look at
+<a href="https://www.cyberciti.biz/faq/how-to-create-tar-gz-file-in-linux-using-command-line/">How to create tar.gz file in Linux using command line</a>.</p>
+
+<p><!-- generated -->
+<a id='deployment-commands-on-the-vm'> </a>
+<!-- /generated --></p>
+
+<h3>Deployment commands on the VM</h3>
+
+<p>Once the <a href="#create-the-deployment-archive">creation of the deployment archive</a> is done, we can 
+transfer the resulting <code>.build/deployment.tar.gz</code> file to the VM, extract it and run the deployment
+script. All of that is done via the <code>deployment-run-on-vm</code> target</p>
+
+<pre><code class="language-Makefile"># directory on the VM that will contain the files to start the docker setup
+CODEBASE_DIRECTORY=/tmp/codebase
+
+.PHONY: deployment-run-on-vm
+deployment-run-on-vm:## Run the deployment script on the VM
+    "$(MAKE)" -s gcp-scp-command SOURCE=".build/deployment.tar.gz" DESTINATION="deployment.tar.gz"
+    "$(MAKE)" -s gcp-ssh-command COMMAND="sudo rm -rf $(CODEBASE_DIRECTORY) &amp;&amp; sudo mkdir -p $(CODEBASE_DIRECTORY) &amp;&amp; sudo tar -xzvf deployment.tar.gz -C $(CODEBASE_DIRECTORY) &amp;&amp; cd $(CODEBASE_DIRECTORY) &amp;&amp; sudo bash deploy.sh"
+</code></pre>
+
+<p>Under the hood, the target uses the
+<a href="#gcp-recipes"><code>gcp-scp-command</code> and <code>gcp-ssh-command</code></a> targets. The deployment archive is 
+extracted in <code>/tmp/codebase</code> via</p>
+
+<pre><code class="language-bash">sudo rm -rf /tmp/codebase &amp;&amp; sudo mkdir -p /tmp/codebase &amp;&amp; sudo tar -xzvf deployment.tar.gz -C /tmp/codebase
+</code></pre>
+
+<p>and then the deployment script is executed</p>
+
+<pre><code class="language-bash">cd /tmp/codebase &amp;&amp; sudo bash deploy.sh
+</code></pre>
+
+<p>All of those commands are run <strong>in a single invocation of <code>gcp-ssh-command</code></strong>, because there's a 
+certain overhead involved when tunneling commands via IAP, i.e. each invocation takes a couple 
+of seconds.</p>
+
+<p><!-- generated -->
+<a id='the-deploy-sh-script'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>deploy.sh</code> script</h4>
+
+<p>The actual deployment is done "on the VM" via the <a href="#the-infrastructure-directory"><code>.infrastructure/scripts/deploy.sh</code> script</a></p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+echo "Retrieving secrets"
+make gcp-secret-get SECRET_NAME=GPG_KEY &gt; secret.gpg
+GPG_PASSWORD=$(make gcp-secret-get SECRET_NAME=GPG_PASSWORD)
+echo "Creating compose-secrets.env file"
+echo "GPG_PASSWORD=$GPG_PASSWORD" &gt; compose-secrets.env
+echo "Initializing the codebase"
+make make-init ENVS="ENV=prod TAG=latest"
+echo "Pulling images on the VM from the registry"
+make docker-pull
+echo "Stop the containers on the VM"
+make docker-down || true
+echo "Start the containers on the VM"
+make docker-up
+</code></pre>
+
+<p>The script is located at the root of the codebase and</p>
+
+<ul>
+<li>will first retrieve the <code>GPG_KEY</code> and the <code>GPG_PASSWORD</code> values that we 
+<a href="/blog/gcp-compute-instance-vm-docker/#add-the-secret-gpg-key-and-password">created previously in the Secret Manager</a>
+
+<ul>
+<li>the <code>GPG_KEY</code> is stored in the file <code>secret.gpg</code> in the root of the codebase so that it is 
+<a href="/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">picked up automatically when initializing <code>gpg</code></a>
+> [...]
+> and the private key has to be <strong>named secret.gpg</strong> and put in the <strong>root of the codebase</strong>.</li>
+<li>the <code>GPG_PASSWORD</code> is stored in the bash variable <code>$GPG_PASSWORD</code> and from there stored in 
+a file called <code>compose-secrets.env</code> as 
+<code>dotenv
+GPG_PASSWORD=$GPG_PASSWORD</code>
+This file is used in the 
+<a href="#docker-compose-prod-yml"><code>docker-compose.prod.yml</code> file as <code>env_file</code> for the php docker containers</a>,
+so that the <code>GPG_PASSWORD</code> becomes available in the 
+<a href="#decrypt-the-secrets-via-entrypoint"><code>decrypt-secrets.sh</code> script used in the <code>ENTRYPOINT</code></a> 
+of the <code>php-base</code> image</li>
+</ul></li>
+<li>then the <code>make</code> setup is initialized for the <code>prod</code> environment via
+<code>bash
+make-init ENVS="ENV=prod TAG=latest"</code>
+so that all subsequent <code>docker-*</code> targets 
+<a href="#env-based-docker-compose-config">use the correct configuration</a></li>
+<li>and finally, the <code>docker</code> images we pushed in step
+<a href="#build-and-push-the-docker-images">"Build and push the <code>docker</code> images"</a> are <strong>pulled</strong>, any 
+running containers are <strong>stopped</strong> and the whole <code>docker</code> setup is <strong>started</strong> with the new 
+images
+
+<ul>
+<li>FYI: <code>docker compose down</code> would fail (exit with a non-zero status code) if no containers are 
+running. Since this is fine for us (we simply want to ensure that no containers are running),
+the command is OR'd via <code>make docker-down || true</code> so that the script won't stop if that 
+happens.</li>
+</ul></li>
+</ul>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You should now be ready to deploy a dockerized PHP application "to 
+production" on GCP via <code>docker compose</code>.</p>
+
+<p>In the next part of this tutorial, we will use terraform to create the infrastructure for 
+production deployments on GCP and deploy the docker containers on individual VMs without 
+<code>docker compose</code>.</p>
+
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>
+                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/";
+                                                     this.page.identifier = "deploy-docker-compose-php-gcp-poc";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/efc4ad3e634047f085316698390c61f4" width="1" height="1" alt=""/>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+
+</html>

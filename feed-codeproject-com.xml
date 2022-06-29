@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Tue, 28 Jun 2022 07:29:39 +0000</pubDate>
-        <lastBuildDate>Tue, 28 Jun 2022 07:29:39 +0000</lastBuildDate>
+        <pubDate>Wed, 29 Jun 2022 07:54:15 +0000</pubDate>
+        <lastBuildDate>Wed, 29 Jun 2022 07:54:15 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -2287,6 +2287,15 @@ using Laravel as a framework instead of "plain PHP".
 We'll use the newest version of Laravel (Laravel 9) that was
 <a href="https://laravel-news.com/laravel-9-released">released at the beginning of February 2022</a>.</p>
 
+<p>If you want to follow along, please use the <strong>branch of the 
+<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">previous tutorial</a></strong>, i.e.</p>
+
+<pre>git checkout git checkout part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022
+</pre>
+
+<p>The branch of <strong>this</strong> tutorials contains the "end result", i.e. Laravel will already exist in 
+the repository.</p>
+
 <p><!-- generated -->
 <a id='install-extensions'> </a>
 <!-- /generated --></p>
@@ -2314,8 +2323,8 @@ RUN apk add --update --no-cache  \
 <p>We'll start by
 <a href="https://laravel.com/docs/9.x/installation#installation-via-composer">creating a new Laravel project with composer</a></p>
 
-<pre><code>composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts
-</code></pre>
+<pre>composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.0.*" --no-install --no-scripts
+</pre>
 
 <p>The files are added to <code>/tmp/laravel</code> because
 <a href="https://github.com/composer/composer/issues/1135#issuecomment-10358244">composer projects cannot be created in non-empty folders</a>
@@ -2324,15 +2333,15 @@ RUN apk add --update --no-cache  \
 <p>Since I don't have PHP 8 installed on my laptop, I'll execute the command in the <code>application</code>
 docker container via</p>
 
-<pre><code>make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND='composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.*" --no-install --no-scripts'
-</code></pre>
+<pre>make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND='composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.0.*" --no-install --no-scripts'
+</pre>
 
 <p>and then move the files into the application directory via</p>
 
-<pre><code>rm -rf public/ tests/ composer.* phpunit.xml
+<pre>rm -rf public/ tests/ composer.* phpunit.xml
 make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND="bash -c 'mv -n /tmp/laravel/{.*,*} .' &amp;&amp; rm -f /tmp/laravel"
 cp .env.example .env
-</code></pre>
+</pre>
 
 <p><strong>Notes</strong></p>
 

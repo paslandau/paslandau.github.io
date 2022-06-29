@@ -110,8 +110,8 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 <div class="post-heading">
-                    <h1>Getting started with GCP Compute Instance VMs</h1>
-                                            <h2 class="subheading">to run dockerized applications</h2>
+                    <h1>Run Docker on GCP Compute Instance VMs</h1>
+                                            <h2 class="subheading">to deploy dockerized applications</h2>
                                                                 <span class="meta">
                             <span style="display:block; margin:0;">
                                 Posted by <a href="#">Pascal Landau</a> on 2022-06-20 06:00:00
@@ -176,7 +176,7 @@ You find the branch with the final result of this tutorial at
 <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
 <a href="/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.
 and the following one is
-<a href="#">Deploy dockerized PHP Apps to production on GCP via docker compose (available at 2022-06-29)</a>.</p>
+<a href="/blog/deploy-docker-compose-php-gcp-poc">Deploy dockerized PHP Apps to production on GCP via docker compose</a>.</p>
 
 <p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
 or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
@@ -283,7 +283,7 @@ or <a href="#newsletter">via email</a> to get <strong>automatic notifications</s
 <h2>Introduction</h2>
 
 <p>In the next tutorial we will
-<a href="#">deploy our dockerized PHP Apps to "production" via docker compose  (available at 2022-06-29)</a>
+<a href="/blog/deploy-docker-compose-php-gcp-poc">deploy our dockerized PHP Apps to "production" via docker compose</a>
 and will create this "production" environment on <strong>GCP (Google Cloud Platform)</strong>. 
 This tutorial serves as a primer on GCP to build up some fundamental knowledge, because we will 
 use the platform to provide all the <strong>infrastructure required to run our dockerized PHP 
@@ -522,7 +522,7 @@ Activated service account credentials for: [docker-php-tutorial-deployment@pl-do
 
 <h2>Set up the Container Registry</h2>
 
-<p><a href="#">We will use <code>docker compose</code> to run our PHP application in the next tutorial part (available at 2022-06-29)</a>
+<p><a href="/blog/deploy-docker-compose-php-gcp-poc/">We will use <code>docker compose</code> to run our PHP application in the next tutorial part</a>
 and need to <strong>make our docker images available</strong> in a 
 <a href="https://www.redhat.com/en/topics/cloud-native-apps/what-is-a-container-registry">container registry</a>.
 Luckily, <a href="https://cloud.google.com/container-registry">GCP offers a Container Registry product</a> 
@@ -708,8 +708,8 @@ latest: digest: sha256:0740591fb686227d8cdf4e42b784f634cbaf9f5caa6ee478e3bcc24ae
 <p><a href="/img/gcp-compute-instance-vm-docker/gcp-container-registry-image-example.PNG"><img src="/img/gcp-compute-instance-vm-docker/gcp-container-registry-image-example.PNG" alt="Example of a pushed image in the Container Registry" /></a></p>
 
 <p>Don't worry: We won't have to do the tagging every time before a push, because we will 
-set up <code>make</code> to use the correct name automatically
-when building the images in the <a href="#">next part (available at 2022-06-29)</a>.</p>
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#adding-gcp-values-to-make-variables-env">set up <code>make</code> to use the correct name automatically</a>
+when building the images in the <a href="/blog/deploy-docker-compose-php-gcp-poc/">next part</a>.</p>
 
 <p><!-- generated -->
 <a id='images-are-stored-in-google-cloud-storage-buckets'> </a>
@@ -1461,7 +1461,7 @@ local-file1.txt           | 0 kB |   0.0 kB/s | ETA: 00:00:00 | 100%
 
 <p>Before we shift our attention to docker, let's quickly deal with the secrets. We won't need them 
 for this part of the tutorial. but will need the secret <code>gpg</code> key and its password to 
-<a href="#">decrypt the secrets in the <code>php</code> containers in the next part (available at 2022-06-29)</a>.
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-secrets-directory">decrypt the secrets in the <code>php</code> containers in the next part</a>.
 To recap: We have <a href="#add-the-secret-gpg-key-and-password">added the them previously</a> and can now
 retrieve them as explained under section
 <a href="#retrieve-a-secret-via-the-gcloud-cli">Retrieve a secret via the <code>gcloud</code> cli</a> via</p>
@@ -1752,9 +1752,9 @@ resources.</p>
 <p>FYI: We could also do this with our personal GCP user, but I plan to use <code>terraform</code> in a later 
 tutorial which will require a service account anyway.</p>
 
-<p>We will use <code>docker-php-tutorial-master</code> as service account ID and store the key file of the 
-account at the root of the codebase under <code>gcp-master-service-account-key.json</code>
-(which is also added to the <code>.gitignore</code> file).</p>
+<p>We will use <code>docker-php-tutorial-master</code> as service account ID and 
+<a href="#create-service-account-key-file">store the key file</a> of the account at the root of the 
+codebase under <code>gcp-master-service-account-key.json</code> (which is also added to the <code>.gitignore</code> file).</p>
 
 <p><!-- generated -->
 <a id='configure-gcloud-to-use-the-master-service-account'> </a>
@@ -2217,17 +2217,16 @@ Login Succeeded
 Logging in with your password grants your terminal complete access to your account.
 For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/
 </code></pre></li>
-<li><p><a href="#pushing-images-to-the-registry">pushing it to the registry</a> 
-via</p>
+<li><p><a href="#pushing-images-to-the-registry">pushing it to the registry</a></p>
 
 <pre><code class="language-bash">docker push gcr.io/pl-dofroscra-p/my-nginx
 </code></pre>
 
 <pre><code class="language-text"><br />$ docker push gcr.io/pl-dofroscra-p/my-nginx
 Using default tag: latest
-The push refers to repository gcr.io/pl-dofroscra-1/my-nginx
+The push refers to repository [gcr.io/pl-dofroscra-1/my-nginx]
 ad4683501621: Preparing
-...
+# ...
 ad4683501621: Pushed
 latest: digest: sha256:680086b3c77e4b895099c0a5f6e713ff79ba0d78e1e1df1bc2546d6f979126e4 size: 1775
 </code></pre></li>
@@ -2613,7 +2612,7 @@ leave a comment. You should now be familiar enough with GCP to create a Compute 
 configure it to run dockerized applications on it.</p>
 
 <p>In the next part of this tutorial, we will 
-<a href="#">deploy our dockerized PHP application "to production" on GCP via <code>docker compose</code> (available at 2022-06-29)</a>.</p>
+<a href="/blog/deploy-docker-compose-php-gcp-poc/">deploy our dockerized PHP application "to production" on GCP via <code>docker compose</code></a>.</p>
 
 <p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
 notifications when this next part comes out :)</p>
