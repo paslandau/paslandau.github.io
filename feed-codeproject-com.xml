@@ -5,10 +5,1311 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 29 Jun 2022 07:54:15 +0000</pubDate>
-        <lastBuildDate>Wed, 29 Jun 2022 07:54:15 +0000</lastBuildDate>
+        <pubDate>Sat, 03 Sep 2022 13:22:59 +0000</pubDate>
+        <lastBuildDate>Sat, 03 Sep 2022 13:22:59 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
+                    <item>
+                <title>Deploy dockerized PHP Apps to production on GCP via docker compose [Tutorial Part 9]</title>
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/'>Deploy dockerized PHP Apps to production on GCP via docker compose [Tutorial Part 9]</a></p>
+<hr />
+
+<p>In the ninth part of this tutorial series on developing PHP on Docker we will 
+<strong>deploy our dockerized PHP application to a production environment</strong> (a GCP Compute Instance VM)
+and <strong>run it via <code>docker compose</code> as a proof of concept</strong>.</p>
+
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/I6gaVR21fnw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-9-deploy-docker-compose-php-gcp-poc">part-9-deploy-docker-compose-php-gcp-poc</a>.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker">Create a GCP Compute Instance VM for dockerized PHP Apps</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h3>Table of contents</h3>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#codebase-changes">Codebase changes</a>
+
+<ul>
+<li><a href="#restructure-the-codebase">Restructure the codebase</a></li>
+<li><a href="#the-build-directory">The <code>.build</code> directory</a></li>
+<li><a href="#the-secrets-directory">The <code>.secrets</code> directory</a></li>
+<li><a href="#the-tutorial-directory">The <code>.tutorial</code> directory</a></li>
+<li><a href="#the-infrastructure-directory">The <code>.infrastructure</code> directory</a></li>
+<li><a href="#add-a-gpg-key-for-production">Add a <code>gpg</code> key for production</a></li>
+<li><a href="#show-the-build-info">Show the <code>build-info</code></a></li>
+<li><a href="#optimize-gitignore">Optimize <code>.gitignore</code></a></li>
+</ul></li>
+<li><a href="#docker-changes">Docker changes</a>
+
+<ul>
+<li><a href="#a-env-file-for-prod">A <code>.env</code> file for <code>prod</code></a></li>
+<li><a href="#updating-the-docker-compose-yml-configuration-files">Updating the <code>docker-compose.yml</code> configuration files</a>
+
+<ul>
+<li><a href="#docker-compose-local-ci-prod-yml"><code>docker-compose.local.ci.prod.yml</code></a></li>
+<li><a href="#docker-compose-local-prod-yml"><code>docker-compose.local.prod.yml</code></a></li>
+<li><a href="#docker-compose-prod-yml"><code>docker-compose.prod.yml</code></a></li>
+</ul></li>
+<li><a href="#adjust-the-dockerignore-file">Adjust the <code>.dockerignore</code> file</a></li>
+<li><a href="#build-target-prod">Build target: <code>prod</code></a>
+
+<ul>
+<li><a href="#build-stage-prod-in-the-php-base-image">Build stage <code>prod</code> in the <code>php-base</code> image</a>
+
+<ul>
+<li><a href="#env-based-branching"><code>ENV</code> based branching</a></li>
+<li><a href="#avoid-composer-dev-dependencies">Avoid composer dev dependencies</a></li>
+<li><a href="#remove-unnecessary-directories">Remove unnecessary directories</a></li>
+<li><a href="#remove-secrets-for-other-environments">Remove secrets for other environments</a></li>
+<li><a href="#decrypt-the-secrets-via-entrypoint">Decrypt the secrets via <code>ENTRYPOINT</code></a></li>
+<li><a href="#copy-codebase-and-build-info-file">Copy codebase and <code>build-info</code> file</a></li>
+</ul></li>
+<li><a href="#build-stage-prod-in-the-remaining-images">Build stage <code>prod</code> in the remaining images</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#makefile-changes">Makefile changes</a>
+
+<ul>
+<li><a href="#adding-gcp-values-to-make-variables-env">Adding GCP values to <code>.make/variables.env</code></a></li>
+<li><a href="#env-based-docker-compose-config">ENV based <code>docker compose</code> config</a></li>
+<li><a href="#changes-to-the-git-secret-recipes">Changes to the <code>git-secret</code> recipes</a></li>
+<li><a href="#additional-docker-recipes">Additional <code>docker</code> recipes</a></li>
+<li><a href="#gcp-recipes">GCP recipes</a></li>
+<li><a href="#infrastructure-recipes">Infrastructure recipes</a></li>
+<li><a href="#deployment-recipes">Deployment recipes</a></li>
+</ul></li>
+<li><a href="#deployment-workflow">Deployment workflow</a>
+
+<ul>
+<li><a href="#the-deploy-target">The <code>deploy</code> target</a></li>
+<li><a href="#avoiding-code-drift">Avoiding code drift</a></li>
+<li><a href="#the-build-info-file">The <code>build-info</code> file</a></li>
+<li><a href="#build-and-push-the-docker-images">Build and push the <code>docker</code> images</a></li>
+<li><a href="#create-the-deployment-archive">Create the deployment archive</a></li>
+<li><a href="#deployment-commands-on-the-vm">Deployment commands on the VM</a>
+
+<ul>
+<li><a href="#the-deploy-sh-script">The <code>deploy.sh</code> script</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>In the previous tutorial
+<a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/">Create a GCP compute instance VM to run dockerized applications</a>
+we have created a Compute Instance VM on GCP and prepared it to run <code>docker</code> containers. For 
+this tutorial I made a small adjustment and changed the machine type from <code>e2-micro</code> to
+<code>e2-small</code> because we need a little more memory to run the whole application.</p>
+
+<p>In this tutorial, we will use the VM as a <strong>production environment</strong>, i.e. we will</p>
+
+<ul>
+<li>prepare our <code>docker</code> setup for production usage</li>
+<li>build and push the production-ready <code>docker</code> images to the GCP registry from our local system</li>
+<li>pull and start the images on the VM</li>
+</ul>
+
+<p>The whole process will be defined <a href="#the-deploy-target">in a single <code>make</code> target called <code>deploy</code></a>.</p>
+
+<p><strong>To try it yourself:</strong></p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    The following steps <strong>will create actual infrastructure on GCP</strong> which means you
+    will create costs (albeit quite little). Please make sure to shut the project down once you are
+    done, see <a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#cleanup">Cleanup</a> of the previous
+    tutorial.
+  </div>
+</div>
+
+<ul>
+<li>create an account on GCP, <a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#preconditions-project-and-owner-service-account">a project and a master service account</a>
+
+<ul>
+<li><a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#create-service-account-key-file">create a keyfile</a> 
+for the service account, name it <code>gcp-master-service-account-key.json</code> and move it to the 
+root of the repository</li>
+</ul></li>
+<li>checkout branch
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-9-deploy-docker-compose-php-gcp-poc">part-9-deploy-docker-compose-php-gcp-poc</a></li>
+<li>update the <code>.make/variables.env</code> file with your GCP project id and VM name</li>
+<li>initialize local docker setup via
+
+<ul>
+<li>copying the secret gpg key to the root of the repository via 
+<code>bash
+cp .tutorial/secret.gpg.example ./secret.gpg</code></li>
+<li>initializing the shared variables via <code>make make-init</code></li>
+<li>building the docker setup via <code>make docker-build</code></li>
+<li>start the docker setup via <code>make docker-up</code></li>
+<li>decrypt the secrets via 
+<code>make gpg-init
+make secret-decrypt</code></li>
+</ul></li>
+<li>run the script located at <code>.infrastructure/setup-gcp.sh</code> to create a GCP VM</li>
+<li>run <code>make deploy IGNORE_UNCOMMITTED_CHANGES=true</code> to deploy the application</li>
+<li>run <code>make deployment-setup-db-on-vm</code> to run the DB migrations</li>
+<li>run <code>make gcp-show-ip</code> to retrieve the public IP of the VM and open it in a browser</li>
+</ul>
+
+<pre>project_id=my-new-project100
+vm_name=my-vm-name
+
+git checkout part-9-deploy-docker-compose-php-gcp-poc
+sed -i "s/pl-dofroscra-p/${project_id}/g" .make/variables.env
+sed -i "s/dofroscra-test/${vm_name}/g" .make/variables.env
+cp .tutorial/secret.gpg.example ./secret.gpg
+make make-init
+make docker-build
+make docker-up
+make gpg-init
+make secret-decrypt
+bash .infrastructure/setup-gcp.sh $project_id $vm_name
+make deploy IGNORE_UNCOMMITTED_CHANGES=true
+make deployment-setup-db-on-vm
+echo "http://$(make -s gcp-show-ip)/"
+</pre>
+
+<p><strong>Note: It can take a couple of minutes until the infrastructure is up and running.</strong></p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    Please consider this whole tutorial <strong>only as a POC</strong>! 
+    <code>docker compose</code> should not be
+    used on a single VM in a production setup, because one huge benefit of docker is the separation
+    of services into horizontally scalable containers. Using a single VM would pretty much defeat
+    the purpose. <br>
+    <br>
+    In addition, we will use <code>docker</code> containers for the 
+    <code>mysql</code> and <code>redis</code> databases. It would be far better to use 
+    managed services like
+    <a href ="https://cloud.google.com/memorystore/docs/redis">Memorystore for <code>redis</code></a> and
+    <a href ="https://cloud.google.com/sql/docs/mysql">Cloud SQL for <code>mysql</code></a>
+    so that we don't have to deal with backups etc. ourselves.
+  </div>
+</div>
+
+<p><strong>Note:</strong> 
+We will tackle those issues and "remove" the POC status in the next part of the tutorial series.</p>
+
+<p><!-- generated -->
+<a id='codebase-changes'> </a>
+<!-- /generated --></p>
+
+<h2>Codebase changes</h2>
+
+<p>Before we dive into the <code>docker</code> stuff, let's quickly talk about some cleanup work in the 
+codebase that you can get via
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-9-deploy-docker-compose-php-gcp-poc">part-9-deploy-docker-compose-php-gcp-poc</a>.</p>
+
+<p><!-- generated -->
+<a id='restructure-the-codebase'> </a>
+<!-- /generated --></p>
+
+<h3>Restructure the codebase</h3>
+
+<p><!-- generated -->
+<a id='the-build-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.build</code> directory</h4>
+
+<p>We already know this directory from the previous tutorial where we used it as a temporary directory
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/#create-a-junit-report-from-phpunit">to collect build artifacts from the CI pipeline</a>.
+Now, we will make use of it again as a temporary directory to</p>
+
+<ul>
+<li>prepare <a href="#create-the-deployment-archive">the creation of the deployment archive</a></li>
+<li>create a <a href="#the-build-info-file"><code>build-info</code> file</a> to pass it to the <code>docker</code> daemon in the build context</li>
+</ul>
+
+<p>The files in the directory are ignored via <code>.gitignore</code> as they are only temporarily required</p>
+
+<pre># File: .gitignore
+
+.build/*
+</pre>
+
+<p>However, since the <code>build-info</code> file must be passed to docker, we will have a slight deviation 
+between the <code>.gitignore</code> and the <code>.dockerignore</code> file.</p>
+
+<pre># File: .dockerignore
+
+.build/*
+
+# kept files
+!.build/build-info
+</pre>
+
+<p>I'm mentioning this here specifically, because we usually 
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/#dockerignore">strive for a parity between <code>.gitignore</code> and <code>.dockerignore</code></a>.</p>
+
+<p><!-- generated -->
+<a id='the-secrets-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.secrets</code> directory</h4>
+
+<p>Since we will store <em>all</em> secrets for <em>all</em> environments in the codebase, <strong>we will organize them 
+by environment</strong> as subdirectories in a new <code>.secrets</code> directory:</p>
+
+<pre>.secrets/
+├── ci
+│   └── ci-secret.txt.secret
+├── prod
+│   ├── app.env.secret
+│   └── docker.env.secret
+└── shared
+    └── passwords.txt.secret
+</pre>
+
+<p>This will also make it easier to 
+<a href="#remove-secrets-for-other-environments">pick the correct files per environment when building the docker image</a>
+and 
+<a href="#decrypt-the-secrets-via-entrypoint">select them for decryption in the <code>ENTRYPOINT</code></a>.</p>
+
+<p>The <code>.secrets/shared/</code> directory contains all secret files that are required by <em>all</em> 
+environments, whereas <code>.secrets/ci/</code> contains only <code>ci</code> secrets and <code>.secrets/prod/</code> contains only 
+<code>prod</code> secrets, respectively.</p>
+
+<p>In our codebase there are already <strong>two files that contain actual secrets</strong>: The <code>.env</code> file and 
+the <code>.docker/.env</code> file. Both of them contain the credentials for <code>mysql</code> and <code>redis</code>, and the 
+<code>.env</code> file also contains the <code>APP_KEY</code> that 
+<a href="https://tighten.com/blog/app-key-and-you/">is used by Laravel to encrypt cookies</a></p>
+
+<blockquote>
+  <p>Laravel uses the [<code>APP_KEY</code>] for all encrypted cookies, including the session cookie, before 
+  handing them off to the user's browser, and it uses it to decrypt cookies read from the browser.</p>
+</blockquote>
+
+<pre># File: .env
+
+APP_KEY=base64:C8X1hLE2bpok8OS+bJ1cTB9wNASJNRLibqUrDq2ls4Q=
+DB_PASSWORD=production_secret_mysql_root_password
+REDIS_PASSWORD=production_secret_redis_password
+</pre>
+
+<pre># File: .docker/.env
+
+MYSQL_PASSWORD=production_secret
+MYSQL_ROOT_PASSWORD=production_secret_mysql_root_password
+REDIS_PASSWORD=production_secret_redis_password
+</pre>
+
+<p>I have created the encrypted <code>.secret</code> files by moving the unencrypted files to the <code>.secrets/</code> 
+directory and made sure to add them to the <code>.gitignore</code> file with the rules</p>
+
+<pre># ...
+
+.secrets/*/*
+!**/*.secret
+</pre>
+
+<p>Then I ran</p>
+
+<pre>make secret-add FILES=".secrets/*/*"
+
+make secret-encrypt
+</pre>
+
+<pre>$ make secret-add FILES=".secrets/*/*"
+"C:/Program Files/Git/mingw64/bin/make" -s git-secret ARGS="add .secrets/*/*"
+git-secret: 4 item(s) added.
+
+$ make secret-encrypt
+"C:/Program Files/Git/mingw64/bin/make" -s git-secret ARGS="hide"
+git-secret: done. 4 of 4 files are hidden.
+</pre>
+
+<p><!-- generated -->
+<a id='the-tutorial-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.tutorial</code> directory</h4>
+
+<p>I have mentioned before, that 
+<a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/#introduction">I would normally not store secret <code>gpg</code> keys in the repository</a>,
+but I'm still doing it in this tutorial so that it's easier to follow along. To make clear 
+which files are affected by this "exception to the rule", I have moved them in a dedicated 
+<code>.tutorial</code> directory:</p>
+
+<pre>.tutorial/
+├── secret-ci-protected.gpg.example
+├── secret-production-protected.gpg.example
+└── secret.gpg.example
+</pre>
+
+<p><!-- generated -->
+<a id='the-infrastructure-directory'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>.infrastructure</code> directory</h4>
+
+<p>The <code>.infrastructure</code> directory contains all files that are used to manage the infrastructure and 
+deployments. The directory was introduced in the 
+<a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/">previous part</a> and looks as follows</p>
+
+<pre>.infrastructure/
+├── scripts/
+│     ├── deploy.sh
+│     └── provision.sh
+└── setup-gcp.sh
+</pre>
+
+<ul>
+<li>the <code>scripts</code> directory contains files that are transferred to and then executed on the VM
+
+<ul>
+<li><code>deploy.sh</code> is a script to <strong>perform all necessary deployment steps on the VM</strong> and is explained 
+in more detail in section <a href="#deployment-commands-on-the-vm">Deployment commands on the VM</a></li>
+<li><code>provision.sh</code> is a script to <strong>install <code>docker</code> and <code>docker compose</code> on the VM</strong> and contains 
+the commands that are explained in section <a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#installing-docker-and-docker-compose">Installing <code>docker</code> and <code>docker compose</code></a></li>
+</ul></li>
+<li><code>setup-gcp.sh</code> is run to set up a VM initially and was described in more detail under
+<a href="https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#putting-it-all-together">Putting it all together</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='add-a-gpg-key-for-production'> </a>
+<!-- /generated --></p>
+
+<h3>Add a <code>gpg</code> key for production</h3>
+
+<p>We have created a new <code>gpg</code> key pair for the <code>prod</code> environment 
+when <a href="#add-a-gpg-key-for-production">setting up the VM on GCP</a>. The secret key is located
+at <code>.tutorial/secret-production-protected.gpg.example</code> and the public key at 
+<code>.dev/gpg-keys/production-public.gpg</code>.</p>
+
+<p><!-- generated -->
+<a id='show-the-build-info'> </a>
+<!-- /generated --></p>
+
+<h3>Show the <code>build-info</code></h3>
+
+<p>As part of the deployment, we generate a <a href="#the-build-info-file"><code>build-info</code> file</a> that allows 
+us to understand "which version of the codebase lives inside a container". This file is located 
+<strong>at the root of the repository</strong>, and we expose it as the web route <code>/info</code> (via the <code>php-fpm</code> 
+container) and as the command <code>info</code> (via the <code>application</code> container).</p>
+
+<p><strong>routes/web.php</strong></p>
+
+<pre># ...
+
+Route::get('/info', function () {
+    $info = file_get_contents(__DIR__."/../build-info");
+    return new \Illuminate\Http\Response($info, 200, ["Content-type" =&gt; "text/plain"]);
+});
+</pre>
+
+<p>Show via <code>curl http://localhost/info</code></p>
+
+<p><strong>routes/console.php</strong></p>
+
+<pre># ...
+
+Artisan::command('info', function () {
+    $info = file_get_contents(__DIR__."/../build-info");
+    $this-&gt;line($info);
+})-&gt;purpose('Display build information about the codebase');
+</pre>
+
+<p>Show via <code>php artisan info</code></p>
+
+<p><!-- generated -->
+<a id='optimize-gitignore'> </a>
+<!-- /generated --></p>
+
+<h3>Optimize <code>.gitignore</code></h3>
+
+<p>Laravel uses multiple <code>.gitignore</code> files to retain a directory structure, because 
+<a href="https://stackoverflow.com/a/115992/413531">empty directories cannot be added to git</a>. 
+<a href="https://stackoverflow.com/a/53208503/413531">This is a valid strategy</a>, but it makes 
+<a href="https://stackoverflow.com/a/29695734/413531">understanding "what is actually ignored" more complex</a>.</p>
+
+<p>In addition, it makes it harder to 
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/#dockerignore">keep <code>.gitignore</code> and <code>.dockerignore</code> in sync</a>,
+because we can't simply "copy the contents of the <code>./.gitignore</code>" any longer as it might not 
+contain all rules.</p>
+
+<p>Thus, I have identified all directory-specific <code>.gitignore</code> files via</p>
+
+<pre>find . -path ./vendor -prune -o -name .gitignore -print
+</pre>
+
+<pre>find . -path ./vendor -prune -o -name .gitignore -print
+./.gitignore
+./bootstrap/cache/.gitignore
+./database/.gitignore
+./storage/app/.gitignore
+./storage/app/public/.gitignore
+./storage/framework/.gitignore
+./storage/framework/cache/.gitignore
+./storage/framework/cache/data/.gitignore
+./storage/framework/sessions/.gitignore
+./storage/framework/testing/.gitignore
+./storage/framework/views/.gitignore
+./storage/logs/.gitignore
+</pre>
+
+<p><strong>CAUTION</strong>: Usually, the files simply contain the rules</p>
+
+<pre>*
+!.gitignore
+</pre>
+
+<p>The only exception is <code>./database/.gitignore</code> which contains</p>
+
+<pre>*.sqlite*
+</pre>
+
+<p>TBH, I would consider this rather a bug, because this rule SHOULD actually live the main 
+<code>.gitignore</code> file. But for us it means, that we need to keep this rule as</p>
+
+<pre>database/*.sqlite*
+</pre>
+
+<p>Before we add them to the <code>.gitignore</code> file, it is important to understand 
+<a href="https://git-scm.com/docs/gitignore#_pattern_format">how <code>git</code> handles the <code>gitignore</code> file</a></p>
+
+<blockquote>
+  <p>An optional prefix "<code>!</code>" which negates the pattern; any matching file excluded by a previous 
+  pattern will become included again. <strong>It is not possible to re-include a file if a parent 
+  directory of that file is excluded</strong>. Git doesn’t list excluded directories for performance 
+  reasons, so any patterns on contained files have no effect, no matter where they are defined.</p>
+</blockquote>
+
+<p>In other words: Consider the following structure</p>
+
+<pre>storage/
+└── app
+    ├── .gitignore
+    └── public
+        └── .gitignore
+</pre>
+
+<p>We might be tempted to write the rules as</p>
+
+<pre>storage/app/*
+!storage/app/.gitignore
+!storage/app/public/.gitignore
+</pre>
+
+<p>But that won't work as expected:
+<code>storage/app/*</code> ignores "everything" in the <code>storage/app/</code> directory, so that <code>git</code> <strong>wouldn't even 
+look</strong> into the <code>storage/app/public/</code> directory and thus wouldn't find the 
+<code>storage/app/public/.gitignore</code> file! In consequence, the rule <code>!storage/app/public/.gitignore</code> 
+doesn't have any affect and the file would <em>not</em> be added to the git repository.</p>
+
+<p>Instead, I need to allow the <code>public</code> directory explicitly by adding the rule 
+<code>!storage/app/public/</code> and ignore all files in it apart from the <code>.gitignore</code> file via 
+<code>storage/app/public/*</code>. So we are essentially saying:</p>
+
+<ul>
+<li>ignore all files in the <code>storage/app/</code> directory</li>
+<li>but NOT the <code>storage/app/public/</code> directory ITSELF</li>
+<li>though do still ignore all files IN the <code>storage/app/public/</code> directory</li>
+<li>but NOT the <code>storage/app/public/.gitignore</code> file</li>
+</ul>
+
+<pre># ignore all files in the storage/app/ directory
+storage/app/*
+!storage/app/.gitignore
+# but NOT the storage/app/public/ directory ITSELF
+!storage/app/public/
+# do still ignore all files IN storage/app/public/
+storage/app/public/*
+# but NOT the storage/app/public/.gitignore file
+!storage/app/public/.gitignore
+</pre>
+
+<p>We can simplify the rules a little more via <code>!**.gitignore</code>, i.e. <em>all</em> <code>gitignore</code> files in any 
+directory should be included</p>
+
+<pre>storage/app/*
+!storage/app/public/
+storage/app/public/*
+
+!**.gitignore
+</pre>
+
+<p>So the final rules for all directory-specific <code>.gitignore</code> files become</p>
+
+<pre><code>bootstrap/cache/*
+database/*.sqlite*
+storage/app/*
+!storage/app/public/
+storage/app/public/*
+storage/framework/*
+!storage/framework/cache/
+storage/framework/cache/*
+!storage/framework/cache/data/
+storage/framework/cache/data/*
+!storage/framework/sessions/
+storage/framework/sessions/*
+!storage/framework/testing/
+storage/framework/testing/*
+!storage/framework/views/
+storage/framework/views/*
+!storage/framework/logs/
+storage/framework/logs/*
+
+!**.gitignore
+</code></pre>
+
+<p><strong>Caution</strong>: If Laravel changes the rules for their directory-specific <code>.gitignore</code> files, we 
+must adjust our rules as well! Luckily this usually only happens on major version upgrades, though.</p>
+
+<p>The full <code>.gitignore</code> file becomes</p>
+
+<pre>**/*.env*
+!.env.example
+!.make/variables.env
+.idea
+.phpunit.result.cache
+vendor/
+secret.gpg
+.gitsecret/keys/random_seed
+.gitsecret/keys/pubring.kbx~
+.secrets/*/*
+!**/*.secret
+gcp-service-account-key.json
+gcp-master-service-account-key.json
+
+# =&gt; directory-specific .gitignore files by Laravel
+bootstrap/cache/*
+database/*.sqlite*
+storage/app/*
+!storage/app/public/
+storage/app/public/*
+storage/framework/*
+!storage/framework/cache/
+storage/framework/cache/*
+!storage/framework/cache/data/
+storage/framework/cache/data/*
+!storage/framework/sessions/
+storage/framework/sessions/*
+!storage/framework/testing/
+storage/framework/testing/*
+!storage/framework/views/
+storage/framework/views/*
+!storage/framework/logs/
+storage/framework/logs/*
+
+# =&gt; directory-specific .gitignore files from us
+.build/*
+
+# =&gt; keep ALL .gitignore files
+!**.gitignore
+</pre>
+
+<p>It will be <a href="#adjust-the-dockerignore-file">"synced" later with the <code>.dockerignore</code> file</a>.</p>
+
+<p><!-- generated -->
+<a id='docker-changes'> </a>
+<!-- /generated --></p>
+
+<h2>Docker changes</h2>
+
+<p>For this tutorial we will use <code>docker compose</code> to <strong>build the containers</strong> as well as to 
+<strong>run them "in production"</strong>, i.e. on the GCP VM. The <code>docker compose</code> configuration will 
+essentially be a combination of the <code>local</code> and <code>ci</code> config from the previous tutorials:</p>
+
+<ul>
+<li>We will need all the services that 
+<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#docker">we already know from the <strong><code>local</code> environment</strong></a>,
+i.e.
+<a href="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG"><img src="https://www.pascallandau.com/img/docker-from-scratch-for-php-applications-in-2022/docker-images.PNG" alt="Docker images" title="Docker images" /></a>
+
+<ul>
+<li><code>nginx</code></li>
+<li><code>mysql</code></li>
+<li><code>redis</code></li>
+<li><code>php-worker</code></li>
+<li><code>php-fpm</code></li>
+<li><code>application</code></li>
+</ul></li>
+<li>The codebase will be baked into the image and we will <strong>bind mount a <code>gpg</code> secret key</strong> at 
+runtime to decrypt the secrets - exactly 
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/#docker-compose-ci-yml">as we did in the previous tutorial with the <strong><code>ci</code> environment</strong></a>
+<a href="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/codebase-in-docker-image-share-secret-key.PNG"><img src="https://www.pascallandau.com/img/ci-pipeline-docker-php-gitlab-github/codebase-in-docker-image-share-secret-key.PNG" alt="Add the codebase in the docker image and share a secret key file" /></a></li>
+</ul>
+
+<p>In the previous tutorial we have used the environment (<code>ci</code>) to 
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/#compose-file-updates">identify the necessary <code>docker-compose.yml</code> configuration files</a> 
+and also
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/#build-target-ci">as a new build target in the <code>Dockerfiles</code></a>. 
+We'll stick to this process and <strong>add yet another environment called <code>prod</code></strong>.</p>
+
+<p><!-- generated -->
+<a id='a-env-file-for-prod'> </a>
+<!-- /generated --></p>
+
+<h3>A <code>.env</code> file for <code>prod</code></h3>
+
+<p>For our <code>local</code> and <code>ci</code> environments we didn't really care about the <code>.env</code> file that we used for 
+<code>docker compose</code> and have simply <strong>added a ready-to-use template at <code>.docker/.env.example</code> that is 
+NOT ignored by <code>git</code></strong>. Even though the file contains credentials, e.g. for <code>mysql</code> and <code>redis</code>, 
+it's okay if those are "exposed" in the repository, <strong>because we won't store any production data 
+in those databases</strong> in <code>local</code> and <code>ci</code>.</p>
+
+<p>For <code>prod</code> however, the situation is different: We certainly do NOT want to expose the 
+credentials. Luckily we already have <a href="https://www.pascallandau.com/blog/git-secret-encrypt-repository-docker/"><code>git secret</code> set up</a>
+and thus could simply 
+<a href="#the-secrets-directory">add an encrypted template file at <code>.secrets/prod/docker.env</code></a>. We will 
+later 
+<a href="#create-the-deployment-archive">decrypt the file and add it to the deployment archive</a> 
+to transfer it to the VM 
+<a href="#deployment-commands-on-the-vm">in order to start the docker setup there</a>.</p>
+
+<p><!-- generated -->
+<a id='updating-the-docker-compose-yml-configuration-files'> </a>
+<!-- /generated --></p>
+
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/'>Deploy dockerized PHP Apps to production on GCP via docker compose [Tutorial Part 9]</a></b></p>
+]]></description>
+                <pubDate>Wed, 29 Jun 2022 06:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/</guid>
+            </item>
+                    <item>
+                <title>A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</title>
+                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/'>A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</a></p>
+<hr />
+
+<p>In the eighth part of this tutorial series on developing PHP on Docker we will <strong>take a look on 
+the Google Cloud Platform (GCP)</strong> and <strong>create a Compute Instance VM</strong> to <strong>run dockerized 
+applications</strong>. This includes:</p>
+
+<ul>
+<li>creating VMs</li>
+<li>using a container registry</li>
+<li>using a secret manager</li>
+</ul>
+
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/RScVUaNHNxs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<div class="youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uPx9AZPOMrA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-8-gcp-compute-instance-vm-docker">part-8-gcp-compute-instance-vm-docker</a>.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/">Create a CI pipeline for dockerized PHP Apps</a>.
+and the following one is
+<a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc">Deploy dockerized PHP Apps to production on GCP via docker compose</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#set-up-a-gcp-project">Set up a GCP project</a></li>
+<li><a href="#create-a-service-account">Create a service account</a>
+
+<ul>
+<li><a href="#create-service-account-key-file">Create service account key file</a></li>
+<li><a href="#configure-iam-permissions">Configure IAM permissions</a></li>
+</ul></li>
+<li><a href="#set-up-the-gcloud-cli-tool">Set up the <code>gcloud</code> CLI tool</a></li>
+<li><a href="#set-up-the-container-registry">Set up the Container Registry</a>
+
+<ul>
+<li><a href="#authenticate-docker">Authenticate docker</a></li>
+<li><a href="#pushing-images-to-the-registry">Pushing images to the registry</a></li>
+<li><a href="#images-are-stored-in-google-cloud-storage-buckets">Images are stored in Google Cloud Storage buckets</a></li>
+<li><a href="#pulling-images-from-the-registry">Pulling images from the registry</a></li>
+</ul></li>
+<li><a href="#set-up-the-secret-manager">Set up the Secret Manager</a>
+
+<ul>
+<li><a href="#create-a-secret-via-the-ui">Create a secret via the UI</a></li>
+<li><a href="#view-a-secret-via-the-ui">View a secret via the UI</a></li>
+<li><a href="#retrieve-a-secret-via-the-gcloud-cli">Retrieve a secret via the <code>gcloud</code> cli</a></li>
+<li><a href="#add-the-secret-gpg-key-and-password">Add the secret <code>gpg</code> key and password</a></li>
+</ul></li>
+<li><a href="#compute-instances-the-gcp-vms">Compute Instances: The GCP VMs </a>
+
+<ul>
+<li><a href="#create-a-vm">Create a VM</a>
+
+<ul>
+<li><a href="#general-vm-settings">General VM settings</a></li>
+<li><a href="#firewall-and-networks-tags">Firewall and networks tags</a></li>
+<li><a href="#the-role-of-the-service-account">The role of the service account</a></li>
+<li><a href="#adding-a-public-ssh-key">Adding a public SSH key</a></li>
+<li><a href="#define-availability-policies">Define Availability Policies</a></li>
+<li><a href="#the-actual-vm-creation">The actual VM creation</a></li>
+</ul></li>
+<li><a href="#log-into-a-vm">Log into a VM</a>
+
+<ul>
+<li><a href="#login-via-ssh-from-the-gcp-ui">Login via SSH from the GCP UI</a></li>
+<li><a href="#login-via-ssh-with-your-own-key-from-your-host-machine">Login via SSH with your own key from your host machine</a></li>
+<li><a href="#login-using-the-identity-aware-proxy-iap-concept">Login using the Identity-Aware Proxy (IAP) concept</a>
+
+<ul>
+<li><a href="#additional-notes-on-iap">Additional notes on IAP</a></li>
+</ul></li>
+<li><a href="#get-root-permissions">Get <code>root</code> permissions</a></li>
+</ul></li>
+<li><a href="#ssh-and-scp-commands"><code>ssh</code> and <code>scp</code> commands</a>
+
+<ul>
+<li><a href="#gcloud-ssh-command"><code>gcloud ssh --command=""</code></a></li>
+<li><a href="#gcloud-scp"><code>gcloud scp</code></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#provision-the-vm">Provision the VM</a>
+
+<ul>
+<li><a href="#get-the-secret-gpg-key-and-password-from-the-secret-manager">Get the secret <code>gpg</code> key and password from the Secret Manager</a></li>
+<li><a href="#installing-docker-and-docker-compose">Installing <code>docker</code> and <code>docker compose</code></a></li>
+<li><a href="#authenticate-docker-via-gcloud">Authenticate docker via <code>gcloud</code></a></li>
+<li><a href="#pulling-the-nginx-image">Pulling the <code>nginx</code> image</a></li>
+<li><a href="#start-the-nginx-container">Start the <code>nginx</code> container</a></li>
+</ul></li>
+<li><a href="#automate-via-gcloud-commands">Automate via <code>gcloud</code> commands</a>
+
+<ul>
+<li><a href="#preconditions-project-and-owner-service-account">Preconditions: Project and <code>Owner</code> service account</a></li>
+<li><a href="#configure-gcloud-to-use-the-master-service-account">Configure <code>gcloud</code> to use the master service account</a></li>
+<li><a href="#enable-apis">Enable APIs</a></li>
+<li><a href="#create-and-configure-a-deployment-service-account">Create and configure a "deployment" service account</a></li>
+<li><a href="#create-secrets">Create secrets</a></li>
+<li><a href="#create-firewall-rule-for-http-traffic">Create firewall rule for HTTP traffic</a></li>
+<li><a href="#create-a-compute-instance-vm">Create a Compute Instance VM</a></li>
+<li><a href="#provisioning">Provisioning</a></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul></li>
+<li><a href="#putting-it-all-together">Putting it all together </a></li>
+<li><a href="#cleanup">Cleanup</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>In the next tutorial we will
+<a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc">deploy our dockerized PHP Apps to "production" via docker compose</a>
+and will create this "production" environment on <strong>GCP (Google Cloud Platform)</strong>. 
+This tutorial serves as a primer on GCP to build up some fundamental knowledge, because we will 
+use the platform to provide all the <strong>infrastructure required to run our dockerized PHP 
+application</strong>.</p>
+
+<p>In the process, we'll learn about <a href="#set-up-a-gcp-project">GCP projects</a> as our own "space" 
+in GCP and <a href="#create-a-service-account">service accounts</a> as a way to communicate 
+programmatically. We'll start by doing everything manually via the UI, but will also 
+<a href="#automate-via-gcloud-commands">explain how to do it programmatically via the <code>gcloud</code> cli</a> and 
+end with a <a href="#putting-it-all-together">fully automated script</a>.</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-services.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-services.PNG" alt="GCP Services" /></a></p>
+
+<p>The following video shows the overall flow</p>
+
+<video controls>
+  <source src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-run-docker-images.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>The API keys (see <a href="#create-service-account-key-file">service account key files</a>) that I use are 
+<strong>not</strong> in the repository, because I would be billed for any usage. I.e. <strong>you must create you own 
+project and keys</strong> to follow along.</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    Following the steps outlined in this tutorial <strong>will incur costs</strong>, because we will 
+    create "real" infrastructure. It won't be much (couple of cents), and it will very likely be 
+    covered by the free 300$ grant that you get when trying out GCP (or the general unlimited 
+    <a href="https://cloud.google.com/free/docs/gcp-free-tier">GCP Free Tier</a>
+    ).<br> 
+    <br>
+    But you should still know about that upfront and <strong>make sure to shut everything down / 
+    delete everything</strong> in case you're trying it out yourself. The "safest" way to do so is
+    <a href="#cleanup">Shutting down (deleting) the whole project</a>
+  </div>
+</div>
+
+<p><!-- generated -->
+<a id='set-up-a-gcp-project'> </a>
+<!-- /generated --></p>
+
+<h2>Set up a GCP project</h2>
+
+<p>On GCP, resources are organized under so-called 
+<a href="https://cloud.google.com/resource-manager/docs/creating-managing-projects">projects</a>. We can 
+create a project via the <a href="https://console.cloud.google.com/projectcreate">Create Project UI</a>:</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-new-project.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-new-project.PNG" alt="Create a new GCP project" /></a></p>
+
+<p>The <strong>project ID</strong> must be a globally unique string, and I have chosen <code>pl-dofroscra-p</code> for this 
+tutorial (<code>pl</code> => Pascal Landau; <code>dofroscra</code> => Docker From Scratch; <code>p</code> => production).</p>
+
+<p><!-- generated -->
+<a id='create-a-service-account'> </a>
+<!-- /generated --></p>
+
+<h2>Create a service account</h2>
+
+<p>As a next step, we need a <a href="https://cloud.google.com/iam/docs/service-accounts">service account</a>
+that we can <strong>use to make API requests</strong>, because we don't want to use our "personal GCP account". 
+Service accounts are created via the 
+<a href="https://console.cloud.google.com/iam-admin/serviceaccounts/create">IAM &amp; Admin > Service Accounts UI</a>:</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-new-service-account.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-new-service-account.PNG" alt="Create a new GCP service account" /></a></p>
+
+<p><!-- generated -->
+<a id='create-service-account-key-file'> </a>
+<!-- /generated --></p>
+
+<h3>Create service account key file</h3>
+
+<p>In order to <strong>use the account programmatically</strong>, we also need to 
+<a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating">create a key file</a>
+by choosing the "Manage Keys" option of the corresponding service account.</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.PNG" alt="Create a new key file for a GCP service account UI" /></a></p>
+
+<p>This will open up a UI at</p>
+
+<pre>https://console.cloud.google.com/iam-admin/serviceaccounts/details/$serviceAccountId/keys
+</pre>
+
+<p>where <code>$serviceAccountId</code> is the numeric id of the service account, e.g. <code>109548647107864470967</code>.
+To create a key:</p>
+
+<ul>
+<li>click <code>"ADD KEY"</code> and select <code>"Create new key"</code> from the drop down menu
+
+<ul>
+<li>This will bring up a modal window to choose the key type.</li>
+</ul></li>
+<li>select the recommended JSON type and click <code>"Create"</code>.
+
+<ul>
+<li>GCP will then <strong>generate a new key pair</strong>, store the public key and offer the private key file as 
+download.</li>
+</ul></li>
+<li>download the file and make sure to treat it like any other private key (ssh, gpg, ...) 
+i.e. <strong>never share it publicly</strong>!</li>
+</ul>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.gif"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-create-service-account-key-file.gif" alt="Create a new key file for a GCP service account" /></a></p>
+
+<p>We will <strong>store this file in the root of the codebase</strong> at <code>gcp-service-account-key.json</code> and add it 
+to the <code>.gitignore</code> file.</p>
+
+<p>Each service account has also a <strong>unique email address</strong> that consists of its (non-numeric) <code>id</code> 
+and the <code>project id</code>. You can also find it directly in the key file:</p>
+
+<pre>$ grep "email" ./gcp-service-account-key.json
+  "client_email": "docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com",
+</pre>
+
+<p>This email address is usually used to reference the service account, e.g. when assigning IAM 
+permissions.</p>
+
+<p><!-- generated -->
+<a id='configure-iam-permissions'> </a>
+<!-- /generated --></p>
+
+<h3>Configure IAM permissions</h3>
+
+<p><strong>IAM</strong> stands for <a href="https://cloud.google.com/iam/docs#docs">Identity and Access Management (IAM)</a> 
+and is used for <strong>managing permissions on GCP</strong>. The 
+<a href="https://cloud.google.com/iam/docs/understanding-roles">two core concepts are "permissions" and "roles"</a>:</p>
+
+<ul>
+<li><strong>permissions</strong> are fine-grained for particular actions, e.g. <code>storage.buckets.create</code> to "Create 
+Cloud Storage buckets"</li>
+<li><strong>roles</strong> combine a selection of permissions, e.g. the <code>Cloud Storage Admin</code> role has 
+permissions like
+
+<ul>
+<li><code>storage.buckets.create</code></li>
+<li><code>storage.buckets.get</code></li>
+<li>etc.</li>
+</ul></li>
+<li>roles are assigned to <strong>users</strong> (or service accounts)</li>
+</ul>
+
+<p>You can find a full overview of all permissions in the 
+<a href="https://cloud.google.com/iam/docs/permissions-reference">Permissions Reference</a> and all roles 
+under 
+<a href="https://cloud.google.com/iam/docs/understanding-roles#predefined">Understanding roles > Predefined roles</a>.</p>
+
+<p>For this tutorial, we'll assign the following roles to the service account "user"
+<code>docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com</code>:</p>
+
+<ul>
+<li><code>Storage Admin</code>
+
+<ul>
+<li>required to <a href="#pushing-images-to-the-registry">create the GCP bucket for the registry</a> and to 
+<a href="#pulling-images-from-the-registry">pull the images on the VM</a></li>
+</ul></li>
+<li><code>Secret Manager Admin</code>
+
+<ul>
+<li>required to <a href="#get-the-secret-gpg-key-and-password-from-the-secret-manager">retrieve secrets from the Secret Manager</a></li>
+</ul></li>
+<li><code>Compute Admin</code>, <code>Service Account User</code> and <code>IAP-secured Tunnel User</code>
+
+<ul>
+<li>are necessary for <a href="#additional-notes-on-iap">logging into a VM via IAP</a>.</li>
+</ul></li>
+</ul>
+
+<p>Roles can be assigned through the
+<a href="https://console.cloud.google.com/iam-admin/iam">Cloud Console IAM UI</a> by editing the
+corresponding user.</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-iam-permissions.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-iam-permissions.PNG" alt="Managing IAM permissions" /></a></p>
+
+<p><strong>Caution:</strong> It might take some time (usually a couple of seconds) until changes in IAM
+permissions take effect.</p>
+
+<p><!-- generated -->
+<a id='set-up-the-gcloud-cli-tool'> </a>
+<!-- /generated --></p>
+
+<h2>Set up the <code>gcloud</code> CLI tool</h2>
+
+<p>The <a href="https://cloud.google.com/sdk/gcloud">CLI tool for GCP is called <code>gcloud</code></a> and is
+<a href="https://cloud.google.com/sdk/docs/install">available for all operating systems</a>.</p>
+
+<p>In this tutorial we are using version <code>380.0.0</code> <strong>installed natively on Windows</strong> via the
+<a href="https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe">GoogleCloudSDKInstaller.exe</a>
+using the "Bundled Python" option.</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcloud-installation-options.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcloud-installation-options.PNG" alt="Install <code>gcloud</code> on Windows" /></a></p>
+
+<p>FYI: As described under
+<a href="https://cloud.google.com/sdk/docs/uninstall-cloud-sdk">Uninstalling the Google Cloud CLI</a>
+you can find the installation and config directories via</p>
+
+<pre># installation directory
+$ gcloud info --format='value(installation.sdk_root)'
+C:\Users\Pascal\AppData\Local\Google\Cloud SDK\google-cloud-sdk
+
+# config directory
+$ gcloud info --format='value(config.paths.global_config_dir)'
+C:\Users\Pascal\AppData\Roaming\gcloud
+</pre>
+
+<p>I will <em>not</em> use my personal Google account to run <code>gcloud</code> commands, thus I'm <em>not</em> using the 
+"usual" initialization process
+<a href="https://cloud.google.com/sdk/docs/initializing">by running <code>gcloud init</code></a>. Instead, I will use
+the <a href="#create-a-service-account">service account that we created previously</a> and activate it as 
+described under
+<a href="https://cloud.google.com/sdk/gcloud/reference/auth/activate-service-account">gcloud auth activate-service-account</a>
+via</p>
+
+<pre>gcloud auth activate-service-account docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com --key-file=./gcp-service-account-key.json --project=pl-dofroscra-p
+</pre>
+
+<p>Output</p>
+
+<pre>$ gcloud auth activate-service-account docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com --key-file=./gcp-service-account-key.json --project=pl-dofroscra-p
+Activated service account credentials for: [docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com]
+</pre>
+
+<p>FYI: Because we are using a <code>json</code> key file that includes the service account ID, we can also 
+omit the id in the command, i.e.</p>
+
+<pre>$ gcloud auth activate-service-account --key-file=./gcp-service-account-key.json --project=pl-dofroscra-p
+Activated service account credentials for: [docker-php-tutorial-deployment@pl-dofroscra-p.iam.gserviceaccount.com]
+</pre>
+
+<p><!-- generated -->
+<a id='set-up-the-container-registry'> </a>
+<!-- /generated --></p>
+
+<h2>Set up the Container Registry</h2>
+
+<p><a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/">We will use <code>docker compose</code> to run our PHP application in the next tutorial part</a>
+and need to <strong>make our docker images available</strong> in a 
+<a href="https://www.redhat.com/en/topics/cloud-native-apps/what-is-a-container-registry">container registry</a>.
+Luckily, <a href="https://cloud.google.com/container-registry">GCP offers a Container Registry product</a> 
+that gives us a <strong>ready-to-use private registry as part of a GCP project</strong>. Before we can use it, 
+the corresponding 
+<a href="https://console.cloud.google.com/marketplace/product/google/containerregistry.googleapis.com">Google Container Registry API must be enabled</a>:</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-enable-container-registry-api.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-enable-container-registry-api.PNG" alt="Enable the GCP Container Registry API" /></a></p>
+
+<p>You find the <strong>Container Registry</strong> in the Cloud Console UI under 
+<a href="https://console.cloud.google.com/gcr">Container Registry</a>.</p>
+
+<p><!-- generated -->
+<a id='authenticate-docker'> </a>
+<!-- /generated --></p>
+
+<h3>Authenticate docker</h3>
+
+<p>Since the Container Registry is private, we <strong>need to authenticate before we can push our 
+docker images</strong>. The available authentication methods are described in the
+<a href="https://cloud.google.com/container-registry/docs/advanced-authentication">GCP docu "Container Registry Authentication methods"</a>.
+For pushing images from our local host system, we will use <strong>the service account key file</strong> that we 
+<a href="#create-service-account-key-file">created previously</a> and run the command shown in the
+<a href="https://cloud.google.com/container-registry/docs/advanced-authentication#json-key">"JSON key file" section</a>
+of the the docu.</p>
+
+<pre>key=./gcp-service-account-key.json
+cat "$key" | docker login -u _json_key --password-stdin https://gcr.io
+</pre>
+
+<p>A successful authentication looks as follows:</p>
+
+<pre>$ cat "$key" | docker login -u _json_key --password-stdin https://gcr.io
+Login Succeeded
+
+Logging in with your password grants your terminal complete access to your account.
+For better security, log in with a limited-privilege personal access token. Learn more at https://docs.docker.com/go/access-tokens/
+</pre>
+
+<p>So what exactly "happens" when we run this command? According to the 
+<a href="https://docs.docker.com/engine/reference/commandline/login/"><code>docker login</code>documentation</a></p>
+
+<blockquote>
+  <p>When you log in, the command stores credentials in <code>$HOME/.docker/config.json</code> 
+  on Linux or <code>%USERPROFILE%/.docker/config.json</code> on Windows
+  [...]</p>
+  
+  <p>The Docker Engine can keep user credentials in an external credentials store, 
+  such as the native keychain of the operating system.
+  [...]</p>
+  
+  <p>You need to specify the credentials store in 
+  <code>$HOME/.docker/config.json</code> to tell the docker engine to use it.
+  [...]</p>
+  
+  <p>By default, Docker looks for the native binary on each of the platforms, 
+  i.e. “osxkeychain” on macOS, “wincred” on windows, and “pass” on Linux.</p>
+</blockquote>
+
+<p>In other words: I <strong>won't be able to see the content of the service account key file in "plain 
+text"</strong> anywhere but docker will utilize the OS specific tools to store them securely. After I ran 
+the <code>docker login</code> command on Windows, I found the following content in <code>~/.docker/config.json</code>:</p>
+
+<pre>$ cat ~/.docker/config.json
+{
+        "auths": {
+                "gcr.io": {}
+        },
+        "credsStore": "desktop"
+}
+</pre>
+
+<p>FYI: <code>"desktop"</code> seems to be a 
+<a href="https://forums.docker.com/t/docker-windows-desktop-credentials-location/107251">wrapper for the Wincred executable</a>.</p>
+
+<p><!-- generated -->
+<a id='pushing-images-to-the-registry'> </a>
+<!-- /generated --></p>
+
+<h3>Pushing images to the registry</h3>
+
+<p>For this tutorial, we will create a super simple <code>nginx</code> alpine image that provides a "Hello 
+world" <code>hello.html</code> file via</p>
+
+<pre>docker build -t my-nginx -f - . &lt;&lt;EOF
+FROM nginx:1.21.5-alpine
+
+RUN echo "Hello world" &gt;&gt; /usr/share/nginx/html/hello.html
+
+EOF
+</pre>
+
+<p>The name of the image is <code>my-nginx</code></p>
+
+<pre>$ docker image ls | grep my-nginx
+my-nginx         latest             42dd1608d126   50 seconds ago    23.5MB
+</pre>
+
+<p>In order to 
+<a href="https://docs.docker.com/engine/reference/commandline/push/">push an image to a registry</a>,
+<strong>the image name must be prefixed with the corresponding registry</strong>. This was quite confusing to 
+me, because I would have expected to be able to run something like this:</p>
+
+<pre>$ docker push my-nginx --registry=gcr.io
+
+unknown flag: --registry
+See 'docker push --help'.
+</pre>
+
+<p>But nope, there is no such <code>--registry</code> option. Even worse: <strong>Omitting it would cause a push to 
+<code>docker.io</code></strong>, the "default" registry:</p>
+
+<pre>$ docker push my-nginx
+Using default tag: latest
+The push refers to repository [docker.io/my-nginx]
+</pre>
+
+<p>According to 
+<a href="https://cloud.google.com/container-registry/docs/pushing-and-pulling">the GCP docs on Pushing and pulling images</a>, 
+the following steps are necessary to push an image to a GCP registry:</p>
+
+<blockquote>
+  <ul>
+  <li><strong>Tag</strong> the image with its target path in Container Registry, including the gcr.io registry 
+  host and the project ID my-project</li>
+  <li><strong>Push</strong> the image to the registry</li>
+  </ul>
+</blockquote>
+
+<p>In our case <strong>the target path to our Container Registry</strong> is</p>
+
+<pre>gcr.io/pl-dofroscra-p
+</pre>
+
+<p>because <code>pl-dofroscra-p</code> is the <a href="#set-up-a-gcp-project">id of the GCP project we created previously</a>.</p>
+
+<p>The <strong>full image name</strong> becomes</p>
+
+<pre>gcr.io/pl-dofroscra-p/my-nginx
+</pre>
+
+<p>To push the <code>my-nginx</code> image, we must first <strong>"add another name"</strong> to it via 
+<a href="https://docs.docker.com/engine/reference/commandline/tag/"><code>docker tag</code></a></p>
+
+<pre>$ docker tag my-nginx gcr.io/pl-dofroscra-p/my-nginx
+
+$ docker image ls
+REPOSITORY                       TAG                IMAGE ID       CREATED          SIZE
+my-nginx                         latest             ba7a2c5faf0d   15 minutes ago   23.5MB
+gcr.io/pl-dofroscra-p/my-nginx   latest             ba7a2c5faf0d   15 minutes ago   23.5MB
+</pre>
+
+<p>and <strong>push that name afterwards</strong></p>
+
+<pre>$ docker push gcr.io/pl-dofroscra-p/my-nginx
+Using default tag: latest
+The push refers to repository [gcr.io/pl-dofroscra-p/my-nginx]
+134174afa9ad: Preparing
+cb7b4430c52d: Preparing
+419df8b60032: Preparing
+0e835d02c1b5: Preparing
+5ee3266a70bd: Preparing
+3f87f0a06073: Preparing
+1c9c1e42aafa: Preparing
+8d3ac3489996: Preparing
+8d3ac3489996: Waiting
+3f87f0a06073: Waiting
+1c9c1e42aafa: Waiting
+cb7b4430c52d: Pushed
+134174afa9ad: Pushed
+419df8b60032: Pushed
+5ee3266a70bd: Pushed
+0e835d02c1b5: Pushed
+8d3ac3489996: Layer already exists
+3f87f0a06073: Pushed
+1c9c1e42aafa: Pushed
+latest: digest: sha256:0740591fb686227d8cdf4e42b784f634cbaf9f5caa6ee478e3bcc24aeef75d7f size: 1982
+</pre>
+
+<p>You can then find the image in the 
+<a href="https://console.cloud.google.com/gcr">UI of the Container Registry</a>:</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-container-registry-image-example.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-container-registry-image-example.PNG" alt="Example of a pushed image in the Container Registry" /></a></p>
+
+<p>Don't worry: We won't have to do the tagging every time before a push, because we will 
+<a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/#adding-gcp-values-to-make-variables-env">set up <code>make</code> to use the correct name automatically</a>
+when building the images in the <a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/">next part</a>.</p>
+
+<p><!-- generated -->
+<a id='images-are-stored-in-google-cloud-storage-buckets'> </a>
+<!-- /generated --></p>
+
+<h3>Images are stored in Google Cloud Storage buckets</h3>
+
+<p>We <a href="#configure-iam-permissions">assigned the <code>Storage Admin</code> role to the service account previously</a>
+that contains the <code>storage.buckets.create</code> permission. If we wouldn't have done that, the 
+following error would have occurred:</p>
+
+<pre>denied: Token exchange failed for project 'pl-dofroscra-p'. Caller does not have permission 'storage.buckets.create'. To configure permissions, follow instructions at: https://cloud.google.com/container-registry/docs/access-control
+</pre>
+
+<p>The Container Registry tries to <strong>store the docker images in a Google Cloud Storage bucket</strong> that 
+is created on the fly when the <strong>very first image is pushed</strong>, see 
+<a href="https://cloud.google.com/container-registry/docs/pushing-and-pulling#add-registry">the GCP docs on "Adding a registry"</a>:</p>
+
+<blockquote>
+  <p>The first image push to a hostname triggers creation of the registry in a project 
+  and the corresponding Cloud Storage storage bucket. 
+  This initial push requires project-wide permissions to create storage buckets.</p>
+</blockquote>
+
+<p>You can find the bucket, that in my case is named <code>artifacts.pl-dofroscra-p.appspot.com</code>
+in the <a href="https://console.cloud.google.com/storage">Cloud Storage UI</a>:</p>
+
+<p><a href="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-cloud-storage-registry-images.PNG"><img src="https://www.pascallandau.com/img/gcp-compute-instance-vm-docker/gcp-cloud-storage-registry-images.PNG" alt="GCP Container Registry image location on Cloud Storage" /></a></p>
+
+<p><strong>CAUTION</strong>: Make sure to <strong>delete this bucket once you are done with the tutorial</strong> - otherwise 
+<a href="https://cloud.google.com/storage/pricing">storage costs</a> will incur.</p>
+
+<p><!-- generated -->
+<a id='pulling-images-from-the-registry'> </a>
+<!-- /generated --></p>
+
+<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/'>A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</a></b></p>
+]]></description>
+                <pubDate>Mon, 20 Jun 2022 06:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/</guid>
+            </item>
                     <item>
                 <title>CI Pipelines for dockerized PHP Apps with Github &amp; Gitlab [Tutorial Part 7]</title>
                 <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/ci-pipeline-docker-php-gitlab-github/'>CI Pipelines for dockerized PHP Apps with Github & Gitlab [Tutorial Part 7]</a></p>
@@ -2209,1553 +3510,6 @@ composer-require-checker            done   took 6s
                 <pubDate>Mon, 25 Apr 2022 05:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/php-qa-tools-make-docker/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/php-qa-tools-make-docker/</guid>
-            </item>
-                    <item>
-                <title>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</title>
-                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</a></p>
-<hr />
-
-<p>In this part of my tutorial series on developing PHP on Docker we will
-install <strong>Laravel and make sure our setup works for Artisan Commands, a Redis Queue and Controllers</strong>
-for the front end requests.</p>
-
-<div class="youtube">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/BpsBzpMD87c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
-<p><strong>All code samples are publicly available</strong> in my
-<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
-You find the branch for this tutorial at
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-3-run-laravel-9-docker-in-2022">part-4-3-run-laravel-9-docker-in-2022</a>.</p>
-
-<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
-<a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
-<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022</a>
-and the following one is
-<a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/">Set up PHP QA tools and control them via make</a>.</p>
-
-<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
-to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-
-<p><!-- generated -->
-<a id='table-of-contents'> </a>
-<!-- /generated --></p>
-
-<h2>Table of contents</h2>
-
-<!-- toc -->
-
-<ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#install-extensions">Install extensions</a></li>
-<li><a href="#install-laravel">Install Laravel</a></li>
-<li><a href="#update-the-php-poc">Update the PHP POC</a>
-
-<ul>
-<li><a href="#config">config</a>
-
-<ul>
-<li><a href="#database-connection">database connection</a></li>
-<li><a href="#queue-connection">queue connection</a></li>
-</ul></li>
-<li><a href="#controllers">Controllers</a></li>
-<li><a href="#commands">Commands</a></li>
-<li><a href="#jobs-and-workers">Jobs and workers</a></li>
-<li><a href="#tests">Tests</a></li>
-</ul></li>
-<li><a href="#makefile-updates">Makefile updates</a>
-
-<ul>
-<li><a href="#clearing-the-queue">Clearing the queue</a></li>
-</ul></li>
-<li><a href="#running-the-poc">Running the POC</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
-</ul>
-
-<!-- /toc -->
-
-<p><!-- generated -->
-<a id='introduction'> </a>
-<!-- /generated --></p>
-
-<h2>Introduction</h2>
-
-<p>The goal of this tutorial is to run the 
-<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#php-poc">PHP POC from part 4.1</a>
-using Laravel as a framework instead of "plain PHP". 
-We'll use the newest version of Laravel (Laravel 9) that was
-<a href="https://laravel-news.com/laravel-9-released">released at the beginning of February 2022</a>.</p>
-
-<p>If you want to follow along, please use the <strong>branch of the 
-<a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/">previous tutorial</a></strong>, i.e.</p>
-
-<pre>git checkout git checkout part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022
-</pre>
-
-<p>The branch of <strong>this</strong> tutorials contains the "end result", i.e. Laravel will already exist in 
-the repository.</p>
-
-<p><!-- generated -->
-<a id='install-extensions'> </a>
-<!-- /generated --></p>
-
-<h2>Install extensions</h2>
-
-<p>Before Laravel can be installed, we need to add the necessary extensions of the framework (and all
-its dependencies) to the <code>php-base</code> image:</p>
-
-<pre><code># File: .docker/images/php/base/Dockerfile
-
-# ...
-
-RUN apk add --update --no-cache  \
-        php-curl~=${TARGET_PHP_VERSION} \
-
-</code></pre>
-
-<p><!-- generated -->
-<a id='install-laravel'> </a>
-<!-- /generated --></p>
-
-<h2>Install Laravel</h2>
-
-<p>We'll start by
-<a href="https://laravel.com/docs/9.x/installation#installation-via-composer">creating a new Laravel project with composer</a></p>
-
-<pre>composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.0.*" --no-install --no-scripts
-</pre>
-
-<p>The files are added to <code>/tmp/laravel</code> because
-<a href="https://github.com/composer/composer/issues/1135#issuecomment-10358244">composer projects cannot be created in non-empty folders</a>
-, so we need to create the project in a temporary location first and move it afterwards.</p>
-
-<p>Since I don't have PHP 8 installed on my laptop, I'll execute the command in the <code>application</code>
-docker container via</p>
-
-<pre>make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND='composer create-project --prefer-dist laravel/laravel /tmp/laravel "9.0.*" --no-install --no-scripts'
-</pre>
-
-<p>and then move the files into the application directory via</p>
-
-<pre>rm -rf public/ tests/ composer.* phpunit.xml
-make execute-in-container DOCKER_SERVICE_NAME="application" COMMAND="bash -c 'mv -n /tmp/laravel/{.*,*} .' &amp;&amp; rm -f /tmp/laravel"
-cp .env.example .env
-</pre>
-
-<p><strong>Notes</strong></p>
-
-<ul>
-<li><code>composer install</code> is skipped via <code>--no-install</code> to avoid having to copy over the <code>vendor/</code> folder
-(which is super slow on Docker Desktop)</li>
-<li><a href="https://unix.stackexchange.com/a/127713">existing directories cannot be overwritten by <code>mv</code></a> 
-thus I remove <code>public/</code> and <code>tests/</code> upfront (as well as the <code>composer</code> and <code>phpunit</code> config 
-files)</li>
-<li><code>mv</code> uses the <code>-n</code> flag so that existing files like our <code>.editorconfig</code> are not overwritten</li>
-<li>I need to use <code>bash -c</code> to run the command in the container because otherwise 
-<a href="https://github.com/moby/moby/issues/12558#issuecomment-94775867">the <code>*</code> wildcard would have no effect in the container</a></li>
-</ul>
-
-<p>To finalize the installation I need to install the composer dependencies and execute the 
-<code>create-project</code> scripts defined in 
-<a href="https://github.com/laravel/laravel/blob/9.x/composer.json#L45"><code>composer.json</code></a>:</p>
-
-<pre><code>make composer ARGS=install
-make composer ARGS="run-script post-create-project-cmd"
-</code></pre>
-
-<p>Since our nginx configuration was already pointing to the <code>public/</code> directory, we can immediately 
-open <a href="http://127.0.0.1">http://127.0.0.1</a> in the browser and should see the frontpage of 
-a fresh Laravel installation.</p>
-
-<p><!-- generated -->
-<a id='update-the-php-poc'> </a>
-<!-- /generated --></p>
-
-<h2>Update the PHP POC</h2>
-
-<p><!-- generated -->
-<a id='config'> </a>
-<!-- /generated --></p>
-
-<h3>config</h3>
-
-<p>We need to update the connection information for the database and the queue (previously 
-configured via <code>dependencies.php</code>) in the <code>.env</code> file</p>
-
-<p><!-- generated -->
-<a id='database-connection'> </a>
-<!-- /generated --></p>
-
-<h4>database connection</h4>
-
-<pre><code>DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=application_db
-DB_USERNAME=root
-DB_PASSWORD=secret_mysql_root_password
-</code></pre>
-
-<p><!-- generated -->
-<a id='queue-connection'> </a>
-<!-- /generated --></p>
-
-<h4>queue connection</h4>
-
-<pre><code>QUEUE_CONNECTION=redis
-
-REDIS_HOST=redis
-REDIS_PASSWORD=secret_redis_password
-</code></pre>
-
-<p><!-- generated -->
-<a id='controllers'> </a>
-<!-- /generated --></p>
-
-<h3>Controllers</h3>
-
-<p>The functionality of the previous <code>public/index.php</code> file now lives in the <code>HomeController</code> at 
-<code>app/Http/Controllers/HomeController.php</code></p>
-
-<pre>class HomeController extends Controller
-{
-    use DispatchesJobs;
-
-    public function __invoke(Request $request, QueueManager $queueManager, DatabaseManager $databaseManager): View
-    {
-        $jobId = $request-&gt;input("dispatch") ?? null;
-        if ($jobId !== null) {
-            $job = new InsertInDbJob($jobId);
-            $this-&gt;dispatch($job);
-
-            return $this-&gt;getView("Adding item '$jobId' to queue");
-        }
-
-        if ($request-&gt;has("queue")) {
-
-            /**
-             * @var RedisQueue $redisQueue
-             */
-            $redisQueue = $queueManager-&gt;connection();
-            $redis =  $redisQueue-&gt;getRedis()-&gt;connection();
-            $queueItems = $redis-&gt;lRange("queues:default", 0, 99999);
-
-            $content = "Items in queue\n".var_export($queueItems, true);
-
-            return $this-&gt;getView($content);
-        }
-
-        if ($request-&gt;has("db")) {
-            $items = $databaseManager-&gt;select($databaseManager-&gt;raw("SELECT * FROM jobs"));
-
-            $content = "Items in db\n".var_export($items, true);
-
-            return $this-&gt;getView($content);
-        }
-        $content = &lt;&lt;&lt;HTML
-            &lt;ul&gt;
-                &lt;li&gt;&lt;a href="?dispatch=foo"&gt;Dispatch job 'foo' to the queue.&lt;/a&gt;&lt;/li&gt;
-                &lt;li&gt;&lt;a href="?queue"&gt;Show the queue.&lt;/a&gt;&lt;/li&gt;
-                &lt;li&gt;&lt;a href="?db"&gt;Show the DB.&lt;/a&gt;&lt;/li&gt;
-            &lt;/ul&gt;
-            HTML;
-
-        return $this-&gt;getView($content);
-    }
-
-    private function getView(string $content): View
-    {
-        return view('home')-&gt;with(["content" =&gt; $content]);
-    }
-}
-
-</pre>
-
-<p>Its content is displayed via the <code>home</code> view located at <code>resources/views/home.blade.php</code>:</p>
-
-<pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    {!! $content !!}
-    &lt;/body&gt;
-&lt;/html&gt;
-</code></pre>
-
-<p>The controller is added as a route in <code>routes/web.php</code>:</p>
-
-<pre>Route::get('/', \App\Http\Controllers\HomeController::class)-&gt;name("home");
-</pre>
-
-<p><!-- generated -->
-<a id='commands'> </a>
-<!-- /generated --></p>
-
-<h3>Commands</h3>
-
-<p>We will replace the <code>setup.php</code> script with a <code>SetupDbCommand</code> that is located at 
-<code>app/Commands/SetupDbCommand.php</code></p>
-
-<pre>class SetupDbCommand extends Command
-{
-    /**
-     * @var string
-     */
-    protected $name = "app:setup-db";
-
-    /**
-     * @var string
-     */
-    protected $description = "Run the application database setup";
-
-    protected function getOptions(): array
-    {
-        return [
-            [
-                "drop",
-                null,
-                InputOption::VALUE_NONE,
-                "If given, the existing database tables are dropped and recreated.",
-            ],
-        ];
-    }
-
-    public function handle()
-    {
-        $drop = $this-&gt;option("drop");
-        if ($drop) {
-            $this-&gt;info("Dropping all database tables...");
-
-            $this-&gt;call(WipeCommand::class);
-
-            $this-&gt;info("Done.");
-        }
-
-        $this-&gt;info("Running database migrations...");
-
-        $this-&gt;call(MigrateCommand::class);
-
-        $this-&gt;info("Done.");
-    }
-}
-</pre>
-
-<p>Register it the <code>AppServiceProvider</code> in <code>app/Providers/AppServiceProvider.php</code></p>
-
-<pre>    public function register()
-    {
-        $this-&gt;commands([
-            \App\Commands\SetupDbCommand::class
-        ]);
-    }
-</pre>
-
-<p>and update the <code>setup-db</code> target in <code>.make/01-00-application-setup.mk</code> to run the <code>artisan</code> Command</p>
-
-<pre>.PHONY: setup-db
-setup-db: ## Setup the DB tables
-    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan app:setup-db $(ARGS);
-</pre>
-
-<p>We will also create a migration for the <code>jobs</code> table in 
-<code>database/migrations/2022_02_10_000000_create_jobs_table.php</code>:</p>
-
-<pre>return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('jobs', function (Blueprint $table) {
-            $table-&gt;id();
-            $table-&gt;string('value');
-        });
-    }
-};
-</pre>
-
-<p><!-- generated -->
-<a id='jobs-and-workers'> </a>
-<!-- /generated --></p>
-
-<h3>Jobs and workers</h3>
-
-<p>We will replace the <code>worker.php</code> script with <code>InsertInDbJob</code> located at 
-<code>app/Jobs/InsertInDbJob.php</code></p>
-
-<pre>class InsertInDbJob implements ShouldQueue
-{
-    use Dispatchable, InteractsWithQueue, Queueable;
-
-    public function __construct(
-        public readonly string $jobId
-    ) {
-    }
-
-    public function handle(DatabaseManager $databaseManager)
-    {
-        $databaseManager-&gt;insert("INSERT INTO `jobs`(value) VALUES(?)", [$this-&gt;jobId]);
-    }
-}
-</pre>
-
-<p>though this will "only" handle the insertion part. For the worker itself we will use the native
-<code>\Illuminate\Queue\Console\WorkCommand</code> via</p>
-
-<pre><code>php artisan queue:work
-</code></pre>
-
-<p>We need to adjust the <code>.docker/images/php/worker/Dockerfile</code> and change</p>
-
-<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/worker.php"
-</code></pre>
-
-<p>to</p>
-
-<pre><code>ARG PHP_WORKER_COMMAND="php $APP_CODE_PATH/artisan queue:work"
-</code></pre>
-
-<p>Since this change takes place directly in the Dockerfile, we must now rebuild the image</p>
-
-<pre><code>$ make docker-build-image DOCKER_SERVICE_NAME=php-worker
-</code></pre>
-
-<p>and restart it</p>
-
-<pre><code>$ make docker-up
-</code></pre>
-
-<p><!-- generated -->
-<a id='tests'> </a>
-<!-- /generated --></p>
-
-<h3>Tests</h3>
-
-<p>I'd also like to take this opportunity to add a <code>Feature</code> test for the <code>HomeController</code> at
-<code>tests/Feature/App/Http/Controllers/HomeControllerTest.php</code>:</p>
-
-<pre>class HomeControllerTest extends TestCase
-{
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        $this-&gt;setupDatabase();
-        $this-&gt;setupQueue();
-    }
-
-    /**
-     * @dataProvider __invoke_dataProvider
-     */
-    public function test___invoke(array $params, string $expected): void
-    {
-        $urlGenerator = $this-&gt;getDependency(UrlGenerator::class);
-
-        $url = $urlGenerator-&gt;route("home", $params);
-
-        $response = $this-&gt;get($url);
-
-        $response
-            -&gt;assertStatus(200)
-            -&gt;assertSee($expected, false)
-        ;
-    }
-
-    public function __invoke_dataProvider(): array
-    {
-        return [
-            "default"           =&gt; [
-                "params"   =&gt; [],
-                "expected" =&gt; &lt;&lt;&lt;TEXT
-                        &lt;li&gt;&lt;a href="?dispatch=foo"&gt;Dispatch job 'foo' to the queue.&lt;/a&gt;&lt;/li&gt;
-                        &lt;li&gt;&lt;a href="?queue"&gt;Show the queue.&lt;/a&gt;&lt;/li&gt;
-                        &lt;li&gt;&lt;a href="?db"&gt;Show the DB.&lt;/a&gt;&lt;/li&gt;
-                    TEXT
-                ,
-            ],
-            "database is empty" =&gt; [
-                "params"   =&gt; ["db"],
-                "expected" =&gt; &lt;&lt;&lt;TEXT
-                        Items in db
-                    array (
-                    )
-                    TEXT
-                ,
-            ],
-            "queue is empty"    =&gt; [
-                "params"   =&gt; ["queue"],
-                "expected" =&gt; &lt;&lt;&lt;TEXT
-                        Items in queue
-                    array (
-                    )
-                    TEXT
-                ,
-            ],
-        ];
-    }
-
-    public function test_shows_existing_items_in_database(): void
-    {
-        $databaseManager = $this-&gt;getDependency(DatabaseManager::class);
-
-        $databaseManager-&gt;insert("INSERT INTO `jobs` (id, value) VALUES(1, 'foo');");
-
-        $urlGenerator = $this-&gt;getDependency(UrlGenerator::class);
-
-        $params = ["db"];
-        $url    = $urlGenerator-&gt;route("home", $params);
-
-        $response = $this-&gt;get($url);
-
-        $expected = &lt;&lt;&lt;TEXT
-                Items in db
-            array (
-              0 =&gt; 
-              (object) array(
-                 'id' =&gt; 1,
-                 'value' =&gt; 'foo',
-              ),
-            )
-            TEXT;
-
-        $response
-            -&gt;assertStatus(200)
-            -&gt;assertSee($expected, false)
-        ;
-    }
-
-    public function test_shows_existing_items_in_queue(): void
-    {
-        $queueManager = $this-&gt;getDependency(QueueManager::class);
-
-        $job = new InsertInDbJob("foo");
-        $queueManager-&gt;push($job);
-
-        $urlGenerator = $this-&gt;getDependency(UrlGenerator::class);
-
-        $params = ["queue"];
-        $url    = $urlGenerator-&gt;route("home", $params);
-
-        $response = $this-&gt;get($url);
-
-        $expectedJobsCount = &lt;&lt;&lt;TEXT
-                Items in queue
-            array (
-              0 =&gt; '{
-            TEXT;
-
-        $expected = &lt;&lt;&lt;TEXT
-            \\\\"jobId\\\\";s:3:\\\\"foo\\\\";
-            TEXT;
-
-        $response
-            -&gt;assertStatus(200)
-            -&gt;assertSee($expectedJobsCount, false)
-            -&gt;assertSee($expected, false)
-        ;
-    }
-}
-</pre>
-
-<p>The test checks the database as well as the queue and uses the helper methods 
-<code>$this-&gt;setupDatabase()</code> and <code>$this-&gt;setupQueue()</code> that I defined in the base test case at
-<code>tests/TestCase.php</code> as follows</p>
-
-<pre>   /**
-     * @template T
-     * @param class-string&lt;T&gt; $className
-     * @return T
-     */
-    protected function getDependency(string $className)
-    {
-        return $this-&gt;app-&gt;get($className);
-    }
-
-    protected function setupDatabase(): void
-    {
-        $databaseManager = $this-&gt;getDependency(DatabaseManager::class);
-
-        $actualConnection  = $databaseManager-&gt;getDefaultConnection();
-        $testingConnection = "testing";
-        if ($actualConnection !== $testingConnection) {
-            throw new RuntimeException("Database tests are only allowed to run on default connection '$testingConnection'. The current default connection is '$actualConnection'.");
-        }
-
-        $this-&gt;ensureDatabaseExists($databaseManager);
-
-        $this-&gt;artisan(SetupDbCommand::class, ["--drop" =&gt; true]);
-    }
-
-    protected function setupQueue(): void
-    {
-        $queueManager = $this-&gt;getDependency(QueueManager::class);
-
-        $actualDriver  = $queueManager-&gt;getDefaultDriver();
-        $testingDriver = "testing";
-        if ($actualDriver !== $testingDriver) {
-            throw new RuntimeException("Queue tests are only allowed to run on default driver '$testingDriver'. The current default driver is '$actualDriver'.");
-        }
-
-        $this-&gt;artisan(ClearCommand::class);
-    }
-
-    protected function ensureDatabaseExists(DatabaseManager $databaseManager): void
-    {
-        $connection = $databaseManager-&gt;connection();
-
-        try {
-            $connection-&gt;getPdo();
-        } catch (PDOException $e) {
-            // e.g. SQLSTATE[HY000] [1049] Unknown database 'testing'
-            if ($e-&gt;getCode() !== 1049) {
-                throw $e;
-            }
-            $config             = $connection-&gt;getConfig();
-            $config["database"] = "";
-
-            $connector = new MySqlConnector();
-            $pdo       = $connector-&gt;connect($config);
-            $database  = $connection-&gt;getDatabaseName();
-            $pdo-&gt;exec("CREATE DATABASE IF NOT EXISTS `{$database}`;");
-        }
-    }
-</pre>
-
-<p>The methods ensure that the tests are only executed if the proper database connection and queue 
-driver is configured. This is done through environment variables and I like using
-<a href="https://laravel.com/docs/9.x/testing#the-env-testing-environment-file">a dedicated <code>.env</code> file located at <code>.env.testing</code></a><br />
-for all testing <code>ENV</code> values instead of defining them in the <code>phpunit.xml</code> config file via <code>&lt;env&gt;</code> 
-elements:</p>
-
-<pre># File: .env.testing
-
-DB_CONNECTION=testing
-DB_DATABASE=testing
-QUEUE_CONNECTION=testing
-REDIS_DB=1000
-</pre>
-
-<p>The corresponding connections have to be configured in the <code>config</code> files</p>
-
-<pre># File: config/database.php
-
-return [
-// ...
-    'connections' =&gt; [
-// ...
-        'testing' =&gt; [
-            'driver' =&gt; 'mysql',
-            'url' =&gt; env('DATABASE_URL'),
-            'host' =&gt; env('DB_HOST'),
-            'port' =&gt; env('DB_PORT', '3306'),
-            'database' =&gt; env('DB_DATABASE', 'testing'),
-            'username' =&gt; env('DB_USERNAME'),
-            'password' =&gt; env('DB_PASSWORD', ''),
-            'unix_socket' =&gt; env('DB_SOCKET', ''),
-            'charset' =&gt; 'utf8mb4',
-            'collation' =&gt; 'utf8mb4_unicode_ci',
-            'prefix' =&gt; '',
-            'prefix_indexes' =&gt; true,
-            'strict' =&gt; true,
-            'engine' =&gt; null,
-            'options' =&gt; extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA =&gt; env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-    ],
-// ...
-    'redis' =&gt; [
-// ...
-        'testing' =&gt; [
-            'url' =&gt; env('REDIS_URL'),
-            'host' =&gt; env('REDIS_HOST', '127.0.0.1'),
-            'password' =&gt; env('REDIS_PASSWORD'),
-            'port' =&gt; env('REDIS_PORT', '6379'),
-            'database' =&gt; env('REDIS_DB', '1000'),
-        ],
-    ],
-];
-</pre>
-
-<pre># File: config/queue.php
-
-return [
-// ...
-
-    'connections' =&gt; [
-// ...
-        'testing' =&gt; [
-            'driver' =&gt; 'redis',
-            'connection' =&gt; 'testing', // =&gt; refers to the "database.redis.testing" config entry
-            'queue' =&gt; env('REDIS_QUEUE', 'default'),
-            'retry_after' =&gt; 90,
-            'block_for' =&gt; null,
-            'after_commit' =&gt; false,
-        ],
-    ],
-];
-</pre>
-
-<p>The tests can be executed via <code>make test</code></p>
-
-<pre><code>$ make test
-ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit -c phpunit.xml
-PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
-
-.......                                                             7 / 7 (100%)
-
-Time: 00:02.709, Memory: 28.00 MB
-
-OK (7 tests, 13 assertions)
-</code></pre>
-
-<p><!-- generated -->
-<a id='makefile-updates'> </a>
-<!-- /generated --></p>
-
-<h2>Makefile updates</h2>
-
-<p><!-- generated -->
-<a id='clearing-the-queue'> </a>
-<!-- /generated --></p>
-
-<h3>Clearing the queue</h3>
-
-<p>For convenience while testing I added a make target to clear all items from the queue in 
-<code>.make/01-01-application-commands.mk</code></p>
-
-<pre>.PHONY: clear-queue
-clear-queue: ## Clear the job queue
-    $(EXECUTE_IN_APPLICATION_CONTAINER) php artisan queue:clear $(ARGS)
-</pre>
-
-<p><!-- generated -->
-<a id='running-the-poc'> </a>
-<!-- /generated --></p>
-
-<h2>Running the POC</h2>
-
-<p>Since the POC only uses <code>make</code> targets and we basically just "refactored" them, there is no 
-modification necessary to make the existing <code>test.sh</code> work:</p>
-
-<pre><code>$ bash test.sh
-
-
-  Building the docker setup
-
-
-//...
-
-
-  Starting the docker setup
-
-
-//...
-
-
-  Clearing DB
-
-
-ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application php artisan app:setup-db --drop;
-Dropping all database tables...
-Dropped all tables successfully.
-Done.
-Running database migrations...
-Migration table created successfully.
-Migrating: 2014_10_12_000000_create_users_table
-Migrated:  2014_10_12_000000_create_users_table (64.04ms)
-Migrating: 2014_10_12_100000_create_password_resets_table
-Migrated:  2014_10_12_100000_create_password_resets_table (50.06ms)
-Migrating: 2019_08_19_000000_create_failed_jobs_table
-Migrated:  2019_08_19_000000_create_failed_jobs_table (58.61ms)
-Migrating: 2019_12_14_000001_create_personal_access_tokens_table
-Migrated:  2019_12_14_000001_create_personal_access_tokens_table (94.03ms)
-Migrating: 2022_02_10_000000_create_jobs_table
-Migrated:  2022_02_10_000000_create_jobs_table (31.85ms)
-Done.
-
-
-  Stopping workers
-
-
-ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl stop worker:*;
-worker:worker_00: stopped
-worker:worker_01: stopped
-worker:worker_02: stopped
-worker:worker_03: stopped
-
-
-  Ensuring that queue and db are empty
-
-
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    Items in queue
-array (
-)
-    &lt;/body&gt;
-&lt;/html&gt;
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    Items in db
-array (
-)
-    &lt;/body&gt;
-&lt;/html&gt;
-
-
-  Dispatching a job 'foo'
-
-
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    Adding item 'foo' to queue
-    &lt;/body&gt;
-&lt;/html&gt;
-
-
-  Asserting the job 'foo' is on the queue
-
-
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    Items in queue
-array (
-  0 =&gt; '{"uuid":"7ea63590-2a86-4739-abf8-8a059d41bd60","displayName":"App\\\\Jobs\\\\InsertInDbJob","job":"Illuminate\\\\Queue\\\\CallQueuedHandler@call","maxTries":null,"maxExceptions":null,"failOnTimeout":false,"backoff":null,"timeout":null,"retryUntil":null,"data":{"commandName":"App\\\\Jobs\\\\InsertInDbJob","command":"O:22:\\"App\\\\Jobs\\\\InsertInDbJob\\":11:{s:5:\\"jobId\\";s:3:\\"foo\\";s:3:\\"job\\";N;s:10:\\"connection\\";N;s:5:\\"queue\\";N;s:15:\\"chainConnection\\";N;s:10:\\"chainQueue\\";N;s:19:\\"chainCatchCallbacks\\";N;s:5:\\"delay\\";N;s:11:\\"afterCommit\\";N;s:10:\\"middleware\\";a:0:{}s:7:\\"chained\\";a:0:{}}"},"id":"I3k5PNyGZc6Z5XWCC4gt0qtSdqUZ84FU","attempts":0}',
-)
-    &lt;/body&gt;
-&lt;/html&gt;
-
-
-  Starting the workers
-
-
-ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker supervisorctl start worker:*;
-worker:worker_00: started
-worker:worker_01: started
-worker:worker_02: started
-worker:worker_03: started
-
-
-  Asserting the queue is now empty
-
-
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    Items in queue
-array (
-)
-    &lt;/body&gt;
-&lt;/html&gt;
-
-
-  Asserting the db now contains the job 'foo'
-
-
-&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-    &lt;head&gt;
-        &lt;meta charset="utf-8"&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-    Items in db
-array (
-  0 =&gt;
-  (object) array(
-     'id' =&gt; 1,
-     'value' =&gt; 'foo',
-  ),
-)
-    &lt;/body&gt;
-&lt;/html&gt;
-
-</code></pre>
-
-<p><!-- generated -->
-<a id='wrapping-up'> </a>
-<!-- /generated --></p>
-
-<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/'>Run Laravel 9 on Docker in 2022 [Tutorial Part 4]</a></b></p>
-]]></description>
-                <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/</guid>
-            </item>
-                    <item>
-                <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</title>
-                <description><![CDATA[<p>This article appeared first on <a href='https://www.pascallandau.com/'>https://www.pascallandau.com/</a> at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</a></p>
-<hr />
-
-<p>In this part of the tutorial series on developing PHP on Docker we 
-will <strong>set up our local development environment to be used by PhpStorm and Xdebug</strong>. We will also 
-ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw 
-the tool <code>strace</code> into the mix for debugging long-running processes.</p>
-
-<div class="youtube">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/bZ1MiynqT98" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
-<p>All code samples are publicly available in my
-<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
-You find the branch for this tutorial at 
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
-
-<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
-<a href="https://www.pascallandau.com/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
-<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-and the following one is
-<a href="https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>.</p>
-
-<p>If you want to follow along, please subscribe to the <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
-to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-
-<p><!-- generated -->
-<a id='table-of-contents'> </a>
-<!-- /generated --></p>
-
-<h2>Table of contents</h2>
-
-<!-- toc -->
-
-<ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#install-tools">Install Tools</a>
-
-<ul>
-<li><a href="#install-composer">Install composer</a></li>
-<li><a href="#install-xdebug">Install Xdebug</a></li>
-<li><a href="#install-phpunit">Install PHPUnit</a></li>
-<li><a href="#install-ssh">Install SSH</a></li>
-</ul></li>
-<li><a href="#setup-phpstorm">Setup PhpStorm</a>
-
-<ul>
-<li><a href="#ssh-configuration">SSH Configuration</a></li>
-<li><a href="#php-interpreter">PHP Interpreter</a></li>
-<li><a href="#phpunit">PHPUnit</a></li>
-<li><a href="#debugging">Debugging</a>
-
-<ul>
-<li><a href="#debug-code-executed-via-phpstorm">Debug code executed via PhpStorm</a></li>
-<li><a href="#debug-code-executed-via-php-fpm-cli-or-from-a-worker">Debug code executed via php-fpm, cli or from a worker</a>
-
-<ul>
-<li><a href="#php-fpm">php-fpm</a></li>
-<li><a href="#cli">cli</a></li>
-<li><a href="#php-workers">php-workers</a></li>
-</ul></li>
-</ul></li>
-</ul></li>
-<li><a href="#strace">strace</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
-</ul>
-
-<!-- /toc -->
-
-<p><!-- generated -->
-<a id='introduction'> </a>
-<!-- /generated --></p>
-
-<h2>Introduction</h2>
-
-<p>This article is mostly an update of
-<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-but will also cover the "remaining cases" of <strong>debugging php-fpm</strong> and <strong>php worker processes</strong>.</p>
-
-<p>We will still rely on an <strong>always-running docker setup</strong> that we connect to via an SSH Configuration
-instead of using the 
-<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#run-debug-a-php-script-on-docker-server">built-in docker-compose capabilities</a>
-as I feel it's closer to what we do in CI / production. However, we will <strong>not use SSH keys</strong> 
-any longer but simply authenticate via password. This reduces complexity and removes any 
-pesky warnings regarding "SSH keys being exposed in a repository".</p>
-
-<p><!-- generated -->
-<a id='install-tools'> </a>
-<!-- /generated --></p>
-
-<h2>Install Tools</h2>
-
-<p><!-- generated -->
-<a id='install-composer'> </a>
-<!-- /generated --></p>
-
-<h3>Install composer</h3>
-
-<p><a href="https://getcomposer.org/">Composer</a> is installed by pulling 
-<a href="https://hub.docker.com/_/composer">the official composer docker image</a> and simply "copying" the 
-composer executable over to the base php image. In addition, composer needs the extensions
-<code>mbstring</code> and <code>phar</code></p>
-
-<pre><code># File: .docker/images/php/base/Dockerfile
-
-ARG ALPINE_VERSION
-ARG COMPOSER_VERSION
-FROM composer:${COMPOSER_VERSION} as composer
-FROM alpine:${ALPINE_VERSION} as base
-
-# ...
-
-RUN apk add --update --no-cache  \
-        php-mbstring~=${TARGET_PHP_VERSION} \
-        php-phar~=${TARGET_PHP_VERSION} \
-
-# ...
-
-COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-</code></pre>
-
-<p>Because we want our build to be deterministic, we "pin" the composer version by adding a 
-<code>COMPOSER_VERSION</code> variable to the <code>.docker/.env</code> file</p>
-
-<pre>COMPOSER_VERSION=2.2.5
-</pre>
-
-<p>and using it in <code>.docker/docker-compose/docker-compose-php-base.yml</code>:</p>
-
-<pre>services:
-  php-base:
-    build:
-      args:
-        - COMPOSER_VERSION=${COMPOSER_VERSION?}
-</pre>
-
-<p><!-- generated -->
-<a id='install-xdebug'> </a>
-<!-- /generated --></p>
-
-<h3>Install Xdebug</h3>
-
-<p>Install the extension via <code>apk</code> (only for the <code>local</code> target):</p>
-
-<pre># File: .docker/images/php/base/Dockerfile
-
-FROM base as local
-
-RUN apk add --no-cache --update \
-        php-xdebug~=${TARGET_PHP_VERSION} \
-    # ensure that xdebug is not enabled by default
-    &amp;&amp; rm -f /etc/php8/conf.d/00_xdebug.ini
-</pre>
-
-<p>We also don't want to enable <code>xdebug</code> immediately but only when we need it (due to the decrease 
-in performance when the extension is enabled), hence we remove the default config file and 
-disable the extension in the application <code>.ini</code> file</p>
-
-<pre><code># File: .docker/images/php/base/conf.d/zz-app-local.ini
-
-; Note:
-; Remove the comment ; to enable debugging
-;zend_extension=xdebug
-xdebug.client_host=host.docker.internal
-xdebug.start_with_request=yes
-xdebug.mode=debug
-</code></pre>
-
-<p>See <a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker">Fix Xdebug on PhpStorm when run from a Docker container</a>
-for an explanation of the <code>xdebug.client_host=host.docker.internal</code> setting (previously called
-<code>xdebug.remote_host</code> in xdebug &lt; 3). This will still work out of the box for Docker Desktop, but
-for Linux users we need to add the 
-<a href="https://github.com/docker/for-linux/issues/264#issuecomment-965465879"><code>host-gateway</code> magic reference</a>
-<strong>to all PHP containers</strong> (we can't add it to the php base image because this is a runtime setting):</p>
-
-<pre>services:
-  service:
-    extra_hosts:
-      - host.docker.internal:host-gateway
-</pre>
-
-<p>Finally, we need to add 
-<a href="https://www.jetbrains.com/help/phpstorm/debugging-a-php-cli-script.html">the environment variable <code>PHP_IDE_CONFIG</code></a>
-<strong>to all PHP containers</strong>. The variable is defined as <code>PHP_IDE_CONFIG=serverName=dofroscra</code>, where 
-"dofroscra" is the name of the server that we will configure later for debugging. Because we 
-need the same value in multiple places, the variable is configured in <code>.docker/.env</code>:</p>
-
-<pre><code>PHP_IDE_CONFIG=serverName=dofroscra
-</code></pre>
-
-<p>And then added in
-<code>.docker/docker-compose/docker-compose.local.yml</code></p>
-
-<pre>services:
-  php-fpm:
-    environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
-
-  php-worker:
-    environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
-
-  application:
-    environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
-</pre>
-
-<p><!-- generated -->
-<a id='install-phpunit'> </a>
-<!-- /generated --></p>
-
-<h3>Install PHPUnit</h3>
-
-<p>PHPUnit will be installed via <code>composer</code> but will not be "baked into the image" for local 
-development. Thus, we must run <code>composer require</code> <strong>in the container</strong>. To make this more 
-convenient a make target for running arbitrary composer commands is added in 
-<code>.make/01-00-application-setup.mk</code>:</p>
-
-<pre>.PHONY: composer
-composer: ## Run composer commands. Specify the command e.g. via ARGS="install"
-    $(EXECUTE_IN_APPLICATION_CONTAINER) composer $(ARGS);
-</pre>
-
-<p>This allows me to run <code>make composer ARGS="install"</code> from the host system to execute <code>composer 
-install</code> in the container. In consequence, <code>composer</code> will use the PHP version and extensions of 
-the <code>application</code> container to install the dependencies, yet I will still see the installed files
-locally because the codebase is configured as a volume for the container.</p>
-
-<p>Before installing phpunit, we must add the required extensions <code>dom</code> and <code>xml</code> to the container</p>
-
-<pre><code># File: .docker/images/php/base/Dockerfile
-
-# ...
-
-RUN apk add --update --no-cache  \
-        php-dom~=${TARGET_PHP_VERSION} \
-        php-xml~=${TARGET_PHP_VERSION} \
-</code></pre>
-
-<p>as well as rebuild and restart the docker setup via</p>
-
-<pre><code>make docker-build
-make docker-down
-make docker-up
-</code></pre>
-
-<p>Now we can add phpunit via</p>
-
-<pre><code>make composer ARGS='require "phpunit/phpunit"'
-</code></pre>
-
-<p>which will create a <code>composer.json</code> file and setup up the <code>vendor/</code> directory:</p>
-
-<pre><code>$ make composer ARGS='require "phpunit/phpunit"'
-Using version ^9.5 for phpunit/phpunit
-./composer.json has been created
-Running composer update phpunit/phpunit
-Loading composer repositories with package information
-Updating dependencies
-...
-</code></pre>
-
-<p><strong>CAUTION</strong>: If you <strong>run into the following permission error</strong> at this step, you are likely using 
-Linux and 
-haven't set the <code>APP_USER_ID</code> and <code>APP_GROUP_ID</code> variables as described in the previous article
-under 
-<a href="https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/#solving-permission-issues">Solving permission issues</a>.</p>
-
-<pre>make composer ARGS='req phpunit/phpunit' ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application composer req phpunit/phpunit
-./composer.json is not writable.
-make: *** [.make/01-00-application-setup.mk:14: composer] Error 1
-</pre>
-
-<p>I have also added</p>
-
-<ul>
-<li>a minimal <code>phpunit.xml</code> config file</li>
-<li>a test case at <code>tests/SomeTest.php</code></li>
-<li>and a new Makefile for "anything related to qa" at <code>.make/01-02-application-qa.mk</code>:</li>
-</ul>
-
-<pre>##@ [Application: QA]
-
-.PHONY: test
-test: ## Run the test suite 
-    $(EXECUTE_IN_WORKER_CONTAINER) vendor/bin/phpunit -c phpunit.xml
-</pre>
-
-<p>So I can run tests simply via <code>make test</code></p>
-
-<pre><code>$ make test
-ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit
-PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
-
-.                                                                   1 / 1 (100%)
-
-Time: 00:00.324, Memory: 4.00 MB
-
-OK (1 test, 1 assertion)
-</code></pre>
-
-<p><!-- generated -->
-<a id='install-ssh'> </a>
-<!-- /generated --></p>
-
-<h3>Install SSH</h3>
-
-<p>We will execute commands from PhpStorm via ssh in the <code>application</code> container. As mentioned, we 
-won't use a key file for authentication but will instead simply use a password that is 
-configured via the <code>APP_SSH_PASSWORD</code> variable in <code>.docker/.env</code> and passed to the image in 
-<code>.docker/docker-compose/docker-compose.local.yml</code>. In addition, we map port <code>2222</code> from the 
-host system to port <code>22</code> of the application container and make sure that the codebase is shared
-as a volume between host and container</p>
-
-<pre>  application:
-    build:
-      args:
-        - APP_SSH_PASSWORD=${APP_SSH_PASSWORD?}
-    volumes:
-      - ${APP_CODE_PATH_HOST?}:${APP_CODE_PATH_CONTAINER?}
-    ports:
-      - "${APPLICATION_SSH_HOST_PORT:-2222}:22"
-</pre>
-
-<p>The container already contains <code>openssh</code> and sets the password</p>
-
-<pre>ARG BASE_IMAGE
-FROM ${BASE_IMAGE} as base
-
-FROM base as local
-
-RUN apk add --no-cache --update \
-        openssh
-
-ARG APP_SSH_PASSWORD
-RUN echo "$APP_USER_NAME:$APP_SSH_PASSWORD" | chpasswd 2&gt;&amp;1
-
-# Required to start sshd, otherwise the container will error out on startup with the message
-# "sshd: no hostkeys available -- exiting."
-# @see https://stackoverflow.com/a/65348102/413531 
-RUN ssh-keygen -A
-
-# we use SSH deployment configuration in PhpStorm for local development
-EXPOSE 22
-
-CMD ["/usr/sbin/sshd", "-D"]
-</pre>
-
-<p><!-- generated -->
-<a id='setup-phpstorm'> </a>
-<!-- /generated --></p>
-
-<h2>Setup PhpStorm</h2>
-
-<p>We will configure a remote PHP interpreter that uses an SSH connection to run commands in the 
-<code>application</code> container. Before, 
-<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#configure-the-deployment-configuration">we have been using an <code>SFTP Deployment configuration</code></a>
-, which was kinda confusing ("What is SFTP doing here?"), so we will use an 
-<a href="https://www.jetbrains.com/help/phpstorm/create-ssh-configurations.html">SSH Configuration</a> 
-instead and configure the path mappings in the <strong>Cli Interpreter</strong> interface</p>
-
-<p><!-- generated -->
-<a id='ssh-configuration'> </a>
-<!-- /generated --></p>
-
-<h3>SSH Configuration</h3>
-
-<p>At <code>File | Settings | Tools | SSH Configurations</code> create a new SSH Configuration named 
-"Docker PHP Tutorial" with the following settings</p>
-
-<ul>
-<li>Host: 127.0.0.1</li>
-<li>Port: see <code>APPLICATION_SSH_HOST_PORT</code> in <code>.docker/docker-compose/docker-compose.local.yml</code></li>
-<li>User name: see <code>APP_USER_NAME</code> in <code>.make/.env</code></li>
-<li>Authentication type: Password</li>
-<li>Password: see <code>APP_SSH_PASSWORD</code> in <code>.docker/.env</code></li>
-</ul>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG" alt="PhpStorm SSH Configuration" title="PhpStorm SSH Configuration" /></a></p>
-
-<p><!-- generated -->
-<a id='php-interpreter'> </a>
-<!-- /generated --></p>
-
-<h3>PHP Interpreter</h3>
-
-<p>At <code>File | Settings | PHP</code> add a new PHP CLI interpreter that uses the new SSH Configuration</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG" alt="PhpStorm new CLI interpreter" title="PhpStorm new CLI interpreter" /></a></p>
-
-<p>In addition, we define the <strong>path to the xdebug extension</strong> because it is disabled by default but
-PhpStorm can enable it automatically if required. You can find the path in the <code>application</code>
-container via</p>
-
-<pre><code>root:/var/www/app# php -i | grep extension_dir
-extension_dir =&gt; /usr/lib/php8/modules =&gt; /usr/lib/php8/modules
-root:/var/www/app# ll /usr/lib/php8/modules | grep xdebug
--rwxr-xr-x    1 root     root        303936 Jan  9 00:21 xdebug.so
-</code></pre>
-
-<p>We still need to 
-<a href="https://www.pascallandau.com/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
-by adding a custom PHP option for <code>xdebug.client_host=host.docker.internal</code>. That's the same value
-we use in <code>.docker/images/php/base/conf.d/zz-app-local.ini</code>.</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG" alt="PhpStorm Xdebug settings for the CLI interpreter" title="PhpStorm Xdebug settings for the CLI interpreter" /></a></p>
-
-<p>In the interpreter overview we must now configure the <strong>path mappings</strong> so that PhpStorm knows
-"which local file belongs to which remote one". The remote folder is defined in <code>.docker/.env</code> via</p>
-
-<pre>APP_CODE_PATH_CONTAINER=/var/www/app
-</pre>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG" alt="PhpStorm path mappings for the CLI interpreter" title="PhpStorm path mappings for the CLI interpreter" /></a></p>
-
-<p>Afterwards we can set a breakpoint e.g. in <code>setup.php</code> and start debugging:</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
-
-<p>The screenshot shows that PhpStorm adds the Xdebug extension that we defined previously.</p>
-
-<p><!-- generated -->
-<a id='phpunit'> </a>
-<!-- /generated --></p>
-
-<h3>PHPUnit</h3>
-
-<p><code>phpunit</code> is configured via <code>File | Settings | PHP | Test Frameworks</code>. First, we select the
-interpreter that we just added</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG" alt="Set up phpunit in PhpStorm" title="Set up phpunit in PhpStorm" /></a></p>
-
-<p>Then, we add the paths to the composer autoload script and the <code>phpunit.xml</code> configuration file.</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG" alt="phpunit settings in PhpStorm" title="phpunit settings in PhpStorm" /></a></p>
-
-<p>PhpStorm will now execute tests using the PHP interpreter in the <code>application</code> container</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG" alt="Run a phpunit test in PhpStorm" title="Run a phpunit test in PhpStorm" /></a></p>
-
-<p><!-- generated -->
-<a id='debugging'> </a>
-<!-- /generated --></p>
-
-<h3>Debugging</h3>
-
-<p>First of all, if you haven't already please also take a look at the 
-<a href="https://xdebug.org/docs/step_debug">official xdebug documentation</a>. Derick is doing a great job 
-at explaining xdebug in detail including some helpful videos like
-<a href="https://www.youtube.com/watch?v=4opFac50Vwo">Xdebug 3: Xdebug with Docker and PhpStorm in 5 minutes</a></p>
-
-<p><!-- generated -->
-<a id='debug-code-executed-via-phpstorm'> </a>
-<!-- /generated --></p>
-
-<h4>Debug code executed via PhpStorm</h4>
-
-<p>This should already work out of the box. Simply set a break point, right-click on a file and choose 
-"Debug '...'"</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
-
-<p><!-- generated -->
-<a id='debug-code-executed-via-php-fpm-cli-or-from-a-worker'> </a>
-<!-- /generated --></p>
-
-<h4>Debug code executed via php-fpm, cli or from a worker</h4>
-
-<p>For code that is executed "directly" by a container without PhpStorm, we first need to enable 
-<code>xdebug</code> in the container by removing the <code>;</code> in front of the extension in 
-<code>/etc/php8/conf.d/zz-app-local.ini</code></p>
-
-<pre><code>; Note:
-; Remove the comment ; to enable debugging
-zend_extension=xdebug
-</code></pre>
-
-<p>To make this a little more convenient, we use dedicated make recipes for those actions in
-<code>.make/01-01-application-commands.mk</code></p>
-
-<pre>.PHONY: execute-in-container
-execute-in-container: ## Execute a command in a container. E.g. via "make execute-in-container DOCKER_SERVICE_NAME=php-fpm COMMAND="echo 'hello'"
-    @$(if $(DOCKER_SERVICE_NAME),,$(error DOCKER_SERVICE_NAME is undefined))
-    @$(if $(COMMAND),,$(error COMMAND is undefined))
-    $(EXECUTE_IN_CONTAINER) $(COMMAND);
-
-.PHONY: enable-xdebug
-enable-xdebug: ## Enable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
-    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"
-
-.PHONY: disable-xdebug
-disable-xdebug: ## Disable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
-    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/;zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"
-</pre>
-
-<p>To capture incoming requests, we need to make PhpStorm listen for PHP Debug connections via
-<code>Run | Start Listening for PHP Debug Connections</code>.</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG" alt="PhpStorm: Start Listening for PHP Debug Connections" title="PhpStorm: Start Listening for PHP Debug Connections" /></a></p>
-
-<p>The corresponding ports are configured at <code>File | Settings | PHP | Debug</code>. In Xdebug &lt; 3 the 
-default port was <code>9000</code> and in <a href="https://xdebug.org/docs/all_settings#client_port">Xdebug 3 it is <code>9003</code></a></p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG" alt="PhpStorm: configure xdebug ports" title="PhpStorm: configure xdebug ports" /></a></p>
-
-<p>Finally, we need to add a server via <code>File | Settings | PHP | Servers</code></p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG" alt="PhpStorm: configure a server" title="PhpStorm: configure a server" /></a></p>
-
-<p>The name of the server must match the value of the <code>serverName</code> key in the environment variable 
-<code>PHP_IDE_CONFIG</code> that we configured previously as <code>serverName=dofroscra</code>.</p>
-
-<p><!-- generated -->
-<a id='php-fpm'> </a>
-<!-- /generated --></p>
-
-<h5>php-fpm</h5>
-
-<p>For <code>php-fpm</code> we must
-<a href="https://stackoverflow.com/a/43076457">restart the <code>php-fpm</code> process without restarting the container</a>
-after we have activated <code>xdebug</code> via</p>
-
-<pre><code>kill -USR2 1
-</code></pre>
-
-<p>Since this is a pain to remember, we add a make target in <code>.make/01-01-application-commands.mk</code></p>
-
-<pre># @see https://stackoverflow.com/a/43076457
-.PHONY: restart-php-fpm
-restart-php-fpm: ## Restart the php-fpm service
-    "$(MAKE)" execute-in-container DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME_PHP_FPM) COMMAND="kill -USR2 1"
-</pre>
-
-<p>So we can now simply run</p>
-
-<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-fpm
-make restart-php-fpm
-</code></pre>
-
-<p>Setting a breakpoint in <code>public/index.php</code> and opening <a href="http://127.0.0.1/">http://127.0.0.1/</a> in
-a browser or via <code>curl http://127.0.0.1/</code> will halt the execution as expected.</p>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG" alt="PhpStorm debugging breakpoint for php-fpm" title="PhpStorm debugging breakpoint for php-fpm" /></a></p>
-
-<p><!-- generated -->
-<a id='cli'> </a>
-<!-- /generated --></p>
-
-<h5>cli</h5>
-
-<p>Instead of triggering a PHP script via HTTP request, we can also run CLI scripts - think of the 
-<code>make setup-db</code> target for instance. To debug such invocations, we need to follow the same steps
-as before:</p>
-
-<ul>
-<li>enable the <code>xdebug</code> extension in the <code>application</code> container</li>
-<li>"Listening for PHP Debug Connections" from PhpStorm</li>
-</ul>
-
-<p>Running the following make targets will trigger a breakpoint in <code>setup.php</code>:</p>
-
-<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=application
-make setup-db
-</code></pre>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG" alt="PhpStorm debugging breakpoint for cli" title="PhpStorm debugging breakpoint for cli" /></a></p>
-
-<p><!-- generated -->
-<a id='php-workers'> </a>
-<!-- /generated --></p>
-
-<h5>php-workers</h5>
-
-<p>And finally the same thing for long running PHP processes (aka workers). Just as before:</p>
-
-<ul>
-<li>enable the <code>xdebug</code> extension in the <code>php-worker</code> container</li>
-<li>"Listening for PHP Debug Connections" from PhpStorm</li>
-<li>restart the php workers</li>
-</ul>
-
-<p>Running the following make targets will trigger a breakpoint in <code>worker.php</code>:</p>
-
-<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-worker
-make restart-workers
-</code></pre>
-
-<p><a href="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG"><img src="https://www.pascallandau.com/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG" alt="PhpStorm debugging breakpoint for php-workers" title="PhpStorm debugging breakpoint for php-workers" /></a></p>
-
-<p><!-- generated -->
-<a id='strace'> </a>
-<!-- /generated --></p>
-
-<h2>strace</h2>
-
-<p><a href="https://strace.io/">strace</a> is a great tool for debugging long running processes that I've 
-adopted after reading <a href="https://derickrethans.nl/what-is-php-doing.html">What is PHP doing?</a>. I've
-added it to the php base image:</p>
-
-<pre>RUN apk add --update --no-cache \
-        strace
-</pre>
-
-<p>You can attach to any running process via <code>sudo strace -p $processId</code> - BUT that doesn't work 
-out of the box on docker and will fail with the error message</p>
-
-<pre><code>strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted
-</code></pre>
-
-<p>This is caused by a security measure from docker and 
-<a href="https://stackoverflow.com/a/46676868">can be circumvented</a> by adding</p>
-
-<pre>services:
-  service:
-    cap_add:
-      - "SYS_PTRACE"
-    security_opt:
-      - "seccomp=unconfined"
-</pre>
-
-<p>in <code>.docker/docker-compose/docker-compose.local.yml</code> <strong>to all PHP containers</strong>. After 
-rebuilding and restarting the docker setup, you can now e.g. log in the <code>php-worker</code> container
-and run <code>strace</code> on a php worker process:</p>
-
-<pre><code>application:/var/www/app# ps aux
-PID   USER     TIME  COMMAND
-    1 applicat  0:00 {supervisord} /usr/bin/python3 /usr/bin/supervisord
-    7 applicat  0:00 php /var/www/app/worker.php
-    8 applicat  0:00 php /var/www/app/worker.php
-    9 applicat  0:00 php /var/www/app/worker.php
-   10 applicat  0:00 php /var/www/app/worker.php
-   11 applicat  0:00 bash
-   20 applicat  0:00 ps aux
-application:/var/www/app# sudo strace -p 7
-strace: Process 7 attached
-restart_syscall(&lt;... resuming interrupted read ...&gt;) = 0
-poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
-sendto(4, "*2\r\n$4\r\nRPOP\r\n$5\r\nqueue\r\n", 25, MSG_DONTWAIT, NULL, 0) = 25
-poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 1 ([{fd=4, revents=POLLIN}])
-recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1
-</code></pre>
-
-<p><!-- generated -->
-<a id='wrapping-up'> </a>
-<!-- /generated --></p>
-
-<hr/><p><b>Due to technical constraints, this article is capped at 30000 characters. Read the full content at <a href='https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/'>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</a></b></p>
-]]></description>
-                <pubDate>Tue, 22 Mar 2022 11:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=feed-codeproject-com</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/</guid>
             </item>
             </channel>
 </rss>
