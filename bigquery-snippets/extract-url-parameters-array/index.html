@@ -70,7 +70,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -92,9 +92,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -149,6 +146,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
                 <p>We're gonna use the <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=de#regexp_extract_all">REGEXP_EXTRACT_ALL</a> 
 function provided in the Standard SQL dialect of BigQuery
 to extract parameters from the query part of a URL and return them as an ARRAY.</p>
@@ -422,7 +420,14 @@ r'(?:\?|&amp;)(?:(?:[^=]+)=([^&amp;]*))') as values</code></li>
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

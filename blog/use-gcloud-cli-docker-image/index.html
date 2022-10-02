@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="A short tutorial on using the gcloud cli docker image and include it in a deployment workflow">
+            <meta name="author" content="Pascal Landau">
+        <title>Use the gcloud cli docker image [Tutorial Part 12] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/use-gcloud-cli-docker-image/"/>
+            <meta name="robots" content="noindex"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Use the gcloud cli docker image</h1>
+                                            <h2 class="subheading">instead installing it locally</h2>
+                                                                <span class="meta">
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-09-27 06:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
+                        </span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <strong>Caution</strong>
+                        </div>
+                        <div class="panel-body bg-danger">
+                            This post is still in a <strong>draft</strong> status and likely subject to change!
+                        </div>
+                    </div>                    
+                    
+                <p>In this tutorial we will <strong>replace the locally installed <code>gcloud</code> cli tool with the official
+<code>gcloud</code> cli docker image</strong> and integrate it in the setup and deployment process.</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    You will learn which <code>gcloud</code> cli docker images exist, and how to pull and run them.
+    <br>
+    <br>
+    In addition I'll show a way to seamlessly integrate the image in a <code>make</code> setup and 
+    in <code>shell</code> scripts to completely remove the need for a locally installed version 
+    of the <code>gcloud</code> cli.
+    <br>
+    <br>
+    Finally, we will adjust the example codebase to use the docker image wherever possible.    
+  </div>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-12-use-gcloud-cli-docker-image">part-12-use-gcloud-cli-docker-image</a>.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/deploy-dockerized-php-app-production/">Deploy dockerized PHP Apps to production</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+
+<ul>
+<li><a href="#run-the-code-yourself">Run the code yourself</a></li>
+<li><a href="#a-word-of-caution-for-windows-users-git-bash-mingw-msys2">A word of caution for Windows users (Git Bash / MINGW / MSYS2)</a></li>
+</ul></li>
+<li><a href="#the-gcloud-cli-docker-image">The <code>gcloud</code> cli <code>docker</code> image</a>
+
+<ul>
+<li><a href="#download">Download</a></li>
+<li><a href="#image-sizes">Image sizes</a></li>
+<li><a href="#installed-components">Installed components</a></li>
+<li><a href="#usage">Usage</a>
+
+<ul>
+<li><a href="#authentication-and-persistence">Authentication and persistence</a></li>
+<li><a href="#suppress-warnings">Suppress warnings</a></li>
+<li><a href="#a-make-variable-for-targets">A <code>make</code> variable for targets</a>
+
+<ul>
+<li><a href="#creating-an-ssh-key">Creating an SSH key</a></li>
+</ul></li>
+<li><a href="#a-bash-function-for-shell-scripts">A <code>bash</code> function for shell scripts</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#using-the-gcloud-cli-docker-image-in-our-codebase">Using the <code>gcloud</code> cli <code>docker</code> image in our codebase</a>
+
+<ul>
+<li><a href="#replacing-local-gcloud-invocations">Replacing local <code>gcloud</code> invocations</a>
+
+<ul>
+<li><a href="#replacing-gcloud-in-the-make-setup">Replacing <code>gcloud</code> in the <code>make</code> setup</a></li>
+<li><a href="#replacing-gcloud-in-the-setup-scripts">Replacing <code>gcloud</code> in the setup scripts</a></li>
+<li><a href="#adjusting-gcloud-in-the-deployment">Adjusting <code>gcloud</code> in the deployment</a></li>
+</ul></li>
+<li><a href="#authentication-for-the-container-registry">Authentication for the Container Registry</a></li>
+<li><a href="#ensuring-ssh-keys-exist">Ensuring SSH keys exist</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>The <code>gcloud</code> cli is the <strong>official CLI tool of GCP</strong>. We have introduced it in
+<a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-gcloud-cli-tool">Run Docker on GCP Compute Instance VMs: Set up the <code>gcloud</code> CLI tool</a>
+and installed it directly on our local machine:</p>
+
+<blockquote>
+  <p>The <a href="https://cloud.google.com/sdk/gcloud">CLI tool for GCP is called <code>gcloud</code></a> and is
+  <a href="https://cloud.google.com/sdk/docs/install">available for all operating systems</a>.</p>
+  
+  <p>In this tutorial we are using [it] <strong>installed natively on Windows</strong> via the
+  <a href="https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe">GoogleCloudSDKInstaller.exe</a>
+  using the "Bundled Python" option.</p>
+</blockquote>
+
+<p>Since it became a vital part
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#deployment-workflow">in the deployment of the application</a>, 
+it is likely <strong>to be used by multiple developers in the team</strong>. This can lead to problems like</p>
+
+<ul>
+<li>outdated versions</li>
+<li>unnecessary updating overhead (e.g. due a dependency on a new <code>python</code> version)</li>
+<li>etc.</li>
+</ul>
+
+<p>We had similar considerations when
+<a href="/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">implementing <code>git secret</code> via <code>docker</code> container</a>:</p>
+
+<blockquote>
+  <p>Plus, we need to ensure that the <code>git-secret</code> and <code>gpg</code> versions are kept up-to-date for
+  everyone to not run into any compatibility issues.</p>
+</blockquote>
+
+<p>In this tutorial we'll remove this "local" dependency and <strong>use the official <code>gcloud</code> cli
+<code>docker</code> image instead</strong>.</p>
+
+<p><!-- generated -->
+<a id='run-the-code-yourself'> </a>
+<!-- /generated --></p>
+
+<h3>Run the code yourself</h3>
+
+<p>If you are "just" interested in using <code>gcloud</code> via docker image, run the following commands:</p>
+
+<pre><code class="language-bash"><br /># Prepare the codebase
+git clone https://github.com/paslandau/docker-php-tutorial.git &amp;&amp; cd docker-php-tutorial
+git checkout part-12-use-gcloud-cli-docker-image
+
+# Run a `gcloud` command in the docker image
+make gcp-gcloud ARGS=version 
+
+# Run a `gcloud` command locally
+make gcp-gcloud ARGS=version EXECUTE_GCLOUD_IN_CONTAINER=false
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-text">$ make gcp-gcloud ARGS=version
+docker run -i --rm --workdir="/codebase" --mount type=bind,source="$(pwd)",target=/codebase --mount type=volume,src=gcloud-config,dst=/home/cloudsdk --user cloudsdk gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim gcloud version
+Google Cloud SDK 403.0.0
+alpha 2022.09.20
+beta 2022.09.20
+bq 2.0.77
+bundled-python3-unix 3.9.12
+core 2022.09.20
+gcloud-crc32c 1.0.0
+gsutil 5.13
+
+$ make gcp-gcloud ARGS=version EXECUTE_GCLOUD_IN_CONTAINER=false
+gcloud version
+Google Cloud SDK 399.0.0
+beta 2022.08.19
+bq 2.0.75
+core 2022.08.19
+gsutil 5.12
+</code></pre>
+
+<p>Since this article is part of a tutorial series, you can also run the full deployment.</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    The following steps <strong>will create actual infrastructure on GCP</strong> which means you
+    will create costs (albeit quite little). Please make sure to shut the project down once you are
+    done, see
+    <a href="/blog/gcp-compute-instance-vm-docker/#cleanup">Run Docker on GCP Compute InstanceVMs: Cleanup</a>.
+  </div>
+</div>
+
+<p>I recommend <strong>creating a completely new GCP project</strong> to have a "clean slate" that ensures that
+everything works out of the box as intended.</p>
+
+<pre><code class="language-bash"><br /># Prepare the codebase
+git clone https://github.com/paslandau/docker-php-tutorial.git &amp;&amp; cd docker-php-tutorial
+git checkout part-12-use-gcloud-cli-docker-image
+
+# Run the initialization 
+make dev-init
+
+# Note: 
+# You don't have to follow the additional instructions of the `dev-init` target 
+# for this part of the tutorial.
+
+# The following steps need to be done manually:
+# 
+# - Create a new GCP project and "master" service account with Owner permissions.
+# - Create a key file for that master service account and place it in the root of the codebase at
+#   ./gcp-master-service-account-key.json
+#
+# @see https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#preconditions-project-and-owner-service-account
+
+ls ./gcp-master-service-account-key.json
+# Should NOT fail with
+#   ls: cannot access './gcp-master-service-account-key.json': No such file or directory
+
+# Update the variables `DOCKER_REGISTRY` and `GCP_PROJECT_ID` in `.make/variables.env` 
+projectId="SET YOUR GCP_PROJECT_ID HERE"
+# CAUTION: Mac users might need to use `sed -i '' -e` instead of `sed -i`! @see https://stackoverflow.com/a/19457213/413531
+sed -i "s/DOCKER_REGISTRY=.*/DOCKER_REGISTRY=gcr.io\/${projectId}/" .make/variables.env
+sed -i "s/GCP_PROJECT_ID=.*/GCP_PROJECT_ID=${projectId}/" .make/variables.env
+
+# Set up an SSH key for the `gcloud` container
+make gcp-create-ssh-key
+
+# Set up the infrastructure
+make infrastructure-setup ROOT_PASSWORD="production_secret_mysql_root_password"
+
+# Authenticate docker to push images
+make gcp-authenticate-docker SERVICE_ACCOUNT_KEY_FILE=./gcp-service-account-key.json
+
+make docker-compose-build
+make docker-compose-up
+make gpg-init
+make secret-decrypt
+
+make gcp-activate-master-account
+# Retrieve the AUTH string of the redis instance and set it in the `.secrets/prod/app.env` file
+auth_string=$(make -s gcp-get-redis-auth)
+# CAUTION: Mac users might need to use `sed -i '' -e` instead of `sed -i`! @see https://stackoverflow.com/a/19457213/413531
+sed -i "s/REDIS_PASSWORD=.*/REDIS_PASSWORD=${auth_string}/" .secrets/prod/app.env
+
+# Encrypt the secrets and commit the changes
+make secret-encrypt
+git add . &amp;&amp; git commit -m "Update the REDIS_PASSWORD and re-encrypt the secrets"
+
+# Run the deployment
+make deploy
+
+# Migrate the database
+make deployment-setup-db-on-vm
+
+# Verify the deployment
+make deployment-info
+</code></pre>
+
+<p><!-- generated -->
+<a id='a-word-of-caution-for-windows-users-git-bash-mingw-msys2'> </a>
+<!-- /generated --></p>
+
+<h3>A word of caution for Windows users (Git Bash / MINGW / MSYS2)</h3>
+
+<p>This section is important, if you encounter one of the following error messages</p>
+
+<pre><code class="language-text">the working directory 'C:/Program Files/Git/codebase' is invalid, it needs to be an absolute path.
+
+invalid mount config for type "volume": invalid mount path: 'C:/Program Files/Git/home/cloudsdk' mount path must be absolute.
+
+the input device is not a TTY
+
+stdout is not a tty
+</code></pre>
+
+<p>My development setup at the moment is</p>
+
+<ul>
+<li>Windows 10</li>
+<li>Docker Desktop v4.12.0</li>
+<li>Git for Windows v2.37.3</li>
+</ul>
+
+<p>I.e. I do <strong>not use WSL</strong> but 
+<a href="/blog/setting-up-git-bash-mingw-msys2-on-windows/">Git Bash as my terminal of choice</a>. If you 
+are in the same boat, please make sure to read my 
+<a href="/blog/setting-up-git-bash-mingw-msys2-on-windows/#common-issues">Common Issues</a> section, especially
+<a href="/blog/setting-up-git-bash-mingw-msys2-on-windows/#the-role-of-winpty-fixing-the-input-device-is-not-a-tty">The role of winpty: Fixing "The input device is not a TTY"</a>
+and
+<a href="/blog/setting-up-git-bash-mingw-msys2-on-windows/#the-path-conversion-issue">The path conversion issue</a>:</p>
+
+<ul>
+<li>Windows needs a special tool called <code>winpty</code> to <strong>create input that is compatible with a Unix 
+pty</strong>  and Git Bash and <code>winpty</code> "screw up" absolute Unix paths like <code>/codebase</code> <strong>by converting 
+them by default to a Windows path</strong> like <code>C:/Program Files/Git/codebase</code>.</li>
+<li>the <strong>pty issue</strong> can be solved by prefixing <code>docker</code> commands that require user input with
+<code>winpty</code> to avoid <code>The input device is not a TTY</code> errors while NOT adding it to <code>docker</code> 
+commands that need pipes to avoid the <code>stdout is not a tty</code> error</li>
+<li>to solve the <strong>path conversion issue</strong>, you need to install the latest version of <code>winpty</code> and 
+in addition export the variable <code>MSYS_NO_PATHCONV=1</code> as an environment variable</li>
+</ul>
+
+<p><strong>Long story short:</strong> Your concrete TODO in the context of this tutorial is <strong>making sure to use the 
+latest version of <code>winpty</code></strong>, e.g. by following the steps outlined in
+<a href="/blog/setting-up-git-bash-mingw-msys2-on-windows/#fixing-the-path-conversion-issue-for-winpty">Fixing the path conversion issue for <code>winpty</code></a>.</p>
+
+<p>Exporting <code>MSYS_NO_PATHCONV=1</code> as an environment variable should not be required if you are 
+using the example code of this tutorial, because I'm taking care of it directly in the main 
+<code>Makefile</code> via</p>
+
+<pre><code class="language-bash">OS?=$(shell uname)
+ifeq ($(OS),Windows_NT)
+  # [...]
+  # Export MSYS_NO_PATHCONV=1 as environment variable to avoid automatic path conversion
+  # (the export does only apply locally to `make` and the scripts that are invoked,
+  # it does not affect the global environment)
+  # @see http://www.pascallandau.com/blog/setting-up-git-bash-mingw-msys2-on-windows/#fixing-the-path-conversion-issue-for-mingw-msys2
+  export MSYS_NO_PATHCONV=1
+# [...]
+endif
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-gcloud-cli-docker-image'> </a>
+<!-- /generated --></p>
+
+<h2>The <code>gcloud</code> cli <code>docker</code> image</h2>
+
+<p><!-- generated -->
+<a id='download'> </a>
+<!-- /generated --></p>
+
+<h3>Download</h3>
+
+<p>You can pull the <code>gcloud</code> cli <code>docker</code> image via</p>
+
+<pre><code class="language-bash">docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:$version
+
+# e.g.
+# docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:latest
+# docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0
+
+# or
+
+docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:$optionalVersion-$type
+
+# e.g.
+# docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine
+# docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-alpine
+</code></pre>
+
+<p>where</p>
+
+<ul>
+<li><code>$version</code> is either <code>latest</code> or a concrete version number like <code>403.0.0</code>
+
+<ul>
+<li>A (big) Debian-based image with additional components</li>
+</ul></li>
+<li><code>$type</code> can be one of:
+
+<ul>
+<li><code>slim</code>: A smaller Debian-based image with <em>less</em> additional components</li>
+<li><code>emulators</code>: A smaller Debian-based image with emulator components</li>
+<li><code>alpine</code>: An Alpine-based image with <em>no</em> additional components</li>
+<li><code>debian_component_based</code>: Debian-based image with <em>all</em> additional components using the 
+component manager to install components</li>
+</ul></li>
+</ul>
+
+<p>See also the <a href="https://cloud.google.com/sdk/docs/downloads-docker">GCP Cloud SDK docu: Installing the Google Cloud CLI Docker image</a>
+for a full overview of the image options. The corresponding <code>Dockerfiles</code> are available in the 
+<a href="https://github.com/GoogleCloudPlatform/cloud-sdk-docker"><code>GoogleCloudPlatform/cloud-sdk-docker</code> Github repository</a>.</p>
+
+<p>Concrete example for pulling a <code>403.0.0-alpine</code> image:</p>
+
+<pre><code class="language-text">$ docker pull gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-alpine
+403.0.0-alpine: Pulling from google.com/cloudsdktool/google-cloud-cli
+9621f1afde84: Already exists
+ac7f9f5825e5: Pulling fs layer
+de9993cc056b: Pulling fs layer
+a8c020dea79a: Pulling fs layer
+9da7a7c33f19: Pulling fs layer
+1ab604b5b29f: Pulling fs layer
+[...]
+Digest: sha256:d451cccaeb65f7878947c921c77e83910acb7465b26465c97451ae4a6a37e8e1
+Status: Downloaded newer image for gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-alpine
+gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-alpine
+</code></pre>
+
+<p>You can also <strong>create a custom image</strong> based on the
+<code>slim</code> and <code>alpine</code> types if you need a <strong>specific component that doesn't come pre-installed</strong> - see
+the documentation section
+<a href="https://cloud.google.com/sdk/docs/downloads-docker#installing_additional_components">Installing additional components</a>.</p>
+
+<p><!-- generated -->
+<a id='image-sizes'> </a>
+<!-- /generated --></p>
+
+<h3>Image sizes</h3>
+
+<p>To get a feeling for the <strong>size of the images</strong>, I've pulled the current <code>latest</code> version of each
+image - which is <code>403.0.0</code> as of <code>2022-09-25</code>:</p>
+
+<pre><code class="language-text">REPOSITORY                                        TAG                              SIZE    IMAGE ID    
+gcr.io/google.com/cloudsdktool/google-cloud-cli   403.0.0                          2.86GB  a331adb66c48
+gcr.io/google.com/cloudsdktool/google-cloud-cli   403.0.0-debian_component_based   2.57GB  d0260cfd2a43
+gcr.io/google.com/cloudsdktool/google-cloud-cli   403.0.0-emulators                1.1GB   8a360f740264
+gcr.io/google.com/cloudsdktool/google-cloud-cli   403.0.0-slim                     1.41GB  2662111f0e6b
+gcr.io/google.com/cloudsdktool/google-cloud-cli   403.0.0-alpine                   820MB   92eef3663fa5
+</code></pre>
+
+<p>The smallest one (<code>alpine</code>; 820MB) is ~3.5x smaller than then biggest one ("no type"; 2.86GB).</p>
+
+<p><!-- generated -->
+<a id='installed-components'> </a>
+<!-- /generated --></p>
+
+<h3>Installed components</h3>
+
+<p>In oder to understand if a pre-compiled image is sufficient, I've used the following script to 
+<strong>print the components for each image type</strong>:</p>
+
+<pre><code class="language-bash">version="403.0.0"
+printf "Tag: $version\n=\n"
+docker run --rm gcr.io/google.com/cloudsdktool/google-cloud-cli:$version gcloud version
+
+tags="debian_component_based emulators slim alpine"
+
+for tag in $tags; do
+  printf "\n\nTag: $version-$tag\n=\n"
+  docker run --rm gcr.io/google.com/cloudsdktool/google-cloud-cli:$version-$tag gcloud version
+done
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-bash">Tag: 403.0.0
+=
+Google Cloud SDK 403.0.0
+alpha 2022.09.20
+app-engine-go 1.9.72
+app-engine-java 1.9.98.1
+app-engine-python 1.9.101
+app-engine-python-extras 1.9.97
+beta 2022.09.20
+bigtable
+bq 2.0.77
+bundled-python3-unix 3.9.12
+cbt 0.12.0
+cloud-datastore-emulator 2.2.2
+cloud-firestore-emulator 1.14.4
+cloud-spanner-emulator 1.4.3
+core 2022.09.20
+datalab 20190610
+gcloud-crc32c 1.0.0
+gke-gcloud-auth-plugin 0.3.0
+gsutil 5.13
+kpt 1.0.0-beta.15
+local-extract 1.5.4
+pubsub-emulator 0.7.0
+
+
+Tag: 403.0.0-debian_component_based
+=
+Google Cloud SDK 403.0.0
+alpha 2022.09.20
+anthos-auth 1.4.3
+app-engine-go 1.9.72
+app-engine-java 1.9.98.1
+app-engine-python 1.9.101
+app-engine-python-extras 1.9.96
+appctl 0.1.12
+beta 2022.09.20
+bigtable
+bq 2.0.77
+bundled-python3-unix 3.9.12
+cbt 0.12.0
+cloud-datastore-emulator 2.2.2
+core 2022.09.20
+datalab 20190610
+gcloud-crc32c 1.0.0
+gke-gcloud-auth-plugin 0.3.0
+gsutil 5.13
+kpt 1.0.0-beta.15
+kubectl 1.22.12
+kustomize 4.4.0
+local-extract 1.5.4
+minikube 1.26.1
+nomos 1.13.0-rc.7
+pubsub-emulator 0.7.0
+skaffold 1.39.2
+
+
+Tag: 403.0.0-emulators
+=
+Google Cloud SDK 403.0.0
+beta 2022.09.20
+bigtable
+bq 2.0.77
+bundled-python3-unix 3.9.12
+cloud-datastore-emulator 2.2.2
+cloud-firestore-emulator 1.14.4
+cloud-spanner-emulator 1.4.3
+core 2022.09.20
+gcloud-crc32c 1.0.0
+gsutil 5.13
+pubsub-emulator 0.7.0
+
+
+Tag: 403.0.0-slim
+=
+Google Cloud SDK 403.0.0
+alpha 2022.09.20
+beta 2022.09.20
+bq 2.0.77
+bundled-python3-unix 3.9.12
+core 2022.09.20
+gcloud-crc32c 1.0.0
+gsutil 5.13
+
+
+Tag: 403.0.0-alpine
+=
+Google Cloud SDK 403.0.0
+bq 2.0.77
+bundled-python3-unix 3.9.12
+core 2022.09.20
+gcloud-crc32c 1.0.0
+gsutil 5.13
+</code></pre>
+
+<p>FYI: For the codebase of this tutorial we need the <code>beta</code> component for 
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#create-the-mysql-instance">creating the MySQL Cloud SQL instance</a>
+to enable the <code>--allocated-ip-range-name</code> option.</p>
+
+<p>The smallest image type that contains that component is <code>slim</code>, i.e. we'll use image</p>
+
+<pre><code class="language-text">gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim
+</code></pre>
+
+<p><!-- generated -->
+<a id='usage'> </a>
+<!-- /generated --></p>
+
+<h3>Usage</h3>
+
+<p>To use <code>gcloud</code> via docker, you need to specify the <code>gcloud</code> command as first argument after the
+image name of <code>docker run</code> and then "use the commands as you would on a local installation", e.g.
+for <code>gcloud version</code></p>
+
+<pre><code class="language-text">docker run --rm gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim gcloud version
+</code></pre>
+
+<pre><code class="language-text">$ docker run --rm gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim gcloud version
+Google Cloud SDK 403.0.0
+bq 2.0.77
+bundled-python3-unix 3.9.12
+core 2022.09.20
+gcloud-crc32c 1.0.0
+gsutil 5.13
+</code></pre>
+
+<p><!-- generated -->
+<a id='authentication-and-persistence'> </a>
+<!-- /generated --></p>
+
+<h4>Authentication and persistence</h4>
+
+<p>Since we <strong>need to be authenticated for most of the commands</strong>, we need some way of "persisting" the
+authentication information. We will <strong>use a named volume to retain the information</strong> across 
+different container runs.</p>
+
+<p>The following example shows how to <strong>authenticate with a service account key file located in the 
+current working directory</strong></p>
+
+<pre><code class="language-bash">docker run \
+  -i \
+  --rm \
+  --workdir="/codebase" \
+  --mount type=bind,source="$(pwd)",target=/codebase \
+  --mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+  --user cloudsdk \
+  gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim \
+  gcloud auth activate-service-account --key-file="./gcp-service-account-key.json" --project="pl-dofroscra-p"
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-text">$ docker run \
+  -i \
+  --rm \
+  --workdir="/codebase" \
+  --mount type=bind,source="$(pwd)",target=/codebase \
+  --mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+  --user cloudsdk \
+  gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim \
+  gcloud auth activate-service-account --key-file="./gcp-service-account-key.json" --project="pl-dofroscra-p"
+Activated service account credentials for: [pl-dofroscra-p.iam.gserviceaccount.com]
+</code></pre>
+
+<pre><code class="language-text">-i \
+--rm \
+</code></pre>
+
+<p>Run the container in interactive mode (<code>-i</code>) 
+<a href="https://stackoverflow.com/a/44421764">to accept input from <code>stdin</code></a> and remove it (<code>--rm</code>) after 
+running the command as there is no need to keep it running after executing a <code>gcloud</code> command.</p>
+
+<p>FYI: Accepting input from <code>stdin</code> is e.g. required for setting the secret <code>gpg</code> password in
+<code>.infrastructure/setup-gcp.sh</code> at</p>
+
+<pre><code class="language-bash">echo -n "${gpg_secret_key_password}" | gcloud secrets versions add GPG_PASSWORD --data-file=-
+</code></pre>
+
+<p>Otherwise, we would run into the error</p>
+
+<pre><code class="language-text">ERROR: (gcloud.secrets.versions.add) INVALID_ARGUMENT: Secret Payload cannot be empty.
+</code></pre>
+
+<pre><code class="language-text">--workdir="/codebase" \
+--mount type=bind,source="$(pwd)",target=/codebase \
+</code></pre>
+
+<p>Share the codebase (specified via 
+<a href="https://unix.stackexchange.com/a/175000">the current directory <code>$(pwd)</code></a>) with the container as 
+a bind mount and make it available at path <code>/codebase</code>. This is important to get access to the 
+service account key file that we specify via <code>--key-file="./gcp-service-account-key.json"</code> in the 
+<code>gcloud auth</code> command.</p>
+
+<p>FYI: The <code>/codebase</code> directory is chosen arbitrarily - it should just be a directory that 
+doesn't exist in the container.</p>
+
+<pre><code class="language-text">--user cloudsdk \
+--mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+</code></pre>
+
+<p>When we apply permanent settings to the <code>gcloud</code> cli config (e.g. the authenticated service 
+account and the default project), those <strong>settings need to be stored "somewhere"</strong>. By default, 
+this is happening in the <code>~/.config/gcloud</code> directory within the home directory of the current 
+user,
+see <a href="https://cloud.google.com/sdk/docs/configurations">CloudSDK docs: Managing gcloud CLI configurations </a>:</p>
+
+<blockquote>
+  <p>Configurations are stored in your user config directory (typically ~/.config/gcloud on MacOS 
+  and Linux, or %APPDATA%\gcloud on Windows [...]</p>
+</blockquote>
+
+<p>To <strong>retain those settings across different container runs</strong>, we need to <strong>"persist" the data in a 
+volume</strong>.</p>
+
+<p>The <code>cloudsdk</code> user comes pre-created with all <code>gcloud</code> images and its home directory is 
+<code>/home/cloudsdk</code>. Thus, we create a volume named <code>gcloud-config</code> to map it to this path. I.e. all 
+files and directories within the home directory are stored in the volume - including the
+<code>/home/cloudsdk/.config/gcloud</code> directory.</p>
+
+<p>FYI: We use the <code>cloudsdk</code> user instead of the default <code>root</code> user on purpose, because it would 
+create problems later, e.g. when trying to log into a VM via SSH, because <code>root</code> login is 
+disabled by default.</p>
+
+<pre><code class="language-text">gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim \
+gcloud auth activate-service-account --key-file="./gcp-service-account-key.json" --project="pl-dofroscra-p"
+</code></pre>
+
+<p>Finally, we define the <code>gcloud</code> image and run the <code>gcloud auth activate-service-account</code> command.</p>
+
+<p>We can then verify that the authentication worked as expected via</p>
+
+<pre><code class="language-bash">docker run \
+  -i \
+  --rm \
+  --workdir="/codebase" \
+  --mount type=bind,source="$(pwd)",target=/codebase \
+  --mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+  --user cloudsdk \
+  gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim \
+  gcloud info
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-text">$ docker run \
+  -i \
+  --rm \
+  --workdir="/codebase" \
+  --mount type=bind,source="$(pwd)",target=/codebase \
+  --mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+  --user cloudsdk \
+  gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim \
+  gcloud info
+Google Cloud SDK [403.0.0]
+
+Platform: [Linux, x86_64] uname_result(system='Linux', node='80b59ba0d70c', release='5.10.124-linuxkit', version='#1 SMP Thu Jun 30 08:19:10 UTC 2022', machine='x86_64')
+Locale: (None, None)
+Python Version: [3.9.13 (main, Jul 26 2022, 13:12:30)  [GCC 10.3.1 20211027]]
+Python Location: [/usr/bin/python3]
+OpenSSL: [OpenSSL 1.1.1q  5 Jul 2022]
+Requests Version: [2.25.1]
+urllib3 Version: [1.26.9]
+Site Packages: [Disabled]
+
+Installation Root: [/google-cloud-sdk]
+Installed Components:
+  gsutil: [5.13]
+  gcloud-crc32c: [1.0.0]
+  bq: [2.0.77]
+  bundled-python3-unix: [3.9.12]
+  core: [2022.09.20]
+System PATH: [/google-cloud-sdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin]
+Python PATH: [/google-cloud-sdk/lib/third_party:/google-cloud-sdk/lib:/usr/lib/python39.zip:/usr/lib/python3.9:/usr/lib/python3.9/lib-dynload]
+Cloud SDK on PATH: [True]
+Kubectl on PATH: [False]
+
+Installation Properties: [/google-cloud-sdk/properties]
+User Config Directory: [/home/cloudsdk/.config/gcloud]
+Active Configuration Name: [default]
+Active Configuration Path: [/home/cloudsdk/.config/gcloud/configurations/config_default]
+
+Account: [deployment@pl-dofroscra-p.iam.gserviceaccount.com]
+Project: [pl-dofroscra-p]
+
+Current Properties:
+  [core]
+    account: [deployment@pl-dofroscra-p.iam.gserviceaccount.com] (property file)
+    disable_usage_reporting: [True] (property file)
+    project: [pl-dofroscra-p] (property file)
+
+Logs Directory: [/home/cloudsdk/.config/gcloud/logs]
+Last Log File: [/home/cloudsdk/.config/gcloud/logs/2022.09.26/08.40.35.902096.log]
+
+git: [git version 2.34.4]
+</code></pre>
+
+<p>Note the</p>
+
+<pre><code class="language-text">Account: [deployment@pl-dofroscra-p.iam.gserviceaccount.com]
+Project: [pl-dofroscra-p]
+</code></pre>
+
+<p>part near the end.</p>
+
+<p>FYI: The 
+<a href="https://cloud.google.com/sdk/docs/downloads-docker#installing_a_specified_docker_image">GCP docs on Installing a specified Docker image</a>
+propose a different approach:</p>
+
+<ul>
+<li>create a container named <code>google-config</code> that uses an anonymous volume</li>
+<li>run the authentication in this container</li>
+<li>use the <code>--volumes-from</code> option to references the volumes of the <code>google-config</code> container on 
+subsequent invocations of the <code>gcloud</code> docker image</li>
+</ul>
+
+<p>Though I find this approach less intuitive, more difficult and don't see a benefit over simply 
+using a named volume. The only thing you need to keep in mind is that something like 
+<code>docker volume prune</code> would delete the <code>google-config</code> volume unless it is attached to a running 
+container.</p>
+
+<p><!-- generated -->
+<a id='suppress-warnings'> </a>
+<!-- /generated --></p>
+
+<h4>Suppress warnings</h4>
+
+<p>After playing around with the containerized <code>gcloud</code>, I noticed the warning</p>
+
+<pre><code class="language-text">WARNING:
+
+To increase the performance of the tunnel, consider installing NumPy. For instructions,
+please see https://cloud.google.com/iap/docs/using-tcp-forwarding#increasing_the_tcp_upload_bandwidth
+</code></pre>
+
+<p>popping up whenever I used the <code>--tunnel-through-iap</code> flag of the 
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh#--tunnel-through-iap"><code>gcloud compute ssh</code></a> 
+command. Since I don't want to create a custom image to install <code>NumPy</code>, I looked for 
+alternatives to suppress the warning and came across the 
+<a href="https://cloud.google.com/sdk/gcloud/reference/config#verbosity"><code>verbosity</code> configuration for <code>gcloud</code></a>, 
+that is set to <code>warning</code> by default.</p>
+
+<p>Displaying the warning can be suppressed by adding <code>--verbosity=error</code> as option to any command 
+that uses the <code>--tunnel-through-iap</code> flag.</p>
+
+<p>FYI: You could also adjust the general <code>verbosity</code> level via</p>
+
+<pre><code class="language-bash">gcloud config set core/verbosity error
+</code></pre>
+
+<p>but that might also hide some warnings that you DO want to see, and I feel disabling it on a 
+per-case basis is the safer way to go.</p>
+
+<p><!-- generated -->
+<a id='a-make-variable-for-targets'> </a>
+<!-- /generated --></p>
+
+<h4>A <code>make</code> variable for targets</h4>
+
+<p>So far, we are using <code>gcloud</code> "directly" in <code>make</code> targets, e.g. like this:</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-info-vms
+gcp-info-vms: ## Show VM information
+    gcloud compute instances list
+</code></pre>
+
+<p>To replace this usage with the <code>gcloud</code> image instead, we would have to change the target to</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-info-vms
+gcp-info-vms: ## Show VM information
+    docker run \
+      -i \
+      --rm \
+      --workdir="/codebase" \
+      --mount type=bind,source="$$(pwd)",target=/codebase \
+      --mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+      --user cloudsdk \
+      gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim \
+    gcloud compute instances list
+</code></pre>
+
+<p>Which is quite a lot of noise. Luckily, we have already "solved" this problem earlier and can 
+use the same "technique" as we did for
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">managing <code>docker compose</code> via <code>make</code></a>
+by <strong>creating a <code>GCLOUD</code> variable that holds the fully configured command</strong>, i.e.</p>
+
+<pre><code class="language-makefile">WINPTY_PREFIX=
+# OS is a defined variable for WIN systems, so "uname" will not be executed
+OS?=$(shell uname)
+ifeq ($(OS),Windows_NT)
+    WINPTY_PREFIX=winpty
+endif
+
+EXECUTE_GCLOUD_IN_CONTAINER?=true
+GCLOUD_VERSION:=403.0.0-slim
+GCLOUD_DOCKER_IMAGE_USER=cloudsdk
+
+RUN_GCLOUD_DOCKER_IMAGE_ARGS= -i \
+                              --rm \
+                              --workdir="/codebase" \
+                              --mount type=bind,source="$$(pwd)",target=/codebase \
+                              --mount type=volume,src=gcloud-config,dst=/home/$(GCLOUD_DOCKER_IMAGE_USER) \
+                              --user $(GCLOUD_DOCKER_IMAGE_USER)
+
+RUN_GCLOUD_DOCKER_IMAGE:=docker run $(RUN_GCLOUD_DOCKER_IMAGE_ARGS) gcr.io/google.com/cloudsdktool/google-cloud-cli:$(GCLOUD_VERSION)
+RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY:=$(WINPTY_PREFIX) docker run -t $(RUN_GCLOUD_DOCKER_IMAGE_ARGS) gcr.io/google.com/cloudsdktool/google-cloud-cli:$(GCLOUD_VERSION)
+
+GCLOUD:=gcloud
+GCLOUD_WITH_TTY:=gcloud
+ifeq ($(EXECUTE_GCLOUD_IN_CONTAINER),true)
+    GCLOUD:=$(RUN_GCLOUD_DOCKER_IMAGE) gcloud
+    GCLOUD_WITH_TTY:=$(RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY) gcloud
+endif
+</code></pre>
+
+<p>By default, the <code>GCLOUD</code> variable equals to <code>gcloud</code> (i.e. the locally installed <code>gcloud</code> cli) but 
+if the <code>EXECUTE_GCLOUD_IN_CONTAINER</code> is set to <code>true</code>, the <code>docker</code> image will be used instead 
+(which is the default, as the variable is defined as <code>EXECUTE_GCLOUD_IN_CONTAINER?=true</code>).</p>
+
+<p>This way, we can write our target as</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-info-vms
+gcp-info-vms: ## Show VM information
+    $(GCLOUD) compute instances list
+</code></pre>
+
+<p>And can even control via <code>EXECUTE_GCLOUD_IN_CONTAINER</code> if we want to run the <code>docker</code> image or the 
+locally installed <code>gcloud</code> cli. Examples:</p>
+
+<p><strong>Use the docker image</strong></p>
+
+<pre><code class="language-text"><br />$ make gcp-info-vms -n
+docker run --rm --workdir="/codebase" --mount type=bind,source="",target=/codebase --mount type=volume,src=gcloud-config,dst=/home/cloudsdk --user cloudsdk gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim gcloud compute instances list
+</code></pre>
+
+<p><strong>Use the locally installed <code>gcloud</code> cli</strong></p>
+
+<pre><code class="language-text"><br />$ make gcp-info-vms EXECUTE_GCLOUD_IN_CONTAINER=false -n
+gcloud compute instances list
+</code></pre>
+
+<p>In addition, I have added a <code>GCLOUD_WITH_TTY</code> variable that needs to be used whenever a command 
+requires user input. Take the 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#gcp-recipes"><code>gcp-ssh-login</code> target</a> for example:</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-ssh-login
+gcp-ssh-login: validate-gcp-variables ## Log into a VM via IAP tunnel
+    @$(if $(VM_NAME),,$(error "VM_NAME is undefined"))
+    $(GCLOUD_WITH_TTY) compute ssh $(VM_NAME) --project $(GCP_PROJECT_ID) --zone $(GCP_ZONE) --tunnel-through-iap --verbosity=error
+</code></pre>
+
+<p>This target will 
+<a href="/blog/gcp-compute-instance-vm-docker/#login-using-the-identity-aware-proxy-iap-concept">open an SSH session over IAP</a>
+so that we can then run commands on the remote VM -
+since we need to "type" the commands, we need a terminal and thus need to instruct <code>docker</code> to 
+allocate a <code>tty</code> for us. This is done via the <code>-t</code> option. Thus, we have added the helper variable</p>
+
+<pre><code class="language-text">RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY:=$(WINPTY_PREFIX) docker run -t $(RUN_GCLOUD_DOCKER_IMAGE_ARGS) gcr.io/google.com/cloudsdktool/google-cloud-cli:$(GCLOUD_VERSION)
+</code></pre>
+
+<p>The <code>$(WINPTY_PREFIX)</code> is required for users of Git Bash on Windows, because 
+<a href="#a-word-of-caution-for-windows-users-git-bash-mingw-msys2">they must add <code>winpty</code> as a prefix</a>,
+to enable terminal input.</p>
+
+<p><!-- generated -->
+<a id='creating-an-ssh-key'> </a>
+<!-- /generated --></p>
+
+<h5>Creating an SSH key</h5>
+
+<p>The <code>RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY</code> variable is helpful to run other commands in the container. 
+A concrete example is the generation of the <code>google_compute_engine</code> SSH keys, that are required for 
+<a href="/blog/gcp-compute-instance-vm-docker/#login-using-the-identity-aware-proxy-iap-concept">connecting to the Compute Engine VMs via IAP</a>. 
+This can be done with the following target:</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-create-ssh-key
+gcp-create-ssh-key: ## Create an SSH key pair named "google_compute_engine" in the gcloud docker image at ~/.ssh
+    @$(RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY) ssh-keygen -t rsa -f /home/$(GCLOUD_DOCKER_IMAGE_USER)/.ssh/google_compute_engine -C $(GCLOUD_DOCKER_IMAGE_USER) -N "";
+</code></pre>
+
+<p>The <code>.ssh</code> folder is located in the home directory of the user and thus already covered by the 
+<a href="#authentication-and-persistence"><code>gcloud-config</code> volume</a>.</p>
+
+<p>FYI: We need a <code>tty</code> here, because <code>ssh-keygen</code> doesn't provide an option to force overwriting 
+an existing key and would prompt us to confirm (or deny) the action. Usage example:</p>
+
+<pre><code class="language-text">$ make gcp-create-ssh-key
+Generating public/private rsa key pair.
+/home/cloudsdk/.ssh/google_compute_engine already exists.
+Overwrite (y/n)? y
+Your identification has been saved in /home/cloudsdk/.ssh/google_compute_engine.
+Your public key has been saved in /home/cloudsdk/.ssh/google_compute_engine.pub.
+The key fingerprint is:
+SHA256:+TMUpyBeVSSjTe728c+xTkEVJAqy3HeK5e7TZcnq9OE cloudsdk
+The key's randomart image is:
++---[RSA 2048]----+
+|       . .=oo..oo|
+|      . +*.o. . .|
+|      .o+.++.. . |
+|     . o +=+o .  |
+|      . S.=o. ...|
+|         +.. o =.|
+|          +.o.=+ |
+|          .+.o+o+|
+|           .o..Eo|
++----[SHA256]-----+
+</code></pre>
+
+<p><!-- generated -->
+<a id='a-bash-function-for-shell-scripts'> </a>
+<!-- /generated --></p>
+
+<h4>A <code>bash</code> function for shell scripts</h4>
+
+<p>As in the 
+<a href="#a-make-variable-for-targets">previous <code>make</code> section</a> our shell scripts are currently also using 
+<code>gcloud</code> directly and we'll create a "decorator" for the <code>gcloud</code> command by
+<a href="https://stackoverflow.com/a/25399516">overwriting it with our own function</a>:</p>
+
+<pre><code class="language-bash">export MSYS_NO_PATHCONV=1
+
+gcloud() { 
+  gcloudVersion=403.0.0-slim
+
+  docker run \
+  -i \
+  --rm \
+  --workdir="/codebase" \
+  --mount type=bind,source="$(pwd)",target=/codebase \
+  --mount type=volume,src=gcloud-config,dst=/home/cloudsdk \
+  --user cloudsdk \
+  gcr.io/google.com/cloudsdktool/google-cloud-cli:${gcloudVersion} \
+  gcloud "$@"
+}
+</code></pre>
+
+<p>We're first exporting <code>MSYS_NO_PATHCONV=1</code> as an environment variable to 
+<a href="#a-word-of-caution-for-windows-users-git-bash-mingw-msys2">disable the automatic path conversion for Git Bash users</a>
+and will then use the
+<a href="#authentication-and-persistence">already familiar options for the <code>docker</code> image</a>
+to run a container and invoke <code>gcloud</code> command
+<a href="https://stackoverflow.com/a/9994328">with all given arguments via <code>"$@"</code></a>.</p>
+
+<p><strong>The function must be defined by each script</strong> so that all invocations of <code>gcloud</code> use it 
+instead of the actual command. To avoid having to re-define the function multiple times, we can 
+add it to a file once and <strong>include this file in the affected scripts</strong>. Take the following 
+directory structure for example:</p>
+
+<pre><code class="language-text">./scripts
+├── includes/
+│   └── gcloud_decorator.sh
+└── foo.sh
+</code></pre>
+
+<p>where <code>./scripts/includes/gcloud_decorator.sh</code> contains the decorator mentioned above and 
+<code>./scripts/foo.sh</code> contains the following script:</p>
+
+<pre><code class="language-bash">set -x
+
+. $(dirname "$0")/includes/gcloud_decorator.sh
+
+gcloud version
+</code></pre>
+
+<p><a href="https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html"><code>set -x</code> (Print a trace of simple commands)</a> 
+is helpful for showing us that our decorator is actually used and the <code>$(dirname "$0")</code> part in 
+the include is necessary to
+<a href="https://stackoverflow.com/a/41280223">resolve the location of the included script relative to the invoked one</a>.</p>
+
+<p>Running the script generates the following output:</p>
+
+<pre><code class="language-text">++ dirname ./scripts/foo.sh
++ . .infrastructure/include/gcloud_decorator.sh
++ gcloud version
++ gcloudVersion=403.0.0-slim
+++ pwd
++ MSYS_NO_PATHCONV=1
++ docker run -i --rm --workdir=/codebase --mount type=bind,source=/c/codebase/docker-php-tutorial,target=/codebase --mount type=volume,src=gcloud-config,dst=/home/cloudsdk --user cloudsdk gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim gcloud version
+Google Cloud SDK 403.0.0
+alpha 2022.09.20
+beta 2022.09.20
+bq 2.0.77
+bundled-python3-unix 3.9.12
+core 2022.09.20
+gcloud-crc32c 1.0.0
+gsutil 5.13
+</code></pre>
+
+<p>Note, that it will actually run the <code>docker</code> container as expected:</p>
+
+<pre><code class="language-text">+ docker run -i --rm --workdir=/codebase --mount type=bind,source=/c/codebase/docker-php-tutorial,target=/codebase --mount type=volume,src=gcloud-config,dst=/home/cloudsdk --user cloudsdk gcr.io/google.com/cloudsdktool/google-cloud-cli:403.0.0-slim gcloud version
+</code></pre>
+
+<p><!-- generated -->
+<a id='using-the-gcloud-cli-docker-image-in-our-codebase'> </a>
+<!-- /generated --></p>
+
+<h2>Using the <code>gcloud</code> cli <code>docker</code> image in our codebase</h2>
+
+<p>In order to use the <code>gcloud</code> cli <code>docker</code> image instead of the locally installed <code>gcloud</code> cli, 
+we need to <strong>replace all current "direct" <code>gcloud</code> invocations from our local machine</strong> - but 
+NOT the ones on the remote Compute Engine VM, because <code>gcloud</code> already comes 
+<a href="/blog/gcp-compute-instance-vm-docker/#the-role-of-the-service-account">pre-installed and authenticated with the deployed service account</a>.</p>
+
+<p><!-- generated -->
+<a id='replacing-local-gcloud-invocations'> </a>
+<!-- /generated --></p>
+
+<h3>Replacing local <code>gcloud</code> invocations</h3>
+
+<p>We're using the <code>gcloud</code> cli in three places:</p>
+
+<ul>
+<li>the <code>make</code> setup</li>
+<li>the setup scripts</li>
+<li>the deployment</li>
+</ul>
+
+<p><!-- generated -->
+<a id='replacing-gcloud-in-the-make-setup'> </a>
+<!-- /generated --></p>
+
+<h4>Replacing <code>gcloud</code> in the <code>make</code> setup</h4>
+
+<p>All usages of the <code>gcloud</code> cli are happening in file <code>.make/03-00-gcp.mk</code> and we simply need to 
+replace <code>gcloud</code> with the <code>GCLOUD</code> or <code>GCLOUD_WITH_TTY</code> variable introduced in section 
+<a href="#a-make-variable-for-targets">A <code>make</code> variable for targets</a>:</p>
+
+<pre><code class="language-makefile">##@ [GCP]
+
+EXECUTE_GCLOUD_IN_CONTAINER?=true
+GCLOUD_VERSION:=403.0.0-slim
+GCLOUD_DOCKER_IMAGE_USER=cloudsdk
+
+RUN_GCLOUD_DOCKER_IMAGE_ARGS= -i \
+                              --rm \
+                              --workdir="/codebase" \
+                              --mount type=bind,source="$$(pwd)",target=/codebase \
+                              --mount type=volume,src=gcloud-config,dst=/home/$(GCLOUD_DOCKER_IMAGE_USER) \
+                              --user $(GCLOUD_DOCKER_IMAGE_USER)
+
+RUN_GCLOUD_DOCKER_IMAGE:=docker run $(RUN_GCLOUD_DOCKER_IMAGE_ARGS) gcr.io/google.com/cloudsdktool/google-cloud-cli:$(GCLOUD_VERSION)
+RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY:=$(WINPTY_PREFIX) docker run -t $(RUN_GCLOUD_DOCKER_IMAGE_ARGS) gcr.io/google.com/cloudsdktool/google-cloud-cli:$(GCLOUD_VERSION)
+
+GCLOUD:=gcloud
+GCLOUD_WITH_TTY:=gcloud
+ifeq ($(EXECUTE_GCLOUD_IN_CONTAINER),true)
+    GCLOUD:=$(RUN_GCLOUD_DOCKER_IMAGE) gcloud
+    GCLOUD_WITH_TTY:=$(RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY) gcloud
+endif
+
+.PHONY: gcp-gcloud
+gcp-gcloud: ## Run an arbitrary `gcloud` command specified via ARGS
+    $(GCLOUD) $(ARGS) 
+
+.PHONY: gcp-create-ssh-key
+gcp-create-ssh-key: ## Create an SSH key pair named "google_compute_engine" in the gcloud docker image at ~/.ssh
+    @$(RUN_GCLOUD_DOCKER_IMAGE_WITH_TTY) ssh-keygen -t rsa -f /home/$(GCLOUD_DOCKER_IMAGE_USER)/.ssh/google_compute_engine -C $(GCLOUD_DOCKER_IMAGE_USER) -N "";
+
+.PHONY: gcp-authenticate-docker
+gcp-authenticate-docker: ## Authenticate docker with the JSON key file specified via SERVICE_ACCOUNT_KEY_FILE
+    @$(if $(SERVICE_ACCOUNT_KEY_FILE),,$(error "SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    cat "$(SERVICE_ACCOUNT_KEY_FILE)" | docker login -u _json_key --password-stdin https://gcr.io
+
+.PHONY: gcp-activate-service-account
+gcp-activate-service-account: validate-gcp-variables ## Initialize the `gcloud` cli with the service account specified via SERVICE_ACCOUNT_KEY_FILE
+    @$(if $(SERVICE_ACCOUNT_KEY_FILE),,$(error "SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    $(GCLOUD) auth activate-service-account --key-file="$(SERVICE_ACCOUNT_KEY_FILE)" --project="$(GCP_PROJECT_ID)"
+
+.PHONY: gcp-activate-deployment-account
+gcp-activate-deployment-account: validate-gcp-variables ## Initialize the `gcloud` cli with the deployment service account 
+    @$(if $(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE),,$(error "GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    "$(MAKE)" gcp-activate-service-account SERVICE_ACCOUNT_KEY_FILE=$(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE)
+
+# ...
+</code></pre>
+
+<p><!-- generated -->
+<a id='replacing-gcloud-in-the-setup-scripts'> </a>
+<!-- /generated --></p>
+
+<h4>Replacing <code>gcloud</code> in the setup scripts</h4>
+
+<p>The setup scripts for the GCP infrastructure have been introduced in 
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/">Create a production infrastructure for dockerized PHP Apps on GCP</a>
+and are located in the 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-infrastructure-directory"><code>.infrastructure</code> directory</a>.</p>
+
+<p>We are using the decorator function explained in section
+<a href="#a-bash-function-for-shell-scripts">A <code>bash</code> function for shell scripts</a> by placing it in the file
+<code>.infrastructure/include/include.sh</code> and including it in each setup script. Take the
+<code>.infrastructure/setup-vm.sh</code> script for example:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+# Fail immediately if any command fails
+set -e
+
+usage="Usage: setup-vm.sh project_id vm_name"
+[ -z "$1" ] &amp;&amp;  echo "No project_id given! $usage" &amp;&amp; exit 1
+[ -z "$2" ] &amp;&amp;  echo "No vm_name given! $usage" &amp;&amp; exit 1
+
+. $(dirname "$0")/include/include.sh
+
+project_id=$1
+vm_name=$2
+enable_public_access=$3
+vm_zone=us-central1-a
+master_service_account_key_location=./gcp-master-service-account-key.json
+
+# ...
+
+printf "${GREEN}Activating master service account${NO_COLOR}\n"
+gcloud auth activate-service-account --key-file="${master_service_account_key_location}" --project="${project_id}"
+
+printf "${GREEN}Creating a Compute Instance VM${NO_COLOR}\n"
+gcloud compute instances create "${vm_name}" \
+    --project="${project_id}" \
+    --zone="${vm_zone}" \
+    --machine-type=e2-micro \
+
+# ...
+</code></pre>
+
+<p>Please note, that we are NOT including it in <code>.infrastructure/scripts/deploy.sh</code>, because this 
+file is transferred to the remote VM and executed there as part of the deployment. This is 
+explained in the following section in more detail.</p>
+
+<p><!-- generated -->
+<a id='adjusting-gcloud-in-the-deployment'> </a>
+<!-- /generated --></p>
+
+<h4>Adjusting <code>gcloud</code> in the deployment</h4>
+
+<p>The 
+<a href="/blog/deploy-dockerized-php-app-production/#introduction">deployment</a> consists of a local phase 
+and a remote phase:</p>
+
+<ul>
+<li>locally:
+
+<ul>
+<li>build the <code>docker</code> images and push them to the registry</li>
+<li>create a deployment archive and transfer it to the VMs</li>
+</ul></li>
+<li>remotely:
+
+<ul>
+<li>extract the deployment archive and run the deployment script ...</li>
+<li>... that will pull and start the containers</li>
+</ul></li>
+</ul>
+
+<p>Since both phases use <code>make</code>, we simply need to make sure that the <code>EXECUTE_GCLOUD_IN_CONTAINER</code> 
+introduced in section <a href="#replacing-gcloud-in-the-make-setup">Replacing <code>gcloud</code> in the <code>make</code> setup</a>
+is set to <code>true</code> in the local phase and <code>false</code> in the remote one.</p>
+
+<p>Since <code>true</code> is the default value, we don't need to adjust anything for the local phase. 
+Remotely, the <code>make</code> setup is initialized as part of the 
+<a href="/blog/deploy-dockerized-php-app-production/#the-application-deployment-script">application deployment script located at <code>.infrastructure/scripts/deploy.sh</code> script</a>
+and we need to adjust it to set <code>EXECUTE_GCLOUD_IN_CONTAINER=false</code> via</p>
+
+<pre><code class="language-bash">make make-init ENVS="ENV=prod TAG=latest EXECUTE_GCLOUD_IN_CONTAINER=false"
+</code></pre>
+
+<p>This ensures, that the <code>gcp-secret-get</code> target will keep using the local <code>gcloud</code> cli. Full script:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+set -e
+
+usage="Usage: deploy.sh docker_service_name"
+[ -z "$1" ] &amp;&amp;  echo "No docker_service_name given! $usage" &amp;&amp; exit 1
+
+docker_service_name=$1
+
+echo "Initializing the codebase"
+make make-init ENVS="ENV=prod TAG=latest EXECUTE_GCLOUD_IN_CONTAINER=false"
+echo "Retrieving secrets"
+make gcp-secret-get SECRET_NAME=GPG_KEY &gt; secret.gpg
+GPG_PASSWORD=$(make gcp-secret-get SECRET_NAME=GPG_PASSWORD)
+echo "Creating compose-secrets.env file"
+echo "GPG_PASSWORD=$GPG_PASSWORD" &gt; compose-secrets.env
+echo "Pulling image for '${docker_service_name}' on the VM from the registry"
+make docker-pull DOCKER_SERVICE_NAME="${docker_service_name}"
+echo "Stop the '${docker_service_name}' container on the VM"
+make docker-stop DOCKER_SERVICE_NAME="${docker_service_name}" || true
+make docker-rm DOCKER_SERVICE_NAME="${docker_service_name}" || true
+
+echo "Preparing service IPs as --add-host options"
+service_ips=""
+while read -r line; 
+do 
+  service_ips=$service_ips" --add-host $line" 
+done &lt; service-ips
+echo "Start the container for '${docker_service_name}' on the VM"
+make docker-run-"${docker_service_name}" HOST_STRING="$service_ips"
+</code></pre>
+
+<p><!-- generated -->
+<a id='authentication-for-the-container-registry'> </a>
+<!-- /generated --></p>
+
+<h3>Authentication for the Container Registry</h3>
+
+<p>In short: We don't need to change anything. Here is why:</p>
+
+<p>We're using 
+<a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-container-registry">GCPs Container Registry</a> 
+and need to be authenticated with a service account (or user) that has the 
+<a href="https://cloud.google.com/container-registry/docs/access-control#permissions_and_roles">necessary permissions to push and pull images</a>.</p>
+
+<p>Locally, we are using <a href="https://cloud.google.com/container-registry/docs/advanced-authentication#json-key">JSON key file authentication</a></p>
+
+<pre><code class="language-bash">key=./gcp-service-account-key.json
+cat "$key" | docker login -u _json_key --password-stdin https://gcr.io
+</code></pre>
+
+<p>(see <a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-container-registry">Run Docker on GCP Compute Instance VMs: Authenticate docker</a>)
+in the <code>make</code> target <code>gcp-authenticate-docker</code> defined in <code>.make/03-00-gcp.mk</code>:</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-authenticate-docker
+gcp-authenticate-docker: ## Authenticate docker with the JSON key file specified via SERVICE_ACCOUNT_KEY_FILE
+    @$(if $(SERVICE_ACCOUNT_KEY_FILE),,$(error "SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    cat "$(SERVICE_ACCOUNT_KEY_FILE)" | docker login -u _json_key --password-stdin https://gcr.io
+</code></pre>
+
+<p>This method does <em>not</em> rely on <code>gcloud</code> to be present on the system. Thus, we don't need to 
+update anything here.</p>
+
+<p>Remotely (on a GCP VM) we are using the
+<a href="https://cloud.google.com/container-registry/docs/advanced-authentication#gcloud-helper"><code>gcloud</code> credential helper</a>
+via</p>
+
+<pre><code class="language-bash">gcloud auth configure-docker
+</code></pre>
+
+<p>(see <a href="/blog/gcp-compute-instance-vm-docker/#authenticate-docker-via-gcloud">Run Docker on GCP Compute Instance VMs: Authenticate docker via <code>gcloud</code></a>)
+as part of the <code>.infrastructure/provision-vm.sh</code> setup script:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+# Fail immediately if any command fails
+set -e
+
+usage="Usage: provision-vm.sh project_id vm_name"
+[ -z "$1" ] &amp;&amp;  echo "No project_id given! $usage" &amp;&amp; exit 1
+[ -z "$2" ] &amp;&amp;  echo "No vm_name given! $usage" &amp;&amp; exit 1
+
+. $(dirname "$0")/include/include.sh
+
+project_id=$1
+vm_name=$2
+vm_zone=us-central1-a
+
+# ...
+
+printf "${GREEN}Authenticating docker via gcloud in the VM${NO_COLOR}\n"
+gcloud compute ssh ${vm_name} --zone ${vm_zone} --tunnel-through-iap --project=${project_id} --command="sudo su root -c 'gcloud auth configure-docker --quiet'"
+</code></pre>
+
+<p>Note in the last line, that we run the <code>ssh</code> command</p>
+
+<pre><code class="language-bash">sudo su root -c 'gcloud auth configure-docker --quiet'
+</code></pre>
+
+<p>on the VM. This method <em>requires</em> <code>gcloud</code> to pe present on the system => which is fine, as 
+that's the case by default for Compute Engine VMs.</p>
+
+<p><!-- generated -->
+<a id='ensuring-ssh-keys-exist'> </a>
+<!-- /generated --></p>
+
+<h3>Ensuring SSH keys exist</h3>
+
+<p>We are using IAP to log into the Compute Instance VMs as outlined in
+<a href="/blog/gcp-compute-instance-vm-docker/#login-using-the-identity-aware-proxy-iap-concept">Run Docker on GCP Compute Instance VMs: Login using the Identity-Aware Proxy (IAP) concept</a>.
+This technique expects a private <code>ssh</code> key located in the home directory at 
+<code>~/.ssh/google_compute_engine</code>. We have already introduced the target <code>gcp-create-ssh-key</code> in 
+section <a href="#creating-an-ssh-key">Creating an SSH key</a> and need to ensure that it's run once before 
+the <code>gcloud</code> container is used.</p>
+
+<p><small>FYI: In theory, the <code>gcloud</code> cli would also create the key
+automatically if it doesn't exist - but this lead to problems for me when running commands in 
+parallel, because they would then try to create the missing keys simultaneously and fail.</small></p>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment.</p>
+                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/use-gcloud-cli-docker-image/";
+                                                     this.page.identifier = "use-gcloud-cli-docker-image";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/46588b8d26fb4984b01be4dbd3bf9c0f" width="1" height="1" alt=""/>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
+</body>
+
+</html>

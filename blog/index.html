@@ -69,7 +69,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -91,9 +91,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -121,7 +118,8 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                            <h2><a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose [Tutorial Part 9]</a></h2>
+                    
+                            <h2><a href="/blog/deploy-docker-compose-php-gcp-poc/">Use docker compose for production deployments of a PHP App on GCP [Tutorial Part 9]</a></h2>
         <small>Published at 2022-06-29 06:00:00 by Pascal Landau </small>
         <p>Deploy dockerized PHP applications to &#039;production&#039; on a GCP VM and run them via docker compose.</p>
             <h2><a href="/blog/gcp-compute-instance-vm-docker/">A primer on GCP Compute Instance VMs for dockerized Apps [Tutorial Part 8]</a></h2>
@@ -151,6 +149,18 @@
             <h2><a href="/blog/setup-phpstorm-with-xdebug-on-docker/">How to set up PhpStorm with Xdebug on Docker [Tutorial]</a></h2>
         <small>Published at 2018-08-06 12:00:00 by Pascal Landau </small>
         <p>Detailed instructions on how to setup PhpStorm  properly to work with Xdebug in Docker containers for local development.</p>
+            <h2><a href="/blog/php-php-fpm-and-nginx-on-docker-in-windows-10/">How to set up PHP, PHP-FPM and NGINX on Docker in Windows 10 [Tutorial Into]</a></h2>
+        <small>Published at 2018-07-08 22:00:00 by Pascal Landau </small>
+        <p>Step-by-Step tutorial for setting up PHP Docker containers (cli and fpm)  for local development on Windows 10.</p>
+            <h2><a href="/blog/laravel-with-phpunit-on-vagrant-in-phpstorm/">How to set up Laravel with PHPUnit on Vagrant in PhpStorm [Tutorial Part 3]</a></h2>
+        <small>Published at 2016-08-07 16:00:00 by Pascal Landau </small>
+        <p>Step-by-Step tutorial for setting up a fresh Laravel installation running on a Homestead Vagrant box.</p>
+            <h2><a href="/blog/phpstorm-with-vagrant-using-laravel-homestead-on-windows-10/">How to se tup PhpStorm with Vagrant and Laravel Homestead [Tutorial  Part 2]</a></h2>
+        <small>Published at 2016-08-07 13:00:00 by Pascal Landau </small>
+        <p>Step-by-Step tutorial for setting up a new PhpStorm project running on a Homestead Vagrant box.</p>
+            <h2><a href="/blog/php7-with-xdebug-2-4-for-phpstorm-on-windows-10/">How to setup PHP7 with Xdebug 2.4 for PhpStorm [Tutorial Part 1]</a></h2>
+        <small>Published at 2016-08-07 10:00:00 by Pascal Landau </small>
+        <p>Step-by-Step tutorial for setting up PHP7 with Xdebug 2.4 for PhpStorm on Windows 10</p>
                     <hr />
                 <h3>Wanna stay in touch?</h3>
                 <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
@@ -299,7 +309,14 @@
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

@@ -70,7 +70,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -92,9 +92,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -149,6 +146,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
                 <p>In the eighth part of this tutorial series on developing PHP on Docker we will <strong>take a look on 
 the Google Cloud Platform (GCP)</strong> and <strong>create a Compute Instance VM</strong> to <strong>run dockerized 
 applications</strong>. This includes:</p>
@@ -1813,7 +1811,7 @@ Operation "operations/acat.p2-386551299607-87333b29-c7eb-40b8-b951-8c86185bbf49"
 only the necessary permissions.</p>
 
 <p>Service accounts are created via
-<a href="https://cloud.google.com/sdk/gcloud/reference/service-accounts/create"><code>gcloud iam service-accounts create $serviceAccountId</code></a>,
+<a href="https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/create"><code>gcloud iam service-accounts create $serviceAccountId</code></a>,
 (see also the <a href="https://cloud.google.com/iam/docs/creating-managing-service-accounts">Docu on "Creating and managing service accounts"</a>).</p>
 
 <p>The <code>$serviceAccountId</code> is the <strong>id of the service account</strong>, e.g.
@@ -1832,7 +1830,7 @@ Created service account [docker-php-tutorial-deployment].
 </code></pre>
 
 <p>Then, we need a <strong>key file</strong> for authentication. It can be created via
-<a href="https://cloud.google.com/sdk/gcloud/reference/service-accounts/keys/create"><code>gcloud iam service-accounts keys create $localPathToKeyFile --iam-account=$serviceAccountEmail</code></a>
+<a href="https://cloud.google.com/sdk/gcloud/reference/iam/service-accounts/keys/create"><code>gcloud iam service-accounts keys create $localPathToKeyFile --iam-account=$serviceAccountEmail</code></a>
 (see also the <a href="https://cloud.google.com/iam/docs/creating-managing-service-account-keys">Docu on "Create and manage service account keys"</a>).</p>
 
 <p>The <code>$localPathToKeyFile</code> is used to <strong>store the key file locally</strong>, e.g.
@@ -2765,7 +2763,14 @@ notifications when this next part comes out :)</p>
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

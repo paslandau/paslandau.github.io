@@ -70,7 +70,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -92,9 +92,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -149,6 +146,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
                 <p>In this part of my tutorial series on developing PHP on Docker we will revisit the previous
 tutorials and update some things to be up-to-date in 2022.</p>
 
@@ -710,7 +708,8 @@ some-target: ## Run some target
 source of truth</strong>. An example would be the <code>DOCKER_REGISTRY</code> variable that we need to define the
 <a href="#image-naming-convention">image names of our docker images</a> in the <code>docker-compose.yml</code> files but
 also when pushing/pulling/deploying images via make targets later. In this case, the variable is
-required by <code>make</code> as well as <code>docker compose</code>.</p>
+required by <code>make</code> as well as <code>docker compose</code> and the setup is explained in section 
+<a href="#make-docker-3">Make + Docker = &lt;3</a>.</p>
 
 <p>To have a clear separation between variables and "code", we use a <code>.env</code> file located
 at <code>. make/.env</code>. It can be initialized via</p>
@@ -733,6 +732,20 @@ at <code>. make/.env</code>. It can be initialized via</p>
 
 <p>The <code>-</code> prefix ensures that make doesn't fail if the file does not exist (yet), see
 <a href="https://www.gnu.org/software/make/manual/html_node/Include.html">GNU make: Including Other Makefiles</a>.</p>
+
+<p><div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Note</strong>
+  </div>
+  <div class="panel-body bg-info">
+    <p>
+    In a later part of this tutorial, we will introduce an additional files that holds variables:
+    </p>
+    <ul><br />
+      <li><a href="/blog/ci-pipeline-docker-php-gitlab-github/#initialize-the-shared-variables"><code>.make/variables.env</code></a></li>
+    </ul><br />
+  </div>
+</div></p>
 
 <p><!-- generated -->
 <a id='manual-modifications'> </a>
@@ -1308,7 +1321,14 @@ notifications when this next part comes out :)</p>
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

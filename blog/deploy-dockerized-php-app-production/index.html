@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Deploy dockerized PHP applications to &#039;production&#039; on GCP Compute Instance VMs and run them via docker with managed mysql and redis instances.">
+            <meta name="author" content="Pascal Landau">
+        <title>Deploy dockerized PHP Apps to production [Tutorial Part 11] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/deploy-dockerized-php-app-production/"/>
+            <meta name="robots" content="noindex"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Deploy dockerized PHP Apps to production</h1>
+                                            <h2 class="subheading">- using multiple VMS and managed mysql and redis instances from GCP</h2>
+                                                                <span class="meta">
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-09-04 06:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
+                        </span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <strong>Caution</strong>
+                        </div>
+                        <div class="panel-body bg-danger">
+                            This post is still in a <strong>draft</strong> status and likely subject to change!
+                        </div>
+                    </div>                    
+                    
+                <p>In this part of the tutorial series on developing PHP on Docker we will 
+<strong>deploy our dockerized PHP application to a production environment on GCP</strong> using multiple VMs
+and <strong>run it via "plain" <code>docker</code> (without <code>compose</code>)</strong>.</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    We'll modify the deployment process introduced in
+    <a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>
+    to work with the new production infrastructure that we created in     
+    <a href="/blog/create-production-infrastructure-docker-php-app-gcp/">Create a production infrastructure for dockerized PHP Apps on GCP</a>.
+    <br>    
+    <br>    
+    You'll learn how to orchestrate the deployment of multiple VMs, ensure their connectivity 
+    amongst each other and deploy a dockerized PHP application by building and pushing the 
+    images locally to pull and start them from the VMs.<br>
+    <br>
+    The deployment process will be reflected in a single
+    <code>make</code> target called <code>deploy</code>.
+  </div>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-11-deploy-dockerized-php-app-production">part-11-deploy-dockerized-php-app-production</a>.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/">Create a production infrastructure for dockerized PHP Apps on GCP</a>.
+and the following one is
+<a href="/blog/use-gcloud-cli-docker-image/">Use the <code>gcloud</code> cli docker image instead of installing it locally</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+
+<ul>
+<li><a href="#run-the-code-yourself">Run the code yourself</a></li>
+</ul></li>
+<li><a href="#running-containers-with-docker-instead-of-docker-compose">Running containers with <code>docker</code> instead of <code>docker compose</code></a>
+
+<ul>
+<li><a href="#removing-docker-compose-run-settings-for-prod">Removing <code>docker compose</code> run settings for <code>prod</code></a></li>
+<li><a href="#make-targets-for-running-containers-via-plain-docker"><code>make</code> targets for running containers via "plain" <code>docker</code></a>
+
+<ul>
+<li><a href="#pulling">Pulling</a></li>
+<li><a href="#running">Running</a></li>
+<li><a href="#stopping">Stopping</a></li>
+<li><a href="#removing">Removing</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#changes-in-the-deployment-process">Changes in the deployment process</a>
+
+<ul>
+<li><a href="#use-a-temporary-deployment-env-file">Use a temporary deployment <code>.env</code> file</a></li>
+<li><a href="#a-simpler-deployment-archive">A simpler deployment archive</a></li>
+<li><a href="#poor-man-s-dns-via-add-host">Poor man's DNS via <code>--add-host</code></a>
+
+<ul>
+<li><a href="#retrieving-ip-addresses">Retrieving IP addresses</a></li>
+<li><a href="#the-service-ips-file-map-service-names-to-ips">The <code>service-ips</code> file: Map service names to IPs</a></li>
+</ul></li>
+<li><a href="#the-application-deployment-script">The application deployment script</a></li>
+<li><a href="#run-the-deployment-script-for-each-service">Run the deployment script for each service</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>The general deployment process is essentially the same as outlined in the previous tutorial at
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#deployment-workflow">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC: Deployment workflow</a>.</p>
+
+<p>For a single VM it looks like shown in the following video:</p>
+
+<video controls>
+  <source src="/img/deploy-docker-compose-php-gcp-poc/deployment-workflow.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>This process now needs to be done <strong>for every Compute Instance VM that runs a dockerized service</strong>
+(i.e. everything labeled "GCP VM" in the following image)</p>
+
+<p><a href="/img/create-production-infrastructure-docker-php-app-gcp/infrastructure-plan.PNG"><img src="/img/create-production-infrastructure-docker-php-app-gcp/infrastructure-plan.PNG" alt="docker based infrastructure on GCP" /></a></p>
+
+<p>We are still able to perform all necessary steps via the <code>deploy</code> target defined in
+<code>.make/05-00-deployment.mk</code>:</p>
+
+<pre><code class="language-makefile">.PHONY: deploy
+deploy: # Build all images and deploy them to GCP
+    @printf "$(GREEN)Cleaning up old 'deployment-settings.env' file$(NO_COLOR)\n"
+    @"$(MAKE)" make-remove-deployment-settings
+    @printf "$(GREEN)Starting docker setup locally$(NO_COLOR)\n"
+    @"$(MAKE)" docker-compose-up
+    @printf "$(GREEN)Verifying that there are no changes in the secrets$(NO_COLOR)\n"
+    @"$(MAKE)" gpg-init
+    @"$(MAKE)" deployment-guard-secret-changes
+    @printf "$(GREEN)Verifying that there are no uncommitted changes in the codebase$(NO_COLOR)\n"
+    @"$(MAKE)" deployment-guard-uncommitted-changes
+    @printf "$(GREEN)Initializing gcloud deployment service account$(NO_COLOR)\n"
+    @"$(MAKE)" gcp-init-deployment-account
+    @printf "$(GREEN)Switching to 'prod' environment ('deployment-settings.env' file)$(NO_COLOR)\n"
+    @"$(MAKE)" make-init-deployment-settings ENVS="ENV=prod TAG=latest"
+    @printf "$(GREEN)Creating build information file$(NO_COLOR)\n"
+    @"$(MAKE)" deployment-create-build-info-file
+    @printf "$(GREEN)Building docker images$(NO_COLOR)\n"
+    @"$(MAKE)" docker-compose-build
+    @printf "$(GREEN)Pushing images to the registry$(NO_COLOR)\n"
+    @"$(MAKE)" docker-compose-push
+    @printf "$(GREEN)Creating the service-ips file$(NO_COLOR)\n"
+    @"$(MAKE)" deployment-create-service-ip-file
+    @printf "$(GREEN)Creating the deployment archive$(NO_COLOR)\n"
+    @"$(MAKE)" deployment-create-tar
+    @printf "$(GREEN)Copying the deployment archive to the VMs and run the deployment$(NO_COLOR)\n"
+    @"$(MAKE)" deployment-run-on-vms
+    @printf "$(GREEN)Clearing deployment archive$(NO_COLOR)\n"
+    @"$(MAKE)" deployment-clear-tar
+    @printf "$(GREEN)Removing 'deployment-settings.env' file$(NO_COLOR)\n"
+    @"$(MAKE)" make-remove-deployment-settings
+</code></pre>
+
+<p><small>
+FYI: The individual <code>make</code> targets are explained in detail at the
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-deploy-target"><code>deploy</code> target section of the previous <code>docker compose</code> based approach</a>
+</small></p>
+
+<p>There are some changes in this tutorial to accommodate for <strong>the switch from <code>docker compose</code> to 
+<code>docker</code></strong> and the <strong>usage of individual VMs</strong> per service over a single one.</p>
+
+<p><!-- generated -->
+<a id='run-the-code-yourself'> </a>
+<!-- /generated --></p>
+
+<h3>Run the code yourself</h3>
+
+<p><strong>CAUTION:</strong> The following steps assume, that <strong>the necessary infrastructure on GCP was already 
+created</strong> and that you have the <strong>key files for the two service accounts</strong></p>
+
+<ul>
+<li><code>gcp-master-service-account-key.json</code> (created manually upfront)</li>
+<li><code>gcp-service-account-key.json</code> (created automatically as part of the setup script)</li>
+</ul>
+
+<p>If that's not the case, please go through the setup steps outlined in the previous tutorial 
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/#run-the-code-yourself">Create a production infrastructure for dockerized PHP Apps on GCP: Run the code yourself</a>
+first. If you need to go through the steps, please keep in mind that some targets have been 
+renamed in this part, especially</p>
+
+<pre><code class="language-text">docker-build =&gt; docker-compose-build
+docker-up =&gt; docker-compose-up
+</code></pre>
+
+<pre><code class="language-bash"><br /># Prepare the codebase
+git clone https://github.com/paslandau/docker-php-tutorial.git &amp;&amp; cd docker-php-tutorial
+git checkout part-11-deploy-dockerized-php-app-production
+
+# Ensure that the service accounts key files exist
+ls -l ./gcp-master-service-account-key.json ./gcp-service-account-key.json 
+# Should NOT fail with
+#   ls: cannot access './gcp-master-service-account-key.json': No such file or directory
+#   ls: cannot access './gcp-service-account-key.json': No such file or directory
+
+# Run the initialization 
+make dev-init
+
+# Update the variables `DOCKER_REGISTRY` and `GCP_PROJECT_ID` in `.make/variables.env` 
+projectId="SET YOUR GCP_PROJECT_ID HERE"
+# CAUTION: Mac users might need to use `sed -i '' -e` instead of `sed -i`! @see https://stackoverflow.com/a/19457213/413531
+sed -i "s/DOCKER_REGISTRY=.*/DOCKER_REGISTRY=gcr.io\/${projectId}/" .make/variables.env
+sed -i "s/GCP_PROJECT_ID=.*/GCP_PROJECT_ID=${projectId}/" .make/variables.env
+
+# Ensure that the infrastructure is up and running
+make gcp-init-master-account
+make infrastructure-info
+
+make docker-compose-build
+make docker-compose-up
+make gpg-init
+make secret-decrypt
+
+# Retrieve the AUTH string of the redis instance and set it in the `.secrets/prod/app.env` file
+auth_string=$(make -s gcp-get-redis-auth)
+# CAUTION: Mac users might need to use `sed -i '' -e` instead of `sed -i`! @see https://stackoverflow.com/a/19457213/413531
+sed -i "s/REDIS_PASSWORD=.*/REDIS_PASSWORD=${auth_string}/" .secrets/prod/app.env
+
+# Encrypt the secrets and commit the changes
+make secret-encrypt
+git add . &amp;&amp; git commit -m "Update the REDIS_PASSWORD and re-encrypt the secrets"
+
+# Run the deployment
+make deploy
+
+# Migrate the database
+make deployment-setup-db-on-vm
+
+# Verify the deployment
+make deployment-info
+</code></pre>
+
+<p>Should show something like this</p>
+
+<pre><code class="language-text">$ make deployment-info
+application:
+CONTAINER ID   IMAGE                                                                  COMMAND                  CREATED          STATUS          PORTS     NAMES
+f7c8079d07ad   gcr.io/ay-mit-mct-atmo-gcp-temp2-c/dofroscra/application-prod:latest   "/decrypt-secrets.sh…"   23 seconds ago   Up 21 seconds             application
+BUILD INFO
+==========
+User  : Pascal
+Date  : 2022-09-13 10:39:12+02:00
+Branch: part-11-deploy-dockerized-php-app-production
+
+Commit
+------
+commit 79438866cc7e699bdb1aab30ec32269d67044366
+Author: Pascal Landau &lt;pascal.landau@googlemail.com&gt;
+Date:   Tue Sep 13 10:38:50 2022 +0200
+
+    Update the REDIS_PASSWORD and re-encrypt the secrets
+
+
+php-fpm:
+CONTAINER ID   IMAGE                                                              COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+4150fed55c05   gcr.io/ay-mit-mct-atmo-gcp-temp2-c/dofroscra/php-fpm-prod:latest   "/decrypt-secrets.sh…"   43 seconds ago   Up 41 seconds   0.0.0.0:9000-&gt;9000/tcp, :::9000-&gt;9000/tcp   php-fpm
+BUILD INFO
+==========
+User  : Pascal
+Date  : 2022-09-13 10:39:12+02:00
+Branch: part-11-deploy-dockerized-php-app-production
+
+Commit
+------
+commit 79438866cc7e699bdb1aab30ec32269d67044366
+Author: Pascal Landau &lt;pascal.landau@googlemail.com&gt;
+Date:   Tue Sep 13 10:38:50 2022 +0200
+
+    Update the REDIS_PASSWORD and re-encrypt the secrets
+
+
+php-worker:
+CONTAINER ID   IMAGE                                                                 COMMAND                  CREATED          STATUS          PORTS      NAMES
+4654abb45e1a   gcr.io/ay-mit-mct-atmo-gcp-temp2-c/dofroscra/php-worker-prod:latest   "/decrypt-secrets.sh…"   51 seconds ago   Up 50 seconds   9001/tcp   php-worker
+BUILD INFO
+==========
+User  : Pascal
+Date  : 2022-09-13 10:39:12+02:00
+Branch: part-11-deploy-dockerized-php-app-production
+
+Commit
+------
+commit 79438866cc7e699bdb1aab30ec32269d67044366
+Author: Pascal Landau &lt;pascal.landau@googlemail.com&gt;
+Date:   Tue Sep 13 10:38:50 2022 +0200
+
+    Update the REDIS_PASSWORD and re-encrypt the secrets
+
+
+nginx:
+CONTAINER ID   IMAGE                                                            COMMAND                  CREATED              STATUS              PORTS                                                                      NAMES
+2f815040499a   gcr.io/ay-mit-mct-atmo-gcp-temp2-c/dofroscra/nginx-prod:latest   "/docker-entrypoint.…"   About a minute ago   Up About a minute   0.0.0.0:80-&gt;80/tcp, :::80-&gt;80/tcp, 0.0.0.0:443-&gt;443/tcp, :::443-&gt;443/tcp   nginx
+
+Visit the UI at: http://34.134.120.87/
+</code></pre>
+
+<p>The last line prints the public IP address of the VM of the <code>nginx</code> service that can be 
+accessed from the internet:</p>
+
+<pre><code class="language-text">$ curl -s http://34.134.120.87
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;ul&gt;
+    &lt;li&gt;&lt;a href="?dispatch=foo"&gt;Dispatch job 'foo' to the queue.&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="?queue"&gt;Show the queue.&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="?db"&gt;Show the DB.&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="/info"&gt;Show the build info.&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p>The following video shows the full process (excluding most of the waiting time)</p>
+
+<video controls>
+  <source src="/img/deploy-dockerized-php-app-production/deploy-dockerized-php-app-production.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='running-containers-with-docker-instead-of-docker-compose'> </a>
+<!-- /generated --></p>
+
+<h2>Running containers with <code>docker</code> instead of <code>docker compose</code></h2>
+
+<p>First, we will still use <code>docker compose</code> to <strong>build</strong> the production images, but we won't use it 
+any longer to <strong>run</strong> the containers. The good news: There are no changes whatsoever in the 
+<code>Dockerfiles</code>. So the task comes down to modifying the <code>docker compose</code> config files to 
+<strong>remove all <em>run</em> settings</strong> and <strong>provide the equivalent commands via <code>make</code> targets</strong>.</p>
+
+<p><!-- generated -->
+<a id='removing-docker-compose-run-settings-for-prod'> </a>
+<!-- /generated --></p>
+
+<h3>Removing <code>docker compose</code> run settings for <code>prod</code></h3>
+
+<p>We can inspect the full <code>compose</code> config for <code>prod</code> via <code>make docker-compose-config ENV=prod</code>:</p>
+
+<pre><code class="language-text">$ make docker-compose-config ENV=prod
+name: dofroscra_prod
+services:
+  application:
+    build:
+      context: C:\codebase\test-deploy\docker-php-tutorial\.docker
+      dockerfile: ./images/php/application/Dockerfile
+      args:
+        BASE_IMAGE: gcr.io/dofroscra-part-10/dofroscra/php-base-prod:latest
+        ENV: prod
+      target: prod
+    image: gcr.io/dofroscra-part-10/dofroscra/application-prod:latest
+    networks:
+      default: null
+  nginx:
+    build:
+      context: C:\codebase\test-deploy\docker-php-tutorial\.docker
+      dockerfile: ./images/nginx/Dockerfile
+      args:
+        APP_CODE_PATH: /var/www/app
+        NGINX_VERSION: 1.21.5-alpine
+      target: prod
+    image: gcr.io/dofroscra-part-10/dofroscra/nginx-prod:latest
+    networks:
+      default: null
+  php-fpm:
+    build:
+      context: C:\codebase\test-deploy\docker-php-tutorial\.docker
+      dockerfile: ./images/php/fpm/Dockerfile
+      args:
+        BASE_IMAGE: gcr.io/dofroscra-part-10/dofroscra/php-base-prod:latest
+        TARGET_PHP_VERSION: "8.1"
+      target: prod
+    image: gcr.io/dofroscra-part-10/dofroscra/php-fpm-prod:latest
+    networks:
+      default: null
+  php-worker:
+    build:
+      context: C:\codebase\test-deploy\docker-php-tutorial\.docker
+      dockerfile: ./images/php/worker/Dockerfile
+      args:
+        BASE_IMAGE: gcr.io/dofroscra-part-10/dofroscra/php-base-prod:latest
+        PHP_WORKER_PROCESS_NUMBER: "4"
+      target: prod
+    image: gcr.io/dofroscra-part-10/dofroscra/php-worker-prod:latest
+    networks:
+      default: null
+networks:
+  default:
+    name: dofroscra_prod_default
+</code></pre>
+
+<p>It consists of the files</p>
+
+<ul>
+<li><code>.docker/docker-compose/docker-compose.local.ci.prod.yml</code></li>
+<li><code>.docker/docker-compose/docker-compose.local.prod.yml</code></li>
+</ul>
+
+<p>and the
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#env-based-docker-compose-config">ENV based <code>docker compose</code> config</a>
+was adjusted accordingly to reflect the file changes in <code>.make/02-00-docker.mk</code></p>
+
+<pre><code class="language-makefile"># We need to "assemble" the correct combination of docker-compose.yml config files
+DOCKER_COMPOSE_FILES:=
+ifeq ($(ENV),prod)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL_PROD)
+else ifeq ($(ENV),ci)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL_CI) -f $(DOCKER_COMPOSE_FILE_CI)
+else ifeq ($(ENV),local)
+    DOCKER_COMPOSE_FILES:=-f $(DOCKER_COMPOSE_FILE_LOCAL_CI_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL_CI) -f $(DOCKER_COMPOSE_FILE_LOCAL_PROD) -f $(DOCKER_COMPOSE_FILE_LOCAL)
+endif
+</code></pre>
+
+<p>The changes to the previous tutorial are described subsequently in more detail.</p>
+
+<p>The file 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#docker-compose-local-ci-prod-yml"><code>.docker/docker-compose/docker-compose.local.ci.prod.yml</code></a> 
+will be stripped down to <strong>only</strong> contain the <code>build</code> instructions for the <code>application</code> image:</p>
+
+<pre><code class="language-yaml">services:
+  application:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/application-${ENV?}:${TAG?}
+    build:
+      context: ../
+      dockerfile: ./images/php/application/Dockerfile
+      target: ${ENV?}
+      args:
+        - BASE_IMAGE=${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+        - ENV=${ENV?}
+</code></pre>
+
+<p>All the "rest" gets moved to the new file <code>.docker/docker-compose/docker-compose.local.ci.yml</code> 
+because it's still relevant for the <code>local</code> and <code>ci</code> environments.</p>
+
+<p>The same is true for the 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#docker-compose-local-prod-yml"><code>.docker/docker-compose/docker-compose.local.prod.yml</code> file</a>.
+It only keeps the <code>build</code> instructions for the services <code>php-fpm</code> <code>php-worker</code> and <code>nginx</code>:</p>
+
+<pre><code class="language-yaml">services:
+  php-fpm:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-fpm-${ENV?}:${TAG?}
+    build:
+      context: ../
+      dockerfile: ./images/php/fpm/Dockerfile
+      target: ${ENV?}
+      args:
+        - BASE_IMAGE=${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+        - TARGET_PHP_VERSION=${PHP_VERSION?}
+
+  php-worker:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-worker-${ENV?}:${TAG?}
+    build:
+      context: ../
+      dockerfile: ./images/php/worker/Dockerfile
+      target: ${ENV?}
+      args:
+        - BASE_IMAGE=${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/php-base-${ENV?}:${TAG?}
+        - PHP_WORKER_PROCESS_NUMBER=${PHP_WORKER_PROCESS_NUMBER:-4}
+
+  nginx:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/nginx-${ENV?}:${TAG?}
+    build:
+      context: ../
+      dockerfile: ./images/nginx/Dockerfile
+      target: ${ENV?}
+      args:
+        - NGINX_VERSION=${NGINX_VERSION?}
+        - APP_CODE_PATH=${APP_CODE_PATH_CONTAINER?}
+</code></pre>
+
+<p>The "rest" goes into file <code>.docker/docker-compose/docker-compose.local.yml</code>.</p>
+
+<p>File 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#docker-compose-prod-yml"><code>.docker/docker-compose/docker-compose.local.prod.yml</code> file</a>
+is simply removed completely.</p>
+
+<p><!-- generated -->
+<a id='make-targets-for-running-containers-via-plain-docker'> </a>
+<!-- /generated --></p>
+
+<h3><code>make</code> targets for running containers via "plain" <code>docker</code></h3>
+
+<p>The <code>make</code> targets for <code>docker</code> (and <code>docker compose</code>) are located in file <code>.make/02-00-docker.mk</code>.
+Since <strong>building and pushing the images</strong> is still done via <code>compose</code>, we only need to add 
+targets for <strong>pulling images and managing containers</strong> via <code>docker</code> (i.e. start, stop and remove).</p>
+
+<p><em>Note</em>: To have clear distinction between targets for <code>docker</code> and those for <code>docker compose</code>, I
+have renamed the existing <code>docker compose</code> targets to include <code>compose</code> in the target name e.g.</p>
+
+<pre><code class="language-text">docker-up   =&gt; docker-compose-up
+docker-push =&gt; docker-compose-push
+</code></pre>
+
+<p><!-- generated -->
+<a id='pulling'> </a>
+<!-- /generated --></p>
+
+<h4>Pulling</h4>
+
+<p><strong>Pulling</strong> is straight forwardly done via 
+<a href="https://docs.docker.com/engine/reference/commandline/pull/"><code>docker pull</code></a>:</p>
+
+<pre><code class="language-makefile">.PHONY: docker-pull
+docker-pull: validate-docker-variables ## Pull a single docker images from the remote repository
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    docker pull $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_SERVICE_NAME)-$(ENV):$(TAG)
+</code></pre>
+
+<p>The image name <code>$(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_SERVICE_NAME)-$(ENV):$(TAG)</code> 
+follows the convention outlined in 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#image-naming-convention">Docker from scratch for PHP 8.1 Applications in 2022: Image naming convention</a>.
+All variables apart from the <code>$(DOCKER_SERVICE_NAME)</code> should be defined as
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">shared variables</a>
+(i.e. they should be always present) and are checked in the <code>validate-docker-variables</code> target</p>
+
+<pre><code class="language-makefile">.PHONY: validate-docker-variables
+validate-docker-variables:
+    @$(if $(TAG),,$(error TAG is undefined - Did you run 'make make-init'?))
+    @$(if $(ENV),,$(error ENV is undefined - Did you run 'make make-init'?))
+    @$(if $(DOCKER_REGISTRY),,$(error DOCKER_REGISTRY is undefined))
+    @$(if $(DOCKER_NAMESPACE),,$(error DOCKER_NAMESPACE is undefined))
+    @$(if $(APP_CODE_PATH_CONTAINER),,$(error APP_CODE_PATH_CONTAINER is undefined))
+</code></pre>
+
+<p><!-- generated -->
+<a id='running'> </a>
+<!-- /generated --></p>
+
+<h4>Running</h4>
+
+<p><strong>Running</strong> a container is done via 
+<a href="https://docs.docker.com/engine/reference/commandline/run/"><code>docker run</code></a></p>
+
+<pre><code class="language-makefile">.PHONY: docker-run
+docker-run: validate-docker-variables ## Start a single docker container
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    @$(if $(HOST_STRING),,$(error "HOST_STRING is undefined"))
+    docker run --name $(DOCKER_SERVICE_NAME) \
+                -d \
+                -it \
+                --env-file compose-secrets.env \
+                --mount type=bind,source="$$(pwd)"/secret.gpg,target=$(APP_CODE_PATH_CONTAINER)/secret.gpg,readonly \
+                $(HOST_STRING) \
+                $(DOCKER_SERVICE_OPTIONS) \
+                $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_SERVICE_NAME)-$(ENV):$(TAG)
+</code></pre>
+
+<p>Though I believe the <code>docker-run</code> target requires some explanation:</p>
+
+<pre><code class="language-text">--name $(DOCKER_SERVICE_NAME)
+</code></pre>
+
+<p>When starting a container, we will retain the same 
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/#mapping-service-names-to-vm-names"><strong>service name</strong></a>
+that we use in the <code>docker compose</code> setup. E.g. the service <code>application</code> will be started with 
+the container name <code>application</code> via <code>--name application</code>. This way, we can 
+streamline the same container management across <code>docker</code> and <code>docker compose</code>, because the 
+<code>$(DOCKER_SERVICE_NAME)</code> works for both cases.</p>
+
+<p>Example: The <code>application</code> container will <em>always</em> have the name <code>application</code> and we will 
+use that information in the <a href="#stopping">Stopping</a> and <a href="#removing">Removing</a> targets later.</p>
+
+<pre><code class="language-text">--env-file compose-secrets.env
+</code></pre>
+
+<p>The <strong>environment variables</strong> are provided via <code>--env-file compose-secrets.env</code>. This file 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-deploy-sh-script">is created during the deployment process on the VM</a>
+and contains the <strong>secret <code>gpg</code> password</strong> (<code>GPG_PASSWORD</code>). It 
+was <a href="/blog/deploy-docker-compose-php-gcp-poc/#docker-compose-prod-yml">previously referenced in the (now deleted) <code>docker-compose.local.prod.yml</code> file</a>.</p>
+
+<pre><code class="language-text">--mount type=bind,source="$$(pwd)"/secret.gpg,target=$(APP_CODE_PATH_CONTAINER)/secret.gpg,readonly
+</code></pre>
+
+<p>Mounts the <strong>secret <code>gpg</code> key</strong>. <code>$$(pwd)</code> resolves to the current working directory and 
+<code>$(APP_CODE_PATH_CONTAINER)</code> to the directory of the codebase in the container. This was 
+previously done in the <code>docker-compose.local.prod.yml</code> file.</p>
+
+<p>The variable was previously defined directly in the <code>.docker/.env</code> file but was moved to the
+shared variables in file <code>.make/variables.env</code>, so that it becomes available for <code>make</code> as well. 
+Its value is</p>
+
+<pre><code class="language-dotenv">APP_CODE_PATH_CONTAINER=/var/www/app
+</code></pre>
+
+<p>It was added accordingly to the 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#make-docker-3">definition of the <code>DOCKER_COMPOSE_COMMAND</code></a>
+in <code>.make/02-00-docker.mk</code>:</p>
+
+<pre><code class="language-makefile">DOCKER_COMPOSE_COMMAND:= \
+ MSYS_NO_PATHCONV=1 \
+ ENV=$(ENV) \
+ TAG=$(TAG) \
+ DOCKER_REGISTRY=$(DOCKER_REGISTRY) \
+ DOCKER_NAMESPACE=$(DOCKER_NAMESPACE) \
+ APP_USER_ID=$(APP_USER_ID) \
+ APP_GROUP_ID=$(APP_GROUP_ID) \
+ APP_USER_NAME=$(APP_USER_NAME) \
+ APP_CODE_PATH_CONTAINER=$(APP_CODE_PATH_CONTAINER) \
+ docker compose -p $(DOCKER_COMPOSE_PROJECT_NAME) --env-file $(DOCKER_ENV_FILE)
+</code></pre>
+
+<p>The <code>MSYS_NO_PATHCONV=1</code> variables was added as well due to the
+<a href="/blog/setting-up-git-bash-mingw-msys2-on-windows/#fixing-the-path-conversion-issue-for-mingw-msys2">handling of leading slashes of MinGW on Windows</a>.</p>
+
+<p><em>Note</em>: <strong>secret <code>gpg</code> key and password</strong> are required for 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#decrypt-the-secrets-via-entrypoint">decrypting the encrypted secret files when the container starts</a>.</p>
+
+<pre><code class="language-text">$(HOST_STRING)
+</code></pre>
+
+<p>We need to somehow <strong>"substitute" the <code>docker compose</code> DNS magic</strong>, that allows us to 
+communicate with a service by simply using the service name instead if its IP address. This is done 
+with the <code>$(HOST_STRING)</code> variable that contains a list of <code>--add-host</code> options. See section 
+<a href="#poor-man-s-dns-via-add-host">Poor man's DNS via <code>--add-host</code></a> for a more in-depth explanation 
+about this topic.</p>
+
+<pre><code class="language-text">$(DOCKER_SERVICE_OPTIONS)
+</code></pre>
+
+<p>Each service might require some <strong>additional <code>docker run</code> options</strong> (e.g. forwarded ports) and
+those can be passed via the <code>$(DOCKER_SERVICE_OPTIONS)</code> variable. Since these options don't 
+change, I have created a corresponding <code>make</code> target for each service:</p>
+
+<pre><code class="language-makefile">.PHONY: docker-run-nginx
+docker-run-nginx: ## Start the nginx container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(VM_NAME_NGINX)" DOCKER_SERVICE_OPTIONS="-p 80:80 -p 443:443"
+
+.PHONY: docker-run-php-fpm
+docker-run-php-fpm: ## Start the php-fpm container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(VM_NAME_PHP_FPM)" DOCKER_SERVICE_OPTIONS="-p 9000:9000"
+
+.PHONY: docker-run-application
+docker-run-application: ## Start the application container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(VM_NAME_APPLICATION)" DOCKER_SERVICE_OPTIONS=""
+
+.PHONY: docker-run-php-worker
+docker-run-php-worker: ## Start the php-worker container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(VM_NAME_PHP_WORKER)" DOCKER_SERVICE_OPTIONS=""
+</code></pre>
+
+<p><!-- generated -->
+<a id='stopping'> </a>
+<!-- /generated --></p>
+
+<h4>Stopping</h4>
+
+<p>Uses <a href="https://docs.docker.com/engine/reference/commandline/stop/"><code>docker stop</code></a></p>
+
+<pre><code class="language-makefile">.PHONY: docker-stop
+docker-stop: validate-docker-variables ## Stop a single docker container
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    docker stop $(DOCKER_SERVICE_NAME)
+</code></pre>
+
+<p><!-- generated -->
+<a id='removing'> </a>
+<!-- /generated --></p>
+
+<h4>Removing</h4>
+
+<p>Uses <a href="https://docs.docker.com/engine/reference/commandline/rm/"><code>docker rm</code></a></p>
+
+<pre><code class="language-makefile">.PHONY: docker-rm
+docker-rm: validate-docker-variables ## Remove a single docker container
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    docker rm $(DOCKER_SERVICE_NAME)
+</code></pre>
+
+<p><!-- generated -->
+<a id='changes-in-the-deployment-process'> </a>
+<!-- /generated --></p>
+
+<h2>Changes in the deployment process</h2>
+
+<p>Most of the steps in the 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-deploy-target"><code>deploy</code> target of the previous <code>docker compose</code> based approach</a> 
+don't change, because we are still using <code>docker compose</code> to build the images. The main 
+differences are, that</p>
+
+<ul>
+<li>we will be <strong>using a temporary deployment <code>.env</code> file</strong></li>
+<li>the <strong>deployment archive becomes simpler</strong></li>
+<li>we need to ensure that the services can still <strong>communicate via their service names</strong></li>
+<li>the <strong>deployment script</strong> needs to be <strong>executed for <em>every</em> service</strong> on its VM</li>
+</ul>
+
+<p><!-- generated -->
+<a id='use-a-temporary-deployment-env-file'> </a>
+<!-- /generated --></p>
+
+<h3>Use a temporary deployment <code>.env</code> file</h3>
+
+<p>The main <code>Makefile</code> will now include a third file containing variables located at 
+<code>.make/deployment-settings.env</code>. The file is ignored by <code>git</code> and is <strong>created only temporary</strong> as 
+part of the deployment process via</p>
+
+<pre><code class="language-makefile">.PHONY: deploy
+deploy: ## Build all images and deploy them to GCP
+    # ...
+    @printf "$(GREEN)Switching to 'prod' environment (via 'deployment-settings.env' file)$(NO_COLOR)\n"
+    @"$(MAKE)" make-init-deployment-settings ENVS="ENV=prod TAG=latest"
+    # ...   
+</code></pre>
+
+<p>It is a copy of the <code>.make/variables.env</code> file and takes precedence over <code>.make/variables.env</code> and
+<code>.make/.env</code>. This is important, because the <code>.make/.env</code> file might hold variables that are 
+specific to the local dev environment, e.g. a custom <code>APP_USER_ID</code> and <code>APP_GROUP_ID</code>
+(required for Linux users to avoid 
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#solving-permission-issues">permission issues in the containers</a>).
+But when the <code>prod</code> containers are built, we don't want to use any local specific settings.</p>
+
+<p>Thus, the new <code>.make/deployment-settings.env</code> is <strong>created before the containers are build and 
+deleted at the end of the deployment process</strong> via</p>
+
+<pre><code class="language-makefile">.PHONY: deploy
+deploy: # Build all images and deploy them to GCP
+    # ...
+    @printf "$(GREEN)Removing 'deployment-settings.env' file$(NO_COLOR)\n"
+    @"$(MAKE)" make-remove-deployment-settings
+</code></pre>
+
+<p>See also the targets <code>make-init-deployment-settings</code> and <code>make-remove-deployment-settings</code> 
+defined in the main <code>Makefile</code>:</p>
+
+<pre><code class="language-makefile">.PHONY: make-init-deployment-settings
+make-init-deployment-settings: ## Create a `deployment-settings.env` file to ensure that no local-only variables are affecting the deployment. Use via ENVS="KEY_1=value1 KEY_2=value2"
+    @cp .make/variables.env .make/deployment-settings.env
+    @for variable in $(ENVS); do \
+      echo $$variable | tee -a .make/deployment-settings.env &gt; /dev/null 2&gt;&amp;1; \
+    done
+
+.PHONY: make-remove-deployment-settings
+make-remove-deployment-settings: ## Remove the `deployment-settings.env` file 
+    @rm -f .make/deployment-settings.env
+</code></pre>
+
+<p><small>Plus, sometimes stuff "goes wrong" in the deployment, and then it's nice to be able to run
+<code>make make-remove-deployment-settings</code> and "clean up" the deployment environment 
+settings nicely. 
+</small></p>
+
+<p>So in total we now have the following three <code>.env</code> files for the <code>make</code> setup:</p>
+
+<ul>
+<li><code>.make/.env</code>:
+
+<ul>
+<li>originally introduced in
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#shared-variables-make-env">Docker from scratch for PHP 8.1 Applications in 2022: Shared variables: <code>.make/.env</code></a> and refined in
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#initialize-the-shared-variables">Create a CI pipeline for dockerized PHP Apps: Initialize the shared variables</a>:
+Defines the shared <code>ENV</code> variable so that all <code>make</code> targets use the correct <strong>infrastructure
+environment</strong> as well as variables that are <strong>specific to the local dev environment</strong></li>
+</ul></li>
+<li><p><code>.make/variables.env</code>:</p>
+
+<ul>
+<li><p>introduced in
+<a href="/blog/ci-pipeline-docker-php-gitlab-github/#initialize-the-shared-variables">Create a CI pipeline for dockerized PHP Apps: Initialize the shared variables</a>:
+Holds the <strong>"default" variables and is not ignored by <code>git</code></strong>. The variables are neither
+"secret" nor are they likely to be changed for dev specific environment adjustments - though
+they could be overridden in the <code>.make/.env</code> file, e.g. for</p>
+
+<pre><code class="language-dotenv">APP_USER_ID
+APP_GROUP_ID
+</code></pre></li>
+</ul></li>
+<li><code>.make/deployment-settings.env</code>:
+
+<ul>
+<li>as described above: A temporary copy of <code>.make/variables.env</code> for the deployment process</li>
+</ul></li>
+</ul>
+
+<p>They are included in the main <code>Makefile</code> in the order</p>
+
+<pre><code class="language-makefile">include .make/variables.env
+-include .make/.env
+-include .make/deployment-settings.env
+</code></pre>
+
+<p>i.e. <code>.make/deployment-settings.env</code> takes precedence over <code>.make/.env</code> that in turn takes 
+precedence over <code>.make/variables.env</code>.</p>
+
+<p><!-- generated -->
+<a id='a-simpler-deployment-archive'> </a>
+<!-- /generated --></p>
+
+<h3>A simpler deployment archive</h3>
+
+<p>This section refers to the previous tutorial
+(step <a href="/blog/deploy-docker-compose-php-gcp-poc/#create-the-deployment-archive">Create the deployment archive</a>)
+that uses the <code>make</code> target <code>deployment-create-tar</code>.</p>
+
+<p>Since we don't use <code>docker compose</code> any longer, we don't need any <code>docker compose</code> configuration 
+files in the deployment archive. The <code>.env</code> file is also no longer necessary, so we can get rid of
+the <a href="/blog/deploy-docker-compose-php-gcp-poc/#a-env-file-for-prod"><code>.secrets/docker.env</code> file</a>
+entirely.</p>
+
+<p><a href="/img/deploy-dockerized-php-app-production/deployment-archive-docker-compose-vs-docker.PNG"><img src="/img/deploy-dockerized-php-app-production/deployment-archive-docker-compose-vs-docker.PNG" alt="Deployment archive: docker compose vs docker" /></a></p>
+
+<p>The new <code>deployment-create-tar</code> target now looks like this:</p>
+
+<pre><code class="language-makefile">.PHONY: deployment-create-tar
+deployment-create-tar:
+    # create the build directory
+    rm -rf .build/deployment
+    mkdir -p .build/deployment
+    # copy the necessary files
+    cp -r .make .build/deployment/
+    find .build/deployment -name '*.env' -delete
+    cp .make/variables.env .build/deployment/.make/variables.env
+    cp Makefile .build/deployment/
+    cp .infrastructure/scripts/deploy.sh .build/deployment/
+    # move the ip services file
+    mv .build/service-ips .build/deployment/service-ips
+    # create the archive
+    tar -czvf .build/deployment.tar.gz -C .build/deployment/ ./
+</code></pre>
+
+<p>The <code>make</code> setup is still required, and we are even adding a new file called <code>.build/service-ips</code>,
+that is created to enable communication via service names and is explained in the next section
+<a href="#poor-man-s-dns-via-add-host">Poor man's DNS via <code>--add-host</code></a>.</p>
+
+<p><!-- generated -->
+<a id='poor-man-s-dns-via-add-host'> </a>
+<!-- /generated --></p>
+
+<h3>Poor man's DNS via <code>--add-host</code></h3>
+
+<p>So far, we could make use of the 
+<a href="https://docs.docker.com/compose/networking/">DNS magic provided by <code>docker compose</code></a> that 
+enabled all our containers to talk to each other via their service name.</p>
+
+<p><a href="/img/deploy-dockerized-php-app-production/docker-compose-dns.PNG"><img src="/img/deploy-dockerized-php-app-production/docker-compose-dns.PNG" alt="DNS for services in the same network works out of the box for docker compose" /></a></p>
+
+<p>We use this e.g. to</p>
+
+<ul>
+<li>define <a href="/blog/structuring-the-docker-setup-for-php-projects/#nginx"><code>php-fpm</code> as an upstream host in the <code>nginx</code> configuration</a></li>
+<li>use <a href="/blog/run-laravel-9-docker-in-2022/#database-connection"><code>mysql</code> as hostname for <code>DB_HOST</code></a> 
+and <a href="/blog/run-laravel-9-docker-in-2022/#queue-connection"><code>redis</code> as hostname for <code>REDIS_HOST</code></a><br />
+in the <code>.env</code> file for Laravel</li>
+</ul>
+
+<p>This will stop working once we drop <code>docker compose</code> and run the containers on individual machines</p>
+
+<p><a href="/img/deploy-dockerized-php-app-production/gcp-vm-docker-no-auto-dns.PNG"><img src="/img/deploy-dockerized-php-app-production/gcp-vm-docker-no-auto-dns.PNG" alt="DNS for docker does not work across different VMs" /></a></p>
+
+<p>Since all services will now live on different VMs, we need to <strong>identify the private IP address 
+of every VM</strong> and make sure that <strong>the service name of the container running on that VM resolves 
+to that IP address</strong>.</p>
+
+<p>The latter part can be achieved quite easily by using the 
+<a href="https://docs.docker.com/engine/reference/run/#managing-etchosts"><code>--add-host</code> option of <code>docker run</code></a></p>
+
+<blockquote>
+  <p>Your container will have lines in <code>/etc/hosts</code> which define the hostname of the container 
+  itself as well as localhost and a few other common things. The <code>--add-host</code> flag can be used 
+  to add additional lines to <code>/etc/hosts</code>.</p>
+</blockquote>
+
+<p><a href="/img/deploy-dockerized-php-app-production/gcp-vm-docker-add-host.PNG"><img src="/img/deploy-dockerized-php-app-production/gcp-vm-docker-add-host.PNG" alt="DNS for docker across different VMs can be &quot;enabled&quot; via --add-host" /></a></p>
+
+<p>But how to we find the IP addresses?</p>
+
+<p><!-- generated -->
+<a id='retrieving-ip-addresses'> </a>
+<!-- /generated --></p>
+
+<h4>Retrieving IP addresses</h4>
+
+<p>Fortunately the <code>gcloud</code> cli has us covered here:</p>
+
+<ul>
+<li><p>for <strong>MySQL</strong>: <a href="https://cloud.google.com/sdk/gcloud/reference/sql/instances/describe"><code>gcloud sql instances describe</code></a></p>
+
+<pre><code class="language-text">$ gcloud sql instances describe mysql-vm --format="get(ipAddresses[0].ipAddress)" --project=$projectId 
+10.111.0.5
+</code></pre></li>
+<li><p>for <strong>Redis</strong>: <a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/describe"><code>gcloud redis instances describe</code></a></p>
+
+<pre><code class="language-text">$ gcloud redis instances describe redis-vm --format="get(host)" --project=$(GCP_PROJECT_ID) --region=$region
+10.111.0.50
+</code></pre></li>
+<li><p>for <strong>Compute Instance VMs</strong>: <a href="https://cloud.google.com/sdk/gcloud/reference/compute/instances/describe"><code>gcloud compute instances describe</code></a>
+(see also <a href="https://cloud.google.com/compute/docs/instances/view-ip-address">Locating IP addresses for an instance</a>)</p>
+
+<pre><code class="language-text">$ gcloud compute instances describe php-fpm-vm --format="get(networkInterfaces[0].networkIP)" --project=$projectId --zone=$zone
+10.128.0.2
+</code></pre></li>
+</ul>
+
+<p>I have added corresponding <code>make</code> targets in <code>.make/03-00-gcp.mk</code></p>
+
+<pre><code class="language-makefile">.PHONY: gcp-get-private-ip-vm
+gcp-get-private-ip-vm: ## Get the private ip of a VM
+    @$(if $(GCP_PROJECT_ID),,$(error "GCP_PROJECT_ID is undefined"))
+    @$(if $(VM_NAME),,$(error "VM_NAME is undefined"))
+    gcloud compute instances describe $(VM_NAME) --format="get(networkInterfaces[0].networkIP)" --project=$(GCP_PROJECT_ID) --zone=$(GCP_ZONE)
+
+.PHONY: gcp-get-private-ip-mysql
+gcp-get-private-ip-mysql: ## Get the private IP address of the SQL service
+    gcloud sql instances describe $(VM_NAME_MYSQL) --format="get(ipAddresses[0].ipAddress)" --project=$(GCP_PROJECT_ID)
+
+.PHONY: gcp-get-private-ip-redis
+gcp-get-private-ip-redis: ## Get the private IP address of the Redis service
+    gcloud redis instances describe $(VM_NAME_REDIS) --format="get(host)" --project=$(GCP_PROJECT_ID) --region=$(GCP_REGION)
+</code></pre>
+
+<p><!-- generated -->
+<a id='the-service-ips-file-map-service-names-to-ips'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>service-ips</code> file: Map service names to IPs</h4>
+
+<p>Now that we can <strong>"get" the IP addresses of all our services</strong>, we can store them in a simple text 
+file as part of the deployment process and transmit this file to all the VMs.</p>
+
+<p>Of course there a is <code>make</code> target for the retrieval (in <code>.make/03-00-gcp.mk</code>)</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-get-ips
+gcp-get-ips: ## Get the IP addresses for all services
+    @printf "$(DOCKER_SERVICE_NAME_MYSQL):"
+    @"$(MAKE)" -s gcp-get-private-ip-mysql
+    @printf "$(DOCKER_SERVICE_NAME_REDIS):"
+    @"$(MAKE)" -s gcp-get-private-ip-redis
+    @for vm_name_service_name in $(ALL_VM_SERVICE_NAMES); do \
+        vm_name=`echo $$vm_name_service_name | cut -d ":" -f 1`; \
+        service_name=`echo $$vm_name_service_name | cut -d ":" -f 2`; \
+        printf "$$service_name:"; \
+        make -s gcp-get-private-ip-vm VM_NAME=$$vm_name; \
+      done;
+</code></pre>
+
+<p>The <code>gcp-get-ips</code> target uses the targets of the previous section and prints them in the format</p>
+
+<pre><code class="language-text">$serviceName:$ipAddress
+</code></pre>
+
+<p><em>Note</em>: Please refer to section 
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/#mapping-service-names-to-vm-names">Mapping service names to VM names</a>
+regarding the variable <code>$(ALL_VM_SERVICE_NAMES)</code> that contains a mapping of the vm names to the 
+service names in the form</p>
+
+<pre><code class="language-text">$vmName:$serviceName
+</code></pre>
+
+<p>A full result might look like this:</p>
+
+<pre><code class="language-text">$ make gcp-get-ips
+mysql:10.111.0.5
+redis:10.111.0.50
+php-fpm:10.128.0.2
+application:10.128.0.3
+nginx:10.128.0.4
+php-worker:10.128.0.5
+</code></pre>
+
+<p>Storing them in a file (<code>.build/service-ips</code>) is done as part of the <code>deploy</code> target via the target 
+<code>deployment-create-service-ip-file</code> defined in file <code>.make/05-00-deployment.mk</code>.</p>
+
+<pre><code class="language-makefile"><br />.PHONY: deployment-create-service-ip-file
+deployment-create-service-ip-file: ## Create a file containing the IPs of all services
+    @make -s gcp-get-ips &gt; ".build/service-ips"
+    @sed -i "s/\r//g" ".build/service-ips"
+</code></pre>
+
+<p><em>Note</em>: The <code>sed -i "s/\r//g" ".build/service-ips"</code> part was necessary, because on Windows the 
+line endings in the <code>gcp-get-ips</code> are <code>\r\n</code> instead of just <code>\n</code> and the <code>sed</code> command ensures 
+that no <code>\r</code> (carriage return) are left over.</p>
+
+<p><!-- generated -->
+<a id='the-application-deployment-script'> </a>
+<!-- /generated --></p>
+
+<h3>The application deployment script</h3>
+
+<p>On a conceptual level, the deployment "on a VM" in the previous tutorial was done with a 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-deploy-sh-script">script (located at <code>.infrastructure/scripts/deploy.sh</code>)</a>
+that is transmitted to the VM first and then executed there. This script was slightly updated:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+set -e
+
+usage="Usage: deploy.sh docker_service_name"
+[ -z "$1" ] &amp;&amp;  echo "No docker_service_name given! $usage" &amp;&amp; exit 1
+
+docker_service_name=$1
+
+echo "Initializing the codebase"
+make make-init ENVS="ENV=prod TAG=latest"
+echo "Retrieving secrets"
+make gcp-secret-get SECRET_NAME=GPG_KEY &gt; secret.gpg
+GPG_PASSWORD=$(make gcp-secret-get SECRET_NAME=GPG_PASSWORD)
+echo "Creating compose-secrets.env file"
+echo "GPG_PASSWORD=$GPG_PASSWORD" &gt; compose-secrets.env
+echo "Pulling image for '${docker_service_name}' on the VM from the registry"
+make docker-pull DOCKER_SERVICE_NAME="${docker_service_name}"
+echo "Stop the '${docker_service_name}' container on the VM"
+make docker-stop DOCKER_SERVICE_NAME="${docker_service_name}" || true
+make docker-rm DOCKER_SERVICE_NAME="${docker_service_name}" || true
+
+echo "Preparing service IPs as --add-host options"
+service_ips=""
+while read -r line; 
+do 
+  service_ips=$service_ips" --add-host $line" 
+done &lt; service-ips
+echo "Start the container for '${docker_service_name}' on the VM"
+make docker-run-"${docker_service_name}" HOST_STRING="$service_ips"
+</code></pre>
+
+<p>It now <strong>expects the service name as a mandatory argument</strong> and uses the
+<a href="#make-targets-for-running-containers-via-plain-docker"><code>make</code> targets for running containers via "plain" <code>docker</code></a>:</p>
+
+<pre><code class="language-bash">make docker-pull DOCKER_SERVICE_NAME="${docker_service_name}"
+make docker-stop DOCKER_SERVICE_NAME="${docker_service_name}" || true
+make docker-rm DOCKER_SERVICE_NAME="${docker_service_name}" || true
+</code></pre>
+
+<p>It also utilizes the <a href="#the-service-ips-file-map-service-names-to-ips"><code>.build/service-ips</code> file</a> 
+from the previous section to 
+<a href="#running">build the <code>HOST_STRING</code> for running the container</a>:</p>
+
+<pre><code class="language-bash">service_ips=""
+while read -r line; 
+do 
+  service_ips=$service_ips" --add-host $line" 
+done &lt; service-ips
+
+make docker-run-"${docker_service_name}" HOST_STRING="$service_ips"
+</code></pre>
+
+<p><!-- generated -->
+<a id='run-the-deployment-script-for-each-service'> </a>
+<!-- /generated --></p>
+
+<h3>Run the deployment script for each service</h3>
+
+<p><a href="#the-application-deployment-script">The application deployment script</a> of the previous section 
+is invoked as part of the <code>deployment-run-on-vm</code> target that we already know from the previous 
+tutorial, see
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#deployment-commands-on-the-vm">Deployment commands on the VM</a>.</p>
+
+<pre><code class="language-makefile">.PHONY: deployment-run-on-vm
+deployment-run-on-vm: ## Run the deployment script on the VM specified by VM_NAME for the service specified by DOCKER_SERVICE_NAME
+    @$(if $(DOCKER_SERVICE_NAME),,$(error "DOCKER_SERVICE_NAME is undefined"))
+    "$(MAKE)" -s gcp-scp-command SOURCE=".build/deployment.tar.gz" DESTINATION="deployment.tar.gz"
+    "$(MAKE)" -s gcp-ssh-command COMMAND="sudo rm -rf $(CODEBASE_DIRECTORY) &amp;&amp; sudo mkdir -p $(CODEBASE_DIRECTORY) &amp;&amp; sudo tar -xzvf deployment.tar.gz -C $(CODEBASE_DIRECTORY) &amp;&amp; cd $(CODEBASE_DIRECTORY) &amp;&amp; sudo bash deploy.sh $(DOCKER_SERVICE_NAME)"
+</code></pre>
+
+<p>This target has to be invoked for every VM, and we use the same technique as in section
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/#set-up-the-vms-that-run-docker-containers">Setup the VMs that run <code>docker</code> containers</a>, 
+i.e.</p>
+
+<ul>
+<li><p>create a <code>make</code> target for every service, e.g.</p>
+
+<pre><code class="language-makefile">.PHONY: deployment-run-on-vm-application
+deployment-run-on-vm-application:
+"$(MAKE)" --no-print-directory deployment-run-on-vm VM_NAME=$(VM_NAME_APPLICATION) DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME_APPLICATION)
+</code></pre></li>
+<li><p>create a target to <a href="/blog/create-production-infrastructure-docker-php-app-gcp/#use-make-to-execute-infrastructure-and-deployment-targets-in-parallel">run them all in parallel via <code>make</code></a></p>
+
+<pre><code class="language-makefile">.PHONY: deployment-run-on-vms
+deployment-run-on-vms: ## Run the deployment script on all VMs
+"$(MAKE)" -j --output-sync=target   deployment-run-on-vm-application \
+                                  deployment-run-on-vm-php-fpm \
+                                  deployment-run-on-vm-php-worker \
+                                  deployment-run-on-vm-nginx
+</code></pre></li>
+</ul>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You should now be ready to deploy a dockerized PHP application "to 
+production" on GCP using multiple VMs via <code>docker</code> - without <code>compose</code> .</p>
+
+<p>In the next part of this tutorial, we will 
+<a href="/blog/use-gcloud-cli-docker-image/">replace the locally installed <code>gcloud</code> cli with the official docker image</a>
+to get rid of the dependency.</p>
+
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>
+                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/deploy-dockerized-php-app-production/";
+                                                     this.page.identifier = "deploy-dockerized-php-app-production";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/1428cc0ac2d045b9b04974ed2d9523d3" width="1" height="1" alt=""/>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
+</body>
+
+</html>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="How to use GCP Redis Memorystore instances: Create instances, connect to them and delete them">
+            <meta name="author" content="Pascal Landau">
+        <title>Using GCP Redis Memorystore instances (create/connect/delete) | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/gcp-redis-memorystore-instances-create-connect-delete/"/>
+            <meta name="robots" content="noindex"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>How to use GCP Redis Memorystore instances</h1>
+                                            <h2 class="subheading">from creation over connection to deletion</h2>
+                                                                <span class="meta">
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-09-03 06:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
+                        </span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <strong>Caution</strong>
+                        </div>
+                        <div class="panel-body bg-danger">
+                            This post is still in a <strong>draft</strong> status and likely subject to change!
+                        </div>
+                    </div>                    
+                    
+                <p>In this blog post I'll summarize my experience with <strong>GCP Redis Memorystore instances</strong>. Memorystore 
+is the managed in-memory datastore solution from Google Cloud Platform and was mentioned in 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#introduction">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>
+as the "better" way to deal with in-memory datastores in a dockerized application (compared to 
+running an in-memory datastore via <code>docker</code>).</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    I'll explain the basic steps to <strong>create a fresh Redis instance</strong>, 
+    <strong>show different ways to connect to it</strong> (locally "from your laptop" via SSH tunnel
+    and from a VM within GCP) and finally <strong>how to delete the instance</strong>. Every process 
+    is done through the Cloud Console UI and <strong>recorded as a short video</strong> as a visual 
+    aid. As in the <a href="/blog/gcp-compute-instance-vm-docker/">GCP "primer" tutorial</a>, this 
+    article ends with the commands to achieve the same things also via the
+    <code>gcloud</code> CLI.
+  </div>
+</div>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#setup-memorystore">Setup Memorystore</a></li>
+<li><a href="#create-a-new-redis-instance">Create a new <code>redis</code> instance</a>
+
+<ul>
+<li><a href="#redis-auth-and-in-transit-encryption"><code>redis</code> AUTH and in-transit encryption</a></li>
+</ul></li>
+<li><a href="#connecting-to-a-redis-memorystore-instance">Connecting to a Redis Memorystore instance</a>
+
+<ul>
+<li><a href="#redis-memorystore-offers-private-ip-connectivity-only">Redis Memorystore offers private IP connectivity only</a></li>
+<li><a href="#connecting-to-the-redis-instance-from-a-compute-instance-vm">Connecting to the <code>redis</code> instance from a Compute Instance VM</a></li>
+<li><a href="#connecting-to-the-redis-instance-via-ssh-tunnel">Connecting to the <code>redis</code> instance via SSH tunnel</a></li>
+</ul></li>
+<li><a href="#delete-a-redis-memorystore-instance">Delete a Redis Memorystore instance</a></li>
+<li><a href="#using-the-gcloud-cli">Using the <code>gcloud</code> CLI</a>
+
+<ul>
+<li><a href="#activate-the-service-account">Activate the service account</a></li>
+<li><a href="#enable-the-necessary-apis">Enable the necessary APIs</a></li>
+<li><a href="#create-an-ip-range-allocation">Create an IP range allocation</a></li>
+<li><a href="#create-the-vpc-peering-with-servicenetworking-googleapis-com">Create the VPC peering with <code>servicenetworking.googleapis.com</code></a></li>
+<li><a href="#create-the-redis-instance">Create the <code>redis</code> instance</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='setup-memorystore'> </a>
+<!-- /generated --></p>
+
+<h2>Setup Memorystore</h2>
+
+<p><a href="/img/gcp-redis-memorystore-instances-create-connect-delete/cloud-console-cloud-memorystore-ui.PNG"><img src="/img/gcp-redis-memorystore-instances-create-connect-delete/cloud-console-cloud-memorystore-ui.PNG" alt="GCP Cloud Console Memorystore UI" /></a></p>
+
+<p>The managed solution for in-memory datastores from GCP is called 
+<a href="https://cloud.google.com/memorystore">Memorystore</a> and provides multiple datastore technologies - 
+including <a href="https://cloud.google.com/memorystore/docs/redis"><code>redis</code></a>. In the Cloud Console UI it is 
+managed via the <a href="https://console.cloud.google.com/memorystore">Memorystore UI</a> that allows us to 
+create and manage instances.</p>
+
+<p><!-- generated -->
+<a id='create-a-new-redis-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Create a new <code>redis</code> instance</h2>
+
+<p>To get started, we need to enable the following APIs:</p>
+
+<ul>
+<li><a href="https://console.cloud.google.com/apis/library/compute.googleapis.com">Compute Engine API</a></li>
+<li><a href="https://console.cloud.google.com/marketplace/product/google/redis.googleapis.com">Google Cloud Memorystore for Redis API</a></li>
+</ul>
+
+<p>Creating a new instance from the 
+<a href="https://console.cloud.google.com/memorystore/redis/locations/-/instances/new">Create a redis instance UI</a>
+is pretty straight forward and well documented in the 
+<a href="https://cloud.google.com/memorystore/docs/redis/creating-managing-instances">GCP Redis Guide: Creating and managing Redis instances</a>.</p>
+
+<p>We'll use the following settings:</p>
+
+<ul>
+<li><code>Tier Selection</code>: For testing purposes, I recommend choosing the "Basic" option (this will 
+also disable the "Read Replicas")</li>
+<li><code>Capacity</code>: Enter "1"</li>
+<li><code>Set up connection &gt; Network</code>: Select the network that the VMs are located in - <code>default</code> in 
+my case</li>
+<li><code>Additional Configurations &gt; Connections</code>: Select option "Private service access" here as it's 
+the recommended approach.
+
+<ul>
+<li><strong>CAUTION</strong>: In order to use "Private service access" as connectivity mode, we need to 
+create a <strong>reserved IP allocation</strong> and a VPC peering with the <strong>Google Cloud Platform
+Service Producer</strong> first. The process is exactly the same as I've explained in
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-via-private-ip">my MySQL Cloud SQL article for connecting via private IP</a>.
+Please make sure to pay close attention to section
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#concrete-steps-to-connect-via-private-ip">Concrete steps to connect via private IP</a>
+and especially the video, as it shows the necessary steps to enable the "Private service access"
+for <code>redis</code>!</li>
+</ul></li>
+<li><code>Security &gt; Enable AUTH</code>: Enable the checkbox
+
+<ul>
+<li><em>Note</em>: This will auto-enable the checkbox "Enable in-transit encryption" though 
+<em>I recommend disabling that checkbox</em> (see section <a href="#redis-auth-and-in-transit-encryption"><code>redis</code> AUTH and in-transit encryption</a>)</li>
+</ul></li>
+<li><code>Configuration &gt; Version</code>: Select "6.x" (which is currently [2022-09-05] the latest version)</li>
+</ul>
+
+<p>FYI: Unfortunately, there is no <code>"EQUIVALENT COMMAND LINE"</code> button as it was the case when 
+<a href="/blog/gcp-compute-instance-vm-docker/#create-a-compute-instance-vm">creating the Compute Instance</a> -
+which would have come in handy for 
+<a href="#create-the-redis-instance">creating the instance via <code>gcloud</code> cli</a>.</p>
+
+<p>Once everything is configured, click the <code>"Create Instance"</code> button. The actual creation can 
+take quite some time (I've experienced times from a couple of minutes to ~15 min).</p>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/create-gcp-redis-memorystore-instance.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='redis-auth-and-in-transit-encryption'> </a>
+<!-- /generated --></p>
+
+<h3><code>redis</code> AUTH and in-transit encryption</h3>
+
+<p>During instance creation we activated the <code>AUTH</code> feature but disabled the <code>in-transit 
+encryption</code> on purpose. Since this goes against GCP's own recommendation</p>
+
+<blockquote>
+  <p>When AUTH is enabled, in-transit encryption is recommended so credentials are confidential when 
+  transmitted.</p>
+</blockquote>
+
+<p>I'd like to provide some thoughts on my reasoning:</p>
+
+<p>According to the 
+<a href="https://cloud.google.com/memorystore/docs/redis/auth-overview#security_and_privacy">GCP Redis Guide: AUTH feature overview > Security and privacy</a>,
+<code>AUTH</code> is not meant to be used as a security measure:</p>
+
+<blockquote>
+  <p>AUTH helps you ensure that known entities in your organization do not unintentionally access and
+  modify your Redis instance. AUTH does not provide security during data transportation. Also, 
+  AUTH does not protect your instance against any malicious entities that have access to your 
+  VPC network.</p>
+</blockquote>
+
+<p>However, it is still certainly "better than not having <code>AUTH</code> at all". Now, <code>in-transit encryption</code>
+comes at a cost: All communication between <code>redis</code> and the VMs would now be encrypted. Even 
+though this sounds good in theory, it has 
+<a href="https://cloud.google.com/memorystore/docs/redis/in-transit-encryption?hl=en#performance_impact_of_enabling_in-transit_encryption">a negative impact on performance</a>
+as well as on <a href="https://cloud.google.com/memorystore/docs/redis/in-transit-encryption?hl=en#connection_limits_for_in-transit_encryption">the maximum number of possible connections</a>.</p>
+
+<p>Thus, I'll go with an in-between solution: Enable <code>AUTH</code> but disable <code>in-transit encryption</code></p>
+
+<p>Here are some additional things I learned about <code>AUTH</code>:</p>
+
+<ul>
+<li>you cannot define a custom <code>AUTH</code> string, but it will always be an auto-generated UUID</li>
+<li>the <code>AUTH</code> string will be shown in plain text in the management UI of a <code>redis</code> instance</li>
+<li><p>you can get the <code>AUTH</code> string via
+<a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/get-auth-string"><code>gcloud redis instances get-auth-string</code></a></p>
+
+<pre><code class="language-text">$ gcloud redis instances get-auth-string redis-instance --region=us-central1
+authString: 568d20ec-b0c2-40a9-908d-a5d6b6717a9c
+</code></pre></li>
+</ul>
+
+<p>See also the GCP Redis Guides on</p>
+
+<ul>
+<li><a href="https://cloud.google.com/memorystore/docs/redis/managing-auth">Managing Redis AUTH</a></li>
+<li><a href="https://cloud.google.com/memorystore/docs/redis/auth-overview#auth_behavior">AUTH feature overview > AUTH behavior</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='connecting-to-a-redis-memorystore-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Connecting to a Redis Memorystore instance</h2>
+
+<p>I'll explain 2 different ways of <strong>connecting to a Redis Memorystore instance</strong>:</p>
+
+<ul>
+<li>from a Compute Instance VM on GCP</li>
+<li>"locally" from your laptop via SSH Tunnel</li>
+</ul>
+
+<p><small>Unfortunately, there is no "One-Click-Solution" like 
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-with-cloud-shell-via-public-ip">accessing MySQL Cloud SQL instances via Cloud Shell</a>
+available for Redis.</small></p>
+
+<p>As always, GCP has also an extensive documentation on the various connection methods available 
+at the
+<a href="https://cloud.google.com/memorystore/docs/redis/connecting-redis-instance">GCP Redis Guide: Connecting to a Redis instance</a>.</p>
+
+<p><!-- generated -->
+<a id='redis-memorystore-offers-private-ip-connectivity-only'> </a>
+<!-- /generated --></p>
+
+<h3>Redis Memorystore offers private IP connectivity only</h3>
+
+<p><strong>Redis Memorystore instances do not have a public IP address!</strong></p>
+
+<blockquote>
+  <p>Regardless of the connection mode, Memorystore for Redis always uses internal IP addresses to 
+  provision Redis instances.</p>
+</blockquote>
+
+<p>(via <a href="https://cloud.google.com/memorystore/docs/redis/networking?hl=en">GCP Redis Guide: Networking</a>)</p>
+
+<p>I.e. it's not possible to connect to an instance without being in the same VPC. This is 
+different from e.g. 
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-via-public-ip">MySQL Cloud SQL instances, that offer public IPs as an option</a>.</p>
+
+<p>Instead, GCP offers two so-called "Connection modes" for private IP access:</p>
+
+<ul>
+<li>Direct peering</li>
+<li>Private services access</li>
+</ul>
+
+<p>As <a href="https://cloud.google.com/memorystore/docs/redis/networking?hl=en#choosing_a_connection_mode"><strong>Private services access</strong> is the newer (and recommended) approach</a>,
+we'll not cover <strong>Direct peering</strong> in more detail (even though it's a little easier to set up,
+because GCP will create the necessary VPC peering automatically).</p>
+
+<p><!-- generated -->
+<a id='connecting-to-the-redis-instance-from-a-compute-instance-vm'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>redis</code> instance from a Compute Instance VM</h3>
+
+<p>Once the <code>redis</code> instance is up and running, we can find its private IP address (and port) via its 
+management UI at URL</p>
+
+<pre><code class="language-text">https://console.cloud.google.com/memorystore/redis/locations/$region/instances/$instanceName/details/overview
+
+# e.g. for an instance named 'redis-1' in region 'us-central1'
+# https://console.cloud.google.com/memorystore/redis-1/locations/us-central1/instances/redis/details/overview
+</code></pre>
+
+<p><a href="/img/gcp-redis-memorystore-instances-create-connect-delete/redis-memorystore-private-ip-address.PNG"><img src="/img/gcp-redis-memorystore-instances-create-connect-delete/redis-memorystore-private-ip-address.PNG" alt="Redis Memorystore private IP in the Cloud Console UI" /></a></p>
+
+<p>Or via <a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/describe"><code>gcloud redis instances describe</code></a></p>
+
+<pre><code class="language-text">$ gcloud redis instances describe redis-instance --format="get(host)" --region=us-central1
+10.111.1.3
+</code></pre>
+
+<p>To test the connectivity from a VM, perform the following steps:</p>
+
+<ul>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#create-a-vm">create a Compute Instance VM</a> in the "default" network</li>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#login-via-ssh-from-the-gcp-ui">log into the VM via the UI</a></li>
+<li><p><a href="https://stackoverflow.com/a/25909402">install the <code>redis-cli</code> client</a> via</p>
+
+<pre><code class="language-bash">sudo apt-get install redis-tool -y
+</code></pre></li>
+<li><p>connect to the Redis Memorystore instance via</p>
+
+<pre><code class="language-bash">redis-cli -h $privateIp
+</code></pre>
+
+<p>where <code>$privateIp</code> is the private IP of the <code>redis</code> instance</p></li>
+<li>once connected:
+
+<ul>
+<li>type the command <code>AUTH</code> followed by the <code>AUTH</code> string of the instance to authenticate</li>
+<li>type the command <code>PING</code></li>
+<li>you should get <code>PONG</code> as response</li>
+</ul></li>
+</ul>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/connect-redis-memorystore-instance-via-compute-vm.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='connecting-to-the-redis-instance-via-ssh-tunnel'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>redis</code> instance via SSH tunnel</h3>
+
+<p>The <a href="https://cloud.google.com/memorystore/docs/redis/connecting-redis-instance?hl=en#connecting_from_a_local_machine_with_port_forwarding">GCP Redis Guide: Connecting from a local machine with port forwarding</a> 
+proposes an interesting approach to connect to a Redis Memorystore instance by using a Compute 
+Instance VM as a jump host, i.e.</p>
+
+<ul>
+<li>create a VM that lives in the same VPC as the <code>redis</code> instance</li>
+<li><p>create an SSH tunnel via <a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh#--ssh-flag"><code>gcloud comute ssh --ssh-flag</code></a></p>
+
+<pre><code class="language-bash">gcloud compute ssh test-instance --zone=us-central1-a --ssh-flag="-N -L 6379:$privateRedisInstanceIp:6379"
+</code></pre>
+
+<ul>
+<li>run this command on your local machine to forward your local port <code>6379</code> to port <code>6379</code> of 
+the <code>redis</code> instance</li>
+<li>the traffic flows over the Compute instance VM in this case</li>
+</ul></li>
+<li><p>on your local machine connect to the Redis Memorystore instance via</p>
+
+<pre><code class="language-bash">redis-cli -h localhost
+</code></pre></li>
+</ul>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/connect-redis-memorystore-instance-via-ssh-tunnel.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='delete-a-redis-memorystore-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Delete a Redis Memorystore instance</h2>
+
+<p>To <strong>delete a Redis Memorystore instance</strong> simply navigate to its management UI and click the 
+<code>"Delete"</code> button. Corresponding docs: 
+<a href="https://cloud.google.com/memorystore/docs/redis/creating-managing-instances?hl=en#deleting_instances">GCP Redis Guide: Creating and managing Redis instances > Deleting instances</a></p>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/delete-redis-memorystore-instance.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='using-the-gcloud-cli'> </a>
+<!-- /generated --></p>
+
+<h2>Using the <code>gcloud</code> CLI</h2>
+
+<p>Even though I like using the UI to "explore and understand" how things are working, the goal is 
+always a more "unattended" approach, e.g. via the 
+<a href="/blog/gcp-compute-instance-vm-docker#set-up-the-gcloud-cli-tool"><code>gcloud</code> cli</a>.</p>
+
+<p>The following commands assume that you have created a master service account with owner 
+permissions and activated it for <code>glcoud</code> with a default project. See also 
+<a href="/blog/gcp-compute-instance-vm-docker#preconditions-project-and-owner-service-account">Preconditions: Project and Owner service account</a></p>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/create-gcp-redis-memorystore-instance-via-gcloud-cli.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='activate-the-service-account'> </a>
+<!-- /generated --></p>
+
+<h3>Activate the service account</h3>
+
+<pre><code class="language-bash">project_id=pl-dofroscra-p
+gcloud auth activate-service-account --key-file=./gcp-master-service-account-key.json --project=${project_id}
+</code></pre>
+
+<p><!-- generated -->
+<a id='enable-the-necessary-apis'> </a>
+<!-- /generated --></p>
+
+<h3>Enable the necessary APIs</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/services/enable"><code>gcloud services enable</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud services enable \
+  compute.googleapis.com \
+  redis.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  servicenetworking.googleapis.com
+</code></pre>
+
+<p><code>cloudresourcemanager.googleapis.com</code> is necessary to create the IP range allocation in the 
+next step.</p>
+
+<p><!-- generated -->
+<a id='create-an-ip-range-allocation'> </a>
+<!-- /generated --></p>
+
+<h3>Create an IP range allocation</h3>
+
+<p>See <a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#create-an-ip-range-allocation">"Create an IP range allocation" in the MySQL Cloud SQL article</a></p>
+
+<p><!-- generated -->
+<a id='create-the-vpc-peering-with-servicenetworking-googleapis-com'> </a>
+<!-- /generated --></p>
+
+<h3>Create the VPC peering with <code>servicenetworking.googleapis.com</code></h3>
+
+<p>See <a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#create-the-vpc-peering-with-servicenetworking-googleapis-com">"Create the VPC peering with <code>servicenetworking.googleapis.com</code>" in the MySQL Cloud SQL article</a></p>
+
+<p><!-- generated -->
+<a id='create-the-redis-instance'> </a>
+<!-- /generated --></p>
+
+<h3>Create the <code>redis</code> instance</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/create"><code>gcloud redis instances create</code> reference</a></li>
+<li><a href="https://cloud.google.com/memorystore/docs/redis/creating-managing-instances#custom_ranges_with_private_services_access">GCP Redis Guide: Creating and managing Redis instances > Custom ranges with private services access</a></li>
+</ul>
+
+<pre><code class="language-bash">region=us-central1
+redis_instance_name="redis"
+size=1
+network="default" # must be the same as for the VMs
+version="redis_6_x" # see https://cloud.google.com/sdk/gcloud/reference/redis/instances/create#--redis-version
+private_ip_range_name="internal-gcp-services"
+
+gcloud redis instances create "${redis_instance_name}" \
+      --size="${size}" \
+      --region="${region}" \
+      --network="${network}" \
+      --redis-version="${version}" \
+      --connect-mode=private-service-access \
+      --reserved-ip-range="${private_ip_range_name}" \
+      --enable-auth \
+      -q 
+</code></pre>
+
+<ul>
+<li>the <code>--reserved-ip-range</code> must be name of the range created in step
+<a href="#create-an-ip-range-allocation">Create an IP range allocation</a></li>
+<li><p>when using the <code>--enable-auth</code> flag, we need to include the <code>-q</code> flag as well, otherwise we 
+are prompted for an additional confirmation:</p>
+
+<pre><code class="language-text">AUTH prevents accidental access to the instance by requiring an AUTH string (automatically generated for you). AUTH credentials are not confidential when transmitted or intended to protect against malicious actors.
+
+Do you want to proceed? (Y/n)?
+</code></pre></li>
+<li><p>the <code>--region</code> is required on any subsequent requests to identify the instance, i.e. the 
+instance name is not enough. If the region is not provided, an error is shown:</p>
+
+<pre><code class="language-text">$ gcloud redis instances describe redis-instance
+ERROR: (gcloud.redis.instances.describe) Error parsing [instance].
+The [instance] resource is not properly specified.
+Failed to find attribute [region]. The attribute can be set in the following ways:
+- provide the argument `--region` on the command line
+- set the property `redis/region`
+</code></pre></li>
+</ul>
+
+<h3>Retrieve the private IP</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/describe"><code>gcloud redis instances create</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud redis instances describe "${redis_instance_name}" \
+    --format="get(host)" \
+    --region="${region}"
+</code></pre>
+
+<h3>Retrieve the <code>AUTH</code> string</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/get-auth-string"><code>gcloud redis instances get-auth-string</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud redis instances get-auth-string "${redis_instance_name}" \
+    --region="${region}"
+</code></pre>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You are now able to manage <code>redis</code> datastores on GCP via the UI as well as via the
+<code>gcloud</code> cli.</p>
+                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/gcp-redis-memorystore-instances-create-connect-delete/";
+                                                     this.page.identifier = "gcp-redis-memorystore-instances-create-connect-delete";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/8873f022e6724b82acd4bcdb55098932" width="1" height="1" alt=""/>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
+</body>
+
+</html>

@@ -69,7 +69,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -91,9 +91,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -131,7 +128,7 @@
         2022-06-29
     </p>
     <p>
-        👉 <a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose [Tutorial Part 9]</a>
+        👉 <a href="https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/">Use docker compose for production deployments of a PHP App on GCP [Tutorial Part 9]</a>
     </p>
     <p>
         You can connect with me on
@@ -144,6 +141,7 @@
     </ul>
     <p>I also publish articles on other dev related media outlets, e.g.</p>
     <ul>
+        <li><a href="https://dzone.com/articles/git-secret-encrypt-amp-store-secrets-in-a-git-repo">DZone</a></li>
         <li><a href="https://hackernoon.com/using-phpstorm-docker-and-xdebug-3-on-php-81">Hackernoon</a></li>
         <li><a href="https://dev.to/pascallandau/use-git-secret-to-encrypt-secrets-in-the-repository-tutorial-part-6-53p5">Dev.to</a></li>
         <li><a href="https://pascallandau.hashnode.dev/set-up-php-qa-tools-and-control-them-via-make-tutorial-part-5">Hashnode</a></li>
@@ -223,7 +221,14 @@
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

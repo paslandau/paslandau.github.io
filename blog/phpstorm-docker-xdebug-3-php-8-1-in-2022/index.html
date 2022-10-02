@@ -70,7 +70,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -92,9 +92,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -149,6 +146,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
                 <p>In this part of the tutorial series on developing PHP on Docker we 
 will <strong>set up our local development environment to be used by PhpStorm and Xdebug</strong>. We will also 
 ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw 
@@ -315,7 +313,7 @@ xdebug.start_with_request=yes
 xdebug.mode=debug
 </code></pre>
 
-<p>See <a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker">Fix Xdebug on PhpStorm when run from a Docker container</a>
+<p>See <a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
 for an explanation of the <code>xdebug.client_host=host.docker.internal</code> setting (previously called
 <code>xdebug.remote_host</code> in xdebug &lt; 3). This will still work out of the box for Docker Desktop, but
 for Linux users we need to add the 
@@ -953,7 +951,14 @@ notifications when this next part comes out :)</p>
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

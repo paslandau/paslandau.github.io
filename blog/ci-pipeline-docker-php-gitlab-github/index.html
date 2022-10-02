@@ -70,7 +70,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -92,9 +92,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -149,6 +146,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
                 <p>In the seventh part of this tutorial series on developing PHP on Docker we will <strong>setup a CI
 (Continuous Integration) pipeline to run code quality tools and tests on Github Actions and Gitlab
 Pipelines</strong>.</p>
@@ -2109,7 +2107,7 @@ make-init: ## Initializes the local .makefile/.env file with ENV variables for m
 <a id='env-based-docker-compose-config'> </a>
 <!-- /generated --></p>
 
-<h3>ENV based docker compose config</h3>
+<h3>ENV based <code>docker compose</code> config</h3>
 
 <p>As mentioned in section <a href="#compose-file-updates">Compose file updates</a> we need to select the 
 "correct" <code>docker compose</code> configuration files based on the <code>ENV</code> value. This is done in 
@@ -2412,7 +2410,14 @@ notifications when this next part comes out :)</p>
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

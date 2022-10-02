@@ -70,7 +70,7 @@
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav navbar-right">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
                 <li>
                     <a href="/">Home</a>
                 </li>
@@ -92,9 +92,6 @@
                 <li>
                     <a href="/personal-finance/">Personal Finance</a>
                 </li>
-
-
-
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -149,6 +146,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    
                 <p>In the sixth part of this tutorial series on developing PHP on Docker we will <strong>setup <code>git-secret</code>
 to store secrets directly in the repository</strong>. Everything will be handled through Docker and 
 added as make targets for a convenient workflow.</p>
@@ -330,7 +328,7 @@ I'll propose exactly that in this tutorial:</p>
 
 <p>to encrypt them again so that they can be committed (and pushed to the remote repository). To 
 see it in action, check out branch
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-6-git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>
 and run the following commands:</p>
 
 <pre><code class="language-bash"># checkout the branch
@@ -426,7 +424,6 @@ RUN apk add --update --no-cache \
 
 <p>I'll only cover the strictly necessary <code>gpg</code> commands here. Please refer to
 <a href="https://git-secret.io/#using-gpg">the "Using GPG" section in the <code>git-secret</code> docu</a>
-and/or <a href="https://linuxhint.com/generate-gpg-keys-gpg/">How to generate PGP keys with GPG</a>
 for further information.</p>
 
 <p><!-- generated -->
@@ -1332,7 +1329,7 @@ gpg-init: gpg-import-default-secret-key gpg-import-default-public-keys ## Initia
 <p>The scenarios assume the following preconditions:</p>
 
 <ul>
-<li>You have checked out branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>
+<li>You have checked out branch <a href="https://github.com/paslandau/docker-php-tutorial/tree/part-6-git-secret-encrypt-repository-docker">part-6-git-secret-encrypt-repository-docker</a>
 <code>bash
 git checkout part-6-git-secret-encrypt-repository-docker</code>
 and no running docker containers 
@@ -1936,7 +1933,14 @@ notifications when this next part comes out :)</p>
      The files can be re-compiled at https://highlightjs.org/download/
      -->
 <script src="/js/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
 </body>
 
 </html>

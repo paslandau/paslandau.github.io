@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="An installation instruction for Git Bash / MINGW / MSYS2 on Windows with some notes on solving common problems">
+            <meta name="author" content="Pascal Landau">
+        <title>Setting up Git Bash / MINGW / MSYS2 on Windows | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/setting-up-git-bash-mingw-msys2-on-windows/"/>
+            <meta name="robots" content="noindex"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Setting up Git Bash / MINGW / MSYS2 on Windows</h1>
+                                            <h2 class="subheading">and solving the most common issues</h2>
+                                                                <span class="meta">
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-09-01 04:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
+                        </span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <strong>Caution</strong>
+                        </div>
+                        <div class="panel-body bg-danger">
+                            This post is still in a <strong>draft</strong> status and likely subject to change!
+                        </div>
+                    </div>                    
+                    
+                <p>In this article I'll document my process for <strong>setting up Git Bash / MINGW / 
+MSYS2 on Windows</strong> including some additional configuration (e.g. installing <code>make</code> and apply 
+some customizations via <code>.bashrc</code>).</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#how-to-install-and-update-git-bash-mingw-msys2-via-git-for-windows">How to install and update Git Bash / MINGW / MSYS2 via Git for Windows</a>
+
+<ul>
+<li><a href="#how-to-install-make">How to install <code>make</code></a></li>
+<li><a href="#configuration-via-bashrc">Configuration via <code>.bashrc</code></a></li>
+</ul></li>
+<li><a href="#common-issues">Common issues</a>
+
+<ul>
+<li><a href="#the-role-of-winpty-fixing-the-input-device-is-not-a-tty">The role of <code>winpty</code>: Fixing "The input device is not a TTY" </a></li>
+<li><a href="#the-path-conversion-issue">The path conversion issue</a>
+
+<ul>
+<li><a href="#fixing-the-path-conversion-issue-for-mingw-msys2">Fixing the path conversion issue for MINGW / MSYS2</a></li>
+<li><a href="#fixing-the-path-conversion-issue-for-winpty">Fixing the path conversion issue for <code>winpty</code></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#miscellaneous">Miscellaneous</a>
+
+<ul>
+<li><a href="#change-the-bash-custom-prompt-to-a">Change the <code>bash</code> custom prompt to a <code>$</code></a></li>
+</ul></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>When I was learning <code>git</code> I started with the fantastic 
+<a href="https://gitforwindows.org/">Git for Windows</a> package, that is maintained in the 
+<a href="https://github.com/git-for-windows/"><code>git-for-windows/git</code> Github repository</a> and comes with 
+<a href="https://www.atlassian.com/git/tutorials/git-bash">Git Bash</a>, a shell that offers a 
+Unix-terminal like experience. It uses 
+<a href="https://github.com/git-for-windows/git/wiki/The-difference-between-MINGW-and-MSYS2">MINGW and MSYS2 under the hood</a>
+and does not only provide <code>git</code> but also a bunch of other common Linux utilities like</p>
+
+<pre><code class="language-text">bash
+sed
+awk
+ls
+cp
+rm
+...
+</code></pre>
+
+<p>I believe the main "shell" is actually powered by <a href="https://www.mingw-w64.org/">MINGW64</a> as 
+that's what will be shown by default:</p>
+
+<p><a href="/img/setting-up-git-bash-mingw-msys2-on-windows/mingw.PNG"><img src="/img/setting-up-git-bash-mingw-msys2-on-windows/mingw.PNG" alt="Git Bash / MINGW shell" /></a></p>
+
+<p>Thus, I will refer to the tool as MINGW shell or Git Bash throughout this article.</p>
+
+<p>I have been using MINGW for almost 10 years now, and it is still my go-to shell for Windows. I 
+could just never warm up to WSL, because the file sharing performance between WSL and native 
+Windows  files was (is?) horrible - but that's a different story.</p>
+
+<p><!-- generated -->
+<a id='how-to-install-and-update-git-bash-mingw-msys2-via-git-for-windows'> </a>
+<!-- /generated --></p>
+
+<h2>How to install and update Git Bash / MINGW / MSYS2 via Git for Windows</h2>
+
+<p>You can find the latest Git for Windows installation package directly at the homepage of
+<a href="https://gitforwindows.org/">https://gitforwindows.org/</a>. Older releases can be found on 
+Github in the 
+<a href="https://github.com/git-for-windows/git/releases">Releases section of the <code>git-for-windows/git</code> repository</a></p>
+
+<p>Follow the instructions in the 
+<a href="https://www.git-tower.com/blog/git-bash/#how-to-install-git-bash-on-windows">How to Install Git Bash on Windows article on git-tower.com</a>
+to get a guided tour through the setup process.</p>
+
+<p>After the installation is finished, I usually create a desktop icon and assign the shortcut 
+<code>CTRL + ALT + B</code> (for "<strong>b</strong>ash") so that I can open a new shell session conveniently via keyboard.</p>
+
+<p><a href="/img/setting-up-git-bash-mingw-msys2-on-windows/git-bash-desktop-shortcut.PNG"><img src="/img/setting-up-git-bash-mingw-msys2-on-windows/git-bash-desktop-shortcut.PNG" alt="Git Bash desktop icon and shortcut" /></a></p>
+
+<p>To update Git for Windows, you can simply run</p>
+
+<pre><code class="language-bash">git update-git-for-windows
+</code></pre>
+
+<p>See also the
+<a href="https://github.com/git-for-windows/git/wiki/FAQ#how-do-i-update-git-for-windows-upon-new-releases">Git for Windows FAQ under "How do I update Git for Windows upon new releases?"</a></p>
+
+<blockquote>
+  <p>Git for Windows comes with a tool to check for updates and offer to install them. Whether or 
+  not you enabled auto-updates during installation, you can manually run 
+  <code>git update-git-for-windows</code>.</p>
+</blockquote>
+
+<p>You can check the current version via <code>git version</code></p>
+
+<pre><code class="language-text">$ git --version
+git version 2.37.2.windows.2
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/update-git-bash.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='how-to-install-make'> </a>
+<!-- /generated --></p>
+
+<h3>How to install <code>make</code></h3>
+
+<p>As per
+<a href="https://gist.github.com/evanwill/0207876c3243bbb6863e65ec5dc3f058#make">How to add more to Git Bash on Windows: <code>make</code></a>:</p>
+
+<ul>
+<li>Go to <a href="https://sourceforge.net/projects/ezwinports/files/">ezwinports</a></li>
+<li>Download file <a href="https://sourceforge.net/projects/ezwinports/files/make-4.3-without-guile-w32-bin.zip/download"><code>make-4.3-without-guile-w32-bin.zip</code></a>
+(get the version without guile)</li>
+<li>Extract zip</li>
+<li>Copy the contents to your <code>Git/mingw64/</code> directory, merging the folders, but do NOT
+overwrite/replace any existing files
+
+<ul>
+<li>navigate to the <code>Git/mingw64/</code> directory via
+<code>cd /
+explorer .</code></li>
+</ul></li>
+</ul>
+
+<p>Test via <code>make version</code></p>
+
+<pre><code class="language-text">$ make --version
+GNU Make 4.3.1
+Built for Windows32
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/install-make-git-bash.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>PS: There's also an alternative way that I've outlined in
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#install-make-on-windows-mingw">Install <code>make</code> on Windows (MinGW)</a>,
+though the one explained here is easier/faster.</p>
+
+<p><!-- generated -->
+<a id='configuration-via-bashrc'> </a>
+<!-- /generated --></p>
+
+<h3>Configuration via <code>.bashrc</code></h3>
+
+<p>The MINGW shell is a <code>bash</code> shell and can thus be 
+<a href="https://www.digitalocean.com/community/tutorials/bashrc-file-in-linux">configured via a <code>.bashrc</code> file</a> located at 
+the home directory of the user. The shell supports the <code>~</code> character as an alias for the home 
+directory, i.e. <strong>you can use <code>~/.bashrc</code> to refer to the full path of the file</strong>. This means you can 
+also edit it easily via <code>vi ~/.bashrc</code> - though I prefer an actual GUI editor like
+<a href="https://notepad-plus-plus.org/">Notepad++</a>. A common workflow for me to open the file is 
+running the following commands in a MINGW shell session</p>
+
+<pre><code class="language-text"># navigate to to the home directory
+cd ~
+
+# open the file explorer
+explorer .
+</code></pre>
+
+<p>My <code>.bashrc</code> file usually includes the following setup:</p>
+
+<pre><code class="language-bash"># Get bash completion for make targets by parsing make files in the current directory at 
+#  the file "Makefile"
+#  all files with a ".mk" suffix in the folders ".make" and ".makefile"
+# see https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
+# Notes:
+#  -h hides filenames
+#  -s hides error messages
+complete -W "\`grep -shoE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile .make/*.mk .makefile/*.mk | sed 's/[^a-zA-Z0-9_.-]*$//' | grep -v PHONY\`" make
+
+# Docker login helper
+# see https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via-din-bashrc-helper
+function din() {
+  filter=$1
+
+  user=""
+  if [[ -n "$2" ]];
+  then
+    user="--user $2"
+  fi
+
+  shell="bash"
+  if [[ -n "$3" ]];
+  then
+    shell=$3
+  fi
+
+  prefix=""
+  if [[ "$(expr substr $(uname -s) 1 5)" == "MINGW" ]]; then
+    prefix="winpty"
+  fi
+  ${prefix} docker exec -it ${user} $(docker ps --filter name=${filter} -q | head -1) ${shell}
+}
+</code></pre>
+
+<p>Links:</p>
+
+<ul>
+<li><a href="https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target">SO: bash completion of makefile target</a></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via-din-bashrc-helper">Easy container access via din .bashrc helper</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='common-issues'> </a>
+<!-- /generated --></p>
+
+<h2>Common issues</h2>
+
+<p>The
+<a href="https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues">Git for Windows Known Issues page</a>
+lists common problems with Git Bash and I want to provide some more context (and solutions) 
+to the things that I have encountered.</p>
+
+<p><!-- generated -->
+<a id='the-role-of-winpty-fixing-the-input-device-is-not-a-tty'> </a>
+<!-- /generated --></p>
+
+<h3>The role of <code>winpty</code>: Fixing "The input device is not a TTY"</h3>
+
+<p>I encountered the <code>The input device is not a TTY</code> error while using <code>docker</code>. To log into a 
+running <code>docker</code> container or starting a container with a login session, the
+<a href="https://docs.docker.com/engine/reference/run/#foreground"><code>-i</code> (Keep STDIN open even if not attached) and <code>-t</code> (Allocate a pseudo-tty) options must be given:</a></p>
+
+<blockquote>
+  <p>For interactive processes (like a shell), you must use <code>-i</code> <code>-t</code> together in order to allocate a
+  tty for the container process. <code>-i</code> <code>-t</code>  is often written <code>-it</code>.</p>
+</blockquote>
+
+<p>But attempting to do so via</p>
+
+<pre><code class="language-bash">docker run --rm -it busybox sh
+</code></pre>
+
+<p>yields the following error:</p>
+
+<pre><code class="language-text">$ docker run --rm -it busybox sh
+the input device is not a TTY.  If you are using mintty, try prefixing the command with 'winpty'
+</code></pre>
+
+<p>Fortunately, the fix is included in the message: Prefix the command with <code>winpty</code>. Doing so
+works as expected:</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -it busybox sh
+/ #
+</code></pre>
+
+<p><a href="https://github.com/rprichard/winpty"><code>winpty</code></a> is according to it's readme</p>
+
+<blockquote>
+  <p>[...] a Windows software package providing an interface similar to a Unix pty-master for
+  communicating with Windows console programs. The package consists of a library (libwinpty) and
+  a tool for Cygwin and MSYS for running Windows console programs in a Cygwin/MSYS pty.</p>
+</blockquote>
+
+<p>So kind of a translator between your "Windows input" and the "command input" to create input 
+that is 
+<a href="https://iximiuz.com/en/posts/linux-pty-what-powers-docker-attach-functionality/">compatible with a Unix pty (pty=pseudoterminal interface), e.g. for <code>docker</code></a>.</p>
+
+<p>According to the
+<a href="https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues">Git for Windows Known Issues page</a>,
+there are a number of other cases where <code>winpty</code> is required (though I personally didn't
+encounter them yet):</p>
+
+<blockquote>
+  <p>Some console programs, most notably non-MSYS2 Python, PHP, Node and OpenSSL, interact
+  correctly with MinTTY only when called through <code>winpty</code> (e.g. the Python console needs to be
+  started as <code>winpty python</code> instead of just <code>python</code>).</p>
+</blockquote>
+
+<p><strong>CAUTION</strong>: I've seen people put an alias in their <code>.bashrc</code> file to <em>always</em> prefix <code>docker</code> 
+commands automatically with <code>winpty</code> like so:</p>
+
+<pre><code class="language-text">alias docker="winpty docker"
+</code></pre>
+
+<p>However, <strong><code>winpty</code> seems to break piping and can lead to unexpected results</strong> like the error 
+<code>stdout is not a tty</code>. See the following example:</p>
+
+<pre><code class="language-text">$ docker run --rm busybox echo "foo" | cat
+foo
+</code></pre>
+
+<pre><code class="language-text">$ winpty docker run --rm busybox echo "foo" | cat
+stdout is not a tty
+</code></pre>
+
+<p>Thus, I would recommend against using it as a default - or if you do only use it when the <code>-it</code> 
+flag is used <a href="https://stackoverflow.com/a/61580520/413531">as proposed in this answer</a>.</p>
+
+<p><!-- generated -->
+<a id='the-path-conversion-issue'> </a>
+<!-- /generated --></p>
+
+<h3>The path conversion issue</h3>
+
+<p>Ah. This one has given me <em>lots</em> of headaches over the years. MINGW, MSYS2 and <code>winpty</code> use 
+automatic conversion of Unix paths to Windows paths, e.g. <code>/foo</code> gets translated to something like
+<code>C:/Program Files/Git/foo</code> where <code>C:/Program Files/Git/</code> is the installation directory of the 
+Git for Windows installation.</p>
+
+<p><!-- generated -->
+<a id='fixing-the-path-conversion-issue-for-mingw-msys2'> </a>
+<!-- /generated --></p>
+
+<h4>Fixing the path conversion issue for MINGW / MSYS2</h4>
+
+<p>First, the behavior is mentioned on the
+<a href="https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues">Git for Windows Known Issues page</a></p>
+
+<blockquote>
+  <p>If you specify command-line options starting with a slash, POSIX-to-Windows path conversion 
+  will kick in converting e.g. "<code>/usr/bin/bash.exe</code>" to "<code>C:\Program Files\Git\usr\bin\bash.exe</code>". 
+  When that is not desired -- e.g. "<code>--upload-pack=/opt/git/bin/git-upload-pack</code>" or "<code>-L/regex/</code>" 
+  -- you need to set the environment variable <code>MSYS_NO_PATHCONV</code> temporarily, like so:</p>
+  
+  <p><code>MSYS_NO_PATHCONV=1 git blame -L/pathconv/ msys2_path_conv.cc</code></p>
+  
+  <p>Alternatively, you can double the first slash to avoid POSIX-to-Windows path conversion, e.g. 
+  "<code>//usr/bin/bash.exe</code>".</p>
+</blockquote>
+
+<p>and also documented for
+<a href="https://web.archive.org/web/20201112005258/http://www.mingw.org/wiki/Posix_path_conversion">MINGW at "Posix path conversion"</a>,
+but it's still brought up regularly, see e.g.
+<a href="https://github.com/git-for-windows/git/issues/3619">GH #3619: "/" is replaced with the directory path of Git installation when using MinGW64 Bash</a>.
+or
+<a href="https://stackoverflow.com/a/34386471">SO: How to stop MinGW and MSYS from mangling path names given at the command line</a></p>
+
+<p><strong>Example</strong></p>
+
+<pre><code class="language-bash">$ docker run --rm busybox ls /foo
+ls: C:/Program Files/Git/foo: No such file or directory
+</code></pre>
+
+<p>As quoted above, it can be solved by either</p>
+
+<ul>
+<li><p>adding an <strong>additional <code>/</code></strong> to the path</p>
+
+<pre><code class="language-text">$ docker run --rm busybox ls //foo
+ls: /foo: No such file or directory
+</code></pre></li>
+<li><p><strong>prefixing</strong> the command with <code>MSYS_NO_PATHCONV=1</code></p>
+
+<pre><code class="language-text">$ MSYS_NO_PATHCONV=1 docker run --rm busybox ls /foo
+ls: /foo: No such file or directory
+</code></pre></li>
+<li><p>or exporting the <code>MSYS_NO_PATHCONV=1</code> variable as an <strong>environment variable</strong> to disable the 
+behavior completely</p>
+
+<pre><code class="language-text">$ export MSYS_NO_PATHCONV=1
+$ docker run --rm busybox ls /foo
+ls: /foo: No such file or directory
+</code></pre></li>
+</ul>
+
+<p><strong>CAUTION:</strong> The value of the <code>MSYS_NO_PATHCONV</code> variable does not matter - we can also set it 
+to <code>0</code>, <code>false</code> or an empty string. It only matters that the variable is defined!</p>
+
+<pre><code class="language-text">$ MSYS_NO_PATHCONV=0 docker run --rm busybox ls /foo
+ls: /foo: No such file or directory
+</code></pre>
+
+<p>This is particularly important when using the <strong>environment variable</strong> approach. In order to 
+selectively enable the path conversion again, you must 
+<a href="https://stackoverflow.com/a/41749660">unset the <code>MSYS_NO_PATHCONV</code> first</a> via 
+<code>env -u MSYS_NO_PATHCONV ...</code>, e.g.</p>
+
+<pre><code class="language-text">$ env -u MSYS_NO_PATHCONV docker run --rm busybox ls /foo
+ls: C:/Program Files/Git/foo: No such file or directory
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/mingw-git-bash-posix-path-conversion.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><strong>CAUTION</strong>: I've seen people adding <code>MSYS_NO_PATHCONV=1</code> permanently to their environment in
+their <code>.bashrc</code> file to <em>always</em> disable path conversion via</p>
+
+<pre><code class="language-bash">export MSYS_NO_PATHCONV=1
+</code></pre>
+
+<p>However, this can have some unintended side effects. When I tried it out,
+<a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-gcloud-cli-tool">my local installation of the <code>gcloud</code> cli</a>
+stopped working with the error</p>
+
+<pre><code class="language-text">$ MSYS_NO_PATHCONV=1 gcloud version
+C:\Users\Pascal\AppData\Local\Programs\Python\Python39\python.exe: can't open file 'C:\c\Users\Pascal\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\gcloud.py': [Errno 2] No such file or directory
+</code></pre>
+
+<p>So instead I recommend setting <code>MSYS_NO_PATHCONV=1</code> either selectively per command or scope it
+to the use case. I do this for example in my Makefiles by only exporting it for the scope of
+<code>make</code> (and all scripts <code>make</code> invokes) by putting the following code in the beginning of the 
+Makefile:</p>
+
+<pre><code class="language-makefile"># OS is a defined variable for WIN systems, so "uname" will not be executed
+OS?=$(shell uname)
+# Values of OS:
+#   Windows =&gt; Windows_NT 
+#   Mac     =&gt; Darwin 
+#   Linux   =&gt; Linux 
+ifeq ($(OS),Windows_NT)
+    export MSYS_NO_PATHCONV=1
+endif
+</code></pre>
+
+<p>The path conversion is also documented for
+<a href="https://www.msys2.org/docs/filesystem-paths/#automatic-unix-windows-path-conversion">MSYS2 at "Filesystem Paths: Automatic Unix ⟶ Windows Path Conversion"</a>
+and can be disabled via the <code>MSYS2_ARG_CONV_EXCL</code> environment variable:</p>
+
+<blockquote>
+  <p>[...] For these cases you can exclude certain arguments via the <code>MSYS2_ARG_CONV_EXCL</code> environment 
+  variable:
+  [...]
+  <code>MSYS2_ARG_CONV_EXCL</code> can either be * to mean exclude everything, or a list of one ore more 
+  arguments prefixes separated by ;, like <code>MSYS2_ARG_CONV_EXCL=--dir=;--bla=;/test</code>. It matches 
+  the prefix against the whole argument string.</p>
+</blockquote>
+
+<p>I.e. setting the variable as <code>MSYS2_ARG_CONV_EXCL="*"</code> should disable the path conversion 
+completely. I myself have never had to use this, though. Using <code>MSYS_NO_PATHCONV</code> was always 
+sufficient.</p>
+
+<p><!-- generated -->
+<a id='fixing-the-path-conversion-issue-for-winpty'> </a>
+<!-- /generated --></p>
+
+<h4>Fixing the path conversion issue for <code>winpty</code></h4>
+
+<p>Unfortunately, <code>winpty</code> suffers from this path conversion issue as well. In the standard 
+installation of Git for Windows we can even see this by simply using <code>echo</code>:</p>
+
+<pre><code class="language-text">$ winpty echo /
+C:/Program Files/Git
+</code></pre>
+
+<p>The behavior is known and flagged as a bug e.g. in
+<a href="https://github.com/msys2/MSYS2-packages/issues/411">GH issue #411: Path conversion with and without winpty differs</a>.</p>
+
+<p>Remember the example I gave in section
+<a href="#the-role-of-winpty-fixing-the-input-device-is-not-a-tty">The role of <code>winpty</code> e.g. when using <code>docker</code></a>?</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -it busybox sh
+/ #
+</code></pre>
+
+<p>Now let's extend this and throw a volume into the mix:</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -v foo:/foo -it busybox sh
+docker: Error response from daemon: create foo;C: "foo;C" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.
+</code></pre>
+
+<p><code>winpty</code> converts <code>/foo</code> to <code>C:/Program Files/Git/foo</code> so that the volume definition becomes
+<code>-v foo:C:/Program Files/Git/foo</code> - which is of course invalid.</p>
+
+<p>Using an additional <code>/</code> as a prefix does work here as well:</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -v foo://foo -it busybox sh
+/ #
+</code></pre>
+
+<p>But <strong>there is no environment variable that we could use</strong>. The only way to "fix" the path 
+conversion is using a 
+<a href="https://github.com/rprichard/winpty/releases">newer release of <code>winpty</code></a> and replace the one 
+that is shipped together with Git for Windows 
+<a href="https://github.com/msys2/MSYS2-packages/issues/411#issuecomment-372585320">as proposed by the maintainer of <code>winpty</code></a>.</p>
+
+<p>This <a href="https://github.com/rprichard/winpty/issues/127#issuecomment-817356202">comment outlines the full process</a>
+to replace <code>winpty</code> and is (slightly adapted) as follows:</p>
+
+<pre><code class="language-bash"># create temporary directory
+mkdir temp
+cd temp
+# download a newer release
+curl -L https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msys2-2.7.0-x64.tar.gz --output winpty.tar.gz
+# extract the archive
+tar -xvf winpty.tar.gz
+# copy the content of the bin/ folder to `/usr/bin` 
+# (which resolves to e.g `C:/Program Files/Git/usr/bin`; replaces any existing files)
+cp winpty-0.4.3-msys2-2.7.0-x64/bin/* /usr/bin
+# delete the temporary directory
+cd ..
+rm -rf temp/
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/winpty-update-posix-path-conversion.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>Once the new version is installed, the path conversion does not happen any longer (even without 
+specifying any environment variables).</p>
+
+<p>Related comments:</p>
+
+<ul>
+<li><a href="https://github.com/docker/for-win/issues/1588#issuecomment-594938988">https://github.com/docker/for-win/issues/1588#issuecomment-594938988</a></li>
+<li><a href="https://github.com/docker/for-win/issues/1588#issuecomment-698080757">https://github.com/docker/for-win/issues/1588#issuecomment-698080757</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='miscellaneous'> </a>
+<!-- /generated --></p>
+
+<h2>Miscellaneous</h2>
+
+<p>Some stuff that I need from time to time - not necessarily only relevant for Git Bash.</p>
+
+<p><!-- generated -->
+<a id='change-the-bash-custom-prompt-to-a'> </a>
+<!-- /generated --></p>
+
+<h3>Change the <code>bash</code> custom prompt to a <code>$</code></h3>
+
+<p>Via <code>PS1=" $"</code>:</p>
+
+<pre><code class="language-text">Pascal@LAPTOP-0DNL2Q02 MINGW64 ~
+$ PS1="$ "
+$
+</code></pre>
+
+<p>See <a href="https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.html">How to Change / Set up bash custom prompt (PS1) in Linux</a></p>
+                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/setting-up-git-bash-mingw-msys2-on-windows/";
+                                                     this.page.identifier = "setting-up-git-bash-mingw-msys2-on-windows";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/e1660b3876b74aecba6dbeca05e68cba" width="1" height="1" alt=""/>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
+</body>
+
+</html>
