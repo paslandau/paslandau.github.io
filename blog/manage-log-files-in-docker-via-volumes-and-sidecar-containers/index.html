@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="A tutorial on managing logfiles on Docker via Volumes and Sidecar containers running logrotate as cron job">
+            <meta name="author" content="Pascal Landau">
+        <title>Manage Logfiles in Docker via Volumes and Sidecar containers [Tutorial Part 13] | pascallandau.com</title>
+    <meta name="google-site-verification" content="fcW8afndMqg-HUmdh_fIAbz81qMkxVJA-Hogrg3UYEw"/>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link href="/css/clean-blog.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="/css/default.min.css">
+    <!-- RSS Feed -->
+    <link rel="canonical" href="https://www.pascallandau.com/blog/manage-log-files-in-docker-via-volumes-and-sidecar-containers/"/>
+            <meta name="robots" content="noindex"/>
+        <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
+    <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
+    <!-- Custom Fonts -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <!-- Google Tag Manager -->
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src =
+                'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-5B9NRTM');</script>
+    <!-- End Google Tag Manager -->
+</head>
+
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B9NRTM"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">pascallandau.com</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right" id="navbar">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                <li>
+                    <a href="/about/">About</a>
+                </li>
+                <li>
+                    <a href="/blog/">Blog</a>
+                </li>
+                <li>
+                    <a href="/blog/#newsletter">Newsletter</a>
+                </li>
+                <li>
+                    <a href="/bigquery-snippets/">BigQuery Snippets</a>
+                </li>
+                <li>
+                    <a href="/docker-php-tutorial/">Docker PHP Tutorial</a>
+                </li>
+                <li>
+                    <a href="/personal-finance/">Personal Finance</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- Page Header -->
+<!-- Set your background image for this header on the line below. -->
+<header class="intro-header" style="background: #000
+        ">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <h1>Manage Logfiles in a dockerized Application</h1>
+                                            <h2 class="subheading">via Volumes and Sidecar containers</h2>
+                                                                <span class="meta">
+                            <span style="display:block; margin:0;">
+                                Posted by <a href="#">Pascal Landau</a> on 2022-10-06 06:00:00
+                            </span>
+                            <span style="display:block;">
+                                <a href="https://twitter.com/PascalLandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-twitter fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/pascallandau">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-linkedin fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://github.com/paslandau/">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-github fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                                <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                    <span class="fa-stack fa-lg">
+                                        <i class="fa fa-youtube fa-stack-1x"></i>
+                                    </span>
+                                </a>
+                            </span>
+                        </span>
+                                    </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <strong>Caution</strong>
+                        </div>
+                        <div class="panel-body bg-danger">
+                            This post is still in a <strong>draft</strong> status and likely subject to change!
+                        </div>
+                    </div>                    
+                    
+                <p>In this part of the tutorial series on developing PHP on Docker we will <strong>implement the sidecar 
+pattern to manage the various logfiles of our dockerized application via <code>logrotate</code> and <code>cron</code></strong>.</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    You will learn how to configure the log settings for all of our dockerized services and 
+    <strong>implement a sidecar pattern to handle the log management </strong> (e.g. persistence, 
+    rotation and compression) in a <code>logger</code> sidecar container.
+    <br>
+    <br>
+    In addition we will <strong>run cron jobs via <code>cron</code> in an alpine docker 
+    container to execute <code>logrotate</code> for rotating file-based logfiles </strong> (and to 
+    trigger the 
+    <a href="https://laravel.com/docs/9.x/scheduling#running-the-scheduler">Laravel scheduler</a>).
+  </div>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-13-manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate">part-13-manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate</a>.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/use-gcloud-cli-docker-image/">Use the <code>gcloud</code> cli docker image instead of installing it locally</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+
+<ul>
+<li><a href="#run-the-code-yourself">Run the code yourself</a></li>
+</ul></li>
+<li><a href="#logs-in-dockerized-applications">Logs in dockerized applications</a>
+
+<ul>
+<li><a href="#output-streams-vs-logfiles">Output streams vs logfiles</a>
+
+<ul>
+<li><a href="#caveats-when-using-streams">Caveats when using streams</a></li>
+</ul></li>
+<li><a href="#use-volumes-to-retain-data">Use volumes to retain data</a></li>
+<li><a href="#use-sidecar-containers-for-auxiliary-tasks">Use "sidecar" containers for auxiliary tasks</a></li>
+</ul></li>
+<li><a href="#tools-crond-and-logrotate">Tools: <code>crond</code> and <code>logrotate</code></a>
+
+<ul>
+<li><a href="#run-cron-jobs-on-docker-via-crond">Run cron jobs on docker via <code>crond</code></a>
+
+<ul>
+<li><a href="#install-crond-on-alpine">Install <code>crond</code> on alpine</a></li>
+<li><a href="#define-a-cron-job">Define a cron job</a></li>
+<li><a href="#define-a-cron-schedule">Define a cron schedule</a></li>
+<li><a href="#cron-logs-and-output-logs-of-cron-jobs">Cron logs and "output" logs of cron jobs</a></li>
+<li><a href="#caveats-running-cron-jobs-in-docker">Caveats running cron jobs in docker</a></li>
+</ul></li>
+<li><a href="#rotate-logfiles-via-logrotate">Rotate logfiles via <code>logrotate</code></a>
+
+<ul>
+<li><a href="#install-logrotate">Install <code>logrotate</code></a></li>
+<li><a href="#configure-logrotate">Configure <code>logrotate</code></a></li>
+<li><a href="#logrotate-usage-example"><code>logrotate</code> usage example</a></li>
+<li><a href="#the-logrotate-state-file">The <code>logrotate</code> state file</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#codebase-changes">Codebase changes</a>
+
+<ul>
+<li><a href="#application">Application</a>
+
+<ul>
+<li><a href="#configure-logging-in-config-logging-php">Configure logging in <code>config/logging.php</code></a></li>
+<li><a href="#adding-a-default-context-for-log-messages">Adding a default context for log messages</a></li>
+<li><a href="#log-message-example">Log message example</a></li>
+</ul></li>
+<li><a href="#docker">Docker</a>
+
+<ul>
+<li><a href="#configure-log-file-settings">Configure log file settings</a>
+
+<ul>
+<li><a href="#php-base-image"><code>php base</code> image</a></li>
+<li><a href="#php-fpm-image"><code>php-fpm</code> image</a></li>
+<li><a href="#nginx-image"><code>nginx</code> image</a></li>
+<li><a href="#php-worker-image"><code>php-worker</code> image</a></li>
+<li><a href="#application-image"><code>application</code> image</a></li>
+</ul></li>
+<li><a href="#the-logger-container">The <code>logger</code> container</a></li>
+<li><a href="#setting-up-volumes">Setting up volumes</a>
+
+<ul>
+<li><a href="#one-volume-to-rule-them-all-is-a-bad-idea">One volume to rule them all - is a bad idea</a></li>
+<li><a href="#docker-compose-for-the-local-env"><code>docker compose</code> for the <code>local</code> env</a></li>
+<li><a href="#docker-for-the-prod-env"><code>docker</code> for the <code>prod</code> env</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul></li>
+<li><a href="#next-steps">Next steps</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>In traditional, non-dockerized applications it is quite common to write logs to actual files on 
+disk. Even though this isn't "the container way" of doing things (i.e. writing to <code>stdout</code>
+and <code>stderr</code> - see <a href="#logs-in-dockerized-applications">Logs in dockerized applications</a>), there 
+are often lots of processes build around this file-based approach.</p>
+
+<p>In this tutorial we will <strong>keep a file-based approach to writing logfiles</strong>
+(see <a href="#configure-log-file-settings">Configure log file settings</a>) and "manage" them 
+with a so-called sidecar container 
+(see <a href="#use-sidecar-containers-for-auxiliary-tasks">Use sidecar containers for auxiliary tasks</a>).</p>
+
+<p>The <a href="#next-steps">Next steps</a> section will outline some possible next steps on how to tackle 
+some caveats of this approach.</p>
+
+<p><!-- generated -->
+<a id='run-the-code-yourself'> </a>
+<!-- /generated --></p>
+
+<h3>Run the code yourself</h3>
+
+<pre><code class="language-bash"># Prepare the codebase
+git clone https://github.com/paslandau/docker-php-tutorial.git &amp;&amp; cd docker-php-tutorial
+git checkout part-13-manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate
+
+# Run the initialization 
+make dev-init
+
+# Follow the "Next steps" section to build, run and setup the application
+make docker-compose-build
+make docker-compose-up
+make setup
+make docker-compose-restart
+
+# Trigger a job in the application container
+make docker-compose-exec DOCKER_SERVICE_NAME=application DOCKER_COMMAND="php artisan app:trigger-job --job-id='test'" DOCKER_USERNAME=application
+
+# Show the application log file
+make docker-compose-exec DOCKER_SERVICE_NAME=application DOCKER_COMMAND="cat /var/log/app/application.log"
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-text">[2022-10-13 14:09:57] local.INFO: Calling php-fpm to insert job 'test' {"pid":826,"service":"application"}
+[2022-10-13 14:09:58] local.INFO: Handling HTTP request: http://nginx/?dispatch=test {"pid":9,"service":"php-fpm"}
+[2022-10-13 14:09:58] local.INFO: Result:&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Adding item 'test' to queue
+    &lt;/body&gt;
+&lt;/html&gt;
+ {"pid":826,"service":"application"}
+[2022-10-13 14:10:00] local.INFO: Inserting a job 'test' {"pid":9,"service":"php-worker"}
+</code></pre>
+
+<video controls>
+  <source src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/docker-logging-run-the-code.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>You can also 
+<a href="/blog/use-gcloud-cli-docker-image/#run-a-full-deployment">run a full production deployment as outlined in the last article</a>.</p>
+
+<p><!-- generated -->
+<a id='logs-in-dockerized-applications'> </a>
+<!-- /generated --></p>
+
+<h2>Logs in dockerized applications</h2>
+
+<p>Please refer to <a href="https://sematext.com/guides/docker-logs/">Docker Logging: A Complete Guide - Get Started with Docker Logging from Scratch</a>
+for a comprehensive overview about logging in docker. The main takeaways are:</p>
+
+<ul>
+<li>logging in containerized applications 
+<a href="https://sematext.com/guides/docker-logs/#how-is-docker-logging-different">is more complex</a> 
+because
+
+<ul>
+<li><strong>containers are ephemeral</strong>, i.e. they <em>should</em> be stateless and data (like logfiles) is not 
+retained after a container is re-created</li>
+<li><strong>containers run on a host system</strong>, i.e. there are not only container logs to care about 
+but also system logs of the host system (though this is out of scope for this tutorial)</li>
+<li><strong>containers should only run a single process</strong>, i.e. we can't rely on things like <code>crond</code> to 
+run regular cron jobs for managing logfiles like compressing and deleting old files</li>
+</ul></li>
+<li>the "docker" way of writing logs is not to write them to disk but to 
+<a href="#output-streams-vs-logfiles"><code>stdout</code> / <code>stderr</code> instead</a>
+
+<ul>
+<li>containers can then use a logging driver that handles the logs, e.g. by</li>
+<li>writing them to a file on the host system
+(<a href="https://docs.docker.com/config/containers/logging/local/"><code>--log-driver=local</code></a>)</li>
+<li>sending them to a log aggregator like <code>fluentd</code> 
+(<a href="https://docs.docker.com/config/containers/logging/fluentd/"><code>--log-driver=fluentd</code></a>)</li>
+</ul></li>
+<li>however, there are also
+<a href="https://sematext.com/guides/docker-logs/#docker-logging-strategies-and-best-practices">alternative logging strategies</a> 
+like:
+
+<ul>
+<li><a href="https://sematext.com/guides/docker-logs/#logging-using-data-volumes">using data volumes</a> to 
+retain data even after containers are re-created</li>
+<li>and <a href="https://sematext.com/guides/docker-logs/#logging-using-the-sidecar-approach">using a "sidecar" container</a>
+to "manage" the log files created by the "main" container</li>
+</ul></li>
+</ul>
+
+<p>Since <a href="#output-streams-vs-logfiles">using output streams over "actual" logfiles has some caveats</a>
+we will be going with the 
+<a href="#use-sidecar-containers-for-auxiliary-tasks">"volumes and sidecar containers" approach</a>.</p>
+
+<p><!-- generated -->
+<a id='output-streams-vs-logfiles'> </a>
+<!-- /generated --></p>
+
+<h3>Output streams vs logfiles</h3>
+
+<p><code>stdin</code>, <code>stderr</code> and <code>stdout</code> are the <strong>default data streams</strong> in Linux and <code>stderr</code> and <code>stdout</code> 
+are the <strong>default output streams</strong>. So what does it mean to "use output streams for logging" and 
+how is it different from a log file?</p>
+
+<p>Consider the command</p>
+
+<pre><code class="language-bash">echo "foo"
+</code></pre>
+
+<p>that will print the line "foo" directly to the terminal.</p>
+
+<pre><code class="language-text">$ echo "foo"
+foo
+</code></pre>
+
+<p>We have essentially "written" to the <code>stdout</code> output stream. This stream is also available at the 
+<code>/dev/stdout</code> <a href="https://stackoverflow.com/a/3511816/413531">special file</a>, and we could achieve 
+the same result by running</p>
+
+<pre><code class="language-bash">echo "foo" &gt;&gt; /dev/stdout
+</code></pre>
+
+<pre><code class="language-text">$ echo "foo" &gt;&gt; /dev/stdout
+foo
+</code></pre>
+
+<p>Conversely <code>/dev/stderr</code> prints to the <code>stderr</code> output stream. Even though it "seems" that we 
+are writing to a file, "nothing" was actually written to disk here.</p>
+
+<p>If we would use an "actual" file instead, "nothing" would be printed to the terminal, and we would 
+have to use something like <code>cat</code> to retrieve the content:</p>
+
+<pre><code class="language-text">$ echo "foo" &gt; logfile
+$ cat logfile
+foo
+</code></pre>
+
+<p>It is actually quite "easy" to make an application write to an output stream by simply 
+<a href="https://linuxize.com/post/how-to-create-symbolic-links-in-linux-using-the-ln-command/">creating a symlink</a>
+via</p>
+
+<pre><code class="language-bash">ln -s /dev/stdout logfile
+</code></pre>
+
+<p>so that "nothing" has to be changed in the application, but the logs are now written to 
+<code>/dev/stdout</code></p>
+
+<pre><code class="language-text">$ ls -l logfile
+lrwxrwxrwx 1 Pascal 197121 11 Oct  5 10:10 logfile -&gt; /dev/stdout
+
+$ echo foo &gt;&gt; logfile
+foo
+</code></pre>
+
+<p>Some links for further reading:</p>
+
+<ul>
+<li><a href="https://www.tutorialspoint.com/understanding-stdin-stderr-and-stdout-in-linux">Understanding <code>stdin</code>, <code>stderr</code> and <code>stdout</code> in Linux</a></li>
+<li><a href="https://jameshfisher.com/2018/03/31/dev-stdout-stdin/">What are /dev/stdout and /dev/stdin? What are they useful for?</a></li>
+<li><a href="https://unix.stackexchange.com/a/400864">SO: echo or print /dev/stdin /dev/stdout /dev/stderr</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='caveats-when-using-streams'> </a>
+<!-- /generated --></p>
+
+<h4>Caveats when using streams</h4>
+
+<p>Since it's "so easy" to enable logging to <code>stdout</code> via symlinks - why don't we just do it? Well, 
+even though we can treat <code>/dev/stdout</code> like a file in some aspects, it doesn't work for all 
+cases, and it's very likely that existing scripts and workflows cannot be used any longer.</p>
+
+<p>Consider for example a script that scans a logfile for the keyword "ERROR" and provides a statistic:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+file=$1
+error_lines=$(grep "ERROR" "$file" | wc -l)
+total_lines=$(wc -l "$file")
+
+echo "$error_lines of $total_lines lines were errors"
+</code></pre>
+
+<p>If we store the script in <code>script.sh</code> and run it on the following file called <code>logfile</code></p>
+
+<pre><code class="language-text">[2022-10-05 11:30:07] ERROR: Access denied
+[2022-10-05 12:30:11] INFO: File written
+[2022-10-05 13:34:12] ERROR: Timeout
+</code></pre>
+
+<p>The result is</p>
+
+<pre><code class="language-text">$ bash script.sh logfile
+2 of 3 logfile lines were errors
+</code></pre>
+
+<p>Full example:</p>
+
+<pre><code class="language-text">cat &lt;&lt; EOF &gt; script.sh
+#!/usr/bin/env bash
+
+file=\$1
+error_lines=\$(grep "ERROR" "\$file" | wc -l)
+total_lines=\$(wc -l "\$file")
+
+echo "\$error_lines of \$total_lines lines were errors"
+EOF
+
+cat &lt;&lt; EOF &gt; logfile
+[2022-10-05 11:30:07] ERROR: Access denied
+[2022-10-05 12:30:11] INFO: File written
+[2022-10-05 13:34:12] ERROR: Timeout
+EOF
+
+bash script.sh logfile
+</code></pre>
+
+<p>Now let's create a symlink from <code>logfile</code> to <code>/dev/stdout</code> and run the same script again:</p>
+
+<pre><code class="language-bash">rm -rf logfile
+ln -s /dev/stdout logfile
+
+cat &lt;&lt; EOF &gt; logfile
+[2022-10-05 11:30:07] ERROR: Access denied
+[2022-10-05 12:30:11] INFO: File written
+[2022-10-05 13:34:12] ERROR: Timeout
+EOF
+
+bash script.sh logfile
+</code></pre>
+
+<pre><code>$ cat &lt;&lt; EOF &gt; logfile
+&gt; [2022-10-05 11:30:07] ERROR: Access denied
+&gt; [2022-10-05 12:30:11] INFO: File written
+&gt; [2022-10-05 13:34:12] ERROR: Timeout
+&gt; EOF
+[2022-10-05 11:30:07] ERROR: Access denied
+[2022-10-05 12:30:11] INFO: File written
+[2022-10-05 13:34:12] ERROR: Timeout
+$ bash script.sh logfile
+# &lt;waiting for input&gt;
+</code></pre>
+
+<ul>
+<li>as expected, the content of the logfile has been written "immediately" to the terminal, i.e. 
+it won't even reach the script</li>
+<li>even worse: the script will now "hang" (indicated by <code># &lt;waiting for input&gt;</code>), because <code>grep</code> 
+is waiting for input on the stream</li>
+</ul>
+
+<p>Is this an unsolvable problem? Well, no. As mentioned before, we could just run a docker 
+container with <a href="https://docs.docker.com/config/containers/logging/local/"><code>--log-driver=local</code></a> 
+so that the logs written to <code>stdout</code> are stored on the host system. But then we have to somehow run 
+the script also on the host system instead of in the container.</p>
+
+<p>My point here is: You probably can't "just" use the symlink approach without any other 
+adjustments and depending on your situation this might mean <em>a lot</em> of effort.</p>
+
+<p><!-- generated -->
+<a id='use-volumes-to-retain-data'> </a>
+<!-- /generated --></p>
+
+<h3>Use volumes to retain data</h3>
+
+<p>To retain data even after a container is re-created, we need to use a 
+<a href="https://docs.docker.com/storage/volumes/">volume</a>. Let's say our application writes its logs to
+<code>/var/log/app/application.log</code>. We could then run the container via</p>
+
+<pre><code class="language-bash">docker run --rm -v application-log:/var/log/app/ busybox
+</code></pre>
+
+<p>to create a volume named <code>application-log</code> and use it in the container to store (and retain) data in
+the <code>/var/log/app/</code> directory. Example:</p>
+
+<pre><code class="language-bash">docker run --rm -v application-log:/var/log/app/ busybox rm -f /var/log/app/application.log
+
+for i in {1..3}; do
+  sleep 1
+  docker run --rm -v application-log:/var/log/app/ busybox \
+            sh -c "echo '[$(date +"%Y-%m-%d %H:%I:%S")] Hello $i' &gt;&gt; /var/log/app/application.log"
+done;
+
+docker run --rm -v application-log:/var/log/app/ busybox cat /var/log/app/application.log
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-text">[2022-10-06 09:09:42] Hello 1
+[2022-10-06 09:09:44] Hello 2
+[2022-10-06 09:09:46] Hello 3
+</code></pre>
+
+<p>Without the volume, the file would not be retained:</p>
+
+<pre><code class="language-bash">for i in {1..3}; do
+  sleep 1
+  docker run --rm busybox \
+            sh -c "echo '[$(date +"%Y-%m-%d %H:%I:%S")] Hello $i' &gt;&gt; /tmp/application.log"
+done;
+
+docker run --rm busybox cat /tmp/application.log
+</code></pre>
+
+<p>Output:</p>
+
+<pre><code class="language-text">cat: can't open '/tmp/application.log': No such file or directory
+</code></pre>
+
+<p><!-- generated -->
+<a id='use-sidecar-containers-for-auxiliary-tasks'> </a>
+<!-- /generated --></p>
+
+<h3>Use "sidecar" containers for auxiliary tasks</h3>
+
+<p>According to the 
+<a href="https://docs.docker.com/config/containers/multi-service_container/">Docker docs: Run multiple services in a container</a>
+a container should only run a single service:</p>
+
+<blockquote>
+  <p>It is generally recommended that you separate areas of concern <strong>by using one service per 
+  container</strong>. That service may fork into multiple processes (for example, Apache web server 
+  starts multiple worker processes). It’s ok to have multiple processes, but to get the most 
+  benefit out of Docker, avoid one container being responsible for multiple aspects of your 
+  overall application.</p>
+</blockquote>
+
+<p>Even though this 
+<a href="https://www.tutorialworks.com/containers-single-or-multiple-processes/#why-should-a-container-have-only-one-process">has quite a lot of benefits</a>,
+it also comes with some downsides when you are  coming from a "normal VM" background, because a 
+lot of things that we could rely on "are no longer there" - e.g. <code>crond</code> for running cron jobs 
+or <code>init.d</code> for service management.</p>
+
+<p>Those services are very helpful for <strong>auxiliary tasks</strong>, i.e. tasks that are not part of the main 
+application but still need to be done. One such example is the management of logfiles (e.g. 
+deletion and compression).</p>
+
+<p>A common approach to solve this issue is the 
+<a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/sidecar">sidecar pattern</a>:</p>
+
+<blockquote>
+  <p>This pattern is named Sidecar because it resembles a sidecar attached to a motorcycle. In the 
+  pattern, the sidecar is attached to a parent application and provides supporting features for the 
+  application. The sidecar also shares the same lifecycle as the parent application, being 
+  created and retired alongside the parent.</p>
+</blockquote>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/sidecar.png"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/sidecar.png" alt="Sidecar containers" /></a>
+(<a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/sidecar#solution">Source</a>)</p>
+
+<p>Here is how this might look like for a <code>logger</code> sidecar of an <code>application</code> container:</p>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar.PNG" alt="A &quot;logger&quot; sidecar container" /></a></p>
+
+<ul>
+<li>both containers use the volume <code>application-logs</code> with path <code>/var/log/app/</code></li>
+<li>the <code>application</code> container writes its logfile to <code>/var/log/app/application.log</code></li>
+<li><p>the <code>logger</code> container runs <code>crond</code> as its main service</p>
+
+<ul>
+<li>the <code>crontab</code> defines executing <code>logrotate</code> each day at midnight via</li>
+</ul>
+
+<pre><code class="language-text">0 0 * * * logrotate
+</code></pre>
+
+<ul>
+<li><code>logrotate</code> is configured via <code>/etc/logrotate.d/app</code> to rotate all files with a <code>.log</code> suffix
+in the <code>/var/log/app/</code> directory</li>
+</ul>
+
+<pre><code class="language-text">/var/log/app/*.log {
+  daily
+  rotate 14
+  compress
+  #...
+}
+</code></pre></li>
+</ul>
+
+<p>The <strong>downside</strong> of this approach is the <strong>added complexity of deploying and running an additional 
+container</strong>, though I strongly believe that the <strong>upside of clearly separating the concerns</strong> 
+definitely outweighs the downsides. FYI: 
+<a href="https://kubernetes.io/docs/concepts/cluster-administration/logging/#using-a-sidecar-container-with-the-logging-agent">Using a sidecar is also a common approach in Kubernetes</a>.</p>
+
+<p><!-- generated -->
+<a id='tools-crond-and-logrotate'> </a>
+<!-- /generated --></p>
+
+<h2>Tools: <code>crond</code> and <code>logrotate</code></h2>
+
+<p><!-- generated -->
+<a id='run-cron-jobs-on-docker-via-crond'> </a>
+<!-- /generated --></p>
+
+<h3>Run cron jobs on docker via <code>crond</code></h3>
+
+<p>Using <strong>cron jobs</strong> is usually the way to go when <strong>re-occurring tasks should be executed</strong> on a 
+defined schedule. Unfortunately, handling cron jobs is not as "unified" as one might wish as 
+there are a couple of differences across various implementations and operating systems. I'm 
+mentioning this explicitly, because it makes googling for answers a lot harder...</p>
+
+<p>In this case, we will be using <code>crond</code> in an alpine <code>docker</code> container, installed via the 
+<a href="https://pkgs.alpinelinux.org/package/edge/main/x86/apk-cron"><code>apk-cron</code></a> package:</p>
+
+<pre><code class="language-text">root:/var/www/app# crond --help
+BusyBox v1.34.1 (2022-07-19 20:11:24 UTC) multi-call binary.
+
+Usage: crond [-fbS] [-l N] [-d N] [-L LOGFILE] [-c DIR]
+
+        -f      Foreground
+        -b      Background (default)
+        -S      Log to syslog (default)
+        -l N    Set log level. Most verbose 0, default 8
+        -d N    Set log level, log to stderr
+        -L FILE Log to FILE
+        -c DIR  Cron dir. Default:/var/spool/cron/crontabs
+</code></pre>
+
+<p><!-- generated -->
+<a id='install-crond-on-alpine'> </a>
+<!-- /generated --></p>
+
+<h4>Install <code>crond</code> on alpine</h4>
+
+<p><code>apk-cron</code> does actually come pre-installed on alpine base images. If not, you could install it via</p>
+
+<pre><code class="language-bash">apk add --update apk-cron
+</code></pre>
+
+<p>This provides the command <code>crond</code> which will execute all cron jobs defined in the <code>crondir</code>. By 
+default, this directory is <code>/var/spool/cron/crontabs/</code> - which is actually a symlink to 
+<code>/etc/crontabs/</code>.</p>
+
+<pre><code class="language-text">$ ls -l /var/spool/cron/crontabs/
+lrwxrwxrwx 1 root root 13 Aug  9 08:58 /var/spool/cron/crontabs -&gt; /etc/crontabs
+</code></pre>
+
+<p>The directory could be changed with the <code>-c</code> option of <code>crond</code>:</p>
+
+<pre><code class="language-text">-c DIR  Cron dir. Default:/var/spool/cron/crontabs
+</code></pre>
+
+<p><code>crond</code> comes with a pre-configured cron job schedule for <code>root</code> at <code>/etc/crontabs/root</code> that 
+executes cron jobs in the pre-defined directories located in <code>/etc/periodic/</code>:</p>
+
+<pre><code class="language-text">$ cat /etc/crontabs/root
+# do daily/weekly/monthly maintenance
+# min   hour    day     month   weekday command
+*/15    *       *       *       *       run-parts /etc/periodic/15min
+0       *       *       *       *       run-parts /etc/periodic/hourly
+0       2       *       *       *       run-parts /etc/periodic/daily
+0       3       *       *       6       run-parts /etc/periodic/weekly
+0       5       1       *       *       run-parts /etc/periodic/monthly
+</code></pre>
+
+<p>In other words: Each script located in <code>/etc/periodic/15min</code> will be executed every 15 minutes. 
+Though we don't really care about those directories, because we will 
+<a href="#define-a-cron-schedule">define our own schedules</a> anyway, and I recommend removing them 
+entirely via</p>
+
+<pre><code class="language-bash">rm -rf /etc/periodic/
+</code></pre>
+
+<p><!-- generated -->
+<a id='define-a-cron-job'> </a>
+<!-- /generated --></p>
+
+<h4>Define a cron job</h4>
+
+<p>Cron jobs are defined in <code>crontab</code> files, i.e. files located in the <code>crondir</code>. The name of the 
+file determines the user under that the commands in the file are executed. Examples for 
+<code>crondir = /etc/crontabs</code>:</p>
+
+<pre><code class="language-text">/etc/crontabs/root          =&gt; executes as user `root`
+/etc/crontabs/application   =&gt; executes as user `application`
+</code></pre>
+
+<p>Test via</p>
+
+<pre><code class="language-bash">echo "* * * * * whoami" &gt; /etc/crontabs/root
+echo "* * * * * whoami" &gt; /etc/crontabs/application
+
+crond -f -l 7 -L /dev/stdout
+</code></pre>
+
+<p>running <code>crond</code></p>
+
+<ul>
+<li>in the foreground via <code>-f</code> (to see the output immediately in the terminal)</li>
+<li>set the log level via <code>-l 7</code></li>
+<li>and print the logs to <code>/dev/stdout</code> via <code>-L /dev/stdout</code></li>
+</ul>
+
+<p>Output:</p>
+
+<pre><code class="language-text">$ crond -f -l 7 -L /dev/stdout
+crond: crond (busybox 1.34.1) started, log level 7
+crond: USER application pid  75 cmd whoami
+crond: USER root pid  76 cmd whoami
+application
+root
+</code></pre>
+
+<p>Please note, that it can take some time (up to a minute) until the cron jobs are run.</p>
+
+<p><strong>Caution:</strong> Running the cron jobs as a certain user only works properly out of the box when 
+<code>crond</code> is started as <code>root</code>. Otherwise, you will get the error</p>
+
+<pre><code class="language-text">crond: can't set groups: Operation not permitted
+</code></pre>
+
+<p>There are ways around this (see e.g. 
+<a href="https://medium.com/@geekidea_81313/running-cron-jobs-as-non-root-on-alpine-linux-e5fa94827c34">Running Cron Jobs as Non-root on Alpine Linux</a>)
+though for our use case I'm fine with running as <code>root</code>.</p>
+
+<p><!-- generated -->
+<a id='define-a-cron-schedule'> </a>
+<!-- /generated --></p>
+
+<h4>Define a cron schedule</h4>
+
+<p>The <a href="https://en.wikipedia.org/wiki/Cron#Overview">standard way to define a schedule for a cron job</a>
+is as follows</p>
+
+<pre><code class="language-text"># ┌───────────── minute (0 - 59)
+# │ ┌───────────── hour (0 - 23)
+# │ │ ┌───────────── day of the month (1 - 31)
+# │ │ │ ┌───────────── month (1 - 12)
+# │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday;
+# │ │ │ │ │                                   7 is also Sunday on some systems)
+# │ │ │ │ │
+# │ │ │ │ │
+# * * * * * &lt;command to execute&gt;
+</code></pre>
+
+<p>I.e. the following example would run the <code>logrotate</code> command every day at midnight:</p>
+
+<pre><code class="language-text"># ┌───────────── at minute 0
+# │ ┌───────────── at hour 0
+# │ │ ┌───────────── every day of the month
+# │ │ │ ┌───────────── every month
+# │ │ │ │ ┌───────────── every day of the week
+# │ │ │ │ │
+# 0 0 * * * logrotate
+</code></pre>
+
+<p>If you have trouble reading or defining cron job definitions, I recommend taking a look at
+<a href="https://crontab.guru/">crontab.guru</a> that provides a nice UI for understanding the scheduling 
+pattern.</p>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/crontab-guru.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/crontab-guru.PNG" alt="crontab.guru" /></a></p>
+
+<p><!-- generated -->
+<a id='cron-logs-and-output-logs-of-cron-jobs'> </a>
+<!-- /generated --></p>
+
+<h4>Cron logs and "output" logs of cron jobs</h4>
+
+<p>(See also <a href="https://askubuntu.com/a/121560/1583296">Where is the cron / crontab log?</a>)</p>
+
+<p>We have already learned about the logs of <code>crond</code> itself, that can be written to a file 
+specified by the <code>-L</code> option with the level defined via the <code>-l</code> option
+(see also <a href="https://unix.stackexchange.com/a/414010">crond log level meaning</a>):</p>
+
+<pre><code class="language-text">-l N    Set log level. Most verbose 0, default 8
+-d N    Set log level, log to stderr
+-L FILE Log to FILE
+</code></pre>
+
+<p>In addition, we also might want to <strong>capture the output of the cron jobs themselves</strong>. This can 
+be done by redirecting the output to a file, e.g. via</p>
+
+<pre><code class="language-text">* * * * * whoami &gt;&gt; /var/log/cron-output.log 2&gt;&amp;1
+</code></pre>
+
+<p>where <code>/var/log/cron-output.log</code> is the path of logfile and 
+<a href="https://wiki.bash-hackers.org/howto/redirection_tutorial#duplicating_file_descriptor_2_1"><code>2&gt;&amp;1</code> ensures that <code>stderr</code> is redirected to <code>stdin</code></a>
+(which is then redirected in the logfile).</p>
+
+<p>Test via</p>
+
+<pre><code class="language-bash">touch /var/log/cron-output.log
+chown application /var/log/cron-output.log
+
+echo "* * * * * whoami &gt;&gt; /var/log/cron-output.log 2&gt;&amp;1" &gt; /etc/crontabs/application
+
+crond -f -l 7 -L /var/log/cron.log
+
+# wait a minute for the cron job to be executed ...
+</code></pre>
+
+<p>Please note, that <strong>the "output" logfile must be writable by the user that runs the command</strong>, i.e. 
+<code>application</code> in the example above. Output:</p>
+
+<pre><code class="language-text">$ tail -n +1 /var/log/cron-output.log /var/log/cron.log
+==&gt; /var/log/cron-output.log &lt;==
+application
+
+==&gt; /var/log/cron.log &lt;==
+crond: crond (busybox 1.34.1) started, log level 7
+crond: USER application pid 119 cmd whoami &gt;&gt; /var/log/cron-output.log 2&gt;&amp;1
+</code></pre>
+
+<p><!-- generated -->
+<a id='caveats-running-cron-jobs-in-docker'> </a>
+<!-- /generated --></p>
+
+<h4>Caveats running cron jobs in docker</h4>
+
+<p>There are some caveats when running cron jobs especially in docker:</p>
+
+<ul>
+<li>we already learned that <code>crond</code> has to be executed as <code>root</code> - 
+<a href="https://theorangeone.net/posts/containers-as-root/">this isn't great for security</a></li>
+<li><a href="https://unix.stackexchange.com/questions/42715/how-can-i-make-cron-run-a-job-right-now-for-testing-debugging-without-changing">testing cron is tricky</a>,
+because there is no "run this crontab immediately" command. The 
+closest I have come to this is using <code>* * * * *</code> and then wait a minute for <code>crond</code> to execute 
+the script</li>
+<li><a href="https://www.baeldung.com/linux/load-env-variables-in-cron-job">environment variables can be a pain</a></li>
+</ul>
+
+<p>Plus a bunch of other stuff mentioned in 
+<a href="https://blog.thesparktree.com/cron-in-docker">Running Cron in Docker</a> - so I recommend giving 
+this a read as well. I've also come across <a href="https://github.com/aptible/supercronic/"><code>superchronic</code></a>
+that is supposed to easy the pain of dealing with cron jobs in container - but I didn't have a 
+reason to use it so far.</p>
+
+<p><!-- generated -->
+<a id='rotate-logfiles-via-logrotate'> </a>
+<!-- /generated --></p>
+
+<h3>Rotate logfiles via <code>logrotate</code></h3>
+
+<p><a href="https://linux.die.net/man/8/logrotate"><code>logrotate</code></a> is a utility to manage logfiles:</p>
+
+<blockquote>
+  <p><strong>logrotate</strong> is designed to ease administration of systems that generate large numbers of log 
+  files. It allows automatic rotation, compression, removal, and mailing of log files.</p>
+</blockquote>
+
+<p>For additional tutorials please take a look at</p>
+
+<ul>
+<li><a href="https://adamtheautomator.com/logrotate-linux/">How to Configure Logrotate to Manage Logfiles (Step by Step)</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-manage-logfiles-with-logrotate-on-ubuntu-16-04">How To Manage Logfiles with Logrotate on Ubuntu 16.04</a></li>
+</ul>
+
+<p>Just in case you find <code>logrotate</code> too complex: It's also 
+<a href="https://stackoverflow.com/a/22621156/413531">completely fine to use <code>find</code> instead</a>, e.g. via</p>
+
+<pre><code class="language-bash">find /var/log -mtime +14 -delete
+find /var/log ! -name \*.gz -mtime +1 -exec gzip
+</code></pre>
+
+<p><!-- generated -->
+<a id='install-logrotate'> </a>
+<!-- /generated --></p>
+
+<h4>Install <code>logrotate</code></h4>
+
+<p>On alpine, <code>logrotate</code> can be installed using the 
+<a href="https://pkgs.alpinelinux.org/packages?name=logrotate&amp;branch=v3.15">logrotate package</a> via</p>
+
+<pre><code class="language-bash">apk add --update logrotate
+</code></pre>
+
+<p>For this tutorial, I'm using <code>v3.18.1</code>:</p>
+
+<pre><code class="language-text">$ logrotate --version
+logrotate 3.18.1
+
+    Default mail command:       /bin/mail
+    Default compress command:   /bin/gzip
+    Default uncompress command: /bin/gunzip
+    Default compress extension: .gz
+    Default state file path:    /var/lib/logrotate.status
+    ACL support:                no
+    SELinux support:            no
+</code></pre>
+
+<p>Options:</p>
+
+<pre><code class="language-text">$ logrotate --help
+Usage: logrotate [OPTION...] &lt;configfile&gt;
+  -d, --debug               Don't do anything, just test and print debug
+                            messages
+  -f, --force               Force file rotation
+  -m, --mail=command        Command to send mail (instead of `/bin/mail')
+  -s, --state=statefile     Path of state file
+      --skip-state-lock     Do not lock the state file
+  -v, --verbose             Display messages during rotation
+  -l, --log=logfile         Log file or 'syslog' to log to syslog
+      --version             Display version information
+
+Help options:
+  -?, --help                Show this help message
+      --usage               Display brief usage message
+</code></pre>
+
+<p><!-- generated -->
+<a id='configure-logrotate'> </a>
+<!-- /generated --></p>
+
+<h4>Configure <code>logrotate</code></h4>
+
+<p><code>logrotate</code> requires a config file as argument. This is by default located at 
+<code>/etc/logrotate.conf</code> and contains the configuration that is applied to all logfiles that are 
+supposed to be managed by <code>logrotate</code>. The default file looks as follows:</p>
+
+<pre><code class="language-text">$ cat /etc/logrotate.conf
+# see "man logrotate" for details
+# rotate log files weekly
+weekly
+
+# keep 4 weeks worth of backlogs
+rotate 4
+
+# create new (empty) log files after rotating old ones
+create
+
+# use date as a suffix of the rotated file
+dateext
+
+# exclude alpine files
+tabooext + .apk-new
+
+# uncomment this if you want your log files compressed
+compress
+
+# apk packages drop log rotation information into this directory
+include /etc/logrotate.d
+</code></pre>
+
+<p>Please refer to the <a href="https://linux.die.net/man/8/logrotate"><code>logrotate</code> Linux man page</a> for a 
+full list of all options.</p>
+
+<p>The to-be-managed logfiles are defined in individual files in the directory specified via the
+<code>include</code> option (<code>/etc/logrotate.d</code> in the example above) and look like this:</p>
+
+<pre><code class="language-text">/var/log/app/*.log {
+  # additional options on top of /etc/logrotate.conf
+  daily # overwrites the "weekly" option
+  # don't fail on missing log files
+  missingok # additional option
+}
+</code></pre>
+
+<p><code>/var/log/app/*.log</code> defines a pattern to match all files with the <code>.log</code> extension in the
+<code>/var/log/app/</code> directory to which this configuration should be applied and the options in the 
+<code>{}</code> block are applied on top of the default config. We can then run <code>logrotate</code> via</p>
+
+<pre><code class="language-text">logrotate /etc/logrotate.conf
+</code></pre>
+
+<p><!-- generated -->
+<a id='logrotate-usage-example'> </a>
+<!-- /generated --></p>
+
+<h4><code>logrotate</code> usage example</h4>
+
+<p>Let's assume the following default configuration in <code>/etc/logrotate.conf</code></p>
+
+<pre><code class="language-text"># rotate log files daily
+daily
+
+# keep 3 days
+rotate 3
+
+# create new (empty) log files after rotating old ones
+create
+
+# compress rotated files
+compress
+
+# don't compress the latest rotate file (=yesterday on daily frequency)
+delaycompress
+
+# use log rotation information from this directory
+include /etc/logrotate.d
+</code></pre>
+
+<p>and the log file config at <code>/etc/logrotate.d/app</code> for all files matching <code>/var/log/app/*.log</code></p>
+
+<pre><code class="language-text">/var/log/app/*.log {
+  # use date as a suffix of the rotated file
+  dateext
+  # use yesterdays date as the filename
+  dateyesterday
+  dateformat -%Y-%m-%d
+}
+</code></pre>
+
+<p>The "final" configuration is then:</p>
+
+<ul>
+<li><code>daily</code> (rotate log files daily)</li>
+<li><code>rotate 3</code> (keep 3 days)</li>
+<li><code>create</code> (create new [empty] log files after rotating old ones)</li>
+<li><code>compress</code> (compress rotated files)</li>
+<li><code>delaycompress</code> (don't compress the latest rotate file [=yesterday on daily frequency])</li>
+<li><code>include /etc/logrotate.d</code> (use log rotation information from this directory)</li>
+<li><code>dateext</code> (use date as a suffix of the rotated file)</li>
+<li><code>dateyesterday</code> (use yesterdays date as the filename)</li>
+<li><code>dateformat -%Y-%m-%d</code> (format the date as Y-m-d, e.g. <code>-2022-10-07</code>)</li>
+</ul>
+
+<p>In addition, the following files exist in <code>/var/log/app/</code></p>
+
+<pre><code class="language-text">/var/log/app/
+├── application.log
+├── application.log-2022-10-05
+├── application.log-2022-10-04.gz
+└── application.log-2022-10-03.gz
+</code></pre>
+
+<p>"Today" is the <code>2022-10-07</code> (important for determining the file suffix) and we run <code>logrotate</code> via</p>
+
+<pre><code class="language-text">$ logrotate /etc/logrotate.conf
+</code></pre>
+
+<p>Then the "result" will be</p>
+
+<pre><code class="language-text">/var/log/app/
+├── application.log
+├── application.log-2022-10-06
+├── application.log-2022-10-05.gz
+└── application.log-2022-10-04.gz
+</code></pre>
+
+<p>where</p>
+
+<ul>
+<li><code>application.log</code> is a new, empty file
+
+<ul>
+<li>due to <code>create</code></li>
+</ul></li>
+<li><code>application.log-2022-10-06</code> is the "previous" <code>application.log</code> before the rotation
+
+<ul>
+<li>containing "yesterdays date" as a suffix due to
+
+<ul>
+<li><code>dateext</code></li>
+<li><code>dateyesterday</code></li>
+<li>and <code>dateformat -%Y-%m-%d</code></li>
+</ul></li>
+<li>not compressed due to <code>delaycompress</code></li>
+</ul></li>
+<li><code>application.log-2022-10-05</code> was compressed to <code>application.log-2022-10-05.gz</code>
+
+<ul>
+<li>due to <code>compress</code></li>
+</ul></li>
+<li><code>application.log-2022-10-03.gz</code> was removed
+
+<ul>
+<li>due to <code>rotate 3</code></li>
+</ul></li>
+</ul>
+
+<p>FYI: I found 
+<a href="https://stackoverflow.com/a/27566659/413531">this answer to "Logrotate to clean up date stamped files"</a>
+helpful to build a mental modal on how the deletion process works in detail as well as 
+<a href="https://www.datadoghq.com/blog/log-file-control-with-logrotate/">How to manage log files using logrotate</a>
+for a general introduction to <code>logrotate</code> and it's options.</p>
+
+<p><!-- generated -->
+<a id='the-logrotate-state-file'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>logrotate</code> state file</h4>
+
+<p><code>logrotate</code> needs to <strong>keep track of the log files that it rotated</strong> in order to understand if any
+action is required. This is done via the <strong>state file</strong>, which is by default located at
+<code>/var/lib/logrotate.status</code> though the location can be changed with the <code>-s</code> option</p>
+
+<pre><code class="language-text">-s, --state=statefile     Path of state file
+</code></pre>
+
+<p>It looks like this:</p>
+
+<pre><code class="language-text">$ cat /var/lib/logrotate.status
+logrotate state -- version 2
+"/var/log/app/application.log" 2022-10-7-5:0:0
+</code></pre>
+
+<ul>
+<li><code>/var/log/app/application.log</code> is log file</li>
+<li><code>2022-10-7-5:0:0</code> is the time of the last rotation</li>
+</ul>
+
+<p>If <code>/var/log/app/application.log</code> is configured to be rotated daily, "nothing" would happen
+if we ran <code>logrotate</code> before <code>2022-10-08 05:00:00</code>. Trying it with the <code>-v</code> flag (for "verbose"
+output) shows something like this:</p>
+
+<pre><code class="language-text">$ logrotate /etc/logrotate.conf -v
+reading config file /etc/logrotate.conf
+including /etc/logrotate.d
+reading config file app
+Reading state from file: /var/lib/logrotate.status
+Allocating hash table for state file, size 64 entries
+Creating new state
+
+Handling 1 logs
+
+rotating pattern: /var/log/app/*.log  after 1 days (3 rotations)
+empty log files are rotated, old logs are removed
+considering log /var/log/app/application.log
+  Now: 2022-10-07 12:46
+  Last rotated at 2022-10-07 05:00
+  log does not need rotating (log has been rotated at 2022-10-07 05:00, which is less than a day ago)
+</code></pre>
+
+<p>Note the last line</p>
+
+<pre><code class="language-text">log does not need rotating (log has been rotated at 2022-10-07 05:00, which is less than a day ago)
+</code></pre>
+
+<p>When we manually modify the status file to set the last rotation date e.g. to <code>2022-10-6-5:0:0</code>
+(one day before) and re-run <code>logrotate</code>, the output changes to</p>
+
+<pre><code class="language-text">$ cat /var/lib/logrotate.status
+logrotate state -- version 2
+"/var/log/app/application.log" 2022-10-6-5:0:0
+
+$ logrotate /etc/logrotate.conf -v
+
+# ...
+
+rotating log /var/log/app/application.log, log-&gt;rotateCount is 3
+
+# ...
+</code></pre>
+
+<p>and the status file is updated with the current time, e.g.</p>
+
+<pre><code class="language-text">$ cat /var/lib/logrotate.status
+logrotate state -- version 2
+"/var/log/app/application.log" 2022-10-7-13:16:43
+</code></pre>
+
+<p><!-- generated -->
+<a id='codebase-changes'> </a>
+<!-- /generated --></p>
+
+<h2>Codebase changes</h2>
+
+<p><!-- generated -->
+<a id='application'> </a>
+<!-- /generated --></p>
+
+<h3>Application</h3>
+
+<p>In order to meaningfully test the log rotation, we need to, well, start logging stuff in the 
+application. In Laravel this is either done via the <code>Log</code> facade or by injecting a
+<code>Psr\Log\LoggerInterface</code>. As I'm not a big fan of Facades, I always opt for the latter :)</p>
+
+<p>Since we have three containers running the PHP application (<code>application</code>, <code>php-fpm</code> and 
+<code>php-worker</code>), I have added log statements in multiple places:</p>
+
+<hr />
+
+<p><code>\App\Http\Controllers\HomeController</code> for <code>php-fpm</code></p>
+
+<pre><code class="language-php">class HomeController extends Controller
+{
+    public function __invoke(/** ...*/, LoggerInterface $logger): View
+    {
+        $logger-&gt;info("Handling HTTP request: ".$request-&gt;getUri());
+
+        // ...
+    }
+}
+</code></pre>
+
+<hr />
+
+<p>A new command <code>\App\Commands\TriggerJobCommand</code> for <code>application</code></p>
+
+<pre><code class="language-php">class TriggerJobCommand extends Command
+{
+    // ...
+
+    public function handle(LoggerInterface $logger): void
+    {
+        $jobId = $this-&gt;option("job-id");
+        $logger-&gt;info("Calling php-fpm to insert job '$jobId'");
+        $result = file_get_contents("http://nginx/?dispatch=".urlencode($jobId));
+        $logger-&gt;info("Result:".$result);
+    }
+}
+</code></pre>
+
+<hr />
+
+<p><code>\App\Jobs\InsertInDbJob</code> for <code>php-worker</code></p>
+
+<pre><code class="language-php">class InsertInDbJob implements ShouldQueue
+{
+    // ...
+
+    public function handle(DatabaseManager $databaseManager, LoggerInterface $logger): void
+    {
+        $logger-&gt;info("Inserting a job '{$this-&gt;jobId}'");
+        $databaseManager-&gt;insert("INSERT INTO `jobs`(value) VALUES(?)", [$this-&gt;jobId]);
+    }
+}
+</code></pre>
+
+<p><!-- generated -->
+<a id='configure-logging-in-config-logging-php'> </a>
+<!-- /generated --></p>
+
+<h4>Configure logging in <code>config/logging.php</code></h4>
+
+<p>Since we want to log to a file (that is then managed via <code>logrotate</code>), we need to apply the 
+necessary changes to <code>config/logging.php</code> (see also the 
+<a href="https://laravel.com/docs/9.x/logging">Laravel docs on "Logging"</a>).</p>
+
+<p>The default log channel is set to <code>stack</code>, which uses the <code>single</code> channel, which writes the 
+logs to file <code>/var/log/app/application.log</code>.</p>
+
+<pre><code class="language-text"># ...
+    'default' =&gt; env('LOG_CHANNEL', 'stack'),
+    'channels' =&gt; [
+        'stack' =&gt; [
+            'driver' =&gt; 'stack',
+            'channels' =&gt; ['single'],
+            'ignore_exceptions' =&gt; false,
+        ],
+
+        'single' =&gt; [
+            'driver' =&gt; 'single',
+            'path' =&gt;  env('LOG_PATH', '/var/log/app/application.log'),
+            'level' =&gt; env('LOG_LEVEL', 'debug'),
+        ],
+    ]
+# ...
+</code></pre>
+
+<p><!-- generated -->
+<a id='adding-a-default-context-for-log-messages'> </a>
+<!-- /generated --></p>
+
+<h4>Adding a default context for log messages</h4>
+
+<p>I find it often helpful to add some default context to log messages. In our case, it's for 
+example helpful to understand from which service a log line was written. Even though 
+<a href="https://laravel.com/docs/9.x/logging#contextual-information">Laravel provides a native solution for this via <code>Log::shareContext()</code></a>
+I've opted to go for a custom class as it gives us more control over the Logger (and the native 
+solution did not work in the <code>php-worker</code> for whatever reason).</p>
+
+<p>I've created a new class <code>\App\Domain\Logger</code> that acts as a decorator of Laravels native Logger 
+and is defined as follows:</p>
+
+<pre><code class="language-php">namespace App\Domain;
+
+use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerTrait;
+
+class Logger implements LoggerInterface
+{
+    use LoggerTrait;
+
+    public function __construct(
+        private LoggerInterface $logger,
+        private array $defaultContext = []
+    ) {
+    }
+
+    public function log($level, string|\Stringable $message, array $context = []): void
+    {
+        $context = array_replace($this-&gt;defaultContext, $context);
+        $this-&gt;logger-&gt;log($level, $message, $context);
+    }
+}
+</code></pre>
+
+<p>To make Laravel use this new Logger, I have registered it for <code>Psr\Log\LoggerInterface</code> 
+<a href="https://laravel.com/docs/9.x/container#binding-a-singleton">as a <code>singleton</code> in the IoC container</a>
+via the <code>AppServiceProvider::register()</code> method</p>
+
+<pre><code class="language-php">class AppServiceProvider extends ServiceProvider
+{
+    public function register()
+    {
+        $this-&gt;commands([
+            SetupDbCommand::class,
+            LogCommand::class,
+            TriggerJobCommand::class,
+        ]);
+
+        $this-&gt;mergeConfigFrom(__DIR__."/../../config/custom.php", "custom");
+
+        $this-&gt;app-&gt;singleton(LoggerInterface::class, function () {
+            $log            = $this-&gt;app-&gt;get("log");
+            $config         = $this-&gt;app-&gt;get(Repository::class);
+            $serviceName    = $config-&gt;get("custom.service");
+            $defaultContext = [
+                'pid'     =&gt; getmypid(),
+                'service' =&gt; $serviceName,
+            ];
+            return new \App\Domain\Logger($log, $defaultContext);
+        });
+    }
+</code></pre>
+
+<p>The service name is defined in a new config class located at <code>/config/custom.php</code> that enables 
+us to define the name with the environment variable <code>SERVICE_NAME</code></p>
+
+<pre><code class="language-php">return [
+    "service" =&gt;  env('SERVICE_NAME', 'NO SERVICE DEFINED'),
+];
+</code></pre>
+
+<p>We will add the <code>SERVICE_NAME</code> in section <a href="#docker">Docker images</a> to all php application images.</p>
+
+<p><!-- generated -->
+<a id='log-message-example'> </a>
+<!-- /generated --></p>
+
+<h4>Log message example</h4>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/log-message-example.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/log-message-example.PNG" alt="Log message example flow" /></a></p>
+
+<p>With the above-mentioned setup, we will be able to trigger a job via <code>php artisan app:trigger-job</code>
+that will create the following log messages:</p>
+
+<pre><code class="language-text">[2022-10-07 14:37:01] local.INFO: Calling php-fpm to insert job '2022-10-07 14:37:00' {"pid":7637,"service":"application"}
+[2022-10-07 14:37:01] local.INFO: Handling HTTP request: http://nginx/?dispatch=2022-10-07%2014%3A37%3A00 {"pid":211,"service":"php-fpm"}
+[2022-10-07 14:37:01] local.INFO: Result:&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="utf-8"&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    Adding item '2022-10-07 14:37:00' to queue
+    &lt;/body&gt;
+&lt;/html&gt;
+ {"pid":7637,"service":"application"}
+[2022-10-07 14:37:02] local.INFO: Inserting a job '2022-10-07 14:37:00' {"pid":215,"service":"php-worker"} 
+</code></pre>
+
+<p><!-- generated -->
+<a id='docker'> </a>
+<!-- /generated --></p>
+
+<h3>Docker</h3>
+
+<p>For each docker image we need to ensure that:</p>
+
+<ul>
+<li>the 
+<a href="#configure-log-file-settings">log settings are configured correctly for each program</a>,
+i.e. <strong>logs are enabled and written to a file</strong></li>
+<li>the directory to write the logs to <strong>exists</strong> and has the <strong>correct permissions at build time</strong> 
+and is <a href="#setting-up-volumes">set up as a volume at run time</a></li>
+<li>for each php application service we also need to <strong>populate the <code>SERVICE_NAME</code> environment 
+variable</strong></li>
+</ul>
+
+<p>In addition, we need to create the <a href="#the-logger-container">logger sidecar image</a>.</p>
+
+<p>FYI: File permissions on volume mounts are "inherited" from an image, if the corresponding 
+directory exists in the image. See also
+<a href="https://serverfault.com/a/984599">Change permissions for named volumes in Docker</a>.</p>
+
+<p><!-- generated -->
+<a id='configure-log-file-settings'> </a>
+<!-- /generated --></p>
+
+<h4>Configure log file settings</h4>
+
+<p>Next to our application, we also use other services that create log files (e.g. <code>nginx</code> access 
+and error logs) and must ensure that those are set up correctly as well.</p>
+
+<p><!-- generated -->
+<a id='php-base-image'> </a>
+<!-- /generated --></p>
+
+<h5><code>php base</code> image</h5>
+
+<p>We have already <a href="#application">enabled the logging of the PHP application</a>, but we need to
+ensure on the docker side of things that the referenced directory <code>/var/log/app/</code> exists in the
+image. Since the services <code>php-fpm</code>, <code>php-worker</code> and <code>application</code> use the same <code>php base</code> image,
+we only need to do this in the <code>base</code> stage of <code>.docker/images/php/base/Dockerfile</code>:</p>
+
+<pre><code class="language-dockerfile"><br />FROM alpine:${ALPINE_VERSION} as base
+
+# [...]
+
+# create the application log directory and set the correct permissions
+RUN mkdir -p /var/log/app/ \
+    &amp;&amp; chown $APP_USER_NAME:$APP_GROUP_NAME /var/log/app/
+</code></pre>
+
+<p><!-- generated -->
+<a id='php-fpm-image'> </a>
+<!-- /generated --></p>
+
+<h5><code>php-fpm</code> image</h5>
+
+<p>The main process of the image is <code>php-fpm</code> and writes its own logfiles as defined in 
+<code>.docker/images/php/fpm/php-fpm.d/www.conf</code>:</p>
+
+<pre><code class="language-ini">error_log = /var/log/php-fpm/error.log
+
+[www]
+clear_env = no
+access.log = /var/log/php-fpm/access.log
+access.format = "%R - %u %t \"%m %r%Q%q\" %s %f %{mili}d %{kilo}M %C%%"
+</code></pre>
+
+<p>See <a href="https://www.php.net/manual/en/install.fpm.configuration.php">the <code>php-fpm</code> configuration docs</a>
+for a comprehensive explanation of the individual settings. In short:</p>
+
+<ul>
+<li><code>error_log</code>: defines the location of the error log</li>
+<li><code>[www].clear_env</code>: makes sure that the ENV variables defined in the Dockerfile are available 
+to the child fpm processes (this is important to retain the <code>SERVICE_NAME</code>)</li>
+<li><code>[www].access.log</code>: defines the location of the access log</li>
+</ul>
+
+<p>The log directory is <code>/var/log/php-fpm/</code> and needs to be created as part of the build process in
+<code>.docker/images/php/fpm/Dockerfile</code>. We are also defining <code>SERVICE_NAME</code> as 
+<code>ENV</code> variable so that it can be used in <code>/config/custom.php</code> and added as a
+<a href="#adding-a-default-context-for-log-messages">default context</a>.</p>
+
+<pre><code class="language-dockerfile">FROM ${BASE_IMAGE} as base
+
+ENV SERVICE_NAME=php-fpm
+
+# ...
+
+RUN mkdir -p /var/log/php-fpm/ \
+    &amp;&amp; rm -rf /var/log/php-fpm/* \
+    &amp;&amp; chown $APP_USER_NAME:$APP_GROUP_NAME /var/log/php-fpm/
+</code></pre>
+
+<p><!-- generated -->
+<a id='nginx-image'> </a>
+<!-- /generated --></p>
+
+<h5><code>nginx</code> image</h5>
+
+<p>The main process of the image is <code>nginx</code> and writes its own logfiles as defined in
+<code>.docker/images/nginx/nginx.conf</code>:</p>
+
+<pre><code class="language-text">http {
+  access_log /var/log/nginx/access.log;
+  error_log /var/log/nginx/error.log;
+
+  log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+  # ...
+}
+</code></pre>
+
+<p>See <a href="https://www.nginx.com/resources/wiki/start/topics/examples/full/">the <code>nginx</code> configuration docs</a>
+for a comprehensive explanation of the individual settings. In short:</p>
+
+<ul>
+<li><code>access_log</code>: defines the location of the access log</li>
+<li><code>error_log</code>: defines the location of the error log</li>
+<li><code>log_format</code>: defines the format of the log messages</li>
+</ul>
+
+<p>The log directory is <code>/var/log/nginx/</code> and needs to be created as part of the build process in
+<code>.docker/images/nginx/Dockerfile</code>. Since <code>nginx</code> is no php application image, we 
+don't need to define a <code>SERVICE_NAME</code> as <code>ENV</code>.</p>
+
+<pre><code class="language-dockerfile">FROM nginx:${NGINX_VERSION} as base
+
+# ...
+
+RUN mkdir -p /var/log/nginx/ \
+    &amp;&amp; rm -rf /var/log/nginx/* \
+    &amp;&amp; chown $APP_USER_NAME:$APP_GROUP_NAME /var/log/nginx/
+
+# ...
+</code></pre>
+
+<p><!-- generated -->
+<a id='php-worker-image'> </a>
+<!-- /generated --></p>
+
+<h5><code>php-worker</code> image</h5>
+
+<p>The main process of the image is <code>supervisor</code> and writes its own logfiles as defined in
+<code>.docker/images/php/worker/supervisor/supervisord.conf</code>:</p>
+
+<pre><code class="language-ini">[supervisord]
+logfile_maxbytes=0
+logfile=/var/log/supervisor/supervisord.log
+
+[program:worker]
+stdout_logfile=/var/log/supervisor/worker-stdout.log
+stdout_logfile_maxbytes=0
+stderr_logfile=/var/log/supervisor/worker-stderr.log
+stderr_logfile_maxbytes=0
+</code></pre>
+
+<p>See <a href="http://supervisord.org/configuration.html">the <code>supervisor</code> configuration docs</a>
+for a comprehensive explanation of the individual settings. In short:</p>
+
+<ul>
+<li>we need to define the log settings for the "main" <code>supervisor</code> process in section 
+<code>[supervisord]</code> and for the actual workers in <code>[program:worker]</code></li>
+<li><code>*_maxbytes</code>: disables the log file rotation (because we will handle this in the 
+<a href="#the-logger-container"><code>logger</code> container</a> ourselves)</li>
+<li><code>stdout_logfile</code>: defines the location of the <code>stdout</code> log file</li>
+<li><code>stderr_logfile</code>: defines the location of the <code>stderr</code> log file</li>
+</ul>
+
+<p>The log directory is <code>/var/log/supervisor/</code> and needs to be created as part of the build process in
+<code>.docker/images/php/worker/Dockerfile</code>. We are also defining <code>SERVICE_NAME</code> as
+<code>ENV</code> variable so that it can be used in <code>/config/custom.php</code> and added as a
+<a href="#adding-a-default-context-for-log-messages">default context</a>.</p>
+
+<pre><code class="language-dockerfile">FROM ${BASE_IMAGE} as base
+
+ENV SERVICE_NAME=php-worker
+
+# ...
+
+RUN mkdir -p /var/log/supervisor/ \
+    &amp;&amp; rm -rf /var/log/supervisor/* \
+    &amp;&amp; chown $APP_USER_NAME:$APP_GROUP_NAME /var/log/supervisor/  
+</code></pre>
+
+<p><!-- generated -->
+<a id='application-image'> </a>
+<!-- /generated --></p>
+
+<h5><code>application</code> image</h5>
+
+<p>Our <code>application</code> service has an <code>sshd</code> process running for the <code>local</code> environment and 
+"nothing" for <code>ci</code>. To generate some log entries automatically on <code>prod</code>, I have 
+scheduled the <code>App\Commands\TriggerJobCommand</code> command to run every minute via the 
+<code>\App\Console\Kernel</code></p>
+
+<pre><code class="language-php">namespace App\Console;
+
+use App\Commands\TriggerJobCommand;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+
+class Kernel extends ConsoleKernel
+{
+    protected function schedule(Schedule $schedule)
+    {
+        $now = (new \DateTimeImmutable())-&gt;format("Y-m-d H:i:s");
+        $schedule-&gt;command(TriggerJobCommand::class, ["--job-id" =&gt; $now])-&gt;everyMinute();
+    }
+}
+</code></pre>
+
+<p>To actually execute the schedule, I added <code>crond</code> as main process
+<a href="https://laravel.com/docs/9.x/scheduling#running-the-scheduler">to run the Laravel scheduler via</a>
+via</p>
+
+<pre><code class="language-bash">php artisan schedule:run
+</code></pre>
+
+<p>in the Dockerfile at <code>.docker/images/php/application/Dockerfile</code>. We are also defining 
+<code>SERVICE_NAME</code> as <code>ENV</code> variable so that it can be used in <code>/config/custom.php</code> and added as a 
+<a href="#adding-a-default-context-for-log-messages">default context</a>.</p>
+
+<pre><code class="language-dockerfile">ARG BASE_IMAGE
+FROM ${BASE_IMAGE} as base
+
+ENV SERVICE_NAME=application
+
+FROM base as prod
+
+RUN    apk add --update apk-cron \
+    &amp;&amp; rm -rf /etc/periodic/*  \
+              /etc/crontabs/root \
+              /var/cache/apk/*
+
+ARG PATH_TO_CRON_OUTPUT_LOG=/var/log/app/cron-output.log
+RUN echo "*  *  *  *  * $(which php) ${APP_CODE_PATH}/artisan schedule:run &gt;&gt; ${PATH_TO_CRON_OUTPUT_LOG} 2&gt;&amp;1" &gt; /etc/crontabs/$APP_USER_NAME
+
+CMD [ "crond", "-l", "2", "-f", "-L", "/var/log/app/cron.log" ]
+</code></pre>
+
+<p>Please note, that the <code>schedule:run</code> command is executed as the <code>$APP_USER_NAME</code> user
+<a href="#define-a-cron-job">by placing it in the crontab file <code>/etc/crontabs/$APP_USER_NAME</code></a>. I have 
+added log files for
+<a href="#cron-logs-and-output-logs-of-cron-jobs"><code>crond</code> itself and the output of the individual cron jobs</a>
+at</p>
+
+<ul>
+<li><code>/var/log/app/cron.log</code></li>
+<li>and <code>/var/log/app/cron-output.log</code></li>
+</ul>
+
+<p>Both log files are located in the <code>/var/log/app/</code> directory that was 
+<a href="#php-base-image">already created in the <code>php base</code> image</a>.</p>
+
+<p><!-- generated -->
+<a id='the-logger-container'> </a>
+<!-- /generated --></p>
+
+<h4>The <code>logger</code> container</h4>
+
+<p>We are using the <a href="#use-sidecar-containers-for-auxiliary-tasks">sidecar pattern</a> by implementing 
+an additional service called <code>logger</code> that runs alongside the "main" services. The image is 
+build via the Dockerfile <code>.docker/images/logger/Dockerfile</code></p>
+
+<pre><code class="language-dockerfile">ARG ALPINE_VERSION
+FROM alpine:${ALPINE_VERSION} as base
+
+RUN apk add --update  \
+      apk-cron \
+      logrotate \
+    &amp;&amp; rm -rf /etc/periodic/* \
+    &amp;&amp; rm -rf /etc/logrotate.d/* \
+    &amp;&amp; rm -rf /var/cache/apk/*
+
+COPY ./logrotate.d/* /etc/logrotate.d/
+
+COPY ./logrotate.conf /etc/logrotate.conf
+
+ARG PATH_TO_LOG_DIR=/var/log/cron
+ARG PATH_TO_CRON_OUTPUT_LOG=$PATH_TO_LOG_DIR/cron-output.log
+RUN echo "0  0  *  *  * $(which logrotate) /etc/logrotate.conf -v &gt;&gt; ${PATH_TO_CRON_OUTPUT_LOG} 2&gt;&amp;1" &gt; /etc/crontabs/root
+
+RUN chmod 644 -R /etc/crontabs/root \
+                 /etc/logrotate.conf \
+                 /etc/logrotate.d/ \
+    &amp;&amp; mkdir -p $PATH_TO_LOG_DIR
+
+CMD [ "crond", "-l", "2", "-f", "-L", "/var/log/cron/cron.log" ]
+
+FROM base as prod
+
+FROM base as local
+</code></pre>
+
+<p>using <code>docker compose</code> for build instructions defined in 
+<code>.docker/docker-compose/docker-compose.local.prod.yml</code></p>
+
+<pre><code class="language-yaml">  logger:
+    image: ${DOCKER_REGISTRY?}/${DOCKER_NAMESPACE?}/logger-${ENV?}:${TAG?}
+    build:
+      context: ../images/logger/
+      dockerfile: Dockerfile
+      args:
+        - ALPINE_VERSION=${ALPINE_VERSION?}
+      target: ${ENV?}
+</code></pre>
+
+<p>The image itself runs <code>crond</code> as its main process to execute <code>logrotate</code> commands, using 
+<code>.docker/images/logger/logrotate.conf</code> as <a href="#configure-logrotate">general configuration file</a>:</p>
+
+<pre><code class="language-apacheconf"># FYI: These settings are applied as default for ALL included files in /etc/logrotate.d
+
+# see "man logrotate" for details
+
+# rotate log files daily
+daily
+
+# keep 14 days
+rotate 14
+
+# create new (empty) log files after rotating old ones
+create
+
+# use date as a suffix of the rotated file
+dateext
+# use yesterdays date as the filename
+dateyesterday
+dateformat -%Y-%m-%d
+
+# uncomment this if you want your log files compressed
+compress
+# don't compress the latest rotate file (=yesterday on daily frequency)
+delaycompress
+
+# use log rotation information from this directory
+include /etc/logrotate.d
+
+# don't fail on missing log files
+missingok
+
+# do NOT set 'notifempty' because we and empty file still tells us that "nothing was logged"
+</code></pre>
+
+<p>The individual log files are defined in <code>.docker/images/logger/logrotate.d</code>:</p>
+
+<p><code>.docker/images/logger/logrotate.d/app</code></p>
+
+<pre><code class="language-text"># application.log   (see config/logging.php at channels.single.path)
+# cron.log          (see .docker/images/php/application/Dockerfile at CMD "-L")
+# cron-output.log   (see .docker/images/php/application/Dockerfile at $PATH_TO_CRON_OUTPUT_LOG)
+/var/log/app/*.log {
+}
+</code></pre>
+
+<p><code>.docker/images/logger/logrotate.d/logger</code></p>
+
+<pre><code class="language-text"># cron.log          (see .docker/images/logger/Dockerfile at CMD "-L")
+# cron-output.log   (see .docker/images/logger/Dockerfile at $PATH_TO_CRON_LOG)
+/var/log/cron/*.log {
+}
+</code></pre>
+
+<p><code>.docker/images/logger/logrotate.d/nginx</code></p>
+
+<pre><code class="language-text"># access.log (see .docker/images/nginx/nginx.conf at http.access_log)
+# error.log  (see .docker/images/nginx/nginx.conf at http.error_log)
+/var/log/nginx/*.log {
+}
+</code></pre>
+
+<p><code>.docker/images/logger/logrotate.d/php-fpm</code></p>
+
+<pre><code class="language-text"># access.log (see .docker/images/php/fpm/php-fpm.d/www.conf at [www].access.log)
+# error.log  (see .docker/images/php/fpm/php-fpm.d/www.conf at error_log)
+/var/log/php-fpm/*.log {
+}
+</code></pre>
+
+<p><code>.docker/images/logger/logrotate.d/supervisor</code></p>
+
+<pre><code class="language-text"># supervisord.log   (see .docker/images/php/worker/supervisor/supervisord.conf at [supervisord].logfile)
+# worker-stdout.log (see .docker/images/php/worker/supervisor/supervisord.conf at [program:worker].stdout_logfile)
+# worker-stderr.log (see .docker/images/php/worker/supervisor/supervisord.conf at [program:worker].stderr_logfile)
+/var/log/supervisor/*.log {
+}
+</code></pre>
+
+<p>Since most of these log files (except <code>.docker/images/logger/logrotate.d/logger</code>) come from 
+other services, we need to make sure that the corresponding log directories are defined as 
+<a href="#setting-up-volumes">volumes for the <code>logger</code> container as well as the container of the service producing the logs</a>
+(see next section).</p>
+
+<p><!-- generated -->
+<a id='setting-up-volumes'> </a>
+<!-- /generated --></p>
+
+<h4>Setting up volumes</h4>
+
+<p><!-- generated -->
+<a id='one-volume-to-rule-them-all-is-a-bad-idea'> </a>
+<!-- /generated --></p>
+
+<h5>One volume to rule them all - is a bad idea</h5>
+
+<p>You might have noticed that all services use a subdirectory in <code>/var/log/</code> so we might be 
+tempted to use "a single volume pointing to <code>/var/log/</code>" and attach it to all containers. But I 
+would strongly advise against that. I was facing two major issues when I tried this approach:</p>
+
+<ul>
+<li>when the volume is created for the first time, <strong>the first container that the volume is attached 
+to will determine the <em>permissions</em> of the <code>/var/log/</code> directory</strong> => this leads to all sorts of 
+problems because the containers run under different users</li>
+<li>the <strong><em>directory structure within</em> the <code>/var/log/</code> directory is also only retained for the first 
+attached container</strong>, i.e. for instance the <code>/var/log/app/</code> directory that we
+<a href="#php-base-image">created in the base php image</a> might not exist</li>
+</ul>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/non-deterministic-directory-structure-in-docker-volume.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/non-deterministic-directory-structure-in-docker-volume.PNG" alt="non-deterministic directory structure on one volume for all containers" /></a></p>
+
+<p>The following video shows an example of this issue:</p>
+
+<video controls>
+  <source src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/docker-volume-directory-structure.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>Instead, one volume per directory should be used if multiple different services are involved:</p>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/deterministic-directory-structure-in-docker-volume.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/deterministic-directory-structure-in-docker-volume.PNG" alt="deterministic directory structure on one volume per directory" /></a></p>
+
+<p>See also the following related issues:</p>
+
+<ul>
+<li><a href="https://stackoverflow.com/questions/38164939/can-we-mount-sub-directories-of-a-named-volume-in-docker">SO: Can we mount sub-directories of a named volume in docker?</a></li>
+<li><a href="https://github.com/moby/moby/issues/32582">GH: Allow mounting sub-directories of named volumes</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='docker-compose-for-the-local-env'> </a>
+<!-- /generated --></p>
+
+<h5><code>docker compose</code> for the <code>local</code> env</h5>
+
+<p>For the <code>local</code> environment, we are using <code>docker compose</code> to orchestrate the containers and 
+need to update the corresponding config file at <code>.docker/docker-compose/docker-compose.local. yml</code>
+by adding the <a href="https://docs.docker.com/compose/compose-file/#volumes"><code>volumes</code> definition</a>:</p>
+
+<pre><code class="language-yaml">volumes:
+  logs-nginx:
+    name: logs-nginx-${ENV?}
+    driver: ${VOLUMES_DRIVER?}
+  logs-app:
+    name: logs-app-${ENV?}
+    driver: ${VOLUMES_DRIVER?}
+  logs-supervisor:
+    name: logs-supervisor-${ENV?}
+    driver: ${VOLUMES_DRIVER?}
+  logs-php-fpm:
+    name: logs-php-fpm-${ENV?}
+    driver: ${VOLUMES_DRIVER?}
+
+  php-fpm:
+    volumes:
+      - logs-app:/var/log/app
+      - logs-php-fpm:/var/log/php-fpm
+
+  php-worker:
+    volumes:
+      - logs-app:/var/log/app
+      - logs-supervisor:/var/log/supervisor
+
+  nginx:
+    volumes:
+      - logs-nginx:/var/log/nginx
+
+  application:
+    volumes:
+      - logs-app:/var/log/app
+
+  logger:
+    volumes:
+      - logs-nginx:/var/log/nginx
+      - logs-app:/var/log/app
+      - logs-supervisor:/var/log/supervisor
+      - logs-php-fpm:/var/log/php-fpm
+</code></pre>
+
+<p>Please note, that we are using a single <code>logger</code> service here to handle all the log files.</p>
+
+<p>In addition, we use <strong>the same <code>logs-app</code> volume for all php services</strong> even though
+we learned in <a href="#one-volume-to-rule-them-all-is-a-bad-idea">One volume to rule them all - is a bad idea</a>
+that this can lead to a couple of problems.</p>
+
+<p>In this case "it isn't a problem", because <strong>all services use the same <code>php base</code> image</strong> and 
+thus have the <strong>same directory structure</strong>. The services are also using the exact <strong>same application 
+user</strong>, so that permissions don't become a problem.</p>
+
+<p>It also has the nice side effect, that we can see the log messages of all containers in the same 
+log file at <code>/var/log/app/application.log</code>.</p>
+
+<video controls>
+  <source src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/local-app-logs.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='docker-for-the-prod-env'> </a>
+<!-- /generated --></p>
+
+<h5><code>docker</code> for the <code>prod</code> env</h5>
+
+<p>In production, we are 
+<a href="/blog/deploy-dockerized-php-app-production/#make-targets-for-running-containers-via-plain-docker">not using <code>docker compose</code> to run the services but "plain" <code>docker</code></a>
+and we run 
+<a href="/blog/create-production-infrastructure-docker-php-app-gcp/#introduction">each service on its own VM</a>.</p>
+
+<p>This also means, that we must deploy the <code>logger</code> sidecar container on each VM:</p>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar-per-service-vm.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar-per-service-vm.PNG" alt="A logger sidecar per service on each VM" /></a></p>
+
+<p>When running a docker container, we need to ensure that the correct volumes are attached and 
+modify the <a href="/blog/deploy-dockerized-php-app-production/#running"><code>docker-run-*</code> targets</a> accordingly
+in <code>.make/02-00-docker.mk</code>:</p>
+
+<pre><code class="language-makefile">.PHONY: docker-run-nginx
+docker-run-nginx: ## Start the nginx container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(DOCKER_SERVICE_NAME_NGINX)" DOCKER_SERVICE_OPTIONS="-v logs-nginx:/var/log/nginx -p 80:80 -p 443:443"
+
+.PHONY: docker-run-php-fpm
+docker-run-php-fpm: ## Start the php-fpm container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(DOCKER_SERVICE_NAME_PHP_FPM)" DOCKER_SERVICE_OPTIONS="-v logs-app:/var/log/app -v logs-php-fpm:/var/log/php-fpm -p 9000:9000"
+
+.PHONY: docker-run-application
+docker-run-application: ## Start the application container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(DOCKER_SERVICE_NAME_APPLICATION)" DOCKER_SERVICE_OPTIONS="-v logs-app:/var/log/app"
+
+.PHONY: docker-run-php-worker
+docker-run-php-worker: ## Start the php-worker container
+    "$(MAKE)" docker-run DOCKER_SERVICE_NAME="$(DOCKER_SERVICE_NAME_PHP_WORKER)" DOCKER_SERVICE_OPTIONS="-v logs-app:/var/log/app -v logs-supervisor:/var/log/supervisor"
+</code></pre>
+
+<p>We also need a new <code>docker-run-logger</code> target to run the <code>logger</code> sidecar:</p>
+
+<pre><code class="language-makefile">.PHONY: docker-run-logger
+docker-run-logger: validate-docker-variables ## Start a logger sidecar container
+    docker run  --name $(DOCKER_SERVICE_NAME_LOGGER) \
+                -d \
+                -it \
+                -v logs-cron:/var/log/cron \
+                -v logs-nginx:/var/log/nginx \
+                -v logs-app:/var/log/app \
+                -v logs-supervisor:/var/log/supervisor \
+                -v logs-php-fpm:/var/log/php-fpm \
+                $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_SERVICE_NAME_LOGGER)-$(ENV):$(TAG)
+</code></pre>
+
+<p>For the sake of simplicity I have simply added all volumes of all services - even though some of 
+them are not necessary for a particular <code>logger</code> container. E.g. the <code>logger</code> sidecar of the 
+<code>php-fpm</code> service only needs the <code>logs-app</code> and <code>logs-php-fpm</code> volumes. There is no harm in 
+having the additional (unused) volumes, but it enables us to keep a single <code>docker-run-logger</code> 
+target instead of "one per service".</p>
+
+<p><!-- generated -->
+<a id='deployment'> </a>
+<!-- /generated --></p>
+
+<h3>Deployment</h3>
+
+<p>In the <a href="/blog/deploy-dockerized-php-app-production/#the-application-deployment-script">deployment script</a>
+located at <code>.infrastructure/scripts/deploy.sh</code> we must now also start the <code>logger</code> sidecar 
+container as part of the deployment:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+# ...
+
+docker_service_name_logger=logger
+
+# ...
+
+echo "Pulling image for '${docker_service_name_logger}' on the VM from the registry"
+make docker-pull DOCKER_SERVICE_NAME="${docker_service_name_logger}"
+echo "Stop the '${docker_service_name_logger}' container on the VM"
+make docker-stop DOCKER_SERVICE_NAME="${docker_service_name_logger}" || true
+make docker-rm DOCKER_SERVICE_NAME="${docker_service_name_logger}" || true
+echo "Start the container for '${docker_service_name_logger}' on the VM"
+make docker-run-"${docker_service_name_logger}"
+</code></pre>
+
+<p>The following video shows the deployment process and the newly started <code>logger</code> sidecar on the 
+<code>nginx</code> VM:</p>
+
+<video controls>
+  <source src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar-production-deployment.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='next-steps'> </a>
+<!-- /generated --></p>
+
+<h2>Next steps</h2>
+
+<p>The current setup is "nice" if you are coming from a traditional (non-dockerized) VM setup that 
+is using actual files for logging, because "everything can stay as it is". However, there are 
+some caveats:</p>
+
+<ul>
+<li>it's <strong>not the "docker way to do things"</strong> (as outlined in section 
+<a href="#logs-in-dockerized-applications">Logs in dockerized applications</a>)</li>
+<li><strong>data loss on VM rotation</strong>:
+
+<ul>
+<li>if the VM is destroyed and re-created, the log volumes will be gone as well</li>
+</ul></li>
+<li><strong>log file decentralization</strong>:
+
+<ul>
+<li>since we have one VM per service, we must log into each VM individually to get access to 
+all the logs</li>
+</ul></li>
+</ul>
+
+<p>We could counter the "data loss" quite easily by using 
+<a href="https://cloud.google.com/storage/docs/gsutil/commands/rsync"><code>gsutil rsync</code></a> to <strong>store log files 
+periodically in a Cloud Storage bucket</strong> (<code>gsutil</code> is part of the <code>gcloud</code> cli). But an even 
+better approach would be using a <strong>log file aggregator</strong> like <a href="https://www.fluentd.org/"><code>fluentd</code></a> 
+to store the logs in a <strong>central location</strong> like <a href="https://cloud.google.com/logging">Cloud Logging</a>
+(<a href="https://stackoverflow.com/a/63916807/413531">formerly known as Stackdriver</a>).</p>
+
+<p>GCP already provides a custom <code>google-fluentd</code> agent to make the integration as easy as possible,
+see <a href="https://cloud.google.com/logging/docs/agent/logging/configuration">the GCP Logging docs: Configure the Logging agent</a>:</p>
+
+<blockquote>
+  <p>The Logging agent <code>google-fluentd</code> is a modified version of the fluentd log data collector. The 
+  Logging agent comes with a default configuration; in most common cases, no additional configuration is required.</p>
+  
+  <p>In its default configuration, the Logging agent streams logs, as included in the list of 
+  default logs, to Cloud Logging. You can configure the agent to stream additional logs; for 
+  details, go to Customizing the Logging agent configuration on this page.</p>
+</blockquote>
+
+<p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logging-agent-operation.png"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logging-agent-operation.png" alt="How the google-fluentd logging agent works" /></a>
+(<a href="https://cloud.google.com/logging/docs/agent/logging/configuration#default_configuration">Source</a>)</p>
+
+<p>The <code>google-fluentd</code> agent could be deployed as yet another sidecar container that is connected 
+to the same docker volumes. But that's out of scope for this tutorial.</p>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You should now be familiar with running cron jobs on <code>docker</code>, configuring 
+<code>logrotate</code> to manage log files and the concept of sidecar containers to handle auxiliary tasks 
+(like managing logs) in a non-intrusive way for existing containers.</p>
+                <hr />
+                <h3>Wanna stay in touch?</h3>
+                <p>Since you ended up on this blog, chances are pretty high that you're into Software Development
+                (probably PHP, Laravel, Docker or Google Big Query) and I'm a big fan of feedback and networking.
+                </p><p>
+                So - if you'd like to stay in touch, feel free to shoot me an email with a couple of words about yourself and/or
+                connect with me on
+                <a href="https://www.linkedin.com/in/pascallandau">LinkedIn</a> or
+                <a href="https://twitter.com/PascalLandau">Twitter</a>
+                or simply subscribe to my <a href="https://www.pascallandau.com/feed.xml">RSS feed</a>
+                or go the crazy route and subscribe via mail
+                and don't forget to leave a comment :)
+                </p>
+                <!-- Begin Mailchimp Signup Form -->
+                <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+                <style type="text/css">
+                    #mc_embed_signup{background:#bae1ff; clear:left; font:14px Helvetica,Arial,sans-serif; border-radius: 20px}
+                    #mc_embed_signup h4 {padding:1em 0 0 1em}
+                    #mc-embedded-subscribe-form input[type=checkbox]{display: inline; width: auto;margin-right: 10px;}
+                    #mergeRow-gdpr {margin-top: 20px;}
+                    #mergeRow-gdpr fieldset label {font-weight: normal;}
+                    #mc-embedded-subscribe-form .mc_fieldset{border:none;min-height: 0px;padding-bottom:0px;}
+                </style>
+                <div id="mc_embed_signup">
+                    <h4 id="newsletter">Subscribe to posts via mail</h4>
+                    <form action="https://pascallandau.us20.list-manage.com/subscribe/post?u=89e1c97fa614ded06a44fbcfd&amp;id=852c78303c" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                        <div id="mc_embed_signup_scroll">
+                            <div class="mc-field-group">
+                                <label for="mce-EMAIL">Email Address </label>
+                                <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL">
+                            </div>
+                            <div class="mc-field-group">
+                                <label for="mce-FNAME">First Name </label>
+                                <input type="text" value="" name="FNAME" class="required" id="mce-FNAME">
+                            </div>
+                            <div id="mce-responses" class="clear">
+                                <div class="response" id="mce-error-response" style="display:none"></div>
+                                <div class="response" id="mce-success-response" style="display:none"></div>
+                            </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_89e1c97fa614ded06a44fbcfd_852c78303c" tabindex="-1" value=""></div>
+                            <div class="clear"><input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                            <div id="mergeRow-gdpr" class="mergeRow gdpr-mergeRow content__gdprBlock mc-field-group">
+                                <div class="content__gdprLegal">
+                                    <small>
+                                        We use Mailchimp as our newsletter provider. By clicking subscribe, you acknowledge that your
+                                        information will be transferred to Mailchimp for processing.
+                                        <a href="https://mailchimp.com/legal/" target="_blank" rel="nofollow">Learn more about Mailchimp's privacy practices here.</a>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+                <!--End mc_embed_signup-->
+                <div style="text-align:center; margin-top:1em;">
+                    <img src="/img/waving-bear.gif" alt="Waving bear" style="max-width:416px"/>
+                </div>
+                <h2>Comments</h2>
+                <div id="disqus_thread"></div>
+                <script>
+                     var disqus_config = function () {
+                        this.page.url = "https://www.pascallandau.com/blog/manage-log-files-in-docker-via-volumes-and-sidecar-containers/";
+                                                     this.page.identifier = "manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate";
+                                              };
+                    (function() {  // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//pascallandau.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+            </div>
+        </div>
+    </div>
+</article>
+
+<hr>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <li>
+                        <a href="https://twitter.com/PascalLandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.linkedin.com/in/pascallandau">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/paslandau/">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.youtube.com/channel/UC8hVNCGAtz1DvOOpSQ3Nfzw">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-youtube fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.pascallandau.com/feed.xml">
+                                <span class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                                </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+    <img src="https://ssl-vg03.met.vgwort.de/na/6a98218251514ed8a6b2197d3a198ec8" width="1" height="1" alt=""/>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.min.js"></script>
+<!-- Custom JavaScript -->
+<script src="/js/main.js"></script>
+<!-- Code highlighting 
+     See source/img/highlight-js-languages.PNG for an overview of the selected languages 
+     The files can be re-compiled at https://highlightjs.org/download/
+     -->
+<script src="/js/highlight.min.js"></script>
+
+<script type='text/javascript'>
+    hljs.highlightAll();
+    // show the hidden blog only locally
+    if(window.location.href.startsWith("http://localhost:8000/")){
+        $('#navbar').prepend('<li><a href="/blog-hidden/">HIDDEN Blog</a></li>');
+    }
+</script>
+</body>
+
+</html>

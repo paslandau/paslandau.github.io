@@ -87,3 +87,8 @@ article a[href^="http://localhost"]::after,
 article a[href^="http://127.0.0.1"]::after {
     display: none !important;
 }
+
+li > p  {
+    line-height: 1.5;
+    margin: 0;
+}
