@@ -5,9 +5,590 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 12 Apr 2023 11:55:43 +0000</pubDate>
-        <lastBuildDate>Wed, 12 Apr 2023 11:55:43 +0000</lastBuildDate>
+        <pubDate>Wed, 12 Apr 2023 12:17:17 +0000</pubDate>
+        <lastBuildDate>Wed, 12 Apr 2023 12:17:17 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Setting up Git Bash / MINGW / MSYS2 on Windows</title>
+                <description><![CDATA[<p>In this article I'll document my process for <strong>setting up Git Bash / MINGW / 
+MSYS2 on Windows</strong> including some additional configuration (e.g. installing <code>make</code> and apply 
+some customizations via <code>.bashrc</code>).</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#how-to-install-and-update-git-bash-mingw-msys2-via-git-for-windows">How to install and update Git Bash / MINGW / MSYS2 via Git for Windows</a>
+
+<ul>
+<li><a href="#update-mingw">Update MINGW</a></li>
+<li><a href="#how-to-install-make">How to install <code>make</code></a></li>
+<li><a href="#configuration-via-bashrc">Configuration via <code>.bashrc</code></a></li>
+</ul></li>
+<li><a href="#common-issues">Common issues</a>
+
+<ul>
+<li><a href="#the-role-of-winpty-fixing-the-input-device-is-not-a-tty">The role of <code>winpty</code>: Fixing "The input device is not a TTY" </a></li>
+<li><a href="#the-path-conversion-issue">The path conversion issue</a>
+
+<ul>
+<li><a href="#fixing-the-path-conversion-issue-for-mingw-msys2">Fixing the path conversion issue for MINGW / MSYS2</a></li>
+<li><a href="#fixing-the-path-conversion-issue-for-winpty">Fixing the path conversion issue for <code>winpty</code></a></li>
+</ul></li>
+</ul></li>
+<li><a href="#miscellaneous">Miscellaneous</a>
+
+<ul>
+<li><a href="#change-the-bash-custom-prompt-to-a">Change the <code>bash</code> custom prompt to a <code>$</code></a></li>
+</ul></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>When I was learning <code>git</code> I started with the fantastic 
+<a href="https://gitforwindows.org/">Git for Windows</a> package, that is maintained in the 
+<a href="https://github.com/git-for-windows/"><code>git-for-windows/git</code> Github repository</a> and comes with 
+<a href="https://www.atlassian.com/git/tutorials/git-bash">Git Bash</a>, a shell that offers a 
+Unix-terminal like experience. It uses 
+<a href="https://github.com/git-for-windows/git/wiki/The-difference-between-MINGW-and-MSYS2">MINGW and MSYS2 under the hood</a>
+and does not only provide <code>git</code> but also a bunch of other common Linux utilities like</p>
+
+<pre><code class="language-text">bash
+sed
+awk
+ls
+cp
+rm
+...
+</code></pre>
+
+<p>I believe the main "shell" is actually powered by <a href="https://www.mingw-w64.org/">MINGW64</a> as 
+that's what will be shown by default:</p>
+
+<p><a href="/img/setting-up-git-bash-mingw-msys2-on-windows/mingw.PNG"><img src="/img/setting-up-git-bash-mingw-msys2-on-windows/mingw.PNG" alt="Git Bash / MINGW shell" /></a></p>
+
+<p>Thus, I will refer to the tool as MINGW shell or Git Bash throughout this article.</p>
+
+<p>I have been using MINGW for almost 10 years now, and it is still my go-to shell for Windows. I 
+could just never warm up to WSL, because the file sharing performance between WSL and native 
+Windows  files was (is?) horrible - but that's a different story.</p>
+
+<p><!-- generated -->
+<a id='how-to-install-and-update-git-bash-mingw-msys2-via-git-for-windows'> </a>
+<!-- /generated --></p>
+
+<h2>How to install and update Git Bash / MINGW / MSYS2 via Git for Windows</h2>
+
+<p>You can find the latest Git for Windows installation package directly at the homepage of
+<a href="https://gitforwindows.org/">https://gitforwindows.org/</a>. Older releases can be found on 
+Github in the 
+<a href="https://github.com/git-for-windows/git/releases">Releases section of the <code>git-for-windows/git</code> repository</a></p>
+
+<p>Follow the instructions in the 
+<a href="https://www.git-tower.com/blog/git-bash/#how-to-install-git-bash-on-windows">How to Install Git Bash on Windows article on git-tower.com</a>
+to get a guided tour through the setup process.</p>
+
+<p>After the installation is finished, I usually create a desktop icon and assign the shortcut 
+<code>CTRL + ALT + B</code> (for "<strong>b</strong>ash") so that I can open a new shell session conveniently via keyboard.</p>
+
+<p><a href="/img/setting-up-git-bash-mingw-msys2-on-windows/git-bash-desktop-shortcut.PNG"><img src="/img/setting-up-git-bash-mingw-msys2-on-windows/git-bash-desktop-shortcut.PNG" alt="Git Bash desktop icon and shortcut" /></a></p>
+
+<p><!-- generated -->
+<a id='update-mingw'> </a>
+<!-- /generated --></p>
+
+<h3>Update MINGW</h3>
+
+<p>To update Git for Windows, you can simply run</p>
+
+<pre><code class="language-bash">git update-git-for-windows
+</code></pre>
+
+<p>See also the
+<a href="https://github.com/git-for-windows/git/wiki/FAQ#how-do-i-update-git-for-windows-upon-new-releases">Git for Windows FAQ under "How do I update Git for Windows upon new releases?"</a></p>
+
+<blockquote>
+  <p>Git for Windows comes with a tool to check for updates and offer to install them. Whether or 
+  not you enabled auto-updates during installation, you can manually run 
+  <code>git update-git-for-windows</code>.</p>
+</blockquote>
+
+<p>You can check the current version via <code>git version</code></p>
+
+<pre><code class="language-text">$ git --version
+git version 2.37.2.windows.2
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/update-git-bash.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='how-to-install-make'> </a>
+<!-- /generated --></p>
+
+<h3>How to install <code>make</code></h3>
+
+<p>As per
+<a href="https://gist.github.com/evanwill/0207876c3243bbb6863e65ec5dc3f058#make">How to add more to Git Bash on Windows: <code>make</code></a>:</p>
+
+<ul>
+<li>Go to <a href="https://sourceforge.net/projects/ezwinports/files/">ezwinports</a></li>
+<li>Download file <a href="https://sourceforge.net/projects/ezwinports/files/make-4.3-without-guile-w32-bin.zip/download"><code>make-4.3-without-guile-w32-bin.zip</code></a>
+(get the version without guile)</li>
+<li>Extract zip</li>
+<li>Copy the contents to your <code>Git/mingw64/</code> directory, merging the folders, but do NOT
+overwrite/replace any existing files
+
+<ul>
+<li>navigate to the <code>Git/mingw64/</code> directory via
+<code>cd /
+explorer .</code></li>
+</ul></li>
+</ul>
+
+<p>Test via <code>make version</code></p>
+
+<pre><code class="language-text">$ make --version
+GNU Make 4.3.1
+Built for Windows32
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/install-make-git-bash.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>PS: There's also an alternative way that I've outlined in
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#install-make-on-windows-mingw">Install <code>make</code> on Windows (MinGW)</a>,
+though the one explained here is easier/faster.</p>
+
+<p><!-- generated -->
+<a id='configuration-via-bashrc'> </a>
+<!-- /generated --></p>
+
+<h3>Configuration via <code>.bashrc</code></h3>
+
+<p>The MINGW shell is a <code>bash</code> shell and can thus be 
+<a href="https://www.digitalocean.com/community/tutorials/bashrc-file-in-linux">configured via a <code>.bashrc</code> file</a> located at 
+the home directory of the user. The shell supports the <code>~</code> character as an alias for the home 
+directory, i.e. <strong>you can use <code>~/.bashrc</code> to refer to the full path of the file</strong>. This means you can 
+also edit it easily via <code>vi ~/.bashrc</code> - though I prefer an actual GUI editor like
+<a href="https://notepad-plus-plus.org/">Notepad++</a>. A common workflow for me to open the file is 
+running the following commands in a MINGW shell session</p>
+
+<pre><code class="language-text"># navigate to to the home directory
+cd ~
+
+# open the file explorer
+explorer .
+</code></pre>
+
+<p>My <code>.bashrc</code> file usually includes the following setup:</p>
+
+<pre><code class="language-bash"># Get bash completion for make targets by parsing make files in the current directory at 
+#  the file "Makefile"
+#  all files with a ".mk" suffix in the folders ".make" and ".makefile"
+# see https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
+# Notes:
+#  -h hides filenames
+#  -s hides error messages
+complete -W "\`grep -shoE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile .make/*.mk .makefile/*.mk | sed 's/[^a-zA-Z0-9_.-]*$//' | grep -v PHONY\`" make
+
+# Docker login helper
+# see https://www.pascallandau.com/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via-din-bashrc-helper
+function din() {
+  filter=$1
+
+  user=""
+  if [[ -n "$2" ]];
+  then
+    user="--user $2"
+  fi
+
+  shell="bash"
+  if [[ -n "$3" ]];
+  then
+    shell=$3
+  fi
+
+  prefix=""
+  if [[ "$(expr substr $(uname -s) 1 5)" == "MINGW" ]]; then
+    prefix="winpty"
+  fi
+  ${prefix} docker exec -it ${user} $(docker ps --filter name=${filter} -q | head -1) ${shell}
+}
+</code></pre>
+
+<p>Links:</p>
+
+<ul>
+<li><a href="https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target">SO: bash completion of makefile target</a></li>
+<li><a href="/blog/structuring-the-docker-setup-for-php-projects/#easy-container-access-via-din-bashrc-helper">Easy container access via din .bashrc helper</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='common-issues'> </a>
+<!-- /generated --></p>
+
+<h2>Common issues</h2>
+
+<p>The
+<a href="https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues">Git for Windows Known Issues page</a>
+lists common problems with Git Bash and I want to provide some more context (and solutions) 
+to the things that I have encountered.</p>
+
+<p><!-- generated -->
+<a id='the-role-of-winpty-fixing-the-input-device-is-not-a-tty'> </a>
+<!-- /generated --></p>
+
+<h3>The role of <code>winpty</code>: Fixing "The input device is not a TTY"</h3>
+
+<p>I encountered the <code>The input device is not a TTY</code> error while using <code>docker</code>. To log into a 
+running <code>docker</code> container or starting a container with a login session, the
+<a href="https://docs.docker.com/engine/reference/run/#foreground"><code>-i</code> (Keep STDIN open even if not attached) and <code>-t</code> (Allocate a pseudo-tty) options must be given:</a></p>
+
+<blockquote>
+  <p>For interactive processes (like a shell), you must use <code>-i</code> <code>-t</code> together in order to allocate a
+  tty for the container process. <code>-i</code> <code>-t</code>  is often written <code>-it</code>.</p>
+</blockquote>
+
+<p>But attempting to do so via</p>
+
+<pre><code class="language-bash">docker run --rm -it busybox sh
+</code></pre>
+
+<p>yields the following error:</p>
+
+<pre><code class="language-text">$ docker run --rm -it busybox sh
+the input device is not a TTY.  If you are using mintty, try prefixing the command with 'winpty'
+</code></pre>
+
+<p>Fortunately, the fix is included in the message: Prefix the command with <code>winpty</code>. Doing so
+works as expected:</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -it busybox sh
+/ #
+</code></pre>
+
+<p><a href="https://github.com/rprichard/winpty"><code>winpty</code></a> is according to it's readme</p>
+
+<blockquote>
+  <p>[...] a Windows software package providing an interface similar to a Unix pty-master for
+  communicating with Windows console programs. The package consists of a library (libwinpty) and
+  a tool for Cygwin and MSYS for running Windows console programs in a Cygwin/MSYS pty.</p>
+</blockquote>
+
+<p>So kind of a translator between your "Windows input" and the "command input" to create input 
+that is 
+<a href="https://iximiuz.com/en/posts/linux-pty-what-powers-docker-attach-functionality/">compatible with a Unix pty (pty=pseudoterminal interface), e.g. for <code>docker</code></a>.</p>
+
+<p>According to the
+<a href="https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues">Git for Windows Known Issues page</a>,
+there are a number of other cases where <code>winpty</code> is required (though I personally didn't
+encounter them yet):</p>
+
+<blockquote>
+  <p>Some console programs, most notably non-MSYS2 Python, PHP, Node and OpenSSL, interact
+  correctly with MinTTY only when called through <code>winpty</code> (e.g. the Python console needs to be
+  started as <code>winpty python</code> instead of just <code>python</code>).</p>
+</blockquote>
+
+<p><strong>CAUTION</strong>: I've seen people put an alias in their <code>.bashrc</code> file to <em>always</em> prefix <code>docker</code> 
+commands automatically with <code>winpty</code> like so:</p>
+
+<pre><code class="language-text">alias docker="winpty docker"
+</code></pre>
+
+<p>However, <strong><a href="https://superuser.com/q/1011597/434918"><code>winpty</code> seems to break piping</a>
+and can lead to unexpected results</strong> like the error <code>stdout is not a tty</code>. See the following 
+example:</p>
+
+<pre><code class="language-text">$ docker run --rm busybox echo "foo" | cat
+foo
+</code></pre>
+
+<pre><code class="language-text">$ winpty docker run --rm busybox echo "foo" | cat
+stdout is not a tty
+</code></pre>
+
+<p>You might work around this by adding the
+<a href="https://github.com/rprichard/winpty/issues/103">(undocumented) <code>-Xallow-non-tty</code></a> flag like so</p>
+
+<pre><code class="language-text">$ winpty -Xallow-non-tty docker run --rm busybox echo "foo" | cat
+foo
+</code></pre>
+
+<p>But this <a href="https://github.com/rprichard/winpty/issues/103#issuecomment-285987050">doesn't seem to be a catch-all solution</a>
+and I would recommend against using it as a default - or if you do, only use it when the <code>-it</code> 
+flag is used <a href="https://stackoverflow.com/a/61580520/413531">as proposed in this answer</a>.</p>
+
+<p><!-- generated -->
+<a id='the-path-conversion-issue'> </a>
+<!-- /generated --></p>
+
+<h3>The path conversion issue</h3>
+
+<p>Ah. This one has given me <em>lots</em> of headaches over the years. MINGW, MSYS2 and <code>winpty</code> use 
+automatic conversion of Unix paths to Windows paths, e.g. <code>/foo</code> gets translated to something like
+<code>C:/Program Files/Git/foo</code> where <code>C:/Program Files/Git/</code> is the installation directory of the 
+Git for Windows installation.</p>
+
+<p><!-- generated -->
+<a id='fixing-the-path-conversion-issue-for-mingw-msys2'> </a>
+<!-- /generated --></p>
+
+<h4>Fixing the path conversion issue for MINGW / MSYS2</h4>
+
+<p>First, the behavior is mentioned on the
+<a href="https://github.com/git-for-windows/build-extra/blob/main/ReleaseNotes.md#known-issues">Git for Windows Known Issues page</a></p>
+
+<blockquote>
+  <p>If you specify command-line options starting with a slash, POSIX-to-Windows path conversion 
+  will kick in converting e.g. "<code>/usr/bin/bash.exe</code>" to "<code>C:\Program Files\Git\usr\bin\bash.exe</code>". 
+  When that is not desired -- e.g. "<code>--upload-pack=/opt/git/bin/git-upload-pack</code>" or "<code>-L/regex/</code>" 
+  -- you need to set the environment variable <code>MSYS_NO_PATHCONV</code> temporarily, like so:</p>
+  
+  <p><code>MSYS_NO_PATHCONV=1 git blame -L/pathconv/ msys2_path_conv.cc</code></p>
+  
+  <p>Alternatively, you can double the first slash to avoid POSIX-to-Windows path conversion, e.g. 
+  "<code>//usr/bin/bash.exe</code>".</p>
+</blockquote>
+
+<p>and also documented for
+<a href="https://web.archive.org/web/20201112005258/http://www.mingw.org/wiki/Posix_path_conversion">MINGW at "Posix path conversion"</a>,
+but it's still brought up regularly, see e.g.
+<a href="https://github.com/git-for-windows/git/issues/3619">GH #3619: "/" is replaced with the directory path of Git installation when using MinGW64 Bash</a>.
+or
+<a href="https://stackoverflow.com/a/34386471">SO: How to stop MinGW and MSYS from mangling path names given at the command line</a></p>
+
+<p><strong>Example</strong></p>
+
+<pre><code class="language-bash">$ docker run --rm busybox ls /foo
+ls: C:/Program Files/Git/foo: No such file or directory
+</code></pre>
+
+<p>As quoted above, it can be solved by either</p>
+
+<ul>
+<li><p>adding an <strong>additional <code>/</code></strong> to the path</p>
+
+<pre><code class="language-text">$ docker run --rm busybox ls //foo
+ls: /foo: No such file or directory
+</code></pre></li>
+<li><p><strong>prefixing</strong> the command with <code>MSYS_NO_PATHCONV=1</code></p>
+
+<pre><code class="language-text">$ MSYS_NO_PATHCONV=1 docker run --rm busybox ls /foo
+ls: /foo: No such file or directory
+</code></pre></li>
+<li><p>or exporting the <code>MSYS_NO_PATHCONV=1</code> variable as an <strong>environment variable</strong> to disable the 
+behavior completely</p>
+
+<pre><code class="language-text">$ export MSYS_NO_PATHCONV=1
+$ docker run --rm busybox ls /foo
+ls: /foo: No such file or directory
+</code></pre></li>
+</ul>
+
+<p><strong>CAUTION:</strong> The value of the <code>MSYS_NO_PATHCONV</code> variable does not matter - we can also set it 
+to <code>0</code>, <code>false</code> or an empty string. It only matters that the variable is defined!</p>
+
+<pre><code class="language-text">$ MSYS_NO_PATHCONV=0 docker run --rm busybox ls /foo
+ls: /foo: No such file or directory
+</code></pre>
+
+<p>This is particularly important when using the <strong>environment variable</strong> approach. In order to 
+selectively enable the path conversion again, you must 
+<a href="https://stackoverflow.com/a/41749660">unset the <code>MSYS_NO_PATHCONV</code> first</a> via 
+<code>env -u MSYS_NO_PATHCONV ...</code>, e.g.</p>
+
+<pre><code class="language-text">$ env -u MSYS_NO_PATHCONV docker run --rm busybox ls /foo
+ls: C:/Program Files/Git/foo: No such file or directory
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/mingw-git-bash-posix-path-conversion.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><strong>CAUTION</strong>: I've seen people adding <code>MSYS_NO_PATHCONV=1</code> permanently to their environment in
+their <code>.bashrc</code> file to <em>always</em> disable path conversion via</p>
+
+<pre><code class="language-bash">export MSYS_NO_PATHCONV=1
+</code></pre>
+
+<p>However, this can have some unintended side effects. When I tried it out,
+<a href="/blog/gcp-compute-instance-vm-docker/#set-up-the-gcloud-cli-tool">my local installation of the <code>gcloud</code> cli</a>
+stopped working with the error</p>
+
+<pre><code class="language-text">$ MSYS_NO_PATHCONV=1 gcloud version
+C:\Users\Pascal\AppData\Local\Programs\Python\Python39\python.exe: can't open file 'C:\c\Users\Pascal\AppData\Local\Google\Cloud SDK\google-cloud-sdk\lib\gcloud.py': [Errno 2] No such file or directory
+</code></pre>
+
+<p>So instead I recommend setting <code>MSYS_NO_PATHCONV=1</code> either selectively per command or scope it
+to the use case. I do this for example in my Makefiles by only exporting it for the scope of
+<code>make</code> (and all scripts <code>make</code> invokes) by putting the following code in the beginning of the 
+Makefile:</p>
+
+<pre><code class="language-makefile"># OS is a defined variable for WIN systems, so "uname" will not be executed
+OS?=$(shell uname)
+# Values of OS:
+#   Windows =&gt; Windows_NT 
+#   Mac     =&gt; Darwin 
+#   Linux   =&gt; Linux 
+ifeq ($(OS),Windows_NT)
+    export MSYS_NO_PATHCONV=1
+endif
+</code></pre>
+
+<p>The path conversion is also documented for
+<a href="https://www.msys2.org/docs/filesystem-paths/#automatic-unix-windows-path-conversion">MSYS2 at "Filesystem Paths: Automatic Unix ⟶ Windows Path Conversion"</a>
+and can be disabled via the <code>MSYS2_ARG_CONV_EXCL</code> environment variable:</p>
+
+<blockquote>
+  <p>[...] For these cases you can exclude certain arguments via the <code>MSYS2_ARG_CONV_EXCL</code> environment 
+  variable:
+  [...]
+  <code>MSYS2_ARG_CONV_EXCL</code> can either be * to mean exclude everything, or a list of one ore more 
+  arguments prefixes separated by ;, like <code>MSYS2_ARG_CONV_EXCL=--dir=;--bla=;/test</code>. It matches 
+  the prefix against the whole argument string.</p>
+</blockquote>
+
+<p>I.e. setting the variable as <code>MSYS2_ARG_CONV_EXCL="*"</code> should disable the path conversion 
+completely. I myself have never had to use this, though. Using <code>MSYS_NO_PATHCONV</code> was always 
+sufficient.</p>
+
+<p><!-- generated -->
+<a id='fixing-the-path-conversion-issue-for-winpty'> </a>
+<!-- /generated --></p>
+
+<h4>Fixing the path conversion issue for <code>winpty</code></h4>
+
+<p>Unfortunately, <code>winpty</code> suffers from this path conversion issue as well. In the standard 
+installation of Git for Windows we can even see this by simply using <code>echo</code>:</p>
+
+<pre><code class="language-text">$ winpty echo /
+C:/Program Files/Git
+</code></pre>
+
+<p>The behavior is known and flagged as a bug e.g. in
+<a href="https://github.com/msys2/MSYS2-packages/issues/411">GH issue #411: Path conversion with and without winpty differs</a>.</p>
+
+<p>Remember the example I gave in section
+<a href="#the-role-of-winpty-fixing-the-input-device-is-not-a-tty">The role of <code>winpty</code> e.g. when using <code>docker</code></a>?</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -it busybox sh
+/ #
+</code></pre>
+
+<p>Now let's extend this and throw a volume into the mix:</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -v foo:/foo -it busybox sh
+docker: Error response from daemon: create foo;C: "foo;C" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.
+</code></pre>
+
+<p><code>winpty</code> converts <code>/foo</code> to <code>C:/Program Files/Git/foo</code> so that the volume definition becomes
+<code>-v foo:C:/Program Files/Git/foo</code> - which is of course invalid.</p>
+
+<p>Using an additional <code>/</code> as a prefix does work here as well:</p>
+
+<pre><code class="language-text">$ winpty docker run --rm -v foo://foo -it busybox sh
+/ #
+</code></pre>
+
+<p>But <strong>there is no environment variable that we could use</strong>. The only way to "fix" the path 
+conversion is using a 
+<a href="https://github.com/rprichard/winpty/releases">newer release of <code>winpty</code></a> and replace the one 
+that is shipped together with Git for Windows 
+<a href="https://github.com/msys2/MSYS2-packages/issues/411#issuecomment-372585320">as proposed by the maintainer of <code>winpty</code></a>.</p>
+
+<p>This <a href="https://github.com/rprichard/winpty/issues/127#issuecomment-817356202">comment outlines the full process</a>
+to replace <code>winpty</code> and is (slightly adapted) as follows:</p>
+
+<pre><code class="language-bash"># create temporary directory
+mkdir temp
+cd temp
+# download a newer release
+curl -L https://github.com/rprichard/winpty/releases/download/0.4.3/winpty-0.4.3-msys2-2.7.0-x64.tar.gz --output winpty.tar.gz
+# extract the archive
+tar -xvf winpty.tar.gz
+# copy the content of the bin/ folder to `/usr/bin` 
+# (which resolves to e.g `C:/Program Files/Git/usr/bin`; replaces any existing files)
+cp winpty-0.4.3-msys2-2.7.0-x64/bin/* /usr/bin
+# delete the temporary directory
+cd ..
+rm -rf temp/
+</code></pre>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/winpty-update-posix-path-conversion.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>Once the new version is installed, the path conversion does not happen any longer (even without 
+specifying any environment variables).</p>
+
+<p>Related comments:</p>
+
+<ul>
+<li><a href="https://github.com/docker/for-win/issues/1588#issuecomment-594938988">https://github.com/docker/for-win/issues/1588#issuecomment-594938988</a></li>
+<li><a href="https://github.com/docker/for-win/issues/1588#issuecomment-698080757">https://github.com/docker/for-win/issues/1588#issuecomment-698080757</a></li>
+</ul>
+
+<p><strong>Caution</strong>
+After <a href="#update-mingw">updating MinGW</a>, the fix for <code>winpty</code> is "gone"!</p>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/winpty-path-fix-gone-after-update.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>I.e. you need to re-run the steps above every time you run an update.</p>
+
+<p><!-- generated -->
+<a id='miscellaneous'> </a>
+<!-- /generated --></p>
+
+<h2>Miscellaneous</h2>
+
+<p>Some stuff that I need from time to time - not necessarily only relevant for Git Bash.</p>
+
+<p><!-- generated -->
+<a id='change-the-bash-custom-prompt-to-a'> </a>
+<!-- /generated --></p>
+
+<h3>Change the <code>bash</code> custom prompt to a <code>$</code></h3>
+
+<p>Via <code>PS1=" $"</code>:</p>
+
+<pre><code class="language-text">Pascal@LAPTOP-0DNL2Q02 MINGW64 ~
+$ PS1="$ "
+$
+</code></pre>
+
+<p>See <a href="https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.html">How to Change / Set up bash custom prompt (PS1) in Linux</a></p>
+]]></description>
+                <pubDate>Wed, 12 Apr 2023 14:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/setting-up-git-bash-mingw-msys2-on-windows/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/setting-up-git-bash-mingw-msys2-on-windows/</guid>
+            </item>
                     <item>
                 <title>Use docker compose for production deployments of a PHP App on GCP [Tutorial Part 9]</title>
                 <description><![CDATA[<p>In the ninth part of this tutorial series on developing PHP on Docker we will 
