@@ -779,14 +779,17 @@ codebase is shared between the host system and a docker container</strong>.
 I've explained the details in the Github issue
 <a href="https://github.com/sobolevn/git-secret/issues/806">"gpg: can't connect to the agent: IPC connect call failed" error in docker alpine on shared volume</a>.</p>
 
-<p>In short:
-- <code>gpg</code> uses a <code>gpg-agent</code> to perform its tasks and the two tools communicate through sockets 
-  that are created in the <code>--home-directory</code> of the <code>gpg-agent</code>
-- the agent is started implicitly through a <code>gpg</code> command used by <code>git-secret</code>, using the 
-  <code>.gitsecret/keys</code> directories as a <code>--home-directory</code>
-- because the location of the <code>--home-directory</code> is shared with the host system, the socket 
-  creation fails (potentially only an issue for Docker Desktop, see the related discussion in 
-  Github issue <a href="https://github.com/docker/for-mac/issues/483#issuecomment-647325015">Support for sharing unix sockets</a>)</p>
+<p>In short:</p>
+
+<ul>
+<li><code>gpg</code> uses a <code>gpg-agent</code> to perform its tasks and the two tools communicate through sockets 
+that are created in the <code>--home-directory</code> of the <code>gpg-agent</code></li>
+<li>the agent is started implicitly through a <code>gpg</code> command used by <code>git-secret</code>, using the 
+<code>.gitsecret/keys</code> directories as a <code>--home-directory</code></li>
+<li>because the location of the <code>--home-directory</code> is shared with the host system, the socket 
+creation fails (potentially only an issue for Docker Desktop, see the related discussion in 
+Github issue <a href="https://github.com/docker/for-mac/issues/483#issuecomment-647325015">Support for sharing unix sockets</a>)</li>
+</ul>
 
 <p>The corresponding error messages are</p>
 
@@ -1913,7 +1916,7 @@ notifications when this next part comes out :)</p>
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2023                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
             </div>
         </div>
     </div>

@@ -5,8 +5,8 @@
         <description>Pascal Landau's Blog - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-codeproject-com.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Thu, 13 Oct 2022 15:22:47 +0000</pubDate>
-        <lastBuildDate>Thu, 13 Oct 2022 15:22:47 +0000</lastBuildDate>
+        <pubDate>Wed, 12 Apr 2023 11:55:43 +0000</pubDate>
+        <lastBuildDate>Wed, 12 Apr 2023 11:55:43 +0000</lastBuildDate>
         <language>en</language>
         <category>CodeProject</category>
                     <item>
@@ -1675,89 +1675,109 @@ echo "SUCCESS"
 <h4>Run details</h4>
 
 <ul>
-<li>as a preparation step, we first ensure that no outdated <code>ci</code> containers are running (this is
-only necessary locally, because runners on a remote CI system will start "from scratch")
-<code>bash
-make docker-down ENV=ci || true</code></li>
-<li>we take some time measurements to understand how long certain parts take via
-<code>bash
-start_total=$(date +%s)</code>
-to store the current timestamp</li>
-<li>we need the secret <code>gpg</code> key in order to decrypt the secrets and simply copy the
+<li><p>as a preparation step, we first ensure that no outdated <code>ci</code> containers are running (this is
+only necessary locally, because runners on a remote CI system will start "from scratch")</p>
+
+<pre>make docker-down ENV=ci || true
+</pre></li>
+<li><p>we take some time measurements to understand how long certain parts take via</p>
+
+<pre>start_total=$(date +%s)
+</pre>
+
+<p>to store the current timestamp</p></li>
+<li><p>we need the secret <code>gpg</code> key in order to decrypt the secrets and simply copy the
 <a href="#add-a-password-protected-secret-gpg-key">password-protected example key</a> 
 (in the actual CI systems the key will be configured as a secret value that is injected in 
-the run)
-<code>bash
-# STORE GPG KEY
-cp secret-protected.gpg.example secret.gpg</code></li>
-<li>I like printing some debugging info in order to understand which exact circumstances
+the run)</p>
+
+<pre># STORE GPG KEY
+cp secret-protected.gpg.example secret.gpg
+</pre></li>
+<li><p>I like printing some debugging info in order to understand which exact circumstances
 we're dealing with (tbh, this is mostly relevant when setting the CI system up or making
-modifications to it)
-<code>bash
-# DEBUG
+modifications to it)</p>
+
+<pre># DEBUG
 docker version
 docker compose version
-cat /etc/*-release || true</code></li>
-<li>for the docker setup, we start with
-<a href="#initialize-make-for-ci">initializing the environment for <code>ci</code></a>
-<code>bash
-# SETUP DOCKER
-make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"</code>
-then build the docker setup
-<code>bash
-make docker-build</code>
-and finally add a <code>.build/</code> directory to
-<a href="#create-a-junit-report-from-phpunit">collect the build artifacts</a>
-<code>bash
-mkdir -p .build &amp;&amp; chmod 777 .build</code></li>
-<li>then, the docker setup is started
-<code>bash
-# START DOCKER
-make docker-up</code>
-and <code>gpg</code> is initialized so that
-<a href="#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a>
-<code>bash
-make gpg-init
-make secret-decrypt-with-password</code>
-We don't need to pass a <code>GPG_PASSWORD</code> to <code>secret-decrypt-with-password</code> because we have set
-it up in the previous step as a default value via <code>make-init</code></li>
-<li>once the <code>application</code> container is running, the qa tools are run by invoking the
-<a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#the-qa-target"><code>qa</code> make target</a>
-<code>bash
-# QA
-make qa || FAILED=true</code>
-The <code>|| FAILED=true</code> part makes sure that the script will not be terminated if the checks fail.
+cat /etc/*-release || true
+</pre></li>
+<li><p>for the docker setup, we start with
+<a href="#initialize-make-for-ci">initializing the environment for <code>ci</code></a></p>
+
+<pre># SETUP DOCKER
+make make-init ENVS="ENV=ci TAG=latest EXECUTE_IN_CONTAINER=true GPG_PASSWORD=12345678"
+</pre>
+
+<p>then build the docker setup</p>
+
+<pre>make docker-build
+</pre>
+
+<p>and finally add a <code>.build/</code> directory to
+<a href="#create-a-junit-report-from-phpunit">collect the build artifacts</a></p>
+
+<pre>mkdir -p .build &amp;&amp; chmod 777 .build
+</pre></li>
+<li><p>then, the docker setup is started</p>
+
+<pre># START DOCKER
+make docker-up
+</pre>
+
+<p>and <code>gpg</code> is initialized so that
+<a href="#add-a-password-protected-secret-gpg-key">the secrets can be decrypted</a></p>
+
+<pre>make gpg-init
+make secret-decrypt-with-password
+</pre>
+
+<p>We don't need to pass a <code>GPG_PASSWORD</code> to <code>secret-decrypt-with-password</code> because we have set
+it up in the previous step as a default value via <code>make-init</code></p></li>
+<li><p>once the <code>application</code> container is running, the qa tools are run by invoking the
+<a href="https://www.pascallandau.com/blog/php-qa-tools-make-docker/#the-qa-target"><code>qa</code> make target</a></p>
+
+<pre># QA
+make qa || FAILED=true
+</pre>
+
+<p>The <code>|| FAILED=true</code> part makes sure that the script will not be terminated if the checks fail.
 Instead, the fact that a failure happened is "recorded" in the <code>FAILED</code> variable so that we
 can evaluate it at the end. We don't want the script to stop here because we want the
-following steps to be executed as well (e.g. the tests).</li>
-<li>to mitigate the
+following steps to be executed as well (e.g. the tests).</p></li>
+<li><p>to mitigate the
 <a href="#adding-a-health-check-for-mysql">"<code>mysql</code> is not ready" problem</a>, we will now apply the
-<a href="#wait-for-service-sh">wait-for-service.sh script</a>
-<code>bash
-# WAIT FOR CONTAINERS
-bash .docker/scripts/wait-for-service.sh mysql 30 1</code></li>
-<li>once <code>mysql</code> is ready, we can execute the tests via the 
+<a href="#wait-for-service-sh">wait-for-service.sh script</a></p>
+
+<pre># WAIT FOR CONTAINERS
+bash .docker/scripts/wait-for-service.sh mysql 30 1
+</pre></li>
+<li><p>once <code>mysql</code> is ready, we can execute the tests via the 
 <a href="https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/#install-phpunit"><code>test</code> make target</a> and 
-apply the same <code>|| FAILED=true</code> workaround as for the qa tools
-<code>bash
-# TEST
-make test || FAILED=true</code></li>
-<li>finally, all the timers are printed
-<code>bash
-# RUNTIMES
+apply the same <code>|| FAILED=true</code> workaround as for the qa tools</p>
+
+<pre># TEST
+make test || FAILED=true
+</pre></li>
+<li><p>finally, all the timers are printed</p>
+
+<pre># RUNTIMES
 echo "Build docker:        " `expr $end_docker_build - $start_docker_build`
 echo "Start docker:        " `expr $end_docker_up - $start_docker_up  `
 echo "QA:                  " `expr $end_qa - $start_qa`
 echo "Wait for containers: " `expr $end_wait_for_containers - $start_wait_for_containers`
 echo "Tests:               " `expr $end_test - $start_test`
 echo "---------------------"
-echo "Total:               " `expr $end_total - $start_total`</code></li>
-<li>we clean up the resources (this is only necessary when running locally, because the runner of
-a CI system would be shut down anyways)
-<code>bash
-# CLEANUP
+echo "Total:               " `expr $end_total - $start_total`
+</pre></li>
+<li><p>we clean up the resources (this is only necessary when running locally, because the runner of
+a CI system would be shut down anyway)</p>
+
+<pre># CLEANUP
 make make-init
-make docker-down ENV=ci || true</code></li>
+make docker-down ENV=ci || true
+</pre></li>
 <li><p>and finally evaluate if any error occurred when running the qa tools or the tests</p>
 
 <pre># EVALUATE RESULTS
@@ -1874,20 +1894,18 @@ repository</li>
 </ul></li>
 <li>a Workflow can contain multiple <strong>Jobs</strong></li>
 <li>each Job consists of a series of <strong>Steps</strong></li>
-<li>each Step needs a <code>run:</code> element that represents a command that is executed by a new shell
+<li><p>each Step needs a <code>run:</code> element that represents a command that is executed by a new shell</p>
 
 <ul>
-<li>multi-line commands that should use the same shell are written as
-```yaml
+<li>multi-line commands that should use the same shell are written as</li>
+</ul>
 
-<ul>
-<li>run : |
-echo "line 1"
-echo "line 2"
-```
-See also <a href="https://stackoverflow.com/a/59536836/413531">difference between "run |" and multiple runs in github actions</a></li>
-</ul></li>
-</ul></li>
+<pre>  - run : |
+        echo "line 1"
+        echo "line 2"
+</pre>
+
+<p>See also <a href="https://stackoverflow.com/a/59536836/413531">difference between "run |" and multiple runs in github actions</a></p></li>
 </ul>
 
 <p><!-- generated -->
@@ -2537,14 +2555,17 @@ codebase is shared between the host system and a docker container</strong>.
 I've explained the details in the Github issue
 <a href="https://github.com/sobolevn/git-secret/issues/806">"gpg: can't connect to the agent: IPC connect call failed" error in docker alpine on shared volume</a>.</p>
 
-<p>In short:
-- <code>gpg</code> uses a <code>gpg-agent</code> to perform its tasks and the two tools communicate through sockets 
-  that are created in the <code>--home-directory</code> of the <code>gpg-agent</code>
-- the agent is started implicitly through a <code>gpg</code> command used by <code>git-secret</code>, using the 
-  <code>.gitsecret/keys</code> directories as a <code>--home-directory</code>
-- because the location of the <code>--home-directory</code> is shared with the host system, the socket 
-  creation fails (potentially only an issue for Docker Desktop, see the related discussion in 
-  Github issue <a href="https://github.com/docker/for-mac/issues/483#issuecomment-647325015">Support for sharing unix sockets</a>)</p>
+<p>In short:</p>
+
+<ul>
+<li><code>gpg</code> uses a <code>gpg-agent</code> to perform its tasks and the two tools communicate through sockets 
+that are created in the <code>--home-directory</code> of the <code>gpg-agent</code></li>
+<li>the agent is started implicitly through a <code>gpg</code> command used by <code>git-secret</code>, using the 
+<code>.gitsecret/keys</code> directories as a <code>--home-directory</code></li>
+<li>because the location of the <code>--home-directory</code> is shared with the host system, the socket 
+creation fails (potentially only an issue for Docker Desktop, see the related discussion in 
+Github issue <a href="https://github.com/docker/for-mac/issues/483#issuecomment-647325015">Support for sharing unix sockets</a>)</li>
+</ul>
 
 <p>The corresponding error messages are</p>
 
@@ -2817,13 +2838,10 @@ etc. When run regularly they are a great way to enforce better code and are thus
 <strong>perfect fit for a CI pipeline</strong>. For this tutorial, I'm going to setup the following tools:</p>
 
 <ul>
-<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a>
-
-<ul>
+<li><a href="#phpcs-and-phpcbf">Style Checker: phpcs</a></li>
 <li><a href="#phpstan">Static Analyzer: phpstan</a></li>
 <li><a href="#php-parallel-lint">Code Linter: php-parallel-lint</a></li>
 <li><a href="#composer-require-checker">Dependency Checker: composer-require-checker</a></li>
-</ul></li>
 </ul>
 
 <p>and provide convenient access through a <a href="#the-qa-target"><code>qa</code> make target</a>. The end result will look
@@ -3273,14 +3291,26 @@ gonna leave a list for inspiration:</p>
 
 <ul>
 <li>Running PhpUnit tests in parallel</li>
-<li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a></li>
+</ul></li>
+<li><a href="https://packagist.org/packages/malukenho/mcbumpface">malukenho/mcbumpface</a>
+
+<ul>
 <li>Update the versions in the <code>composer.json</code> file after an update</li>
-<li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a></li>
+</ul></li>
+<li><a href="https://packagist.org/packages/qossmic/deptrac-shim">qossmic/deptrac-shim</a>
+
+<ul>
 <li>A shim for <a href="https://packagist.org/packages/qossmic/deptrac">qossmic/deptrac</a>: 
 A tool to define dependency layers based on e.g. namespaces</li>
-<li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a></li>
+</ul></li>
+<li><a href="https://packagist.org/packages/icanhazstring/composer-unused">icanhazstring/composer-unused</a>
+
+<ul>
 <li>Show dependencies in the <code>composer.json</code> that are not used in the codebase</li>
-<li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a></li>
+</ul></li>
+<li><a href="https://packagist.org/packages/roave/security-advisories">roave/security-advisories</a>
+
+<ul>
 <li>Gives a warning when packages with known vulnerabilities are used</li>
 <li>Alternative: <a href="https://github.com/fabpot/local-php-security-checker/">local-php-security-checker</a></li>
 </ul></li>

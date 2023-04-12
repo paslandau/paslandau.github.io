@@ -173,6 +173,7 @@ some customizations via <code>.bashrc</code>).</p>
 <li><a href="#how-to-install-and-update-git-bash-mingw-msys2-via-git-for-windows">How to install and update Git Bash / MINGW / MSYS2 via Git for Windows</a>
 
 <ul>
+<li><a href="#update-mingw">Update MINGW</a></li>
 <li><a href="#how-to-install-make">How to install <code>make</code></a></li>
 <li><a href="#configuration-via-bashrc">Configuration via <code>.bashrc</code></a></li>
 </ul></li>
@@ -249,6 +250,12 @@ to get a guided tour through the setup process.</p>
 <code>CTRL + ALT + B</code> (for "<strong>b</strong>ash") so that I can open a new shell session conveniently via keyboard.</p>
 
 <p><a href="/img/setting-up-git-bash-mingw-msys2-on-windows/git-bash-desktop-shortcut.PNG"><img src="/img/setting-up-git-bash-mingw-msys2-on-windows/git-bash-desktop-shortcut.PNG" alt="Git Bash desktop icon and shortcut" /></a></p>
+
+<p><!-- generated -->
+<a id='update-mingw'> </a>
+<!-- /generated --></p>
+
+<h3>Update MINGW</h3>
 
 <p>To update Git for Windows, you can simply run</p>
 
@@ -456,8 +463,9 @@ commands automatically with <code>winpty</code> like so:</p>
 <pre><code class="language-text">alias docker="winpty docker"
 </code></pre>
 
-<p>However, <strong><code>winpty</code> seems to break piping and can lead to unexpected results</strong> like the error 
-<code>stdout is not a tty</code>. See the following example:</p>
+<p>However, <strong><a href="https://superuser.com/q/1011597/434918"><code>winpty</code> seems to break piping</a>
+and can lead to unexpected results</strong> like the error <code>stdout is not a tty</code>. See the following 
+example:</p>
 
 <pre><code class="language-text">$ docker run --rm busybox echo "foo" | cat
 foo
@@ -467,7 +475,15 @@ foo
 stdout is not a tty
 </code></pre>
 
-<p>Thus, I would recommend against using it as a default - or if you do only use it when the <code>-it</code> 
+<p>You might work around this by adding the
+<a href="https://github.com/rprichard/winpty/issues/103">(undocumented) <code>-Xallow-non-tty</code></a> flag like so</p>
+
+<pre><code class="language-text">$ winpty -Xallow-non-tty docker run --rm busybox echo "foo" | cat
+foo
+</code></pre>
+
+<p>But this <a href="https://github.com/rprichard/winpty/issues/103#issuecomment-285987050">doesn't seem to be a catch-all solution</a>
+and I would recommend against using it as a default - or if you do, only use it when the <code>-it</code> 
 flag is used <a href="https://stackoverflow.com/a/61580520/413531">as proposed in this answer</a>.</p>
 
 <p><!-- generated -->
@@ -682,6 +698,16 @@ specifying any environment variables).</p>
 <li><a href="https://github.com/docker/for-win/issues/1588#issuecomment-698080757">https://github.com/docker/for-win/issues/1588#issuecomment-698080757</a></li>
 </ul>
 
+<p><strong>Caution</strong>
+After <a href="#update-mingw">updating MinGW</a>, the fix for <code>winpty</code> is "gone"!</p>
+
+<video controls>
+  <source src="/img/setting-up-git-bash-mingw-msys2-on-windows/winpty-path-fix-gone-after-update.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>I.e. you need to re-run the steps above every time you run an update.</p>
+
 <p><!-- generated -->
 <a id='miscellaneous'> </a>
 <!-- /generated --></p>
@@ -833,7 +859,7 @@ $
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2023                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
             </div>
         </div>
     </div>

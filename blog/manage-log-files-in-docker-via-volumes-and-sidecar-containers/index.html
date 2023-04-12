@@ -921,7 +921,7 @@ the script</li>
 <p>Plus a bunch of other stuff mentioned in 
 <a href="https://blog.thesparktree.com/cron-in-docker">Running Cron in Docker</a> - so I recommend giving 
 this a read as well. I've also come across <a href="https://github.com/aptible/supercronic/"><code>superchronic</code></a>
-that is supposed to easy the pain of dealing with cron jobs in container - but I didn't have a 
+that is supposed to ease the pain of dealing with cron jobs in container - but I didn't have a 
 reason to use it so far.</p>
 
 <p><!-- generated -->
@@ -942,6 +942,7 @@ reason to use it so far.</p>
 <ul>
 <li><a href="https://adamtheautomator.com/logrotate-linux/">How to Configure Logrotate to Manage Logfiles (Step by Step)</a></li>
 <li><a href="https://www.digitalocean.com/community/tutorials/how-to-manage-logfiles-with-logrotate-on-ubuntu-16-04">How To Manage Logfiles with Logrotate on Ubuntu 16.04</a></li>
+<li><a href="https://www.datadoghq.com/blog/log-file-control-with-logrotate/">How to manage log files using logrotate</a></li>
 </ul>
 
 <p>Just in case you find <code>logrotate</code> too complex: It's also 
@@ -1002,9 +1003,9 @@ Help options:
 
 <h4>Configure <code>logrotate</code></h4>
 
-<p><code>logrotate</code> requires a config file as argument. This is by default located at 
-<code>/etc/logrotate.conf</code> and contains the configuration that is applied to all logfiles that are 
-supposed to be managed by <code>logrotate</code>. The default file looks as follows:</p>
+<p><code>logrotate</code> requires a config file as argument. This is usually located at 
+<code>/etc/logrotate.conf</code> and <strong>contains the configuration that is applied to all logfiles</strong> that are 
+supposed to be managed by <code>logrotate</code>. The default file after the installation looks as follows:</p>
 
 <pre><code class="language-text">$ cat /etc/logrotate.conf
 # see "man logrotate" for details
@@ -1031,7 +1032,7 @@ include /etc/logrotate.d
 </code></pre>
 
 <p>Please refer to the <a href="https://linux.die.net/man/8/logrotate"><code>logrotate</code> Linux man page</a> for a 
-full list of all options.</p>
+full list of all options including explanation.</p>
 
 <p>The to-be-managed logfiles are defined in individual files in the directory specified via the
 <code>include</code> option (<code>/etc/logrotate.d</code> in the example above) and look like this:</p>
@@ -1045,10 +1046,29 @@ full list of all options.</p>
 </code></pre>
 
 <p><code>/var/log/app/*.log</code> defines a pattern to match all files with the <code>.log</code> extension in the
-<code>/var/log/app/</code> directory to which this configuration should be applied and the options in the 
-<code>{}</code> block are applied on top of the default config. We can then run <code>logrotate</code> via</p>
+<code>/var/log/app/</code> directory and the options in the <code>{}</code> block are applied on top of the default 
+config. We can then run <code>logrotate</code> via</p>
 
-<pre><code class="language-text">logrotate /etc/logrotate.conf
+<pre><code class="language-text">logrotate /etc/logrotate.conf -v
+</code></pre>
+
+<p>The output looks like this</p>
+
+<pre><code class="language-text">$ logrotate /etc/logrotate.conf -v
+reading config file /etc/logrotate.conf
+warning: 'daily' overrides previously specified 'weekly'
+Reading state from file: /var/lib/logrotate.status
+Allocating hash table for state file, size 64 entries
+Creating new state
+
+Handling 1 logs
+
+rotating pattern: /var/log/app/*.log  after 1 days (4 rotations)
+empty log files are rotated, old logs are removed
+considering log /var/log/app/application.log
+  Now: 2022-10-14 07:11
+  Last rotated at 2022-10-14 00:00
+  log does not need rotating (log has been rotated at 2022-10-14 00:00, which is less than a day ago)
 </code></pre>
 
 <p><!-- generated -->
@@ -1160,9 +1180,7 @@ include /etc/logrotate.d
 
 <p>FYI: I found 
 <a href="https://stackoverflow.com/a/27566659/413531">this answer to "Logrotate to clean up date stamped files"</a>
-helpful to build a mental modal on how the deletion process works in detail as well as 
-<a href="https://www.datadoghq.com/blog/log-file-control-with-logrotate/">How to manage log files using logrotate</a>
-for a general introduction to <code>logrotate</code> and it's options.</p>
+helpful to build a mental modal on how the deletion process works in detail.</p>
 
 <p><!-- generated -->
 <a id='the-logrotate-state-file'> </a>
@@ -1185,7 +1203,7 @@ logrotate state -- version 2
 </code></pre>
 
 <ul>
-<li><code>/var/log/app/application.log</code> is log file</li>
+<li><code>/var/log/app/application.log</code> is the concrete, actual log file</li>
 <li><code>2022-10-7-5:0:0</code> is the time of the last rotation</li>
 </ul>
 
@@ -1245,6 +1263,9 @@ logrotate state -- version 2
 
 <h2>Codebase changes</h2>
 
+<p>The following sections describe the changes in the example codebase available on Github at branch
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-13-manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate">part-13-manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate</a>.</p>
+
 <p><!-- generated -->
 <a id='application'> </a>
 <!-- /generated --></p>
@@ -1264,7 +1285,7 @@ application. In Laravel this is either done via the <code>Log</code> facade or b
 
 <pre><code class="language-php">class HomeController extends Controller
 {
-    public function __invoke(/** ...*/, LoggerInterface $logger): View
+    public function __invoke(/* ... */, LoggerInterface $logger): View
     {
         $logger-&gt;info("Handling HTTP request: ".$request-&gt;getUri());
 
@@ -1287,6 +1308,7 @@ application. In Laravel this is either done via the <code>Log</code> facade or b
         $logger-&gt;info("Calling php-fpm to insert job '$jobId'");
         $result = file_get_contents("http://nginx/?dispatch=".urlencode($jobId));
         $logger-&gt;info("Result:".$result);
+        $this-&gt;info("Inserted job '$jobId' via UI");
     }
 }
 </code></pre>
@@ -1405,7 +1427,7 @@ via the <code>AppServiceProvider::register()</code> method</p>
     }
 </code></pre>
 
-<p>The service name is defined in a new config class located at <code>/config/custom.php</code> that enables 
+<p>The service name is defined in a new config class located at <code>config/custom.php</code> that enables 
 us to define the name with the environment variable <code>SERVICE_NAME</code></p>
 
 <pre><code class="language-php">return [
@@ -1413,7 +1435,7 @@ us to define the name with the environment variable <code>SERVICE_NAME</code></p
 ];
 </code></pre>
 
-<p>We will add the <code>SERVICE_NAME</code> in section <a href="#docker">Docker images</a> to all php application images.</p>
+<p>We will add the <code>SERVICE_NAME</code> in section <a href="#docker">Docker</a> to all php application images.</p>
 
 <p><!-- generated -->
 <a id='log-message-example'> </a>
@@ -1441,6 +1463,8 @@ that will create the following log messages:</p>
 [2022-10-07 14:37:02] local.INFO: Inserting a job '2022-10-07 14:37:00' {"pid":215,"service":"php-worker"} 
 </code></pre>
 
+<p>See also section <a href="#docker-compose-for-the-local-env"><code>docker compose</code> for the <code>local</code> env</a>.</p>
+
 <p><!-- generated -->
 <a id='docker'> </a>
 <!-- /generated --></p>
@@ -1453,7 +1477,7 @@ that will create the following log messages:</p>
 <li>the 
 <a href="#configure-log-file-settings">log settings are configured correctly for each program</a>,
 i.e. <strong>logs are enabled and written to a file</strong></li>
-<li>the directory to write the logs to <strong>exists</strong> and has the <strong>correct permissions at build time</strong> 
+<li>the directory to write the logs to <strong>exists</strong>, has the <strong>correct permissions at build time</strong> 
 and is <a href="#setting-up-volumes">set up as a volume at run time</a></li>
 <li>for each php application service we also need to <strong>populate the <code>SERVICE_NAME</code> environment 
 variable</strong></li>
@@ -1523,7 +1547,7 @@ to the child fpm processes (this is important to retain the <code>SERVICE_NAME</
 
 <p>The log directory is <code>/var/log/php-fpm/</code> and needs to be created as part of the build process in
 <code>.docker/images/php/fpm/Dockerfile</code>. We are also defining <code>SERVICE_NAME</code> as 
-<code>ENV</code> variable so that it can be used in <code>/config/custom.php</code> and added as a
+<code>ENV</code> variable so that it can be used in <code>config/custom.php</code> and added as a
 <a href="#adding-a-default-context-for-log-messages">default context</a>.</p>
 
 <pre><code class="language-dockerfile">FROM ${BASE_IMAGE} as base
@@ -1575,9 +1599,9 @@ don't need to define a <code>SERVICE_NAME</code> as <code>ENV</code>.</p>
 
 # ...
 
-RUN mkdir -p /var/log/nginx/ \
-    &amp;&amp; rm -rf /var/log/nginx/* \
-    &amp;&amp; chown $APP_USER_NAME:$APP_GROUP_NAME /var/log/nginx/
+RUN rm -rf /var/log/nginx \
+    &amp;&amp; mkdir -p /var/log/nginx/ \
+    &amp;&amp; chown nginx:nginx /var/log/nginx/
 
 # ...
 </code></pre>
@@ -1616,7 +1640,7 @@ for a comprehensive explanation of the individual settings. In short:</p>
 
 <p>The log directory is <code>/var/log/supervisor/</code> and needs to be created as part of the build process in
 <code>.docker/images/php/worker/Dockerfile</code>. We are also defining <code>SERVICE_NAME</code> as
-<code>ENV</code> variable so that it can be used in <code>/config/custom.php</code> and added as a
+<code>ENV</code> variable so that it can be used in <code>config/custom.php</code> and added as a
 <a href="#adding-a-default-context-for-log-messages">default context</a>.</p>
 
 <pre><code class="language-dockerfile">FROM ${BASE_IMAGE} as base
@@ -1637,9 +1661,10 @@ RUN mkdir -p /var/log/supervisor/ \
 <h5><code>application</code> image</h5>
 
 <p>Our <code>application</code> service has an <code>sshd</code> process running for the <code>local</code> environment and 
-"nothing" for <code>ci</code>. To generate some log entries automatically on <code>prod</code>, I have 
-scheduled the <code>App\Commands\TriggerJobCommand</code> command to run every minute via the 
-<code>\App\Console\Kernel</code></p>
+"nothing" for <code>ci</code>.</p>
+
+<p>To generate some log entries automatically on <code>prod</code>, I have scheduled the 
+<code>App\Commands\TriggerJobCommand</code> command to run every minute via the <code>\App\Console\Kernel</code>:</p>
 
 <pre><code class="language-php">namespace App\Console;
 
@@ -1665,7 +1690,7 @@ via</p>
 </code></pre>
 
 <p>in the Dockerfile at <code>.docker/images/php/application/Dockerfile</code>. We are also defining 
-<code>SERVICE_NAME</code> as <code>ENV</code> variable so that it can be used in <code>/config/custom.php</code> and added as a 
+<code>SERVICE_NAME</code> as <code>ENV</code> variable so that it can be used in <code>config/custom.php</code> and added as a 
 <a href="#adding-a-default-context-for-log-messages">default context</a>.</p>
 
 <pre><code class="language-dockerfile">ARG BASE_IMAGE
@@ -1838,6 +1863,19 @@ other services, we need to make sure that the corresponding log directories are 
 <a href="#setting-up-volumes">volumes for the <code>logger</code> container as well as the container of the service producing the logs</a>
 (see next section).</p>
 
+<p>FYI: The cron job to run <code>logrotate</code> is executed by the <code>root</code> user so that we won't run into any 
+permission problems when rotating the log files even if they are written by other containers 
+(and their corresponding users).
+<a href="https://linux.die.net/man/8/logrotate">Thanks to the <code>create</code> option</a>, a newly created, empty log 
+file after a rotation will retain the correct user and group permissions:</p>
+
+<blockquote>
+  <p><strong>create</strong> <em>mode owner group</em></p>
+  
+  <p>[...] Any of the log file attributes may be omitted, in which case those attributes for the new 
+  file will use the same values as the original log file for the omitted attributes.</p>
+</blockquote>
+
 <p><!-- generated -->
 <a id='setting-up-volumes'> </a>
 <!-- /generated --></p>
@@ -1890,7 +1928,7 @@ Your browser does not support the video tag.
 <h5><code>docker compose</code> for the <code>local</code> env</h5>
 
 <p>For the <code>local</code> environment, we are using <code>docker compose</code> to orchestrate the containers and 
-need to update the corresponding config file at <code>.docker/docker-compose/docker-compose.local. yml</code>
+need to update the corresponding config file at <code>.docker/docker-compose/docker-compose.local.yml</code>
 by adding the <a href="https://docs.docker.com/compose/compose-file/#volumes"><code>volumes</code> definition</a>:</p>
 
 <pre><code class="language-yaml">volumes:
@@ -1966,7 +2004,7 @@ and we run
 
 <p><a href="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar-per-service-vm.PNG"><img src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar-per-service-vm.PNG" alt="A logger sidecar per service on each VM" /></a></p>
 
-<p>When running a docker container, we need to ensure that the correct volumes are attached and 
+<p>When running a docker container, we need to <strong>ensure that the correct volumes are attached</strong> and 
 modify the <a href="/blog/deploy-dockerized-php-app-production/#running"><code>docker-run-*</code> targets</a> accordingly
 in <code>.make/02-00-docker.mk</code>:</p>
 
@@ -2035,13 +2073,16 @@ echo "Start the container for '${docker_service_name_logger}' on the VM"
 make docker-run-"${docker_service_name_logger}"
 </code></pre>
 
-<p>The following video shows the deployment process and the newly started <code>logger</code> sidecar on the 
-<code>nginx</code> VM:</p>
+<p>The following video shows the deployment process and the newly started <code>logger</code> sidecar on the VM
+of the <code>application</code> service:</p>
 
 <video controls>
   <source src="/img/manage-log-files-in-docker-via-volumes-and-sidecar-containers-with-cron-jobs-and-logrotate/logger-sidecar-production-deployment.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
+
+<p>Please note, that we will <strong>only see the logs created by the <code>application</code> service</strong> - <em>not</em> the ones
+from <code>php-fpm</code> and <code>php-worker</code>, because they are located on other VMs!</p>
 
 <p><!-- generated -->
 <a id='next-steps'> </a>
@@ -2056,23 +2097,17 @@ some caveats:</p>
 <ul>
 <li>it's <strong>not the "docker way to do things"</strong> (as outlined in section 
 <a href="#logs-in-dockerized-applications">Logs in dockerized applications</a>)</li>
-<li><strong>data loss on VM rotation</strong>:
-
-<ul>
-<li>if the VM is destroyed and re-created, the log volumes will be gone as well</li>
-</ul></li>
-<li><strong>log file decentralization</strong>:
-
-<ul>
-<li>since we have one VM per service, we must log into each VM individually to get access to 
+<li><strong>data loss on VM rotation</strong>: if the VM is destroyed and re-created, the log volumes will be 
+gone as well</li>
+<li><strong>log file decentralization</strong>: since we have one VM per service, we must log into each VM individually to get access to 
 all the logs</li>
-</ul></li>
 </ul>
 
 <p>We could counter the "data loss" quite easily by using 
 <a href="https://cloud.google.com/storage/docs/gsutil/commands/rsync"><code>gsutil rsync</code></a> to <strong>store log files 
-periodically in a Cloud Storage bucket</strong> (<code>gsutil</code> is part of the <code>gcloud</code> cli). But an even 
-better approach would be using a <strong>log file aggregator</strong> like <a href="https://www.fluentd.org/"><code>fluentd</code></a> 
+in a Cloud Storage bucket before the VM rotation</strong> (<code>gsutil</code> is part of the <code>gcloud</code> cli). But an 
+even better approach would be using a <strong>log file aggregator</strong> like 
+<a href="https://www.fluentd.org/"><code>fluentd</code></a> 
 to store the logs in a <strong>central location</strong> like <a href="https://cloud.google.com/logging">Cloud Logging</a>
 (<a href="https://stackoverflow.com/a/63916807/413531">formerly known as Stackdriver</a>).</p>
 
@@ -2233,7 +2268,7 @@ leave a comment. You should now be familiar with running cron jobs on <code>dock
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2022                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
+                <p class="copyright text-muted">&copy; <a href="https://www.pascallandau.com">www.pascallandau.com</a> 2023                    built with <a href="https://github.com/tightenco/jigsaw">Jigsaw</a></p>
             </div>
         </div>
     </div>
