@@ -65,7 +65,10 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">pascallandau.com</a>
+            <a class="navbar-brand" href="/">
+                <img src="/favicon.ico" />
+                pascallandau.com
+            </a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
@@ -287,14 +290,15 @@ Your browser does not support the video tag.
 <li>Download file <a href="https://sourceforge.net/projects/ezwinports/files/make-4.3-without-guile-w32-bin.zip/download"><code>make-4.3-without-guile-w32-bin.zip</code></a>
 (get the version without guile)</li>
 <li>Extract zip</li>
-<li>Copy the contents to your <code>Git/mingw64/</code> directory, merging the folders, but do NOT
-overwrite/replace any existing files
+<li><p>Copy the contents to your <code>Git/mingw64/</code> directory, merging the folders, but do NOT
+overwrite/replace any existing files</p>
 
 <ul>
-<li>navigate to the <code>Git/mingw64/</code> directory via
-<code>cd /
-explorer .</code></li>
-</ul></li>
+<li>navigate to the <code>Git/mingw64/</code> directory via</li>
+</ul>
+
+<pre><code>$(cd /; explorer .)
+</code></pre></li>
 </ul>
 
 <p>Test via <code>make version</code></p>

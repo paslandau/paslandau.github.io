@@ -5,8 +5,8 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Wed, 12 Apr 2023 12:17:17 +0000</pubDate>
-        <lastBuildDate>Wed, 12 Apr 2023 12:17:17 +0000</lastBuildDate>
+        <pubDate>Thu, 13 Apr 2023 08:05:15 +0000</pubDate>
+        <lastBuildDate>Thu, 13 Apr 2023 08:05:15 +0000</lastBuildDate>
         <language>en</language>
                     <item>
                 <title>Setting up Git Bash / MINGW / MSYS2 on Windows</title>
@@ -150,14 +150,15 @@ Your browser does not support the video tag.
 <li>Download file <a href="https://sourceforge.net/projects/ezwinports/files/make-4.3-without-guile-w32-bin.zip/download"><code>make-4.3-without-guile-w32-bin.zip</code></a>
 (get the version without guile)</li>
 <li>Extract zip</li>
-<li>Copy the contents to your <code>Git/mingw64/</code> directory, merging the folders, but do NOT
-overwrite/replace any existing files
+<li><p>Copy the contents to your <code>Git/mingw64/</code> directory, merging the folders, but do NOT
+overwrite/replace any existing files</p>
 
 <ul>
-<li>navigate to the <code>Git/mingw64/</code> directory via
-<code>cd /
-explorer .</code></li>
-</ul></li>
+<li>navigate to the <code>Git/mingw64/</code> directory via</li>
+</ul>
+
+<pre><code>$(cd /; explorer .)
+</code></pre></li>
 </ul>
 
 <p>Test via <code>make version</code></p>
