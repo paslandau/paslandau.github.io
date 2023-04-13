@@ -5,9 +5,624 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Thu, 13 Apr 2023 08:05:15 +0000</pubDate>
-        <lastBuildDate>Thu, 13 Apr 2023 08:05:15 +0000</lastBuildDate>
+        <pubDate>Thu, 13 Apr 2023 08:35:26 +0000</pubDate>
+        <lastBuildDate>Thu, 13 Apr 2023 08:35:26 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Using GCP MySQL Cloud SQL instances (create/connect/delete)</title>
+                <description><![CDATA[<p>In this blog post I'll summarize my experience with <strong>GCP MySQL Cloud SQL instances</strong>. Cloud SQL 
+is the managed relational database solution from Google Cloud Platform and was mentioned in 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#introduction">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>
+as the "better" way to deal with databases in a dockerized application (compared to running a 
+database via <code>docker</code>).</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    I'll explain the basic steps to <strong>create a fresh MySQL instance</strong>, 
+    <strong>show different ways to connect to it</strong> (Cloud Shell, locally "from your laptop" 
+    and from a VM within GCP) and finally <strong>how to delete the instance</strong>. Every process 
+    is done through the Cloud Console UI and <strong>recorded as a short video</strong> as a visual 
+    aid. As in the <a href="/blog/gcp-compute-instance-vm-docker/">GCP "primer" tutorial</a>, this 
+    article ends with the commands to achieve the same things also via the
+    <code>gcloud</code> CLI.
+  </div>
+</div>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#setup-cloud-sql">Setup Cloud SQL</a></li>
+<li><a href="#create-a-new-mysql-instance">Create a new <code>mysql</code> instance</a></li>
+<li><a href="#connecting-to-a-mysql-cloud-sql-instance">Connecting to a MySQL Cloud SQL instance</a>
+
+<ul>
+<li><a href="#connecting-to-the-mysql-instance-with-cloud-shell-via-public-ip">Connecting to the <code>mysql</code> instance with Cloud Shell via public IP</a></li>
+<li><a href="#connecting-to-the-mysql-instance-via-public-ip">Connecting to the <code>mysql</code> instance via public IP</a></li>
+<li><a href="#connecting-to-the-mysql-instance-via-private-ip">Connecting to the <code>mysql</code> instance via private IP</a>
+
+<ul>
+<li><a href="#concrete-steps-to-connect-via-private-ip">Concrete steps to connect via private IP</a></li>
+<li><a href="#caveats-for-using-a-private-ip-only">Caveats for using a private IP only</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#delete-a-mysql-cloud-sql-instance">Delete a MySQL Cloud SQL instance</a></li>
+<li><a href="#using-the-gcloud-cli">Using the <code>gcloud</code> CLI</a>
+
+<ul>
+<li><a href="#activate-the-service-account">Activate the service account</a></li>
+<li><a href="#enable-the-necessary-apis">Enable the necessary APIs</a></li>
+<li><a href="#create-an-ip-range-allocation">Create an IP range allocation</a></li>
+<li><a href="#create-the-vpc-peering-with-servicenetworking-googleapis-com">Create the VPC peering with <code>servicenetworking.googleapis.com</code></a></li>
+<li><a href="#create-the-mysql-instance">Create the <code>mysql</code> instance</a>
+
+<ul>
+<li><a href="#set-the-root-password">Set the root password</a></li>
+<li><a href="#create-a-default-database">Create a default database</a></li>
+</ul></li>
+</ul></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='setup-cloud-sql'> </a>
+<!-- /generated --></p>
+
+<h2>Setup Cloud SQL</h2>
+
+<p><a href="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/cloud-console-cloud-sql-ui.PNG"><img src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/cloud-console-cloud-sql-ui.PNG" alt="GCP Cloud Console Cloud SQL UI" /></a></p>
+
+<p>The managed solution for relational databases from GCP is called 
+<a href="https://cloud.google.com/sql">Cloud SQL</a> and provides multiple database technologies - 
+including <a href="https://cloud.google.com/sql/mysql"><code>mysql</code></a>. In the Cloud Console UI it is managed 
+via the <a href="https://console.cloud.google.com/sql">SQL UI</a> that allows us to create and manage 
+instances.</p>
+
+<p><!-- generated -->
+<a id='create-a-new-mysql-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Create a new <code>mysql</code> instance</h2>
+
+<p>To get started, we need to enable the following APIs:</p>
+
+<ul>
+<li><a href="https://console.cloud.google.com/apis/library/compute.googleapis.com">Compute Engine API</a></li>
+<li><a href="https://console.cloud.google.com/apis/library/sqladmin.googleapis.com">Cloud SQL Admin API</a></li>
+</ul>
+
+<p>Creating a new instance from the 
+<a href="https://console.cloud.google.com/sql/instances/create;engine=MySQL">Create a MySQL instance UI</a>
+is pretty straight forward and well documented in the 
+<a href="https://cloud.google.com/sql/docs/mysql/create-instance?hl=en">GCP MySQL Guide: Create instances</a>, 
+though there are some configuration options under "Customize your instance" that I want to mention:</p>
+
+<ul>
+<li><code>Machine type &gt; Machine type</code>: For testing purposes, I recommend choosing a "Shared core" 
+option here (e.g. 1 vCPU, 0.614 GB) to keep the costs to a minimum</li>
+<li><code>Connections &gt; Instance IP assignment</code>: For now we'll go with a "Public IP", because 
+<a href="#connecting-to-the-mysql-instance-via-private-ip">setting up private connectivity requires some additional configuration</a></li>
+<li><code>Data Protection &gt; Instance deletion protection</code>: When the option 
+<code>Enable deletion protection</code> is enabled, the instance cannot be deleted. The option must first 
+be disabled before this is possible (see also
+<a href="#delete-a-mysql-cloud-sql-instance">Delete a Cloud SQL instance</a>).</li>
+</ul>
+
+<p>FYI: Unfortunately, there is no <code>"EQUIVALENT COMMAND LINE"</code> button as it was the case when 
+<a href="/blog/gcp-compute-instance-vm-docker/#create-a-compute-instance-vm">creating the Compute Instance</a> -
+which would have come in handy for 
+<a href="#create-the-mysql-instance">creating the instance via <code>gcloud</code> cli</a>.</p>
+
+<p>Once everything is configured, click the <code>"Create Instance"</code> button. The actual creation can 
+take quite some time (I've experienced times from a couple of minutes to half an hour).</p>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/create-gcp-mysql-cloud-sql-instance.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='connecting-to-a-mysql-cloud-sql-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Connecting to a MySQL Cloud SQL instance</h2>
+
+<p>I'll explain 3 different ways of <strong>connecting to a MySQL Cloud SQL instance</strong>:</p>
+
+<ul>
+<li>via Cloud Shell (requires a public instance IP)</li>
+<li>"locally" from your laptop (requires a public instance IP)</li>
+<li>from a Compute Instance VM on GCP (requires a private instance IP)</li>
+</ul>
+
+<p>Out of scope:</p>
+
+<ul>
+<li>using the <a href="https://cloud.google.com/sql/docs/mysql/sql-proxy">Cloud SQL Auth proxy</a></li>
+</ul>
+
+<p>As always, GCP has also an extensive documentation on the various connection methods available at
+<a href="https://cloud.google.com/sql/docs/mysql/connect-overview">GCP MySQL Guide: About connection options</a>.</p>
+
+<p><!-- generated -->
+<a id='connecting-to-the-mysql-instance-with-cloud-shell-via-public-ip'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>mysql</code> instance with Cloud Shell via public IP</h3>
+
+<p>The easiest way to connect is through <a href="https://cloud.google.com/shell">Cloud Shell</a>. GCP will 
+spin up a VM "behind the scenes" that we can control via shell session in the browser. Navigate 
+to the management UI of the instance at</p>
+
+<pre><code class="language-text">https://console.cloud.google.com/sql/instances/$instanceName/overview
+
+# e.g. for an instance named 'mysql-1'
+# https://console.cloud.google.com/sql/instances/mysql-1/overview 
+</code></pre>
+
+<p>and click the <code>"OPEN CLOUD SHELL"</code> button in panel "Connect to this instance".</p>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/cloud-shell-mysql.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>Please note the</p>
+
+<pre><code>Allowlisting your IP for incoming connection for 5 minutes...working.
+</code></pre>
+
+<p>step in the video: GCP handles all the "networking stuff" to make the connection possible for us.</p>
+
+<p><!-- generated -->
+<a id='connecting-to-the-mysql-instance-via-public-ip'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>mysql</code> instance via public IP</h3>
+
+<p>Even though the instance has a public IP address (<code>104.198.240.225</code> in this case, as shown in 
+the previous video), we can't simply connect to it via</p>
+
+<pre><code class="language-text">$ mysql -u root -p12345678 -h 104.198.240.225
+# ... the request will simply time out
+</code></pre>
+
+<p><a href="https://cloud.google.com/sql/docs/mysql/authorize-networks?hl=en#limitations">due to firewall rules</a>:</p>
+
+<blockquote>
+  <p>Note: The authorized networks list is implemented on the Cloud SQL instance VM by a local 
+  firewall. Learn more about managing connections.</p>
+</blockquote>
+
+<p>If we want to connect from e.g. our own computer, we need to first create a so-called 
+"Authorized network" as described in the
+<a href="https://cloud.google.com/sql/docs/mysql/authorize-networks?hl=en">GCP MySQL Guide: Authorize with authorized networks</a>.</p>
+
+<p>For testing purposes I'll 
+<a href="https://www.cyberciti.biz/faq/how-to-find-my-public-ip-address-from-command-line-on-a-linux/">retrieve my own public IP address</a>
+via <code>wget -q -O - ifconfig.me</code></p>
+
+<pre><code class="language-text">$ wget -q -O - ifconfig.me
+213.21.32.150
+</code></pre>
+
+<p>and edit the <code>mysql</code> instance to <strong>add only this IP address as an Authorized network</strong>. The 
+following video shows that the connection isn't possible before I added the Authorized network 
+but will be afterwards.</p>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/connect-from-localhost-to-cloud-sql-mysql.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><strong>CAUTION</strong>: Please regard this <em>only as a proof of concept</em>. It's not really a viable process to 
+retrieve your own public IP in order to allowlist it "manually". It might be "okay" though, if 
+you are using a VPN with a static IP. However, for the 
+<a href="/docker-php-tutorial/">Docker PHP tutorial</a> we'll not use a public IP address at all, because 
+our <code>mysql</code> instance should only be available for our application VMs.</p>
+
+<p><!-- generated -->
+<a id='connecting-to-the-mysql-instance-via-private-ip'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>mysql</code> instance via private IP</h3>
+
+<p>Having the MySQL Cloud SQL instance exposed via public IP is generally not advised and 
+always carries a certain security risk. Thus, it is desirable <strong>to only allow connections via 
+private IP</strong>. Be aware that this has some caveats, though (see section 
+<a href="#caveats-for-using-a-private-ip-only">Caveats for using a private IP only</a>).</p>
+
+<p>In order to <strong>connect to the MySQL Cloud SQL instance via private IP</strong> (i.e. from a Compute 
+Instance VM), we must first understand how the network configuration of the "managed" products 
+of GCP is set up. This is explained in detail in the 
+<a href="https://cloud.google.com/sql/docs/mysql/private-ip">GCP MySQL Guide: Learn about using private IP</a>. 
+In short:</p>
+
+<ul>
+<li>we use <strong>a private network that allows all of our VMs to communicate</strong></li>
+<li>such a network is called <strong><a href="https://cloud.google.com/vpc">VPC</a> (virtual private cloud)</strong></li>
+<li>since "we" (as a user of GCP) create and manage our application VMs ourselves, <strong>the VMs live 
+"directly" in this network</strong></li>
+<li>the <strong>managed services like Cloud SQL</strong> are "doing their own thing", i.e. <strong>GCP takes care of all 
+the networking stuff</strong> but keeps it <strong>isolated from "our" network</strong></li>
+<li>in consequence, <strong>our VMs cannot talk to a MySQL Cloud SQL instance</strong>, because it lives on a 
+different network</li>
+<li>fortunately, there is a technique called
+<strong><a href="https://cloud.google.com/vpc/docs/vpc-peering">VPC peering</a></strong> that can connect different VPCs 
+and thus enable communication</li>
+<li>to make this work, we need to <strong>"reserve" a range of IPs in "our" VPC</strong> and make it available to
+Cloud SQL by peering with the <strong>Google Cloud Platform Service Producer</strong></li>
+</ul>
+
+<p>See also the <a href="https://cloud.google.com/sql/docs/mysql/private-ip#example">Example in the MySQL Guide: Learn about using private IP</a></p>
+
+<p><a href="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/mysql-cloud-sql-private-ip-vpc-peering.svg"><img src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/mysql-cloud-sql-private-ip-vpc-peering.svg" alt="Connecting to Cloud SQL via private IP through VPC peering" /></a></p>
+
+<p><!-- generated -->
+<a id='concrete-steps-to-connect-via-private-ip'> </a>
+<!-- /generated --></p>
+
+<h4>Concrete steps to connect via private IP</h4>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/connect-cloud-sql-mysql-instance-via-private-ip.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p>In short:</p>
+
+<ul>
+<li>enable the <a href="https://console.cloud.google.com/apis/library/servicenetworking.googleapis.com">Service Networking API</a></li>
+<li>navigate to the <a href="https://console.cloud.google.com/networking/networks/details/default">"default" network UI</a></li>
+<li>open tab "PRIVATE SERVICE CONNECTION" and sub tab "ALLOCATED IP RANGES FOR SERVICES" and click 
+the button <code>"ALLOCATE IP RANGE"</code>
+
+<ul>
+<li>give it a name, e.g. "google-internal-services"</li>
+<li>and select option "Automatic" with a prefix length of 16 (this determines the number of 
+possible Cloud SQL instances, see also
+<a href="https://cloud.google.com/sql/docs/mysql/private-ip#allocated_range_size">the docs on Allocated range size</a>)</li>
+</ul></li>
+<li>open tab "PRIVATE SERVICE CONNECTION" and sub tab "PRIVATE CONNECTIONS TO SERVICES" and click 
+the button <code>"CREATE CONNECTION"</code>
+
+<ul>
+<li>choose "Google Cloud Platform" in the "Connected service producer" drop down field and 
+select the "google-internal-services" range that we just created for the "Assigned allocation" 
+drop down field</li>
+</ul></li>
+<li>once the "peering" is done, you can also observe a corresponding entry in the 
+<a href="https://console.cloud.google.com/networking/peering/list">VPC network peering UI</a>
+<a href="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/vpc-peering-servicenetworking-googleapis-com.PNG"><img src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/vpc-peering-servicenetworking-googleapis-com.PNG" alt="VPC peering connection with servicenetworking.googleapis.com" /></a></li>
+<li><a href="https://console.cloud.google.com/sql/instances/create;engine=MySQL">create a new MySQL Cloud SQL instance</a>
+(or modify an existing one)
+
+<ul>
+<li>under <code>Connections &gt; Instance IP assignment</code> unselect "Public IP" and select "Private IP" 
+select the network "default"</li>
+<li><em>Note</em>: The instance is being shutdown and restarted, i.e. this operation will lead to a 
+service disruption and <strong>can take up to several minutes</strong></li>
+</ul></li>
+<li>once the update is done, navigate to the MySQL Cloud SQL UI of the instance and find the 
+<strong>private IP</strong> in panel "Private IP address"</li>
+</ul>
+
+<p>To test the connectivity from a VM, perform the following steps:</p>
+
+<ul>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#create-a-vm">create a Compute Instance VM</a> in the "default" network</li>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#login-via-ssh-from-the-gcp-ui">log into the VM via the UI</a></li>
+<li><p><a href="https://superuser.com/a/1481211">install the <code>mysql</code> client</a> via</p>
+
+<pre><code class="language-bash">sudo apt-get install default-mysql-client -y
+</code></pre></li>
+<li><p>connect to the MySQL Cloud SQL instance via</p>
+
+<pre><code class="language-bash">mysql -h $privateIp -u root -p
+</code></pre>
+
+<p>where <code>$privateIp</code> is the private IP of the <code>mysql</code> instance</p></li>
+</ul>
+
+<p>See also the GCP MySQL docs:</p>
+
+<ul>
+<li><a href="https://cloud.google.com/sql/docs/mysql/configure-private-services-access">Configure private services access</a></li>
+<li><a href="https://cloud.google.com/sql/docs/mysql/configure-private-ip">Configure private IP</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='caveats-for-using-a-private-ip-only'> </a>
+<!-- /generated --></p>
+
+<h4>Caveats for using a private IP only</h4>
+
+<ul>
+<li>we need to provide some additional networking configuration (explained above)</li>
+<li><p><a href="https://cloud.google.com/sql/docs/mysql/configure-private-ip?hl=en#connect_from">it's no longer possible to connect via Cloud Shell</a>:</p>
+
+<blockquote>
+  <p>Cloud Shell doesn't currently support connecting to a Cloud SQL instance that has only
+  a private IP address.</p>
+</blockquote></li>
+<li><p><a href="https://cloud.google.com/sql/docs/mysql/configure-private-ip?hl=en#configure_an_instance_to_use_private_ip">once a private IP is assigned, it cannot be un-assigned</a>:</p>
+
+<blockquote>
+  <p>After you configure an instance to use private IP, you cannot disable private IP connectivity
+  for that instance.</p>
+  
+  <p>If you choose to let Cloud SQL allocate your private IP for an instance, the addresses for
+  all instances you later configure in that VPC network are automatically allocated in the same IP address range.</p>
+</blockquote></li>
+<li>we can no longer connect from "our" computer, because it doesn't live in the same private network.
+This can be problematic if you are used to using UI tools like MySQL Workbench to manage your
+database - please check out the following articles if this is relevant for you:
+
+<ul>
+<li><a href="https://medium.com/google-cloud/cloud-sql-with-private-ip-only-the-good-the-bad-and-the-ugly-de4ac23ce98a">Cloud SQL with private IP only: the Good, the Bad and the Ugly</a></li>
+<li><a href="https://medium.com/swlh/how-to-deploy-a-cloud-sql-db-with-a-private-ip-only-using-terraform-e184b08eca64">How to Deploy a Cloud SQL DB with a Private IP only, using Terraform</a></li>
+<li><a href="https://www.youtube.com/watch?v=rebyg9_eTHM">GCP | How to access Cloud SQL private IP using Cloud SQL Auth Proxy and Identity-Aware Proxy (IAP)?</a></li>
+</ul></li>
+</ul>
+
+<p>But tbh, I would probably rather 
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh#--ssh-flag">create an SSH tunnel with the <code>gcloud</code> cli</a>
+on a small Compute Instance VM via</p>
+
+<pre><code class="language-bash">gcloud compute ssh $computeInstanceName --zone=$computeInstanceZone -- -N -L 3306:$mysqlInstanceIp:3306
+</code></pre>
+
+<p><!-- generated -->
+<a id='delete-a-mysql-cloud-sql-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Delete a MySQL Cloud SQL instance</h2>
+
+<p>Once again, GCP is doing a great job documenting the process to <strong>delete a MySQL Cloud SQL 
+instance</strong> in 
+the <a href="https://cloud.google.com/sql/docs/mysql/delete-instance">GCP MySQL Guide: Delete instances</a>.</p>
+
+<p><del>Please give it a read as there is at least once thing that I found quite un-intuitive: Even 
+after deleting an instance, the name of the deleted instance is "blocked" for a week. In my case,
+this created some problems, because I was making assumptions about the name in other 
+parts of my code (e.g. I was expecting that the name of the instance is always <code>mysql</code>), but 
+when playing around with Cloud SQL I learned too late, that I couldn't re-use the name after 
+deleting the instance for testing purposes.</del></p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Update</strong>
+  </div>
+  <div class="panel-body bg-info">
+    As of 2022-09-21 the above statement is no longer true - 
+    <strong>instance names are now immediately available after deletion:</strong> 
+    <br>
+    <br>
+    <em>
+    > Cloud SQL allows the re-use of an instance name immediately after the instance is deleted. 
+    </em>
+    <br>
+    <br>
+    Source: 
+    <a href="https://cloud.google.com/release-notes#September_21_2022">GCP Release Notes from 2022-09-21</a>
+  </div>
+</div>
+
+<p><small>Note: If "Deletion protection" is enabled, it needs to be disabled first - which is 
+usually quite a fast operation.</small></p>
+
+<p>See the following video for a visual representation of the process (please ignore the "blocked" 
+instance name issue at the end):</p>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/delete-cloud-sql-mysql-instance.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='using-the-gcloud-cli'> </a>
+<!-- /generated --></p>
+
+<h2>Using the <code>gcloud</code> CLI</h2>
+
+<p>Even though I like using the UI to "explore and understand" how things are working, the goal is 
+always a more "unattended" approach, e.g. via the 
+<a href="/blog/gcp-compute-instance-vm-docker#set-up-the-gcloud-cli-tool"><code>gcloud</code> cli</a>. 
+Since I'm gonna use a MySQL Cloud SQL instance as replacement for a <code>mysql</code> docker container for 
+the next part of the <a href="/docker-php-tutorial/">Docker PHP tutorial</a>, I'll focus on creating an 
+instance with a private IP address only, update the root password and set up a default database.</p>
+
+<p>The following commands assume that you have created a master service account with owner 
+permissions and activated it for <code>glcoud</code> with a default project. See also 
+<a href="/blog/gcp-compute-instance-vm-docker#preconditions-project-and-owner-service-account">Preconditions: Project and Owner service account</a></p>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/create-gcp-mysql-cloud-sql-instance-via-gcloud-cli.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='activate-the-service-account'> </a>
+<!-- /generated --></p>
+
+<h3>Activate the service account</h3>
+
+<pre><code class="language-bash">project_id=pl-dofroscra-p
+gcloud auth activate-service-account --key-file=./gcp-master-service-account-key.json --project=${project_id}
+</code></pre>
+
+<p><!-- generated -->
+<a id='enable-the-necessary-apis'> </a>
+<!-- /generated --></p>
+
+<h3>Enable the necessary APIs</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/services/enable"><code>gcloud services enable</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud services enable \
+  compute.googleapis.com \
+  sqladmin.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  servicenetworking.googleapis.com
+</code></pre>
+
+<p><code>cloudresourcemanager.googleapis.com</code> is necessary to create the IP range allocation in the 
+next step.</p>
+
+<p><!-- generated -->
+<a id='create-an-ip-range-allocation'> </a>
+<!-- /generated --></p>
+
+<h3>Create an IP range allocation</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/compute/addresses/create"><code>gcloud compute addresses create</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">private_ip_range_name="internal-gcp-services"
+network="default"
+ip_range_network_address="10.111.0.0"
+
+gcloud compute addresses create "${private_ip_range_name}" \
+  --global \
+  --purpose=VPC_PEERING \
+  --prefix-length=16 \
+  --addresses="${ip_range_network_address}" \
+  --description="Peering range for GCP Services" \
+  --network="${network}"
+</code></pre>
+
+<p>The <code>--addresses</code> flag can be used to define the network address of the defined range. If it is 
+not given, GCP will choose a random one.</p>
+
+<p><!-- generated -->
+<a id='create-the-vpc-peering-with-servicenetworking-googleapis-com'> </a>
+<!-- /generated --></p>
+
+<h3>Create the VPC peering with <code>servicenetworking.googleapis.com</code></h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/services/vpc-peerings/connect"><code>gcloud services vpc-peerings connect</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">private_ip_range_name="internal-gcp-services"
+network="default"
+
+gcloud services vpc-peerings connect \
+  --service=servicenetworking.googleapis.com \
+  --ranges="${private_ip_range_name}" \
+  --network="${network}"
+</code></pre>
+
+<p><!-- generated -->
+<a id='create-the-mysql-instance'> </a>
+<!-- /generated --></p>
+
+<h3>Create the <code>mysql</code> instance</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/beta/sql/instances/create"><code>gcloud beta sql instances create</code> reference</a></li>
+<li><a href="https://cloud.google.com/sql/docs/mysql/create-instance">GCP MySQL Guide: Create instances</a></li>
+<li><a href="https://cloud.google.com/sql/docs/mysql/configure-private-ip#new-private-instance">GCP MySQL Guide: Configure an instance to use private IP</a></li>
+</ul>
+
+<p><strong>Caution</strong>: The <code>--allocated-ip-range-name</code> option is currently (2023-04-13) only available in 
+the <a href="https://cloud.google.com/sdk/gcloud/reference/beta"><code>beta</code> tools of the <code>gcloud</code> cli</a>. 
+You might need to install them first via 
+<a href="https://cloud.google.com/sdk/gcloud/reference/components/install"><code>gcloud components install beta</code></a>.</p>
+
+<pre><code class="language-bash">mysql_instance_name="mysql"
+version="MYSQL_8_0" # see https://cloud.google.com/sdk/gcloud/reference/sql/instances/create#--database-version
+cpus="1"
+memory="3840MB"
+region="us-central1"
+private_ip_range_name="internal-gcp-services"
+network="default"
+
+gcloud beta sql instances create "${mysql_instance_name}" \
+  --database-version="${version}" \
+  --cpu="${cpus}" \
+  --memory="${memory}" \
+  --region="${region}" \
+  --network="${network}" \
+  --no-assign-ip \
+  --allocated-ip-range-name="${private_ip_range_name}"
+</code></pre>
+
+<p>The <code>--no-assign-ip</code> flag is responsible for not assigning a <em>public</em> IP.</p>
+
+<p><!-- generated -->
+<a id='set-the-root-password'> </a>
+<!-- /generated --></p>
+
+<h4>Set the root password</h4>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/sql/users/set-password"><code>gcloud sql users set-password</code> reference</a></li>
+<li><a href="https://cloud.google.com/sql/docs/mysql/create-manage-users#change-pwd">GCP MySQL Guide: Manage users with built-in authentication: Change a user password</a></li>
+</ul>
+
+<pre><code class="language-bash">mysql_instance_name="mysql"
+root_password=12345678
+
+gcloud sql users set-password root \
+  --host=% \
+  --instance "${mysql_instance_name}" \
+  --password "${root_password}"
+</code></pre>
+
+<p>Using <code>--host=%</code> will allow access from any remote host, see 
+<a href="https://cloud.google.com/sdk/gcloud/reference/sql/users/set-password#--host">docu for the <code>--host</code> parameter </a></p>
+
+<blockquote>
+  <p>Cloud SQL user's host name expressed as a specific IP address or address range. % denotes an 
+  unrestricted host name. Applicable flag for MySQL instances; ignored for all other engines.</p>
+</blockquote>
+
+<p>FYI: Instead of "root", we could also use a different username like "application_user" and MySQL 
+would create that user automatically with the given password (without any privileges).</p>
+
+<p><!-- generated -->
+<a id='create-a-default-database'> </a>
+<!-- /generated --></p>
+
+<h4>Create a default database</h4>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/sql/databases/create"><code>gcloud sql databases create</code> reference</a></li>
+<li><a href="https://cloud.google.com/sql/docs/mysql/create-manage-databases#create">GCP MySQL Guide: Create and manage databases: Create a database on the Cloud SQL instance</a></li>
+</ul>
+
+<pre><code class="language-bash">mysql_instance_name="mysql"
+default_database="application_db"
+
+gcloud sql databases create "${default_database}" \
+  --instance="${mysql_instance_name}" \
+  --charset=utf8mb4 \
+  --collation=utf8mb4_unicode_ci
+</code></pre>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You are now able to manage MySQL databases on GCP via the UI as well as via the
+<code>gcloud</code> cli.</p>
+]]></description>
+                <pubDate>Thu, 13 Apr 2023 10:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/</guid>
+            </item>
                     <item>
                 <title>Setting up Git Bash / MINGW / MSYS2 on Windows</title>
                 <description><![CDATA[<p>In this article I'll document my process for <strong>setting up Git Bash / MINGW / 
@@ -12923,103 +13538,6 @@ notifications when this next part comes out :)</p>
                 <pubDate>Mon, 21 Mar 2022 10:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/docker-from-scratch-for-php-applications-in-2022/</guid>
-            </item>
-                    <item>
-                <title>BigQuery: Monitor Query Costs via INFORMATION_SCHEMA</title>
-                <description><![CDATA[<p>Cost monitoring in Google BigQuery can be a difficult task, especially within a growing organization and
-lots of (independent) stakeholders that have access to the data. If your organization is not using 
-reserved slots (<a href="https://cloud.google.com/bigquery/pricing#flat_rate_pricing">flat-rate pricing</a>) 
-but is billed by the number of bytes processed 
-(<a href="https://cloud.google.com/bigquery/pricing#on_demand_pricing">on-demand pricing</a>), 
-costs can get quickly out of hand, and we need the means to investigate or "debug" the BigQuery 
-usage in order to understand:
-- <strong>who</strong> ran queries with a high cost
-- <strong>what</strong> were the exact queries
-- <strong>when</strong> did those queries run (and are they maybe even running regularly)</p>
-
-<p>Previously, we had to manually set up query logging via Stackdriver as explained in the article
-<a href="https://cloud.google.com/blog/products/data-analytics/taking-a-practical-approach-to-bigquery-cost-monitoring">Taking a practical approach to BigQuery cost monitoring</a>
-but in late 2019 BigQuery introduced 
-<a href="https://cloud.google.com/bigquery/docs/information-schema-intro"><code>INFORMATION_SCHEMA</code> views</a> 
-as a beta feature that also contain data about BigQuery jobs via the 
-<a href="https://cloud.google.com/bigquery/docs/information-schema-jobs"><code>INFORMATION_SCHEMA.JOBS_BY_*</code> views</a>
-and became <a href="https://cloud.google.com/bigquery/docs/release-notes#June_16_2020">generally available (GA) at 2020-06-16</a></p>
-
-<h2>Examples</h2>
-
-<pre><code>SELECT 
-  creation_time,
-  job_id,
-  project_id,
-  user_email,
-  total_bytes_processed,
-  query
-FROM
-  `region-us`.INFORMATION_SCHEMA.JOBS_BY_USER
-
-SELECT * FROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT
-
-SELECT * FROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION
-</code></pre>
-
-<h2>Working Example</h2>
-
-<script src="https://gist.github.com/paslandau/980f251cbbb2f0dddff9da6425007e3f.js"></script>
-
-<ul>
-<li>this query will select the most interesting fields in terms of cost monitoring from the <code>INFORMATION_SCHEMA.JOBS_BY_USER</code>
-view for all jobs that have been run in region US in the currently selected project</li>
-<li>the <code>cost_in_dollar</code> is estimate by calculating the <code>total_bytes_processed</code> in Terabyte and 
-multiplying the result with $5.00 (which corresponds to the cost as of today 2020-06-22). 
-Also, we only take those costs into account if the query was not answered from the cache 
-(see the <code>cache_hit != true</code> condition)</li>
-<li>the <code>creation_time</code> is converted to our local timezone</li>
-<li>the results are restricted to the past 30 days by using the <code>WHERE</code> clause to filter
-on the partition column <code>creation_time</code></li>
-<li>feel free to replace <code>JOBS_BY_PROJECT</code> with <code>JOBS_BY_USER</code> or <code>JOBS_BY_ORGANIZATION</code></li>
-</ul>
-
-<h2>Run on BigQuery</h2>
-
-<p><a href="https://console.cloud.google.com/bigquery?sq=580364496687:b0c09fa64661413eb91f5e7e0fcedebd">Open in BigQuery UI</a></p>
-
-<p><a href="/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png"><img src="/img/bigquery-snippets/monitor-query-costs/monitor-query-costs-bigquery-example.png" alt="BigQuery UI: Monitor query costs in BigQuery example" title="BigQuery UI: Monitor query costs in BigQuery example" /></a></p>
-
-<h2>Notes</h2>
-
-<p>While playing around with the <code>INFORMATION_SCHEMA</code> views I've hit a couple of gotchas:
-- the different views <a href="https://cloud.google.com/bigquery/docs/information-schema-jobs?hl=en#required_permissions">require different permissions</a>
-- the views are regionalized, i.e. we <strong>must</strong> prefix the region (see <code>region-us</code> in the view specification) and
-  must run the job <em>in that region</em> (e.g. from the BigQuery UI via 
-  <a href="https://cloud.google.com/bigquery/docs/running-queries#queries"><code>More &gt; Query Settings &gt; Processing location</code></a>)
-- it is not possible to <strong>mix multiple regions</strong> in the query, because a query with processing location <code>US</code>
-  can only access resources in location <code>US</code>. Though it would be very helpful for organizations that actively use different locations,
-  something like this is not possible:
-  <code>SELECT * FROM 
-    (SELECT * `region-us`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION)
-    UNION ALL
-    (SELECT * `region-eu`.INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION)</code>
-- data is currently only kept for the past 180 days
-- the <code>JOBS_BY_USER</code> view seems to "match" the user based on the email address. My user email adress is a <code>@googlemail.com</code>
-  address; in the user column it is stored as <code>@gmail.com</code>. Thus, I get no results when using <code>JOBS_BY_USER</code>
-- <code>JOBS_BY_USER</code> and <code>JOBS_BY_PROJECT</code> will use the currently selected project by default. A different
-  project (e.g. <code>other-project</code>) can be specified via 
-  <code>SELECT * FROM `other-project.region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT</code>
-- the full <code>query</code> is not available for <code>JOBS_BY_ORGANIZATION</code></p>
-
-<h2>Use Cases</h2>
-
-<p>I use this approach in our organization to set up a view based on <code>INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION</code>
-that is then used as a data source for <a href="https://datastudio.google.com/">Google DataStudio</a>. 
-This allows me to get a quick high level overview
-over all query costs and further enables me to drill down deeper if I need to. I can even find the exact
-queries via their <code>job_id</code>.</p>
-
-<p><a href="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png"><img src="/img/bigquery-snippets/monitor-query-costs/bigquery-cost-dashboard.png" alt="BigQuery cost monitoring dashboard" title="BigQuery cost monitoring dashboard" /></a></p>
-]]></description>
-                <pubDate>Mon, 22 Jun 2020 10:40:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/bigquery-snippets/monitor-query-costs/</guid>
             </item>
             </channel>
 </rss>

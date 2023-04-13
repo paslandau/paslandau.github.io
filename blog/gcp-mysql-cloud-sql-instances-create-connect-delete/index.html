@@ -17,7 +17,6 @@
     <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/"/>
-            <meta name="robots" content="noindex"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
     <!-- Custom Fonts -->
@@ -115,7 +114,7 @@
                                             <h2 class="subheading">from creation over connection to deletion</h2>
                                                                 <span class="meta">
                             <span style="display:block; margin:0;">
-                                Posted by <a href="#">Pascal Landau</a> on 2022-09-01 06:00:00
+                                Posted by <a href="#">Pascal Landau</a> on 2023-04-13 10:00:00
                             </span>
                             <span style="display:block;">
                                 <a href="https://twitter.com/PascalLandau">
@@ -150,14 +149,6 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <strong>Caution</strong>
-                        </div>
-                        <div class="panel-body bg-danger">
-                            This post is still in a <strong>draft</strong> status and likely subject to change!
-                        </div>
-                    </div>                    
                     
                 <p>In this blog post I'll summarize my experience with <strong>GCP MySQL Cloud SQL instances</strong>. Cloud SQL 
 is the managed relational database solution from Google Cloud Platform and was mentioned in 
@@ -538,14 +529,14 @@ on a small Compute Instance VM via</p>
 
 <p>Once again, GCP is doing a great job documenting the process to <strong>delete a MySQL Cloud SQL 
 instance</strong> in 
-the <a href="https://cloud.google.com/sql/docs/mysql/delete-instance">GCP MySQL Guide: Delete instances</a>.
-Please give it a read as there is at least once thing that I found quite un-intuitive: Even 
-after deleting an instance, <strong>the name of the deleted instance is "blocked" for a week</strong>.</p>
+the <a href="https://cloud.google.com/sql/docs/mysql/delete-instance">GCP MySQL Guide: Delete instances</a>.</p>
 
-<p>In my case, this created some problems, because I was making assumptions about the name in other 
+<p><del>Please give it a read as there is at least once thing that I found quite un-intuitive: Even 
+after deleting an instance, the name of the deleted instance is "blocked" for a week. In my case,
+this created some problems, because I was making assumptions about the name in other 
 parts of my code (e.g. I was expecting that the name of the instance is always <code>mysql</code>), but 
 when playing around with Cloud SQL I learned too late, that I couldn't re-use the name after 
-deleting the instance for testing purposes.</p>
+deleting the instance for testing purposes.</del></p>
 
 <div class="panel panel-default">
   <div class="panel-heading">
@@ -686,7 +677,7 @@ gcloud services vpc-peerings connect \
 <li><a href="https://cloud.google.com/sql/docs/mysql/configure-private-ip#new-private-instance">GCP MySQL Guide: Configure an instance to use private IP</a></li>
 </ul>
 
-<p><strong>Caution</strong>: The <code>--allocated-ip-range-name</code> option is currently (2022-09-04) only available in 
+<p><strong>Caution</strong>: The <code>--allocated-ip-range-name</code> option is currently (2023-04-13) only available in 
 the <a href="https://cloud.google.com/sdk/gcloud/reference/beta"><code>beta</code> tools of the <code>gcloud</code> cli</a>. 
 You might need to install them first via 
 <a href="https://cloud.google.com/sdk/gcloud/reference/components/install"><code>gcloud components install beta</code></a>.</p>

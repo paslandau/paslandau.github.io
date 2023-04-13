@@ -4,6 +4,7 @@ https://www.pascallandau.com/blog/
 https://www.pascallandau.com/bigquery-snippets/
 https://www.pascallandau.com/personal-finance/
 https://www.pascallandau.com/docker-php-tutorial/
+https://www.pascallandau.com/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/
 https://www.pascallandau.com/blog/setting-up-git-bash-mingw-msys2-on-windows/
 https://www.pascallandau.com/blog/deploy-docker-compose-php-gcp-poc/
 https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/
