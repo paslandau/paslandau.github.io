@@ -17,7 +17,6 @@
     <link rel="stylesheet" href="/css/default.min.css">
     <!-- RSS Feed -->
     <link rel="canonical" href="https://www.pascallandau.com/blog/gcp-redis-memorystore-instances-create-connect-delete/"/>
-            <meta name="robots" content="noindex"/>
         <link rel="alternate" type="application/rss+xml" title="pascallandau.com" href="https://www.pascallandau.com/feed.xml"/>
     <link rel="alternate" type="application/rss+xml" title="pascallandau.com - Finance related articles" href="https://www.pascallandau.com/feed-finance.xml"/>
     <!-- Custom Fonts -->
@@ -115,7 +114,7 @@
                                             <h2 class="subheading">from creation over connection to deletion</h2>
                                                                 <span class="meta">
                             <span style="display:block; margin:0;">
-                                Posted by <a href="#">Pascal Landau</a> on 2022-09-03 06:00:00
+                                Posted by <a href="#">Pascal Landau</a> on 2023-04-17 06:00:00
                             </span>
                             <span style="display:block;">
                                 <a href="https://twitter.com/PascalLandau">
@@ -150,14 +149,6 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <strong>Caution</strong>
-                        </div>
-                        <div class="panel-body bg-danger">
-                            This post is still in a <strong>draft</strong> status and likely subject to change!
-                        </div>
-                    </div>                    
                     
                 <p>In this blog post I'll summarize my experience with <strong>GCP Redis Memorystore instances</strong>. Memorystore 
 is the managed in-memory datastore solution from Google Cloud Platform and was mentioned in 
@@ -268,7 +259,7 @@ Service Producer</strong> first. The process is exactly the same as I've explain
 Please make sure to pay close attention to section
 <a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#concrete-steps-to-connect-via-private-ip">Concrete steps to connect via private IP</a>
 and especially the video, as it shows the necessary steps to enable the "Private service access"
-for <code>redis</code>!</li>
+for Memorystore!</li>
 </ul></li>
 <li><code>Security &gt; Enable AUTH</code>: Enable the checkbox
 
@@ -276,7 +267,7 @@ for <code>redis</code>!</li>
 <li><em>Note</em>: This will auto-enable the checkbox "Enable in-transit encryption" though 
 <em>I recommend disabling that checkbox</em> (see section <a href="#redis-auth-and-in-transit-encryption"><code>redis</code> AUTH and in-transit encryption</a>)</li>
 </ul></li>
-<li><code>Configuration &gt; Version</code>: Select "6.x" (which is currently [2022-09-05] the latest version)</li>
+<li><code>Configuration &gt; Version</code>: Select "6.x" (which is currently [2023-04-17] the latest version)</li>
 </ul>
 
 <p>FYI: Unfortunately, there is no <code>"EQUIVALENT COMMAND LINE"</code> button as it was the case when 

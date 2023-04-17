@@ -5,9 +5,501 @@
         <description>Personal website of Pascal Landau - Development related posts only</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed-development.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Thu, 13 Apr 2023 08:35:26 +0000</pubDate>
-        <lastBuildDate>Thu, 13 Apr 2023 08:35:26 +0000</lastBuildDate>
+        <pubDate>Mon, 17 Apr 2023 06:59:30 +0000</pubDate>
+        <lastBuildDate>Mon, 17 Apr 2023 06:59:30 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Using GCP Redis Memorystore instances (create/connect/delete)</title>
+                <description><![CDATA[<p>In this blog post I'll summarize my experience with <strong>GCP Redis Memorystore instances</strong>. Memorystore 
+is the managed in-memory datastore solution from Google Cloud Platform and was mentioned in 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#introduction">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>
+as the "better" way to deal with in-memory datastores in a dockerized application (compared to 
+running an in-memory datastore via <code>docker</code>).</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    I'll explain the basic steps to <strong>create a fresh Redis instance</strong>, 
+    <strong>show different ways to connect to it</strong> (locally "from your laptop" via SSH tunnel
+    and from a VM within GCP) and finally <strong>how to delete the instance</strong>. Every process 
+    is done through the Cloud Console UI and <strong>recorded as a short video</strong> as a visual 
+    aid. As in the <a href="/blog/gcp-compute-instance-vm-docker/">GCP "primer" tutorial</a>, this 
+    article ends with the commands to achieve the same things also via the
+    <code>gcloud</code> CLI.
+  </div>
+</div>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#setup-memorystore">Setup Memorystore</a></li>
+<li><a href="#create-a-new-redis-instance">Create a new <code>redis</code> instance</a>
+
+<ul>
+<li><a href="#redis-auth-and-in-transit-encryption"><code>redis</code> AUTH and in-transit encryption</a></li>
+</ul></li>
+<li><a href="#connecting-to-a-redis-memorystore-instance">Connecting to a Redis Memorystore instance</a>
+
+<ul>
+<li><a href="#redis-memorystore-offers-private-ip-connectivity-only">Redis Memorystore offers private IP connectivity only</a></li>
+<li><a href="#connecting-to-the-redis-instance-from-a-compute-instance-vm">Connecting to the <code>redis</code> instance from a Compute Instance VM</a></li>
+<li><a href="#connecting-to-the-redis-instance-via-ssh-tunnel">Connecting to the <code>redis</code> instance via SSH tunnel</a></li>
+</ul></li>
+<li><a href="#delete-a-redis-memorystore-instance">Delete a Redis Memorystore instance</a></li>
+<li><a href="#using-the-gcloud-cli">Using the <code>gcloud</code> CLI</a>
+
+<ul>
+<li><a href="#activate-the-service-account">Activate the service account</a></li>
+<li><a href="#enable-the-necessary-apis">Enable the necessary APIs</a></li>
+<li><a href="#create-an-ip-range-allocation">Create an IP range allocation</a></li>
+<li><a href="#create-the-vpc-peering-with-servicenetworking-googleapis-com">Create the VPC peering with <code>servicenetworking.googleapis.com</code></a></li>
+<li><a href="#create-the-redis-instance">Create the <code>redis</code> instance</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='setup-memorystore'> </a>
+<!-- /generated --></p>
+
+<h2>Setup Memorystore</h2>
+
+<p><a href="/img/gcp-redis-memorystore-instances-create-connect-delete/cloud-console-cloud-memorystore-ui.PNG"><img src="/img/gcp-redis-memorystore-instances-create-connect-delete/cloud-console-cloud-memorystore-ui.PNG" alt="GCP Cloud Console Memorystore UI" /></a></p>
+
+<p>The managed solution for in-memory datastores from GCP is called 
+<a href="https://cloud.google.com/memorystore">Memorystore</a> and provides multiple datastore technologies - 
+including <a href="https://cloud.google.com/memorystore/docs/redis"><code>redis</code></a>. In the Cloud Console UI it is 
+managed via the <a href="https://console.cloud.google.com/memorystore">Memorystore UI</a> that allows us to 
+create and manage instances.</p>
+
+<p><!-- generated -->
+<a id='create-a-new-redis-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Create a new <code>redis</code> instance</h2>
+
+<p>To get started, we need to enable the following APIs:</p>
+
+<ul>
+<li><a href="https://console.cloud.google.com/apis/library/compute.googleapis.com">Compute Engine API</a></li>
+<li><a href="https://console.cloud.google.com/marketplace/product/google/redis.googleapis.com">Google Cloud Memorystore for Redis API</a></li>
+</ul>
+
+<p>Creating a new instance from the 
+<a href="https://console.cloud.google.com/memorystore/redis/locations/-/instances/new">Create a redis instance UI</a>
+is pretty straight forward and well documented in the 
+<a href="https://cloud.google.com/memorystore/docs/redis/creating-managing-instances">GCP Redis Guide: Creating and managing Redis instances</a>.</p>
+
+<p>We'll use the following settings:</p>
+
+<ul>
+<li><code>Tier Selection</code>: For testing purposes, I recommend choosing the "Basic" option (this will 
+also disable the "Read Replicas")</li>
+<li><code>Capacity</code>: Enter "1"</li>
+<li><code>Set up connection &gt; Network</code>: Select the network that the VMs are located in - <code>default</code> in 
+my case</li>
+<li><code>Additional Configurations &gt; Connections</code>: Select option "Private service access" here as it's 
+the recommended approach.
+
+<ul>
+<li><strong>CAUTION</strong>: In order to use "Private service access" as connectivity mode, we need to 
+create a <strong>reserved IP allocation</strong> and a VPC peering with the <strong>Google Cloud Platform
+Service Producer</strong> first. The process is exactly the same as I've explained in
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-via-private-ip">my MySQL Cloud SQL article for connecting via private IP</a>.
+Please make sure to pay close attention to section
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#concrete-steps-to-connect-via-private-ip">Concrete steps to connect via private IP</a>
+and especially the video, as it shows the necessary steps to enable the "Private service access"
+for Memorystore!</li>
+</ul></li>
+<li><code>Security &gt; Enable AUTH</code>: Enable the checkbox
+
+<ul>
+<li><em>Note</em>: This will auto-enable the checkbox "Enable in-transit encryption" though 
+<em>I recommend disabling that checkbox</em> (see section <a href="#redis-auth-and-in-transit-encryption"><code>redis</code> AUTH and in-transit encryption</a>)</li>
+</ul></li>
+<li><code>Configuration &gt; Version</code>: Select "6.x" (which is currently [2023-04-17] the latest version)</li>
+</ul>
+
+<p>FYI: Unfortunately, there is no <code>"EQUIVALENT COMMAND LINE"</code> button as it was the case when 
+<a href="/blog/gcp-compute-instance-vm-docker/#create-a-compute-instance-vm">creating the Compute Instance</a> -
+which would have come in handy for 
+<a href="#create-the-redis-instance">creating the instance via <code>gcloud</code> cli</a>.</p>
+
+<p>Once everything is configured, click the <code>"Create Instance"</code> button. The actual creation can 
+take quite some time (I've experienced times from a couple of minutes to ~15 min).</p>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/create-gcp-redis-memorystore-instance.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='redis-auth-and-in-transit-encryption'> </a>
+<!-- /generated --></p>
+
+<h3><code>redis</code> AUTH and in-transit encryption</h3>
+
+<p>During instance creation we activated the <code>AUTH</code> feature but disabled the <code>in-transit 
+encryption</code> on purpose. Since this goes against GCP's own recommendation</p>
+
+<blockquote>
+  <p>When AUTH is enabled, in-transit encryption is recommended so credentials are confidential when 
+  transmitted.</p>
+</blockquote>
+
+<p>I'd like to provide some thoughts on my reasoning:</p>
+
+<p>According to the 
+<a href="https://cloud.google.com/memorystore/docs/redis/auth-overview#security_and_privacy">GCP Redis Guide: AUTH feature overview > Security and privacy</a>,
+<code>AUTH</code> is not meant to be used as a security measure:</p>
+
+<blockquote>
+  <p>AUTH helps you ensure that known entities in your organization do not unintentionally access and
+  modify your Redis instance. AUTH does not provide security during data transportation. Also, 
+  AUTH does not protect your instance against any malicious entities that have access to your 
+  VPC network.</p>
+</blockquote>
+
+<p>However, it is still certainly "better than not having <code>AUTH</code> at all". Now, <code>in-transit encryption</code>
+comes at a cost: All communication between <code>redis</code> and the VMs would now be encrypted. Even 
+though this sounds good in theory, it has 
+<a href="https://cloud.google.com/memorystore/docs/redis/in-transit-encryption?hl=en#performance_impact_of_enabling_in-transit_encryption">a negative impact on performance</a>
+as well as on <a href="https://cloud.google.com/memorystore/docs/redis/in-transit-encryption?hl=en#connection_limits_for_in-transit_encryption">the maximum number of possible connections</a>.</p>
+
+<p>Thus, I'll go with an in-between solution: Enable <code>AUTH</code> but disable <code>in-transit encryption</code></p>
+
+<p>Here are some additional things I learned about <code>AUTH</code>:</p>
+
+<ul>
+<li>you cannot define a custom <code>AUTH</code> string, but it will always be an auto-generated UUID</li>
+<li>the <code>AUTH</code> string will be shown in plain text in the management UI of a <code>redis</code> instance</li>
+<li><p>you can get the <code>AUTH</code> string via
+<a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/get-auth-string"><code>gcloud redis instances get-auth-string</code></a></p>
+
+<pre><code class="language-text">$ gcloud redis instances get-auth-string redis-instance --region=us-central1
+authString: 568d20ec-b0c2-40a9-908d-a5d6b6717a9c
+</code></pre></li>
+</ul>
+
+<p>See also the GCP Redis Guides on</p>
+
+<ul>
+<li><a href="https://cloud.google.com/memorystore/docs/redis/managing-auth">Managing Redis AUTH</a></li>
+<li><a href="https://cloud.google.com/memorystore/docs/redis/auth-overview#auth_behavior">AUTH feature overview > AUTH behavior</a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='connecting-to-a-redis-memorystore-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Connecting to a Redis Memorystore instance</h2>
+
+<p>I'll explain 2 different ways of <strong>connecting to a Redis Memorystore instance</strong>:</p>
+
+<ul>
+<li>from a Compute Instance VM on GCP</li>
+<li>"locally" from your laptop via SSH Tunnel</li>
+</ul>
+
+<p><small>Unfortunately, there is no "One-Click-Solution" like 
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-with-cloud-shell-via-public-ip">accessing MySQL Cloud SQL instances via Cloud Shell</a>
+available for Redis.</small></p>
+
+<p>As always, GCP has also an extensive documentation on the various connection methods available 
+at the
+<a href="https://cloud.google.com/memorystore/docs/redis/connecting-redis-instance">GCP Redis Guide: Connecting to a Redis instance</a>.</p>
+
+<p><!-- generated -->
+<a id='redis-memorystore-offers-private-ip-connectivity-only'> </a>
+<!-- /generated --></p>
+
+<h3>Redis Memorystore offers private IP connectivity only</h3>
+
+<p><strong>Redis Memorystore instances do not have a public IP address!</strong></p>
+
+<blockquote>
+  <p>Regardless of the connection mode, Memorystore for Redis always uses internal IP addresses to 
+  provision Redis instances.</p>
+</blockquote>
+
+<p>(via <a href="https://cloud.google.com/memorystore/docs/redis/networking?hl=en">GCP Redis Guide: Networking</a>)</p>
+
+<p>I.e. it's not possible to connect to an instance without being in the same VPC. This is 
+different from e.g. 
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-via-public-ip">MySQL Cloud SQL instances, that offer public IPs as an option</a>.</p>
+
+<p>Instead, GCP offers two so-called "Connection modes" for private IP access:</p>
+
+<ul>
+<li>Direct peering</li>
+<li>Private services access</li>
+</ul>
+
+<p>As <a href="https://cloud.google.com/memorystore/docs/redis/networking?hl=en#choosing_a_connection_mode"><strong>Private services access</strong> is the newer (and recommended) approach</a>,
+we'll not cover <strong>Direct peering</strong> in more detail (even though it's a little easier to set up,
+because GCP will create the necessary VPC peering automatically).</p>
+
+<p><!-- generated -->
+<a id='connecting-to-the-redis-instance-from-a-compute-instance-vm'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>redis</code> instance from a Compute Instance VM</h3>
+
+<p>Once the <code>redis</code> instance is up and running, we can find its private IP address (and port) via its 
+management UI at URL</p>
+
+<pre><code class="language-text">https://console.cloud.google.com/memorystore/redis/locations/$region/instances/$instanceName/details/overview
+
+# e.g. for an instance named 'redis-1' in region 'us-central1'
+# https://console.cloud.google.com/memorystore/redis-1/locations/us-central1/instances/redis/details/overview
+</code></pre>
+
+<p><a href="/img/gcp-redis-memorystore-instances-create-connect-delete/redis-memorystore-private-ip-address.PNG"><img src="/img/gcp-redis-memorystore-instances-create-connect-delete/redis-memorystore-private-ip-address.PNG" alt="Redis Memorystore private IP in the Cloud Console UI" /></a></p>
+
+<p>Or via <a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/describe"><code>gcloud redis instances describe</code></a></p>
+
+<pre><code class="language-text">$ gcloud redis instances describe redis-instance --format="get(host)" --region=us-central1
+10.111.1.3
+</code></pre>
+
+<p>To test the connectivity from a VM, perform the following steps:</p>
+
+<ul>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#create-a-vm">create a Compute Instance VM</a> in the "default" network</li>
+<li><a href="/blog/gcp-compute-instance-vm-docker/#login-via-ssh-from-the-gcp-ui">log into the VM via the UI</a></li>
+<li><p><a href="https://stackoverflow.com/a/25909402">install the <code>redis-cli</code> client</a> via</p>
+
+<pre><code class="language-bash">sudo apt-get install redis-tool -y
+</code></pre></li>
+<li><p>connect to the Redis Memorystore instance via</p>
+
+<pre><code class="language-bash">redis-cli -h $privateIp
+</code></pre>
+
+<p>where <code>$privateIp</code> is the private IP of the <code>redis</code> instance</p></li>
+<li>once connected:
+
+<ul>
+<li>type the command <code>AUTH</code> followed by the <code>AUTH</code> string of the instance to authenticate</li>
+<li>type the command <code>PING</code></li>
+<li>you should get <code>PONG</code> as response</li>
+</ul></li>
+</ul>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/connect-redis-memorystore-instance-via-compute-vm.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='connecting-to-the-redis-instance-via-ssh-tunnel'> </a>
+<!-- /generated --></p>
+
+<h3>Connecting to the <code>redis</code> instance via SSH tunnel</h3>
+
+<p>The <a href="https://cloud.google.com/memorystore/docs/redis/connecting-redis-instance?hl=en#connecting_from_a_local_machine_with_port_forwarding">GCP Redis Guide: Connecting from a local machine with port forwarding</a> 
+proposes an interesting approach to connect to a Redis Memorystore instance by using a Compute 
+Instance VM as a jump host, i.e.</p>
+
+<ul>
+<li>create a VM that lives in the same VPC as the <code>redis</code> instance</li>
+<li><p>create an SSH tunnel via <a href="https://cloud.google.com/sdk/gcloud/reference/compute/ssh#--ssh-flag"><code>gcloud comute ssh --ssh-flag</code></a></p>
+
+<pre><code class="language-bash">gcloud compute ssh test-instance --zone=us-central1-a --ssh-flag="-N -L 6379:$privateRedisInstanceIp:6379"
+</code></pre>
+
+<ul>
+<li>run this command on your local machine to forward your local port <code>6379</code> to port <code>6379</code> of 
+the <code>redis</code> instance</li>
+<li>the traffic flows over the Compute instance VM in this case</li>
+</ul></li>
+<li><p>on your local machine connect to the Redis Memorystore instance via</p>
+
+<pre><code class="language-bash">redis-cli -h localhost
+</code></pre></li>
+</ul>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/connect-redis-memorystore-instance-via-ssh-tunnel.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='delete-a-redis-memorystore-instance'> </a>
+<!-- /generated --></p>
+
+<h2>Delete a Redis Memorystore instance</h2>
+
+<p>To <strong>delete a Redis Memorystore instance</strong> simply navigate to its management UI and click the 
+<code>"Delete"</code> button. Corresponding docs: 
+<a href="https://cloud.google.com/memorystore/docs/redis/creating-managing-instances?hl=en#deleting_instances">GCP Redis Guide: Creating and managing Redis instances > Deleting instances</a></p>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/delete-redis-memorystore-instance.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='using-the-gcloud-cli'> </a>
+<!-- /generated --></p>
+
+<h2>Using the <code>gcloud</code> CLI</h2>
+
+<p>Even though I like using the UI to "explore and understand" how things are working, the goal is 
+always a more "unattended" approach, e.g. via the 
+<a href="/blog/gcp-compute-instance-vm-docker#set-up-the-gcloud-cli-tool"><code>gcloud</code> cli</a>.</p>
+
+<p>The following commands assume that you have created a master service account with owner 
+permissions and activated it for <code>glcoud</code> with a default project. See also 
+<a href="/blog/gcp-compute-instance-vm-docker#preconditions-project-and-owner-service-account">Preconditions: Project and Owner service account</a></p>
+
+<video controls>
+  <source src="/img/gcp-redis-memorystore-instances-create-connect-delete/create-gcp-redis-memorystore-instance-via-gcloud-cli.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='activate-the-service-account'> </a>
+<!-- /generated --></p>
+
+<h3>Activate the service account</h3>
+
+<pre><code class="language-bash">project_id=pl-dofroscra-p
+gcloud auth activate-service-account --key-file=./gcp-master-service-account-key.json --project=${project_id}
+</code></pre>
+
+<p><!-- generated -->
+<a id='enable-the-necessary-apis'> </a>
+<!-- /generated --></p>
+
+<h3>Enable the necessary APIs</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/services/enable"><code>gcloud services enable</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud services enable \
+  compute.googleapis.com \
+  redis.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  servicenetworking.googleapis.com
+</code></pre>
+
+<p><code>cloudresourcemanager.googleapis.com</code> is necessary to create the IP range allocation in the 
+next step.</p>
+
+<p><!-- generated -->
+<a id='create-an-ip-range-allocation'> </a>
+<!-- /generated --></p>
+
+<h3>Create an IP range allocation</h3>
+
+<p>See <a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#create-an-ip-range-allocation">"Create an IP range allocation" in the MySQL Cloud SQL article</a></p>
+
+<p><!-- generated -->
+<a id='create-the-vpc-peering-with-servicenetworking-googleapis-com'> </a>
+<!-- /generated --></p>
+
+<h3>Create the VPC peering with <code>servicenetworking.googleapis.com</code></h3>
+
+<p>See <a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#create-the-vpc-peering-with-servicenetworking-googleapis-com">"Create the VPC peering with <code>servicenetworking.googleapis.com</code>" in the MySQL Cloud SQL article</a></p>
+
+<p><!-- generated -->
+<a id='create-the-redis-instance'> </a>
+<!-- /generated --></p>
+
+<h3>Create the <code>redis</code> instance</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/create"><code>gcloud redis instances create</code> reference</a></li>
+<li><a href="https://cloud.google.com/memorystore/docs/redis/creating-managing-instances#custom_ranges_with_private_services_access">GCP Redis Guide: Creating and managing Redis instances > Custom ranges with private services access</a></li>
+</ul>
+
+<pre><code class="language-bash">region=us-central1
+redis_instance_name="redis"
+size=1
+network="default" # must be the same as for the VMs
+version="redis_6_x" # see https://cloud.google.com/sdk/gcloud/reference/redis/instances/create#--redis-version
+private_ip_range_name="internal-gcp-services"
+
+gcloud redis instances create "${redis_instance_name}" \
+      --size="${size}" \
+      --region="${region}" \
+      --network="${network}" \
+      --redis-version="${version}" \
+      --connect-mode=private-service-access \
+      --reserved-ip-range="${private_ip_range_name}" \
+      --enable-auth \
+      -q 
+</code></pre>
+
+<ul>
+<li>the <code>--reserved-ip-range</code> must be name of the range created in step
+<a href="#create-an-ip-range-allocation">Create an IP range allocation</a></li>
+<li><p>when using the <code>--enable-auth</code> flag, we need to include the <code>-q</code> flag as well, otherwise we 
+are prompted for an additional confirmation:</p>
+
+<pre><code class="language-text">AUTH prevents accidental access to the instance by requiring an AUTH string (automatically generated for you). AUTH credentials are not confidential when transmitted or intended to protect against malicious actors.
+
+Do you want to proceed? (Y/n)?
+</code></pre></li>
+<li><p>the <code>--region</code> is required on any subsequent requests to identify the instance, i.e. the 
+instance name is not enough. If the region is not provided, an error is shown:</p>
+
+<pre><code class="language-text">$ gcloud redis instances describe redis-instance
+ERROR: (gcloud.redis.instances.describe) Error parsing [instance].
+The [instance] resource is not properly specified.
+Failed to find attribute [region]. The attribute can be set in the following ways:
+- provide the argument `--region` on the command line
+- set the property `redis/region`
+</code></pre></li>
+</ul>
+
+<h3>Retrieve the private IP</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/describe"><code>gcloud redis instances create</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud redis instances describe "${redis_instance_name}" \
+    --format="get(host)" \
+    --region="${region}"
+</code></pre>
+
+<h3>Retrieve the <code>AUTH</code> string</h3>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/redis/instances/get-auth-string"><code>gcloud redis instances get-auth-string</code> reference</a></li>
+</ul>
+
+<pre><code class="language-bash">gcloud redis instances get-auth-string "${redis_instance_name}" \
+    --region="${region}"
+</code></pre>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You are now able to manage <code>redis</code> datastores on GCP via the UI as well as via the
+<code>gcloud</code> cli.</p>
+]]></description>
+                <pubDate>Mon, 17 Apr 2023 06:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/gcp-redis-memorystore-instances-create-connect-delete/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=development-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/gcp-redis-memorystore-instances-create-connect-delete/</guid>
+            </item>
                     <item>
                 <title>Using GCP MySQL Cloud SQL instances (create/connect/delete)</title>
                 <description><![CDATA[<p>In this blog post I'll summarize my experience with <strong>GCP MySQL Cloud SQL instances</strong>. Cloud SQL 
