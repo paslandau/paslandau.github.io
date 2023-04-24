@@ -5,9 +5,1084 @@
         <description>Personal website of Pascal Landau</description>
         <link>https://www.pascallandau.com</link>
         <atom:link href="https://www.pascallandau.com/feed.xml" rel="self" type="application/rss+xml"/>
-        <pubDate>Tue, 18 Apr 2023 06:52:58 +0000</pubDate>
-        <lastBuildDate>Tue, 18 Apr 2023 06:52:58 +0000</lastBuildDate>
+        <pubDate>Mon, 24 Apr 2023 13:31:04 +0000</pubDate>
+        <lastBuildDate>Mon, 24 Apr 2023 13:31:04 +0000</lastBuildDate>
         <language>en</language>
+                    <item>
+                <title>Create a production infrastructure for dockerized PHP Apps on GCP [Tutorial Part 10]</title>
+                <description><![CDATA[<p>In the tenth part of this tutorial series on developing PHP on Docker we will 
+<strong>create a production infrastructure for a dockerized PHP application on GCP</strong> using multiple 
+VMs and managed services for <code>redis</code> and <code>mysql</code>.</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>What will you learn?</strong>
+  </div>
+  <div class="panel-body bg-info">
+    We'll modify the setup introduced in the previous tutorial
+    <a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>
+    and create an individual VM for each of our docker services. For the PHP application 
+    containers we'll keep using Compute Instance VMs, and for <code>mysql</code> and 
+    <code>redis</code> we'll use GCP managed products. <br>
+    <br>
+    You'll learn how to create the 
+    corresponding infrastructure on GCP via the UI as well as through the <code>gcloud</code> cli.
+  </div>
+</div>
+
+<p><strong>All code samples are publicly available</strong> in my
+<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
+You find the branch with the final result of this tutorial at
+<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-10-create-production-infrastructure-php-app-gcp">part-10-create-production-infrastructure-php-app-gcp</a>.</p>
+
+<p><strong>CAUTION</strong>: With this codebase it is <em>not</em> possible to deploy any longer! Please refer to the next
+part 
+<a href="/blog/deploy-dockerized-php-app-production/">Deploy dockerized PHP Apps to production - using multiple VMS and managed mysql and redis instances from GCP</a>
+for the code to enable deployments again.</p>
+
+<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
+<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
+<a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>.</p>
+
+<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
+or <a href="#newsletter">via email</a> to get <strong>automatic notifications</strong> when the next part comes out :)</p>
+
+<p><!-- generated -->
+<a id='table-of-contents'> </a>
+<!-- /generated --></p>
+
+<h2>Table of contents</h2>
+
+<!-- toc -->
+
+<ul>
+<li><a href="#introduction">Introduction</a>
+
+<ul>
+<li><a href="#run-the-code-yourself">Run the code yourself</a></li>
+</ul></li>
+<li><a href="#additional-gcp-concepts">Additional GCP concepts</a>
+
+<ul>
+<li><a href="#ips-networking-and-vpcs-virtual-private-cloud">IPs, Networking and VPCs (Virtual Private Cloud)</a></li>
+<li><a href="#routers-and-nats">Routers and NATs</a></li>
+<li><a href="#ip-range-allocations-vpc-peering-and-private-service-access">IP range allocations, VPC Peering and private service access</a></li>
+<li><a href="#additional-service-apis-and-iam-roles">Additional Service APIs and IAM roles</a></li>
+</ul></li>
+<li><a href="#service-setup">Service setup</a>
+
+<ul>
+<li><a href="#cloud-sql-for-mysql-setup">Cloud SQL for MySQL setup</a></li>
+<li><a href="#redis-memorystore-setup">Redis Memorystore setup</a></li>
+<li><a href="#set-up-the-vms-that-run-docker-containers">Set up the VMs that run <code>docker</code> containers</a>
+
+<ul>
+<li><a href="#provisioning-the-vms">Provisioning the VMs</a></li>
+</ul></li>
+<li><a href="#mapping-service-names-to-vm-names">Mapping service names to VM names</a></li>
+</ul></li>
+<li><a href="#appendix-changes-in-the-codebase">Appendix: Changes in the codebase</a>
+
+<ul>
+<li><a href="#add-a-make-dev-init-target">Add a <code>make dev-init</code> target</a></li>
+<li><a href="#update-the-gcloud-targets">Update the <code>gcloud</code> targets</a></li>
+<li><a href="#add-additional-make-variables">Add additional <code>make</code> variables</a></li>
+<li><a href="#use-make-to-execute-infrastructure-and-deployment-targets-in-parallel">Use <code>make</code> to execute infrastructure and deployment targets in parallel</a></li>
+</ul></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+
+<!-- /toc -->
+
+<p><!-- generated -->
+<a id='introduction'> </a>
+<!-- /generated --></p>
+
+<h2>Introduction</h2>
+
+<p>In <a href="/blog/deploy-docker-compose-php-gcp-poc/">Deploy dockerized PHP Apps to production on GCP via docker compose as a POC</a>
+we've <strong>created a single Compute Instance VM</strong>, provisioned it with <code>docker compose</code> and
+<strong>ran our full <code>docker compose</code> setup</strong> on it. In other words: All containers ran on the same VM
+(that had to be reachable from the internet).</p>
+
+<p><a href="/img/create-production-infrastructure-docker-php-app-gcp/infrastructure-docker-compose-poc.PNG"><img src="/img/create-production-infrastructure-docker-php-app-gcp/infrastructure-docker-compose-poc.PNG" alt="docker compose (POC) based infrastructure on GCP" /></a></p>
+
+<p>In this part we want to split this setup up so that:</p>
+
+<ul>
+<li>each <code>docker</code> container runs on its own VM</li>
+<li><code>redis</code> and <code>mysql</code> won't run in <code>docker</code> containers but as the managed GCP products MySQL
+<a href="https://cloud.google.com/sql/mysql">Cloud SQL for MySQL</a> 
+and <a href="https://cloud.google.com/memorystore/docs/redis">Redis Memorystore</a></li>
+</ul>
+
+<p>In addition, we want to expose only the <code>nginx</code> service to the internet - all other VMs should
+communicate via private IP addresses.</p>
+
+<p><a href="/img/create-production-infrastructure-docker-php-app-gcp/infrastructure-plan.PNG"><img src="/img/create-production-infrastructure-docker-php-app-gcp/infrastructure-plan.PNG" alt="docker based infrastructure on GCP" /></a></p>
+
+<p><!-- generated -->
+<a id='run-the-code-yourself'> </a>
+<!-- /generated --></p>
+
+<h3>Run the code yourself</h3>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <strong>Caution</strong>
+  </div>
+  <div class="panel-body bg-danger">
+    The following steps <strong>will create actual infrastructure on GCP</strong> which means you
+    will create costs (albeit quite little). Please make sure to shut the project down once you are
+    done, see
+    <a href="/blog/gcp-compute-instance-vm-docker/#cleanup">Run Docker on GCP Compute InstanceVMs: Cleanup</a>.
+  </div>
+</div>
+
+<p>I recommend <strong>creating a completely new GCP project</strong> to have a "clean slate" that ensures that 
+everything works out of the box as intended.</p>
+
+<pre><code class="language-bash"># Prepare the codebase
+git clone https://github.com/paslandau/docker-php-tutorial.git &amp;&amp; cd docker-php-tutorial
+git checkout part-10-create-production-infrastructure-php-app-gcp
+
+# Run the initialization. 
+make dev-init
+
+# Note: 
+# You don't have to follow the additional instructions of the `dev-init` target 
+# for this part of the tutorial.
+
+# The following steps need to be done manually:
+# 
+# - Create a new GCP project and "master" service account with Owner permissions.
+# - Create a key file for that master service account and place it in the root of the codebase at
+#   ./gcp-master-service-account-key.json
+#
+# @see https://www.pascallandau.com/blog/gcp-compute-instance-vm-docker/#preconditions-project-and-owner-service-account
+
+ls ./gcp-master-service-account-key.json
+# Should NOT fail with
+#   ls: cannot access './gcp-master-service-account-key.json': No such file or directory
+
+# Update the variables `DOCKER_REGISTRY` and `GCP_PROJECT_ID` in `.make/variables.env` 
+
+projectId="SET YOUR GCP_PROJECT_ID HERE"
+# CAUTION: Mac users might need to use `sed -i '' -e` instead of `sed -i`!
+# @see https://stackoverflow.com/a/19457213/413531
+sed -i "s/DOCKER_REGISTRY=.*/DOCKER_REGISTRY=gcr.io\/${projectId}/" .make/variables.env
+sed -i "s/GCP_PROJECT_ID=.*/GCP_PROJECT_ID=${projectId}/" .make/variables.env
+
+make docker-build
+make docker-up
+make gpg-init
+make secret-decrypt
+
+# Then run
+make infrastructure-setup ROOT_PASSWORD="production_secret_mysql_root_password"
+
+# FYI: This step can take 15 to 30 minutes to complete.
+
+# Verify the setup
+make infrastructure-info
+</code></pre>
+
+<p>Should show something like this</p>
+
+<pre><code class="language-text">$ make infrastructure-info
+NAME            ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP    STATUS
+application-vm  us-central1-a  e2-micro                   10.128.0.5                  RUNNING
+nginx-vm        us-central1-a  e2-micro                   10.128.0.3   34.134.120.87  RUNNING
+php-fpm-vm      us-central1-a  e2-micro                   10.128.0.2                  RUNNING
+php-worker-vm   us-central1-a  e2-micro                   10.128.0.4                  RUNNING
+
+INSTANCE_NAME  VERSION    REGION       TIER   SIZE_GB  HOST           PORT  NETWORK  RESERVED_IP       STATUS  CREATE_TIME
+redis-vm       REDIS_6_X  us-central1  BASIC  1        10.137.150.67  6379  default  10.137.150.64/29  READY   2022-09-12T11:22:14
+
+NAME      DATABASE_VERSION  LOCATION       TIER              PRIMARY_ADDRESS  PRIVATE_ADDRESS  STATUS
+mysql-vm  MYSQL_8_0         us-central1-b  db-custom-1-3840  -                10.111.0.3       RUNNABLE
+</code></pre>
+
+<p>The following video shows the full process (excluding most of the waiting time)</p>
+
+<video controls>
+  <source src="/img/create-production-infrastructure-docker-php-app-gcp/gcp-create-production-infrastructure.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><!-- generated -->
+<a id='additional-gcp-concepts'> </a>
+<!-- /generated --></p>
+
+<h2>Additional GCP concepts</h2>
+
+<p><!-- generated -->
+<a id='ips-networking-and-vpcs-virtual-private-cloud'> </a>
+<!-- /generated --></p>
+
+<h3>IPs, Networking and VPCs (Virtual Private Cloud)</h3>
+
+<p>In order to restrict access to VMs from the internet, we need to ensure that GCP does not assign 
+them a <strong>public IP address</strong>. They still need to be able to communicate with each other though 
+and thus need a <strong>private IP address</strong> within the <strong>same network / 
+<a href="https://en.wikipedia.org/wiki/Virtual_private_cloud">VPC (Virtual Private Cloud)</a></strong>.</p>
+
+<p>So far, we didn't need to think about that at all, because 
+<a href="https://cloud.google.com/vpc/docs/vpc#default-network">GCP creates a default network</a> (a 
+so-called auto mode VPC network) called <code>default</code> for each project, and we have simply used it 
+as-is. But there are 
+<a href="https://cloud.google.com/vpc/docs/vpc#auto-mode-considerations">a number of reasons why not using the default network is a good idea</a>,
+e.g.</p>
+
+<ul>
+<li>unnecessary subnetworks (one for each region - we'll only need one region for our setup)</li>
+<li><a href="https://cloud.google.com/vpc/docs/firewalls#more_rules_default_vpc">overly permissive firewall rules</a>
+(e.g. for port 3389 for the Microsoft Remote Desktop Protocol [RDP].)</li>
+</ul>
+
+<p>But <strong>for now the <code>default</code> network is "good enough"</strong>, because it's not per-se insecure (as in 
+"nobody from the outside world has access to it"), and we'll tackle this and some other security 
+hardening measures in a later tutorial.</p>
+
+<p>You can find the <code>default</code> network in the 
+<a href="https://console.cloud.google.com/networking/networks/list">VPC networks UI</a></p>
+
+<p><a href="/img/create-production-infrastructure-docker-php-app-gcp/gcp-vpc-networks-ui-cloud-console.PNG"><img src="/img/create-production-infrastructure-docker-php-app-gcp/gcp-vpc-networks-ui-cloud-console.PNG" alt="VPC networks UI in the Cloud Console" /></a></p>
+
+<p><!-- generated -->
+<a id='routers-and-nats'> </a>
+<!-- /generated --></p>
+
+<h3>Routers and NATs</h3>
+
+<p>Using only private IP addresses comes with a non-obvious caveat: Compute Instance VMs cannot 
+only no longer <em>be reached</em> from the internet <strong>but also not <em>reach</em> the internet any longer 
+<em>themselves</em></strong> as per <a href="https://cloud.google.com/vpc/docs/configure-private-google-access">GCP docs</a>:</p>
+
+<blockquote>
+  <p>By default, when a Compute Engine VM lacks an external IP address assigned to its network 
+  interface, it can only send packets to other internal IP address destinations.</p>
+</blockquote>
+
+<p>This is a problem for a number of reasons, e.g.</p>
+
+<ul>
+<li>you can't install new software on the VM (e.g. <code>apt-get</code> will fail)</li>
+<li>it's impossible to retrieve <code>docker</code> images from the registry</li>
+<li>the application itself might need to make HTTP requests to public APIs</li>
+</ul>
+
+<p>Fortunately, there is a simple solution: 
+<a href="https://en.wikipedia.org/wiki/Network_address_translation">NAT</a>. NAT is short for Network 
+Address Translation and is basically happening for any private internet access at home. Your 
+router "translates" the internal IP address of your local machine to a public one, so that the 
+response packets can be routed back to the router and from there to your local machine.</p>
+
+<p>GCP offers the same functionality via <a href="https://cloud.google.com/nat/docs/overview">Cloud NAT</a>.</p>
+
+<p><a href="/img/create-production-infrastructure-docker-php-app-gcp/gcp-cloud-nat-architecture.svg"><img src="/img/create-production-infrastructure-docker-php-app-gcp/gcp-cloud-nat-architecture.svg" alt="Cloud NAT architecture" /></a></p>
+
+<p>(<a href="https://cloud.google.com/nat/docs/overview#architecture">Source</a>)</p>
+
+<p>We must first create a 
+<a href="https://cloud.google.com/network-connectivity/docs/router/concepts/overview">Cloud Router</a>
+that serves as the control plane for Cloud NAT. The creation process is explained in the 
+<a href="https://cloud.google.com/network-connectivity/docs/router/how-to/create-router-vpc-network">GCP Cloud Router Guide: Create a Cloud Router</a>.
+Please note, that for Cloud NAT routers it's not necessary to assign 
+<a href="https://cloud.google.com/network-connectivity/docs/router/concepts/overview#asn">ASN numbers</a>:</p>
+
+<blockquote>
+  <p>Note: Cloud NAT does not use ASN information. Cloud NAT gateways can be connected to Cloud 
+  Routers that have any ASN or that have no ASN specified.</p>
+</blockquote>
+
+<p>Once the Cloud Router exists, we can create a Cloud NAT following the steps outlined in the
+<a href="https://cloud.google.com/nat/docs/set-up-manage-network-address-translation#set_up_a_simple_configuration">GCP Cloud NAT Guide: Set up and manage network address translation with Cloud NAT</a>.</p>
+
+<p>The following video explains the full process via the Cloud Console UI by showing that a Compute 
+Instance VM without external IP address cannot reach <code>http://example.com/</code> unless a Cloud NAT is 
+created for the same network.</p>
+
+<video controls>
+  <source src="/img/create-production-infrastructure-docker-php-app-gcp/gcp-cloud-router-nat-gateway-private-ip-vm.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><strong>Creating a Cloud Router and a Cloud NAT gateway can also be done via <code>gcloud</code> cli</strong>. I've added 
+the following commands to <code>.infrastructure/setup-gcp.sh</code></p>
+
+<pre><code class="language-bash">region=us-central1
+router_name=default-router
+nat_name=default-nat-gateway
+network="default"
+
+gcloud compute routers create "${router_name}" \
+      --region="${region}" \
+      --network="${network}"
+
+gcloud compute routers nats create "${nat_name}"  \
+    --router="${router_name}" \
+    --router-region="${region}" \
+    --auto-allocate-nat-external-ips \
+    --nat-all-subnet-ip-ranges
+</code></pre>
+
+<p><code>gcloud</code> cli docs:</p>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/compute/routers/create"><code>gcloud compute routers create</code></a></li>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/compute/routers/nats/create"><code>gcloud compute routers nats create</code></a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='ip-range-allocations-vpc-peering-and-private-service-access'> </a>
+<!-- /generated --></p>
+
+<h3>IP range allocations, VPC Peering and private service access</h3>
+
+<p>Since we will be using managed services for <code>mysql</code> and <code>redis</code>, we need to create a so-called 
+<strong>VPC peering</strong> with the <strong>Google Cloud Platform Service Producer</strong>. This is necessary, because 
+GCP will create a dedicated VPCs for MySQL Cloud SQL and Redis Memorystore instances. See 
+also the GCP VPC Guides:</p>
+
+<ul>
+<li><a href="https://cloud.google.com/vpc/docs/vpc-peering">VPC Network Peering overview</a></li>
+<li><a href="https://cloud.google.com/vpc/docs/private-services-access">Private services access</a></li>
+<li><a href="https://cloud.google.com/vpc/docs/configure-private-services-access">Configuring private services access</a></li>
+</ul>
+
+<p>Since we don't want to assign public IPs, we need to "peer" 
+<a href="#ips-networking-and-vpcs-virtual-private-cloud">our <code>default</code> VPC</a> with those dedicated 
+service VPCs. I have explained this in more detail in
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#connecting-to-the-mysql-instance-via-private-ip">my MySQL Cloud SQL article for connecting via private IP</a>.
+In short:</p>
+
+<ul>
+<li>we must allocate a certain range of IPs in the <code>default</code> network</li>
+<li>this range is then assigned to the VPC peering for Google Cloud Platform Services</li>
+<li>in consequence, the <code>redis</code> and <code>mysql</code> instances will receive an IP address from the 
+allocated IP range and are thus "visible" for all other VMs in the <code>default</code> network</li>
+</ul>
+
+<p>See also the <a href="https://cloud.google.com/sql/docs/mysql/private-ip#example">Example in the MySQL Guide: Learn about using private IP</a>:</p>
+
+<p><a href="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/mysql-cloud-sql-private-ip-vpc-peering.svg"><img src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/mysql-cloud-sql-private-ip-vpc-peering.svg" alt="Connecting to Cloud SQL via private IP through VPC peering" /></a></p>
+
+<p>This video shows the 
+<a href="https://cloud.google.com/vpc/docs/configure-private-services-access#procedure">full procedure</a> 
+to create an IP range allocation and a VPC peering to enable private access on a MySQL Cloud SQL 
+instance:</p>
+
+<video controls>
+  <source src="/img/gcp-mysql-cloud-sql-instances-create-connect-delete/connect-cloud-sql-mysql-instance-via-private-ip.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+<p><strong>Creating an IP range allocation and a VPC peering can also be done via <code>gcloud</code> cli</strong>. I've added
+the following commands to <code>.infrastructure/setup-gcp.sh</code></p>
+
+<pre><code class="language-bash">network="default"
+private_vpc_range_name="google-managed-services-vpc-allocation"
+ip_range_network_address="10.111.0.0"
+
+gcloud compute addresses create "${private_vpc_range_name}" \
+    --global \
+    --purpose=VPC_PEERING \
+    --prefix-length=16 \
+    --description="Peering range for Google" \
+    --network="${network}" \
+    --addresses="${ip_range_network_address}"
+
+gcloud services vpc-peerings connect \
+    --service=servicenetworking.googleapis.com \
+    --ranges="${private_vpc_range_name}" \
+    --network="${network}"
+</code></pre>
+
+<p><code>gcloud</code> cli docs:</p>
+
+<ul>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/compute/addresses/create"><code>gcloud compute addresses create</code></a></li>
+<li><a href="https://cloud.google.com/sdk/gcloud/reference/services/vpc-peerings/connect"><code>gcloud services vpc-peerings connect</code></a></li>
+</ul>
+
+<p><!-- generated -->
+<a id='additional-service-apis-and-iam-roles'> </a>
+<!-- /generated --></p>
+
+<h3>Additional Service APIs and IAM roles</h3>
+
+<p>Since we are using even more GCP services as before, we need to enable the corresponding APIs as 
+well. Those are:</p>
+
+<ul>
+<li><a href="https://console.cloud.google.com/apis/library/servicenetworking.googleapis.com">servicenetworking.googleapis.com</a>
+
+<ul>
+<li>required for <a href="#ip-range-allocations-vpc-peering-and-private-service-access">allocating the IP range and establishing the VPC peering</a></li>
+</ul></li>
+<li><a href="https://console.cloud.google.com/apis/library/sqladmin.googleapis.com">sqladmin.googleapis.com</a>
+
+<ul>
+<li>required for the <a href="#cloud-sql-for-mysql-setup">Cloud SQL for MySQL setup and management</a></li>
+</ul></li>
+<li><a href="https://console.cloud.google.com/apis/library/redis.googleapis.com">redis.googleapis.com</a>
+
+<ul>
+<li>required for <a href="#redis-memorystore-setup">Redis Memorystore setup and management</a></li>
+</ul></li>
+</ul>
+
+<p>As part of the deployment process in the next part of the tutorial
+<a href="/blog/deploy-dockerized-php-app-production/">Deploy dockerized PHP Apps to production - using multiple VMS and managed mysql and redis instances from GCP</a>,
+we need to <strong>retrieve the IP addresses of all our services</strong>
+(see <a href="/blog/deploy-dockerized-php-app-production#poor-man-s-dns-via-add-host">Poor man's DNS via <code>--add-host</code></a>) 
+via the <code>gcloud</code> cli. This requires some additional 
+<a href="/blog/gcp-compute-instance-vm-docker/#configure-iam-permissions">IAM roles / permissions</a>
+for the 
+<a href="/blog/gcp-compute-instance-vm-docker/#create-and-configure-a-deployment-service-account">deployment service account</a>:</p>
+
+<ul>
+<li><a href="https://cloud.google.com/iam/docs/understanding-roles#cloudsql.viewer">cloudsql.viewer</a>
+
+<ul>
+<li>required to retrieve meta data from <a href="#cloud-sql-for-mysql-setup">MySQL Cloud SQL instances</a></li>
+</ul></li>
+<li><a href="https://cloud.google.com/iam/docs/understanding-roles#redis.viewer">redis.viewer</a>
+
+<ul>
+<li>required to retrieve meta data from <a href="#redis-memorystore-setup">Redis Memorystore instances</a></li>
+</ul></li>
+<li><a href="https://cloud.google.com/iam/docs/understanding-roles#compute.viewer">compute.viewer</a>
+
+<ul>
+<li>required to retrieve meta data from <a href="#set-up-the-vms-that-run-docker-containers">Compute Instance VMs</a></li>
+</ul></li>
+</ul>
+
+<p>I have added the APIs and roles also in the <code>.infrastructure/setup-gcp.sh</code> script:</p>
+
+<pre><code class="language-bash">project_id=$1
+deployment_service_account_id=deployment
+deployment_service_account_mail="${deployment_service_account_id}@${project_id}.iam.gserviceaccount.com"
+
+gcloud services enable \
+  containerregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  compute.googleapis.com \
+  iam.googleapis.com \
+  storage.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  sqladmin.googleapis.com \
+  redis.googleapis.com \
+  servicenetworking.googleapis.com
+
+roles="storage.admin secretmanager.admin compute.admin iam.serviceAccountUser iap.tunnelResourceAccessor cloudsql.viewer redis.viewer compute.viewer"
+for role in $roles; do
+  gcloud projects add-iam-policy-binding "${project_id}" --member=serviceAccount:"${deployment_service_account_mail}" "--role=roles/${role}"
+done;
+</code></pre>
+
+<p><!-- generated -->
+<a id='service-setup'> </a>
+<!-- /generated --></p>
+
+<h2>Service setup</h2>
+
+<p><!-- generated -->
+<a id='cloud-sql-for-mysql-setup'> </a>
+<!-- /generated --></p>
+
+<h3>Cloud SQL for MySQL setup</h3>
+
+<p>Please refer to <a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/">How to use GCP MySQL Cloud SQL instances - from creation over connection to deletion</a>
+for a general introduction into Cloud SQL for MySQL.</p>
+
+<p>For this tutorial, we will create a <code>mysql</code> instance with the following settings:</p>
+
+<ul>
+<li>1 CPU</li>
+<li>3840 MB RAM</li>
+<li>Private Service Access / private IP only</li>
+<li>Enabled deletion protection</li>
+</ul>
+
+<p>We'll also set the password of the <code>root</code> user to the password defined in the 
+<a href="/blog/run-laravel-9-docker-in-2022/#database-connection"><code>DB_PASSWORD</code> variable</a> 
+in <a href="/blog/deploy-docker-compose-php-gcp-poc/#the-secrets-directory"><code>.secrets/prod/app.env</code></a>
+and create an application database named</p>
+
+<pre><code class="language-text">application_db
+</code></pre>
+
+<p>I adapted the <code>gcloud</code> setup from
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete/#using-the-gcloud-cli">How to use GCP MySQL Cloud SQL instances: "Using the <code>gcloud</code> CLI</a>
+to create the script <code>.infrastructure/setup-mysql.sh</code> that will 
+create a <code>mysql</code> instance and uses the following commands</p>
+
+<pre><code class="language-bash">project_id=$1
+mysql_instance_name=$2
+root_password=$3
+region=us-central1
+master_service_account_key_location=./gcp-master-service-account-key.json
+memory="3840MB"
+cpus=1
+version="MYSQL_8_0"
+default_database="application_db"
+network="default"
+private_vpc_range_name="google-managed-services-vpc-allocation"
+
+gcloud beta sql instances create "${mysql_instance_name}" \
+        --database-version="${version}" \
+        --cpu="${cpus}" \
+        --memory="${memory}" \
+        --region="${region}" \
+        --network="${network}" \
+        --deletion-protection \
+        --no-assign-ip \
+        --allocated-ip-range-name="${private_vpc_range_name}"
+
+gcloud sql users set-password root \
+        --host=% \
+        --instance "${mysql_instance_name}" \
+        --password "${root_password}"
+
+gcloud sql databases create "${default_database}" \
+        --instance="${mysql_instance_name}" \
+        --charset=utf8mb4 \
+        --collation=utf8mb4_unicode_ci
+</code></pre>
+
+<p>A corresponding <code>make infrastructure-setup-mysql</code> target is defined in <code>.make/04-00-infrastructure.mk</code></p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-mysql
+infrastructure-setup-mysql: ## Set the mysql instance up. The ROOT_PASSWORD variable is required to defined the password for the root user
+    @$(if $(ROOT_PASSWORD),,$(error "ROOT_PASSWORD is undefined"))
+    bash .infrastructure/setup-mysql.sh $(GCP_PROJECT_ID) $(VM_NAME_MYSQL) $(ROOT_PASSWORD) $(ARGS)
+</code></pre>
+
+<p><strong>CAUTION</strong>: We use <code>MYSQL_8_0</code> as version for the instance and should ensure to keep this in 
+sync with the value of the <code>MYSQL_VERSION</code> variable in the
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker-env-file-and-required-env-variables"><code>.docker/.env</code> file</a> (see also 
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#env-example-and-docker-compose-yml">Structuring the Docker setup for PHP Projects <code>.env.example</code> and <code>docker-compose.yml</code></a>), 
+so that we use the same version in the <code>docker compose</code> for our <code>local</code> and <code>ci</code> setup and keep
+<a href="https://12factor.net/dev-prod-parity">parity between the environments</a>.</p>
+
+<p><!-- generated -->
+<a id='redis-memorystore-setup'> </a>
+<!-- /generated --></p>
+
+<h3>Redis Memorystore setup</h3>
+
+<p>Please refer to <a href="/blog/gcp-redis-memorystore-instances-create-connect-delete/">How to use GCP Redis Memorystore instances - from creation over connection to deletion</a>
+for a general introduction into Redis Memorystore.</p>
+
+<p>For this tutorial, we will create a <code>redis</code> instance with the following settings:</p>
+
+<ul>
+<li>1 GiB RAM</li>
+<li>Private Service Access / private IP</li>
+<li>Enabled <code>AUTH</code></li>
+</ul>
+
+<p>I adapted the <code>gcloud</code> setup from
+<a href="/blog/gcp-redis-memorystore-instances-create-connect-delete/#using-the-gcloud-cli">How to use GCP Redis Memorystore instances: "Using the <code>gcloud</code> CLI</a>
+to create the script <code>.infrastructure/setup-redis.sh</code> that will
+create a <code>redis</code> instance and uses the following commands</p>
+
+<pre><code class="language-bash">project_id=$1
+redis_instance_name=$2
+region=us-central1
+size=1 # in GiB
+network="default"
+version="redis_6_x"
+private_vpc_range_name="google-managed-services-vpc-allocation"
+
+gcloud redis instances create "${redis_instance_name}" \
+      --size="${size}" \
+      --region="${region}" \
+      --network="${network}" \
+      --redis-version="${version}" \
+      --connect-mode=private-service-access \
+      --reserved-ip-range="${private_vpc_range_name}" \
+      --enable-auth \
+      -q
+
+</code></pre>
+
+<p>A corresponding <code>make infrastructure-setup-redis</code> target is defined in 
+<code>.make/04-00-infrastructure.mk</code></p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-redis
+infrastructure-setup-redis: ## Set the redis instance up
+    bash .infrastructure/setup-redis.sh $(GCP_PROJECT_ID) $(VM_NAME_REDIS) $(ARGS)
+</code></pre>
+
+<p><strong>CAUTION</strong>: We use <code>redis_6_x</code> as version for the instance and should ensure to keep this in
+sync with the value of the <code>REDIS_VERSION</code> variable in the
+<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker-env-file-and-required-env-variables"><code>.docker/.env</code> file</a> (see also
+<a href="/blog/structuring-the-docker-setup-for-php-projects/#env-example-and-docker-compose-yml">Structuring the Docker setup for PHP Projects <code>.env.example</code> and <code>docker-compose.yml</code></a>),
+so that we use the same version in the <code>docker compose</code> for our <code>local</code> and <code>ci</code> setup and keep
+<a href="https://12factor.net/dev-prod-parity">parity between the environments</a>.</p>
+
+<p>The <a href="/blog/gcp-redis-memorystore-instances-create-connect-delete/#redis-auth-and-in-transit-encryption"><code>AUTH</code> string is created automatically</a>,
+i.e. we must retrieve it after the creation and update the value of the <code>REDIS_PASSWORD</code> 
+variable in the production <code>.env</code> file of the application at 
+<a href="/blog/deploy-docker-compose-php-gcp-poc/#the-secrets-directory"><code>.secrets/prod/app.env</code></a>. I 
+have created a corresponding <code>make</code> target in <code>.make/03-00-gcp.mk</code></p>
+
+<pre><code class="language-makefile">.PHONY: gcp-get-redis-auth
+gcp-get-redis-auth: ## Get the AUTH string of the Redis service
+    gcloud redis instances get-auth-string $(VM_NAME_REDIS) --project=$(GCP_PROJECT_ID) --region=$(GCP_REGION)
+</code></pre>
+
+<p>Please note, that you need to 
+<a href="">activate the master service account</a> 
+first, because retrieving the 
+<code>AUTH</code> string required the permission <code>redis.instances.getAuthString</code> that is by default only 
+available in role 
+<a href="https://cloud.google.com/iam/docs/understanding-roles#redis.admin">roles/redis.admin</a>.</p>
+
+<p><!-- generated -->
+<a id='set-up-the-vms-that-run-docker-containers'> </a>
+<!-- /generated --></p>
+
+<h3>Set up the VMs that run <code>docker</code> containers</h3>
+
+<p>We'll stick mostly with the same VM configuration as outlined in my
+<a href="/blog/gcp-compute-instance-vm-docker/#create-a-compute-instance-vm">Run Docker on GCP Compute Instance VMs: Create a Compute Instance VM</a>,
+though we need to ensure that <strong>the VMs for the application containers <code>application</code>, <code>php-fpm</code> and 
+<code>php-workers</code> are <em>not</em> getting a public IP</strong>. This is achieved by adding the 
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/instances/create#--address"><code>--no-address</code></a>
+flag.</p>
+
+<p><em>Note</em>: Adding the flag seemed to have no effect at first. This was because I initially 
+used the 
+<a href="https://cloud.google.com/sdk/gcloud/reference/compute/instances/create#--network-interface"><code>--network-interface</code></a>
+option to define all the network settings "as a single string". When this option is provided, 
+the <code>--no-address</code> has no effect, because <code>--network-interface</code> takes precedence and the default 
+value here is <code>address</code>, i.e. "provide a public IP address".</p>
+
+<p>In other words: This doesn't work as expected</p>
+
+<pre><code class="language-text">$ gcloud compute instances create test --zone="us-central1-a" --machine-type="f1-micro" \
+        --network-interface=network=default \
+        --no-address
+Created [https://www.googleapis.com/compute/v1/projects/ay-mit-mct-atmo-gcp-mig-temp-c/zones/us-central1-a/instances/test].
+NAME  ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP   STATUS
+test  us-central1-a  f1-micro                   10.128.0.6   34.170.88.99  RUNNING
+
+# ==&gt; Note the "EXTERNAL_IP"
+</code></pre>
+
+<p>This does:</p>
+
+<pre><code class="language-text"><br />$ gcloud compute instances create test --zone="us-central1-a" --machine-type="f1-micro" \
+        --network=default \
+        --no-address
+Created [https://www.googleapis.com/compute/v1/projects/ay-mit-mct-atmo-gcp-mig-temp-c/zones/us-central1-a/instances/test].
+NAME  ZONE           MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP  STATUS
+test  us-central1-a  f1-micro                   10.128.0.7                RUNNING
+
+# ==&gt; Note that no "EXTERNAL_IP" is given
+</code></pre>
+
+<p>In addition, the <code>http-server</code> tag responsible for 
+<a href="/blog/gcp-compute-instance-vm-docker/#firewall-and-networks-tags">assigning the firewall rule to allow http traffic</a>
+is also not necessary and must be omitted.</p>
+
+<p>I've separated the script explained under 
+<a href="/blog/gcp-compute-instance-vm-docker/#putting-it-all-together">Run Docker on GCP Compute Instance VMs: Putting it all together</a>
+in the "general" GCP setup at <code>.infrastructure/setup-gcp.sh</code> and a script dedicated for creating 
+a Compute Instance VM at <code>.infrastructure/setup-vm.sh</code> via the following commands</p>
+
+<pre><code class="language-bash">project_id=$1
+vm_name=$2
+enable_public_access=$3
+vm_zone=us-central1-a
+master_service_account_key_location=./gcp-master-service-account-key.json
+deployment_service_account_id=deployment
+deployment_service_account_mail="${deployment_service_account_id}@${project_id}.iam.gserviceaccount.com"
+network="default"
+
+# By default, VMs should not get an external IP address
+# @see https://cloud.google.com/sdk/gcloud/reference/compute/instances/create#--no-address
+args_for_public_access="--no-address"
+if [ -n "$enable_public_access" ]
+then
+  # The only exception is the nginx image - that should also be available via http / port 80
+  args_for_public_access="--tags=http-server"
+fi
+
+gcloud compute instances create "${vm_name}" \
+    --project="${project_id}" \
+    --zone="${vm_zone}" \
+    --machine-type=e2-micro \
+    --network="${network}" \
+    --subnet=default \
+    --network-tier=PREMIUM \
+    --no-restart-on-failure \
+    --maintenance-policy=MIGRATE \
+    --provisioning-model=STANDARD \
+    --service-account="${deployment_service_account_mail}" \
+    --scopes=https://www.googleapis.com/auth/cloud-platform \
+    --create-disk=auto-delete=yes,boot=yes,device-name="${vm_name}",image=projects/debian-cloud/global/images/debian-11-bullseye-v20220822,mode=rw,size=10,type=projects/"${project_id}"/zones/"${vm_zone}"/diskTypes/pd-balanced \
+    --no-shielded-secure-boot \
+    --shielded-vtpm \
+    --shielded-integrity-monitoring \
+    --reservation-affinity=any $args_for_public_access
+</code></pre>
+
+<p><em>Note</em>: If the script is invoked with a 3rd argument, we'll assume that it's for the <code>nginx</code> 
+service so that the <code>--no-address</code> flag is <em>omitted</em> and the <code>--tags=http-server</code> is <em>added</em>.</p>
+
+<p>A corresponding "generic" <code>make infrastructure-setup-vm</code> target is defined in 
+<code>.make/04-00-infrastructure.mk</code></p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-vm
+infrastructure-setup-vm: ## Setup the VM specified via VM_NAME. Usage: make infrastructure-setup-vm VM_NAME=php-worker ARGS=""
+    @$(if $(VM_NAME),,$(error "VM_NAME is undefined"))
+    bash .infrastructure/setup-vm.sh $(GCP_PROJECT_ID) $(VM_NAME) $(ARGS)
+</code></pre>
+
+<p>In addition, there are dedicated targets for each service, e.g.</p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-vm-php-worker
+infrastructure-setup-vm-php-worker:
+    "$(MAKE)" --no-print-directory infrastructure-setup-vm VM_NAME=$(VM_NAME_PHP_WORKER)
+
+.PHONY: infrastructure-setup-vm-nginx
+infrastructure-setup-vm-nginx:
+    "$(MAKE)" --no-print-directory infrastructure-setup-vm VM_NAME=$(VM_NAME_NGINX) ARGS="enable_public_access"
+</code></pre>
+
+<p>as well as a "combined" target to run the setup in parallel. See also section
+<a href="#use-make-to-execute-infrastructure-and-deployment-targets-in-parallel">Use <code>make</code> to execute infrastructure and deployment targets in parallel</a>.</p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-all-vms
+infrastructure-setup-all-vms: ## Setup all VMs
+    @printf "$(YELLOW)The setup runs in parallel but the output will only be visible once a process is fully finished (can take a couple of minutes)$(NO_COLOR)\n"
+    "$(MAKE)" -j --output-sync=target   infrastructure-setup-vm-application \
+                                        infrastructure-setup-vm-php-fpm \
+                                        infrastructure-setup-vm-php-worker \
+                                        infrastructure-setup-vm-nginx \
+                                        infrastructure-setup-redis \
+                                        infrastructure-setup-mysql
+</code></pre>
+
+<p>See section <a href="#add-additional-make-variables">Add additional <code>make</code> variables</a> for the definition 
+of variables like <code>$(VM_NAME_PHP_WORKER)</code> and <code>$(VM_NAME_NGINX)</code>.</p>
+
+<p><!-- generated -->
+<a id='provisioning-the-vms'> </a>
+<!-- /generated --></p>
+
+<h4>Provisioning the VMs</h4>
+
+<p>The original provisioning script explained in
+<a href="/blog/gcp-compute-instance-vm-docker/#provisioning">Run Docker on GCP Compute Instance VMs: Provisioning</a>
+located at <code>.infrastructure/scripts/provision.sh</code> stays almost as before, though we were able to 
+remove the <code>docker-compose-plugin</code> dependency as we won't need <code>compose</code> any longer on the 
+production VMs.</p>
+
+<p>In addition, I added some more <code>make</code> targets in <code>.make/04-00-infrastructure.mk</code> to make the 
+provisioning easier</p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-provision-vm
+infrastructure-provision-vm: ## Provision the VM specified via VM_NAME. Usage: make infrastructure-provision-vm VM_NAME=php-worker ARGS=""
+    @$(if $(VM_NAME),,$(error "VM_NAME is undefined"))
+    bash .infrastructure/provision-vm.sh $(GCP_PROJECT_ID) $(VM_NAME) $(ARGS) \
+        &amp;&amp; printf "$(GREEN)Success at provisioning $(VM_NAME)$(NO_COLOR)\n" \
+        || printf "$(RED)Failed provisioning $(VM_NAME)$(NO_COLOR)\n"
+
+.PHONY: infrastructure-provision-vm-nginx
+infrastructure-provision-vm-nginx:
+    "$(MAKE)" --no-print-directory infrastructure-provision-vm VM_NAME=$(VM_NAME_NGINX)
+
+# ...
+
+.PHONY: infrastructure-provision-all
+infrastructure-provision-all: ## Provision all VMs
+    @printf "$(YELLOW)The provisioning runs in parallel but the output will only be visible once a process is fully finished (can take a couple of minutes)$(NO_COLOR)\n"
+    "$(MAKE)" -j --output-sync=target   infrastructure-provision-vm-application \
+                                        infrastructure-provision-vm-php-fpm \
+                                        infrastructure-provision-vm-php-worker \
+                                        infrastructure-provision-vm-nginx
+</code></pre>
+
+<p><!-- generated -->
+<a id='mapping-service-names-to-vm-names'> </a>
+<!-- /generated --></p>
+
+<h3>Mapping service names to VM names</h3>
+
+<p>In this tutorial I'm using the terms "service name" and "VM name" quite a lot. To avoid 
+confusion, here is how I think about them:</p>
+
+<ul>
+<li><p><strong>service name</strong></p>
+
+<ul>
+<li>is used in the sense of a <a href="https://docs.docker.com/compose/compose-file/#services-top-level-element"><code>docker compose</code> service</a></li>
+</ul>
+
+<blockquote>
+  <p>A Service is an abstract definition of a computing resource within an application which can 
+  be scaled/replaced independently from other components. Services are backed by a set of 
+  containers, run by the platform according to replication requirements and placement constraints.</p>
+</blockquote>
+
+<ul>
+<li>our <a href="/blog/docker-from-scratch-for-php-applications-in-2022/#docker">application has 6 services</a> 
+(<code>nginx</code>, <code>php-fpm</code>, <code>application</code>, <code>php-worker</code>, <code>mysql</code> and <code>redis</code>) and so far each 
+service was defined as an individual <code>docker</code> image and ran as a single <code>docker</code> container</li>
+<li>starting from this tutorial, <code>mysql</code> and <code>redis</code> are no longer used via <code>docker</code> images</li>
+<li>services are a "logical" component - not an infrastructural one</li>
+</ul></li>
+<li><strong>VM name</strong>
+
+<ul>
+<li>a "service" can be run on a "VM"</li>
+<li>is a unique identifier for a Virtual Machine on GCP and is often required in <code>gcloud</code> 
+commands to identify the instance for a command</li>
+<li>VMs are infrastructure components</li>
+<li>this includes the "Compute Engine" instances for our application services as well as the
+MySQL Cloud SQL instance for our <code>mysql</code> service and the Redis Memory Store instance for our
+<code>redis</code> service</li>
+</ul></li>
+</ul>
+
+<p><a href="/img/create-production-infrastructure-docker-php-app-gcp/vm-name-service-name.PNG"><img src="/img/create-production-infrastructure-docker-php-app-gcp/vm-name-service-name.PNG" alt="VM names and service names" /></a></p>
+
+<p>In this tutorial we use "one VM per service" and can thus use a 1-to-1 mapping from service name 
+to VM name. As a convention, we use almost the same name, i.e. the <code>php-fpm</code> service runs on the 
+Compute Engine VM instance with the name <code>php-fpm-vm</code>. Using the <code>-vm</code> suffix avoids confusion 
+and ensures that we don't create an unintended coupling between the service name and the VM name.</p>
+
+<p>Using the exact same name (service name = <code>php-fpm</code> and VM name = <code>php-fpm</code>) has lead to 
+problems for me in the past, because 
+<a href="/blog/gcp-mysql-cloud-sql-instances-create-connect-delete#delete-a-mysql-cloud-sql-instance">the name of a MySQL Cloud SQL instance used to be blocked even after deletion for one week</a>,
+so it might not even be possible to use that exact name.</p>
+
+<p>I have defined this mapping as a variable in <code>.make/variables.env</code> as follows:</p>
+
+<pre><code class="language-dotenv"># must match the names used in the docker-composer.yml files
+DOCKER_SERVICE_NAME_NGINX:=nginx
+DOCKER_SERVICE_NAME_PHP_BASE:=php-base
+DOCKER_SERVICE_NAME_PHP_FPM:=php-fpm
+DOCKER_SERVICE_NAME_PHP_WORKER:=php-worker
+DOCKER_SERVICE_NAME_APPLICATION:=application
+DOCKER_SERVICE_NAME_MYSQL:=mysql
+DOCKER_SERVICE_NAME_REDIS:=redis
+# VM / instance names
+VM_NAME_APPLICATION=$(DOCKER_SERVICE_NAME_APPLICATION)-vm
+VM_NAME_PHP_FPM=$(DOCKER_SERVICE_NAME_PHP_FPM)-vm
+VM_NAME_PHP_WORKER=$(DOCKER_SERVICE_NAME_PHP_WORKER)-vm
+VM_NAME_NGINX=$(DOCKER_SERVICE_NAME_NGINX)-vm
+VM_NAME_MYSQL=$(DOCKER_SERVICE_NAME_MYSQL)-vm
+VM_NAME_REDIS=$(DOCKER_SERVICE_NAME_REDIS)-vm
+# Helpers
+ALL_VM_SERVICE_NAMES=$(VM_NAME_APPLICATION):$(DOCKER_SERVICE_NAME_APPLICATION) $(VM_NAME_PHP_FPM):$(DOCKER_SERVICE_NAME_PHP_FPM) $(VM_NAME_PHP_WORKER):$(DOCKER_SERVICE_NAME_PHP_WORKER) $(VM_NAME_NGINX):$(DOCKER_SERVICE_NAME_NGINX)
+</code></pre>
+
+<p>The <code>ALL_VM_SERVICE_NAMES</code> variables is used for instance for
+<a href="/blog/deploy-dockerized-php-app-production#the-service-ips-file-map-service-names-to-ips">Retrieving all IP addresses if the VMs to create the <code>service-ips</code> file</a>.</p>
+
+<p><!-- generated -->
+<a id='appendix-changes-in-the-codebase'> </a>
+<!-- /generated --></p>
+
+<h2>Appendix: Changes in the codebase</h2>
+
+<p>This section is mostly relevant if you have been following the previous tutorials. It explains 
+some changes that have been introduced for this part.</p>
+
+<p><!-- generated -->
+<a id='add-a-make-dev-init-target'> </a>
+<!-- /generated --></p>
+
+<h3>Add a <code>make dev-init</code> target</h3>
+
+<p>A new <code>dev-init</code> target was added in a new sub makefile at <code>.make/00-00-development-setup.mk</code>. 
+It simplifies the setup of the tutorial repository when it has been freshly cloned.</p>
+
+<p>I realized that there are quite some things to keep  in mind in this case (e.g. set up various 
+<code>.env</code> files, decrypt the secrets, install composer dependencies, etc.). I believe this can lead 
+to a bad experience if you start with "this" part of the tutorial, as a lot of those setup 
+things are done in previous parts.</p>
+
+<p><!-- generated -->
+<a id='update-the-gcloud-targets'> </a>
+<!-- /generated --></p>
+
+<h3>Update the <code>gcloud</code> targets</h3>
+
+<p>So far, the targets in <code>.make/03-00-gcp.mk</code> could assume a single <code>GCP_VM_NAME</code> variable as 
+there was only one Compute Instance VM. Now, we have 
+<a href="#set-up-the-vms-that-run-docker-containers">one VM per service</a> and thus need to pass the 
+<code>VM_NAME</code> as a required argument to most VM related targets (i.e. <code>GCP_VM_NAME</code> was replaced by
+<code>VM_NAME</code>).</p>
+
+<p>Example: Logging into a VM via <code>gcp-ssh-login</code> now requires the <code>VM_NAME</code>, because 
+we need to define in which exact VM we want to log in</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-ssh-login
+gcp-ssh-login: validate-gcp-variables ## Log into a VM via IAP tunnel
+    @$(if $(VM_NAME),,$(error "VM_NAME is undefined"))
+    gcloud compute ssh $(VM_NAME) --project $(GCP_PROJECT_ID) --zone $(GCP_ZONE) --tunnel-through-iap
+
+# Example to log into the php-fpm VM: 
+#   make gcp-ssh-login VM_NAME=php-fpm-vm
+</code></pre>
+
+<p>In addition, I have added a dedicated target to activate the mater service account, as it is 
+required for some actions (like retrieving the redis <code>AUTH</code> string - see
+<a href="#redis-memorystore-setup">Redis Memorystory Setup</a>):</p>
+
+<pre><code class="language-makefile">.PHONY: gcp-init
+gcp-init: validate-gcp-variables ## Initialize the `gcloud` cli and authenticate docker with the keyfile defined via SERVICE_ACCOUNT_KEY_FILE.
+    @$(if $(SERVICE_ACCOUNT_KEY_FILE),,$(error "SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    gcloud auth activate-service-account --key-file="$(SERVICE_ACCOUNT_KEY_FILE)" --project="$(GCP_PROJECT_ID)"
+
+.PHONY: gcp-init-deployment-account
+gcp-init-deployment-account: validate-gcp-variables ## Initialize the `gcloud` cli with the deployment service account 
+    @$(if $(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE),,$(error "GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    "$(MAKE)" gcp-init SERVICE_ACCOUNT_KEY_FILE=$(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE)
+    cat "$(GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE)" | docker login -u _json_key --password-stdin https://gcr.io
+
+.PHONY: gcp-init-master-account
+gcp-init-master-account: validate-gcp-variables ## Initialize the `gcloud` cli with the master service account 
+    @$(if $(GCP_MASTER_SERVICE_ACCOUNT_KEY_FILE),,$(error "GCP_MASTER_SERVICE_ACCOUNT_KEY_FILE is undefined"))
+    "$(MAKE)" gcp-init SERVICE_ACCOUNT_KEY_FILE=$(GCP_MASTER_SERVICE_ACCOUNT_KEY_FILE)
+</code></pre>
+
+<p>As part of this change, the variable <code>GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY</code> was renamed to
+<code>GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE</code> and <code>GCP_MASTER_SERVICE_ACCOUNT_KEY_FILE</code> was added.</p>
+
+<p><!-- generated -->
+<a id='add-additional-make-variables'> </a>
+<!-- /generated --></p>
+
+<h3>Add additional <code>make</code> variables</h3>
+
+<p>The following variables have been added:</p>
+
+<pre><code class="language-dotenv">GCP_REGION=us-central1
+</code></pre>
+
+<p>The region is required to create</p>
+
+<ul>
+<li>the <a href="#routers-and-nats">Cloud Router and Cloud NAT gateway</a></li>
+<li>the <a href="#cloud-sql-for-mysql-setup">MySQL Cloud SQL instance</a></li>
+<li>the <a href="#redis-memorystore-setup">Redis Memoerystore instance</a> and 
+<a href="/blog/deploy-dockerized-php-app-production/#retrieving-ip-addresses">retrieve its private IP address</a></li>
+</ul>
+
+<pre><code class="language-dotenv">GCP_DEPLOYMENT_SERVICE_ACCOUNT_KEY_FILE
+GCP_MASTER_SERVICE_ACCOUNT_KEY_FILE
+</code></pre>
+
+<p>See previous section <a href="#update-the-gcloud-targets">Update the <code>gcloud</code> targets</a>.</p>
+
+<pre><code class="language-dotenv">DOCKER_SERVICE_NAME_...
+VM_NAME_...
+ALL_VM_SERVICE_NAMES
+</code></pre>
+
+<p>See section <a href="#mapping-service-names-to-vm-names">Mapping service names to VM names</a>.</p>
+
+<p><!-- generated -->
+<a id='use-make-to-execute-infrastructure-and-deployment-targets-in-parallel'> </a>
+<!-- /generated --></p>
+
+<h3>Use <code>make</code> to execute infrastructure and deployment targets in parallel</h3>
+
+<p>We have already learned about the <strong>capability of <code>make</code> to run targets in parallel</strong> with the <code>-j</code> 
+flag in 
+<a href="/blog/php-qa-tools-make-docker/#parallel-execution-and-a-helper-target">Set up PHP QA tools: Parallel execution and a helper target</a>:</p>
+
+<pre><code class="language-makefile">.PHONY: foo
+foo: 
+    "$(MAKE)" -j target-1 target-2
+</code></pre>
+
+<p>This is particularly helpful when <strong>dealing with I/O heavy targets</strong>, e.g. when making API calls.
+This is great, because we are making <em>a lot</em> of those, e.g. during the 
+<a href="#set-up-the-vms-that-run-docker-containers">creation of the infrastructure</a>
+but also during the 
+<a href="/blog/deploy-dockerized-php-app-production/#run-the-deployment-script-for-each-service">deployment</a> 
+of the application. Unfortunately, it's not possible to pass individual arguments per target,
+i.e. in the following example</p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-all
+infrastructure-setup-all: ## Setup all VMs
+    "$(MAKE)" -j --output-sync=target infrastructure-setup-vm VM_NAME=application-vm \   
+                                      infrastructure-setup-vm VM_NAME=php-fpm-vm
+</code></pre>
+
+<p>the value of <code>VM_NAME</code> would always be <code>php-fpm-vm</code>. Thus, <strong>we must define each target that 
+should run in parallel individually</strong> like this:</p>
+
+<pre><code class="language-makefile">.PHONY: infrastructure-setup-vm
+infrastructure-setup-vm: ## Setup the VM specified via VM_NAME. Usage: make infrastructure-setup-vm VM_NAME=php-worker ARGS=""
+    bash .infrastructure/setup-vm.sh $(GCP_PROJECT_ID) $(VM_NAME) $(ARGS)
+
+.PHONY: infrastructure-setup-vm-application
+infrastructure-setup-vm-application:
+    "$(MAKE)" --no-print-directory infrastructure-setup-vm VM_NAME=$(VM_NAME_APPLICATION)
+
+.PHONY: infrastructure-setup-vm-php-fpm
+infrastructure-setup-vm-php-fpm:
+    "$(MAKE)" --no-print-directory infrastructure-setup-vm VM_NAME=$(VM_NAME_PHP_FPM)
+
+.PHONY: infrastructure-setup-all
+infrastructure-setup-all: ## Setup all VMs
+    "$(MAKE)" -j --output-sync=target infrastructure-setup-vm-application \
+                                      infrastructure-setup-vm-php-fpm
+</code></pre>
+
+<p>This introduces some typing overhead, but I didn't find a better way to do this, yet. 
+In theory, we could also use 
+<a href="https://www.cyberciti.biz/faq/how-to-run-command-or-code-in-parallel-in-bash-shell-under-linux-or-unix/">other ways to run the targets in parallel</a>,
+e.g. by running the process in the background via <code>&amp;</code></p>
+
+<pre><code class="language-makefile">infrastructure-setup-all: ## Provision all VMs
+    for vm_name in $(VM_NAME_APPLICATION) $(VM_NAME_PHP_FPM); do \
+        $$(make infrastructure-provision-vm VM_NAME="$$vm_name") &amp; \
+    done; \
+    wait; \
+    echo "ALL DONE"
+</code></pre>
+
+<p>But: This doesn't give us any way to 
+<a href="https://www.gnu.org/software/make/manual/html_node/Parallel-Output.html">synchronize the output as we can do with <code>make</code> via <code>--output-sync=target</code></a>
+so that the output quickly becomes quite messy. Using 
+<a href="https://www.gnu.org/software/parallel/">GNU <code>parallel</code></a> might be an option, but it doesn't come 
+natively e.g. on Windows and would be a dependency that needed to be installed by all developers
+(which we try to avoid as much as possible - see 
+<a href="/blog/git-secret-encrypt-repository-docker/#local-git-secret-and-gpg-setup">Use git-secret to encrypt secrets: Local <code>git-secret</code> and <code>gpg</code> setup</a>).</p>
+
+<p><!-- generated -->
+<a id='wrapping-up'> </a>
+<!-- /generated --></p>
+
+<h2>Wrapping up</h2>
+
+<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
+leave a comment. You should now be ready to create a production ready infrastructure on GCP 
+including multiple VMs and managed services for <code>mysql</code> and <code>redis</code>.</p>
+
+<p>In the next part of this tutorial, we will 
+<a href="/blog/deploy-dockerized-php-app-production/">deploy a dockerized PHP application "to production" via <code>docker</code> (without <code>compose</code>) on multiple VMs</a>.</p>
+
+<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
+notifications when this next part comes out :)</p>
+]]></description>
+                <pubDate>Mon, 24 Apr 2023 06:00:00 +0000</pubDate>
+                <link>https://www.pascallandau.com/blog/create-production-infrastructure-docker-php-app-gcp/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
+                <guid isPermaLink="true">https://www.pascallandau.com/blog/create-production-infrastructure-docker-php-app-gcp/</guid>
+            </item>
                     <item>
                 <title>Using GCP Redis Memorystore instances (create/connect/delete)</title>
                 <description><![CDATA[<p>In this blog post I'll summarize my experience with <strong>GCP Redis Memorystore instances</strong>. Memorystore 
@@ -12336,668 +13411,6 @@ notifications when this next part comes out :)</p>
                 <pubDate>Wed, 23 Mar 2022 12:00:00 +0000</pubDate>
                 <link>https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
                 <guid isPermaLink="true">https://www.pascallandau.com/blog/run-laravel-9-docker-in-2022/</guid>
-            </item>
-                    <item>
-                <title>PhpStorm, Docker and Xdebug 3 on PHP 8.1 in 2022 [Tutorial Part 3]</title>
-                <description><![CDATA[<p>In this part of the tutorial series on developing PHP on Docker we 
-will <strong>set up our local development environment to be used by PhpStorm and Xdebug</strong>. We will also 
-ensure that we can run <strong>PHPUnit tests from the command line as well as from PhpStorm</strong> and throw 
-the tool <code>strace</code> into the mix for debugging long-running processes.</p>
-
-<div class="youtube">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/bZ1MiynqT98" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
-<p>All code samples are publicly available in my
-<a href="https://github.com/paslandau/docker-php-tutorial/">Docker PHP Tutorial repository on Github</a>.<br />
-You find the branch for this tutorial at 
-<a href="https://github.com/paslandau/docker-php-tutorial/tree/part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022">part-4-2-phpstorm-docker-xdebug-3-php-8-1-in-2022</a></p>
-
-<p><strong>All published parts of the Docker PHP Tutorial</strong> are collected under a dedicated page at
-<a href="/docker-php-tutorial/">Docker PHP Tutorial</a>. The previous part was
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/">Docker from scratch for PHP 8.1 Applications in 2022</a>
-and the following one is
-<a href="/blog/run-laravel-9-docker-in-2022/">Run Laravel 9 on Docker in 2022</a>.</p>
-
-<p>If you want to follow along, please subscribe to the <a href="/feed.xml">RSS feed</a>
-or <a href="#newsletter">via email</a>
-to get <strong>automatic notifications</strong> when the next part comes out :)</p>
-
-<p><!-- generated -->
-<a id='table-of-contents'> </a>
-<!-- /generated --></p>
-
-<h2>Table of contents</h2>
-
-<!-- toc -->
-
-<ul>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#install-tools">Install Tools</a>
-
-<ul>
-<li><a href="#install-composer">Install composer</a></li>
-<li><a href="#install-xdebug">Install Xdebug</a></li>
-<li><a href="#install-phpunit">Install PHPUnit</a></li>
-<li><a href="#install-ssh">Install SSH</a></li>
-</ul></li>
-<li><a href="#setup-phpstorm">Setup PhpStorm</a>
-
-<ul>
-<li><a href="#ssh-configuration">SSH Configuration</a></li>
-<li><a href="#php-interpreter">PHP Interpreter</a></li>
-<li><a href="#phpunit">PHPUnit</a></li>
-<li><a href="#debugging">Debugging</a>
-
-<ul>
-<li><a href="#debug-code-executed-via-phpstorm">Debug code executed via PhpStorm</a></li>
-<li><a href="#debug-code-executed-via-php-fpm-cli-or-from-a-worker">Debug code executed via php-fpm, cli or from a worker</a>
-
-<ul>
-<li><a href="#php-fpm">php-fpm</a></li>
-<li><a href="#cli">cli</a></li>
-<li><a href="#php-workers">php-workers</a></li>
-</ul></li>
-</ul></li>
-</ul></li>
-<li><a href="#strace">strace</a></li>
-<li><a href="#wrapping-up">Wrapping up</a></li>
-</ul>
-
-<!-- /toc -->
-
-<p><!-- generated -->
-<a id='introduction'> </a>
-<!-- /generated --></p>
-
-<h2>Introduction</h2>
-
-<p>This article is mostly an update of
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/">Setting up PhpStorm with Xdebug for local development on Docker</a>
-but will also cover the "remaining cases" of <strong>debugging php-fpm</strong> and <strong>php worker processes</strong>.</p>
-
-<p>We will still rely on an <strong>always-running docker setup</strong> that we connect to via an SSH Configuration
-instead of using the 
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#run-debug-a-php-script-on-docker-server">built-in docker-compose capabilities</a>
-as I feel it's closer to what we do in CI / production. However, we will <strong>not use SSH keys</strong> 
-any longer but simply authenticate via password. This reduces complexity and removes any 
-pesky warnings regarding "SSH keys being exposed in a repository".</p>
-
-<p><!-- generated -->
-<a id='install-tools'> </a>
-<!-- /generated --></p>
-
-<h2>Install Tools</h2>
-
-<p><!-- generated -->
-<a id='install-composer'> </a>
-<!-- /generated --></p>
-
-<h3>Install composer</h3>
-
-<p><a href="https://getcomposer.org/">Composer</a> is installed by pulling 
-<a href="https://hub.docker.com/_/composer">the official composer docker image</a> and simply "copying" the 
-composer executable over to the base php image. In addition, composer needs the extensions
-<code>mbstring</code> and <code>phar</code></p>
-
-<pre><code># File: .docker/images/php/base/Dockerfile
-
-ARG ALPINE_VERSION
-ARG COMPOSER_VERSION
-FROM composer:${COMPOSER_VERSION} as composer
-FROM alpine:${ALPINE_VERSION} as base
-
-# ...
-
-RUN apk add --update --no-cache  \
-        php-mbstring~=${TARGET_PHP_VERSION} \
-        php-phar~=${TARGET_PHP_VERSION} \
-
-# ...
-
-COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-</code></pre>
-
-<p>Because we want our build to be deterministic, we "pin" the composer version by adding a 
-<code>COMPOSER_VERSION</code> variable to the <code>.docker/.env</code> file</p>
-
-<pre><code class="language-dotenv">COMPOSER_VERSION=2.2.5
-</code></pre>
-
-<p>and using it in <code>.docker/docker-compose/docker-compose-php-base.yml</code>:</p>
-
-<pre><code class="language-yaml">services:
-  php-base:
-    build:
-      args:
-        - COMPOSER_VERSION=${COMPOSER_VERSION?}
-</code></pre>
-
-<p><!-- generated -->
-<a id='install-xdebug'> </a>
-<!-- /generated --></p>
-
-<h3>Install Xdebug</h3>
-
-<p>Install the extension via <code>apk</code> (only for the <code>local</code> target):</p>
-
-<pre><code class="language-Dockerfile"># File: .docker/images/php/base/Dockerfile
-
-FROM base as local
-
-RUN apk add --no-cache --update \
-        php-xdebug~=${TARGET_PHP_VERSION} \
-    # ensure that xdebug is not enabled by default
-    &amp;&amp; rm -f /etc/php8/conf.d/00_xdebug.ini
-</code></pre>
-
-<p>We also don't want to enable <code>xdebug</code> immediately but only when we need it (due to the decrease 
-in performance when the extension is enabled), hence we remove the default config file and 
-disable the extension in the application <code>.ini</code> file</p>
-
-<pre><code># File: .docker/images/php/base/conf.d/zz-app-local.ini
-
-; Note:
-; Remove the comment ; to enable debugging
-;zend_extension=xdebug
-xdebug.client_host=host.docker.internal
-xdebug.start_with_request=yes
-xdebug.mode=debug
-</code></pre>
-
-<p>See <a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
-for an explanation of the <code>xdebug.client_host=host.docker.internal</code> setting (previously called
-<code>xdebug.remote_host</code> in xdebug &lt; 3). This will still work out of the box for Docker Desktop, but
-for Linux users we need to add the 
-<a href="https://github.com/docker/for-linux/issues/264#issuecomment-965465879"><code>host-gateway</code> magic reference</a>
-<strong>to all PHP containers</strong> (we can't add it to the php base image because this is a runtime setting):</p>
-
-<pre><code class="language-yaml">services:
-  service:
-    extra_hosts:
-      - host.docker.internal:host-gateway
-</code></pre>
-
-<p>Finally, we need to add 
-<a href="https://www.jetbrains.com/help/phpstorm/debugging-a-php-cli-script.html">the environment variable <code>PHP_IDE_CONFIG</code></a>
-<strong>to all PHP containers</strong>. The variable is defined as <code>PHP_IDE_CONFIG=serverName=dofroscra</code>, where 
-"dofroscra" is the name of the server that we will configure later for debugging. Because we 
-need the same value in multiple places, the variable is configured in <code>.docker/.env</code>:</p>
-
-<pre><code>PHP_IDE_CONFIG=serverName=dofroscra
-</code></pre>
-
-<p>And then added in
-<code>.docker/docker-compose/docker-compose.local.yml</code></p>
-
-<pre><code class="language-yaml">services:
-  php-fpm:
-    environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
-
-  php-worker:
-    environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
-
-  application:
-    environment:
-      - PHP_IDE_CONFIG=${PHP_IDE_CONFIG?}
-</code></pre>
-
-<p><!-- generated -->
-<a id='install-phpunit'> </a>
-<!-- /generated --></p>
-
-<h3>Install PHPUnit</h3>
-
-<p>PHPUnit will be installed via <code>composer</code> but will not be "baked into the image" for local 
-development. Thus, we must run <code>composer require</code> <strong>in the container</strong>. To make this more 
-convenient a make target for running arbitrary composer commands is added in 
-<code>.make/01-00-application-setup.mk</code>:</p>
-
-<pre><code class="language-makefile">.PHONY: composer
-composer: ## Run composer commands. Specify the command e.g. via ARGS="install"
-    $(EXECUTE_IN_APPLICATION_CONTAINER) composer $(ARGS);
-</code></pre>
-
-<p>This allows me to run <code>make composer ARGS="install"</code> from the host system to execute <code>composer 
-install</code> in the container. In consequence, <code>composer</code> will use the PHP version and extensions of 
-the <code>application</code> container to install the dependencies, yet I will still see the installed files
-locally because the codebase is configured as a volume for the container.</p>
-
-<p>Before installing phpunit, we must add the required extensions <code>dom</code> and <code>xml</code> to the container</p>
-
-<pre><code># File: .docker/images/php/base/Dockerfile
-
-# ...
-
-RUN apk add --update --no-cache  \
-        php-dom~=${TARGET_PHP_VERSION} \
-        php-xml~=${TARGET_PHP_VERSION} \
-</code></pre>
-
-<p>as well as rebuild and restart the docker setup via</p>
-
-<pre><code>make docker-build
-make docker-down
-make docker-up
-</code></pre>
-
-<p>Now we can add phpunit via</p>
-
-<pre><code>make composer ARGS='require "phpunit/phpunit"'
-</code></pre>
-
-<p>which will create a <code>composer.json</code> file and setup up the <code>vendor/</code> directory:</p>
-
-<pre><code>$ make composer ARGS='require "phpunit/phpunit"'
-Using version ^9.5 for phpunit/phpunit
-./composer.json has been created
-Running composer update phpunit/phpunit
-Loading composer repositories with package information
-Updating dependencies
-...
-</code></pre>
-
-<p><strong>CAUTION</strong>: If you <strong>run into the following permission error</strong> at this step, you are likely using 
-Linux and 
-haven't set the <code>APP_USER_ID</code> and <code>APP_GROUP_ID</code> variables as described in the previous article
-under 
-<a href="/blog/docker-from-scratch-for-php-applications-in-2022/#solving-permission-issues">Solving permission issues</a>.</p>
-
-<pre><code class="language-text">make composer ARGS='req phpunit/phpunit' ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application application composer req phpunit/phpunit
-./composer.json is not writable.
-make: *** [.make/01-00-application-setup.mk:14: composer] Error 1
-</code></pre>
-
-<p>I have also added</p>
-
-<ul>
-<li>a minimal <code>phpunit.xml</code> config file</li>
-<li>a test case at <code>tests/SomeTest.php</code></li>
-<li>and a new Makefile for "anything related to qa" at <code>.make/01-02-application-qa.mk</code>:</li>
-</ul>
-
-<pre><code class="language-Makefile">##@ [Application: QA]
-
-.PHONY: test
-test: ## Run the test suite 
-    $(EXECUTE_IN_WORKER_CONTAINER) vendor/bin/phpunit -c phpunit.xml
-</code></pre>
-
-<p>So I can run tests simply via <code>make test</code></p>
-
-<pre><code>$ make test
-ENV=local TAG=latest DOCKER_REGISTRY=docker.io DOCKER_NAMESPACE=dofroscra APP_USER_NAME=application APP_GROUP_NAME=application docker-compose -p dofroscra_local --env-file ./.docker/.env -f ./.docker/docker-compose/docker-compose.yml -f ./.docker/docker-compose/docker-compose.local.yml exec -T --user application php-worker vendor/bin/phpunit
-PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
-
-.                                                                   1 / 1 (100%)
-
-Time: 00:00.324, Memory: 4.00 MB
-
-OK (1 test, 1 assertion)
-</code></pre>
-
-<p><!-- generated -->
-<a id='install-ssh'> </a>
-<!-- /generated --></p>
-
-<h3>Install SSH</h3>
-
-<p>We will execute commands from PhpStorm via ssh in the <code>application</code> container. As mentioned, we 
-won't use a key file for authentication but will instead simply use a password that is 
-configured via the <code>APP_SSH_PASSWORD</code> variable in <code>.docker/.env</code> and passed to the image in 
-<code>.docker/docker-compose/docker-compose.local.yml</code>. In addition, we map port <code>2222</code> from the 
-host system to port <code>22</code> of the application container and make sure that the codebase is shared
-as a volume between host and container</p>
-
-<pre><code class="language-yaml">  application:
-    build:
-      args:
-        - APP_SSH_PASSWORD=${APP_SSH_PASSWORD?}
-    volumes:
-      - ${APP_CODE_PATH_HOST?}:${APP_CODE_PATH_CONTAINER?}
-    ports:
-      - "${APPLICATION_SSH_HOST_PORT:-2222}:22"
-</code></pre>
-
-<p>The container already contains <code>openssh</code> and sets the password</p>
-
-<pre><code class="language-Dockerfile">ARG BASE_IMAGE
-FROM ${BASE_IMAGE} as base
-
-FROM base as local
-
-RUN apk add --no-cache --update \
-        openssh
-
-ARG APP_SSH_PASSWORD
-RUN echo "$APP_USER_NAME:$APP_SSH_PASSWORD" | chpasswd 2&gt;&amp;1
-
-# Required to start sshd, otherwise the container will error out on startup with the message
-# "sshd: no hostkeys available -- exiting."
-# @see https://stackoverflow.com/a/65348102/413531 
-RUN ssh-keygen -A
-
-# we use SSH deployment configuration in PhpStorm for local development
-EXPOSE 22
-
-CMD ["/usr/sbin/sshd", "-D"]
-</code></pre>
-
-<p><!-- generated -->
-<a id='setup-phpstorm'> </a>
-<!-- /generated --></p>
-
-<h2>Setup PhpStorm</h2>
-
-<p>We will configure a remote PHP interpreter that uses an SSH connection to run commands in the 
-<code>application</code> container. Before, 
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#configure-the-deployment-configuration">we have been using an <code>SFTP Deployment configuration</code></a>
-, which was kinda confusing ("What is SFTP doing here?"), so we will use an 
-<a href="https://www.jetbrains.com/help/phpstorm/create-ssh-configurations.html">SSH Configuration</a> 
-instead and configure the path mappings in the <strong>Cli Interpreter</strong> interface</p>
-
-<p><!-- generated -->
-<a id='ssh-configuration'> </a>
-<!-- /generated --></p>
-
-<h3>SSH Configuration</h3>
-
-<p>At <code>File | Settings | Tools | SSH Configurations</code> create a new SSH Configuration named 
-"Docker PHP Tutorial" with the following settings</p>
-
-<ul>
-<li>Host: 127.0.0.1</li>
-<li>Port: see <code>APPLICATION_SSH_HOST_PORT</code> in <code>.docker/docker-compose/docker-compose.local.yml</code></li>
-<li>User name: see <code>APP_USER_NAME</code> in <code>.make/.env</code></li>
-<li>Authentication type: Password</li>
-<li>Password: see <code>APP_SSH_PASSWORD</code> in <code>.docker/.env</code></li>
-</ul>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-ssh-configuration.PNG" alt="PhpStorm SSH Configuration" title="PhpStorm SSH Configuration" /></a></p>
-
-<p><!-- generated -->
-<a id='php-interpreter'> </a>
-<!-- /generated --></p>
-
-<h3>PHP Interpreter</h3>
-
-<p>At <code>File | Settings | PHP</code> add a new PHP CLI interpreter that uses the new SSH Configuration</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter.PNG" alt="PhpStorm new CLI interpreter" title="PhpStorm new CLI interpreter" /></a></p>
-
-<p>In addition, we define the <strong>path to the xdebug extension</strong> because it is disabled by default but
-PhpStorm can enable it automatically if required. You can find the path in the <code>application</code>
-container via</p>
-
-<pre><code>root:/var/www/app# php -i | grep extension_dir
-extension_dir =&gt; /usr/lib/php8/modules =&gt; /usr/lib/php8/modules
-root:/var/www/app# ll /usr/lib/php8/modules | grep xdebug
--rwxr-xr-x    1 root     root        303936 Jan  9 00:21 xdebug.so
-</code></pre>
-
-<p>We still need to 
-<a href="/blog/setup-phpstorm-with-xdebug-on-docker/#fix-xdebug-on-phpstorm-when-run-from-a-docker-container">Fix Xdebug on PhpStorm when run from a Docker container</a>
-by adding a custom PHP option for <code>xdebug.client_host=host.docker.internal</code>. That's the same value
-we use in <code>.docker/images/php/base/conf.d/zz-app-local.ini</code>.</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-xdebug.PNG" alt="PhpStorm Xdebug settings for the CLI interpreter" title="PhpStorm Xdebug settings for the CLI interpreter" /></a></p>
-
-<p>In the interpreter overview we must now configure the <strong>path mappings</strong> so that PhpStorm knows
-"which local file belongs to which remote one". The remote folder is defined in <code>.docker/.env</code> via</p>
-
-<pre><code class="language-dotenv">APP_CODE_PATH_CONTAINER=/var/www/app
-</code></pre>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-cli-interpreter-path-mappings.PNG" alt="PhpStorm path mappings for the CLI interpreter" title="PhpStorm path mappings for the CLI interpreter" /></a></p>
-
-<p>Afterwards we can set a breakpoint e.g. in <code>setup.php</code> and start debugging:</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
-
-<p>The screenshot shows that PhpStorm adds the Xdebug extension that we defined previously.</p>
-
-<p><!-- generated -->
-<a id='phpunit'> </a>
-<!-- /generated --></p>
-
-<h3>PHPUnit</h3>
-
-<p><code>phpunit</code> is configured via <code>File | Settings | PHP | Test Frameworks</code>. First, we select the
-interpreter that we just added</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-interpreter.PNG" alt="Set up phpunit in PhpStorm" title="Set up phpunit in PhpStorm" /></a></p>
-
-<p>Then, we add the paths to the composer autoload script and the <code>phpunit.xml</code> configuration file.</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-phpunit-settings.PNG" alt="phpunit settings in PhpStorm" title="phpunit settings in PhpStorm" /></a></p>
-
-<p>PhpStorm will now execute tests using the PHP interpreter in the <code>application</code> container</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-run-phpunit-test.PNG" alt="Run a phpunit test in PhpStorm" title="Run a phpunit test in PhpStorm" /></a></p>
-
-<p><!-- generated -->
-<a id='debugging'> </a>
-<!-- /generated --></p>
-
-<h3>Debugging</h3>
-
-<p>First of all, if you haven't already please also take a look at the 
-<a href="https://xdebug.org/docs/step_debug">official xdebug documentation</a>. Derick is doing a great job 
-at explaining xdebug in detail including some helpful videos like
-<a href="https://www.youtube.com/watch?v=4opFac50Vwo">Xdebug 3: Xdebug with Docker and PhpStorm in 5 minutes</a></p>
-
-<p><!-- generated -->
-<a id='debug-code-executed-via-phpstorm'> </a>
-<!-- /generated --></p>
-
-<h4>Debug code executed via PhpStorm</h4>
-
-<p>This should already work out of the box. Simply set a break point, right-click on a file and choose 
-"Debug '...'"</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint.PNG" alt="PhpStorm debugging breakpoint" title="PhpStorm debugging breakpoint" /></a></p>
-
-<p><!-- generated -->
-<a id='debug-code-executed-via-php-fpm-cli-or-from-a-worker'> </a>
-<!-- /generated --></p>
-
-<h4>Debug code executed via php-fpm, cli or from a worker</h4>
-
-<p>For code that is executed "directly" by a container without PhpStorm, we first need to enable 
-<code>xdebug</code> in the container by removing the <code>;</code> in front of the extension in 
-<code>/etc/php8/conf.d/zz-app-local.ini</code></p>
-
-<pre><code>; Note:
-; Remove the comment ; to enable debugging
-zend_extension=xdebug
-</code></pre>
-
-<p>To make this a little more convenient, we use dedicated make recipes for those actions in
-<code>.make/01-01-application-commands.mk</code></p>
-
-<pre><code class="language-Makefile">.PHONY: execute-in-container
-execute-in-container: ## Execute a command in a container. E.g. via "make execute-in-container DOCKER_SERVICE_NAME=php-fpm COMMAND="echo 'hello'"
-    @$(if $(DOCKER_SERVICE_NAME),,$(error DOCKER_SERVICE_NAME is undefined))
-    @$(if $(COMMAND),,$(error COMMAND is undefined))
-    $(EXECUTE_IN_CONTAINER) $(COMMAND);
-
-.PHONY: enable-xdebug
-enable-xdebug: ## Enable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
-    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"
-
-.PHONY: disable-xdebug
-disable-xdebug: ## Disable xdebug in the given container specified by "DOCKER_SERVICE_NAME". E.g. "make enable-xdebug DOCKER_SERVICE_NAME=php-fpm"
-    "$(MAKE)" execute-in-container APP_USER_NAME="root" DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME) COMMAND="sed -i 's/.*zend_extension=xdebug/;zend_extension=xdebug/' '/etc/php8/conf.d/zz-app-local.ini'"
-</code></pre>
-
-<p>To capture incoming requests, we need to make PhpStorm listen for PHP Debug connections via
-<code>Run | Start Listening for PHP Debug Connections</code>.</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-start-listening-for-debug-connections.PNG" alt="PhpStorm: Start Listening for PHP Debug Connections" title="PhpStorm: Start Listening for PHP Debug Connections" /></a></p>
-
-<p>The corresponding ports are configured at <code>File | Settings | PHP | Debug</code>. In Xdebug &lt; 3 the 
-default port was <code>9000</code> and in <a href="https://xdebug.org/docs/all_settings#client_port">Xdebug 3 it is <code>9003</code></a></p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-ports.PNG" alt="PhpStorm: configure xdebug ports" title="PhpStorm: configure xdebug ports" /></a></p>
-
-<p>Finally, we need to add a server via <code>File | Settings | PHP | Servers</code></p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-server.PNG" alt="PhpStorm: configure a server" title="PhpStorm: configure a server" /></a></p>
-
-<p>The name of the server must match the value of the <code>serverName</code> key in the environment variable 
-<code>PHP_IDE_CONFIG</code> that we configured previously as <code>serverName=dofroscra</code>.</p>
-
-<p><!-- generated -->
-<a id='php-fpm'> </a>
-<!-- /generated --></p>
-
-<h5>php-fpm</h5>
-
-<p>For <code>php-fpm</code> we must
-<a href="https://stackoverflow.com/a/43076457">restart the <code>php-fpm</code> process without restarting the container</a>
-after we have activated <code>xdebug</code> via</p>
-
-<pre><code>kill -USR2 1
-</code></pre>
-
-<p>Since this is a pain to remember, we add a make target in <code>.make/01-01-application-commands.mk</code></p>
-
-<pre><code class="language-Makefile"># @see https://stackoverflow.com/a/43076457
-.PHONY: restart-php-fpm
-restart-php-fpm: ## Restart the php-fpm service
-    "$(MAKE)" execute-in-container DOCKER_SERVICE_NAME=$(DOCKER_SERVICE_NAME_PHP_FPM) COMMAND="kill -USR2 1"
-</code></pre>
-
-<p>So we can now simply run</p>
-
-<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-fpm
-make restart-php-fpm
-</code></pre>
-
-<p>Setting a breakpoint in <code>public/index.php</code> and opening <a href="http://127.0.0.1/">http://127.0.0.1/</a> in
-a browser or via <code>curl http://127.0.0.1/</code> will halt the execution as expected.</p>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-fpm.PNG" alt="PhpStorm debugging breakpoint for php-fpm" title="PhpStorm debugging breakpoint for php-fpm" /></a></p>
-
-<p><!-- generated -->
-<a id='cli'> </a>
-<!-- /generated --></p>
-
-<h5>cli</h5>
-
-<p>Instead of triggering a PHP script via HTTP request, we can also run CLI scripts - think of the 
-<code>make setup-db</code> target for instance. To debug such invocations, we need to follow the same steps
-as before:</p>
-
-<ul>
-<li>enable the <code>xdebug</code> extension in the <code>application</code> container</li>
-<li>"Listening for PHP Debug Connections" from PhpStorm</li>
-</ul>
-
-<p>Running the following make targets will trigger a breakpoint in <code>setup.php</code>:</p>
-
-<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=application
-make setup-db
-</code></pre>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-cli.PNG" alt="PhpStorm debugging breakpoint for cli" title="PhpStorm debugging breakpoint for cli" /></a></p>
-
-<p><!-- generated -->
-<a id='php-workers'> </a>
-<!-- /generated --></p>
-
-<h5>php-workers</h5>
-
-<p>And finally the same thing for long running PHP processes (aka workers). Just as before:</p>
-
-<ul>
-<li>enable the <code>xdebug</code> extension in the <code>php-worker</code> container</li>
-<li>"Listening for PHP Debug Connections" from PhpStorm</li>
-<li>restart the php workers</li>
-</ul>
-
-<p>Running the following make targets will trigger a breakpoint in <code>worker.php</code>:</p>
-
-<pre><code>make enable-xdebug DOCKER_SERVICE_NAME=php-worker
-make restart-workers
-</code></pre>
-
-<p><a href="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG"><img src="/img/phpstorm-docker-xdebug-3-php-8-1-in-2022/phpstorm-xdebug-breakpoint-php-worker.PNG" alt="PhpStorm debugging breakpoint for php-workers" title="PhpStorm debugging breakpoint for php-workers" /></a></p>
-
-<p><!-- generated -->
-<a id='strace'> </a>
-<!-- /generated --></p>
-
-<h2>strace</h2>
-
-<p><a href="https://strace.io/">strace</a> is a great tool for debugging long running processes that I've 
-adopted after reading <a href="https://derickrethans.nl/what-is-php-doing.html">What is PHP doing?</a>. I've
-added it to the php base image:</p>
-
-<pre><code class="language-Dockerfile">RUN apk add --update --no-cache \
-        strace
-</code></pre>
-
-<p>You can attach to any running process via <code>sudo strace -p $processId</code> - BUT that doesn't work 
-out of the box on docker and will fail with the error message</p>
-
-<pre><code>strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted
-</code></pre>
-
-<p>This is caused by a security measure from docker and 
-<a href="https://stackoverflow.com/a/46676868">can be circumvented</a> by adding</p>
-
-<pre><code class="language-yaml">services:
-  service:
-    cap_add:
-      - "SYS_PTRACE"
-    security_opt:
-      - "seccomp=unconfined"
-</code></pre>
-
-<p>in <code>.docker/docker-compose/docker-compose.local.yml</code> <strong>to all PHP containers</strong>. After 
-rebuilding and restarting the docker setup, you can now e.g. log in the <code>php-worker</code> container
-and run <code>strace</code> on a php worker process:</p>
-
-<pre><code>application:/var/www/app# ps aux
-PID   USER     TIME  COMMAND
-    1 applicat  0:00 {supervisord} /usr/bin/python3 /usr/bin/supervisord
-    7 applicat  0:00 php /var/www/app/worker.php
-    8 applicat  0:00 php /var/www/app/worker.php
-    9 applicat  0:00 php /var/www/app/worker.php
-   10 applicat  0:00 php /var/www/app/worker.php
-   11 applicat  0:00 bash
-   20 applicat  0:00 ps aux
-application:/var/www/app# sudo strace -p 7
-strace: Process 7 attached
-restart_syscall(&lt;... resuming interrupted read ...&gt;) = 0
-poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 0 (Timeout)
-sendto(4, "*2\r\n$4\r\nRPOP\r\n$5\r\nqueue\r\n", 25, MSG_DONTWAIT, NULL, 0) = 25
-poll([{fd=4, events=POLLIN|POLLPRI|POLLERR|POLLHUP}], 1, 0) = 1 ([{fd=4, revents=POLLIN}])
-recvfrom(4, "$", 1, MSG_PEEK, NULL, NULL) = 1
-</code></pre>
-
-<p><!-- generated -->
-<a id='wrapping-up'> </a>
-<!-- /generated --></p>
-
-<h2>Wrapping up</h2>
-
-<p>Congratulations, you made it! If some things are not completely clear by now, don't hesitate to
-leave a comment. Apart from that, you should now have a fully configured development setup that
-works with PhpStorm as your IDE.</p>
-
-<p>In the next part of this tutorial, we will 
-<a href="/blog/run-laravel-9-docker-in-2022/">use a fresh installation of Laravel on top of our setup</a>.</p>
-
-<p>Please subscribe to the <a href="/feed.xml">RSS feed</a> or <a href="#newsletter">via email</a> to get automatic
-notifications when this next part comes out :)</p>
-]]></description>
-                <pubDate>Tue, 22 Mar 2022 11:00:00 +0000</pubDate>
-                <link>https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/?utm_source=blog&amp;utm_medium=rss&amp;utm_campaign=global-feed</link>
-                <guid isPermaLink="true">https://www.pascallandau.com/blog/phpstorm-docker-xdebug-3-php-8-1-in-2022/</guid>
             </item>
             </channel>
 </rss>
